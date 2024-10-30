@@ -69,32 +69,37 @@ const MultiplicationGame = () => {
   }, [selectedTable]);
 
   useEffect(() => {
-    setUsedProblems(new Set());
-    generateNewProblem();
-
-    // 정답 확인 시 햅틱 피드백 추가
-    const feedback = () => {
-      // iOS 햅틱 피드백
-      if (
-        'window' in globalThis &&
-        'ImpactFeedbackGenerator' in window &&
-        window.navigator.platform === 'iPhone'
-      ) {
-        // 타입 단언을 사용하여 ImpactFeedbackGenerator 타입 명시
-        const generator = new (window as any).ImpactFeedbackGenerator('medium');
-        generator.prepare();
-        generator.impactOccurred();
-      }
+    window.addEventListener('keydown', handleKeyPress);
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
     };
+  }, [userAnswer]);
 
-    feedback();
-  }, [selectedTable]);
+  const handleKeyPress = (event: KeyboardEvent) => {
+    if (event.key >= '0' && event.key <= '9') {
+      handleNumberClick(event.key);
+    } else if (event.key === 'Backspace') {
+      handleDelete();
+    } else if (event.key === 'Enter') {
+      checkAnswer();
+    }
+  };
+
+  const handleNumberClick = (num: string) => {
+    if (userAnswer.length < 3) {
+      setUserAnswer(userAnswer + num);
+    }
+  };
+
+  const handleDelete = () => {
+    setUserAnswer(userAnswer.slice(0, -1));
+  };
 
   // 햅틱 피드백 함수들
   const hapticFeedback = {
     success: () => {
       if ('vibrate' in navigator) {
-        // 성공 패턴: 짧은 진동 두 번
+        // Android: 성공 패턴: 짧은 진동 두 번
         navigator.vibrate([50, 30, 50]);
       }
 
@@ -108,7 +113,7 @@ const MultiplicationGame = () => {
 
     error: () => {
       if ('vibrate' in navigator) {
-        // 실패 패턴: 긴 진동 한 번
+        // Android: 실패 패턴: 긴 진동 한 번
         navigator.vibrate(300);
       }
 
@@ -136,57 +141,15 @@ const MultiplicationGame = () => {
 
   const handleWrongAnswer = () => {
     hapticFeedback.error();
-    // setShake(true);
     setShowErrorAlert(true);
 
     setTimeout(() => {
-      // setShake(false);
       setShowErrorAlert(false);
     }, 2000);
 
     setScore(score - 15);
     setStreak(0);
     setUserAnswer("");
-  };
-
-  const NumberButton = ({ number }: { number: number }) => (
-    <motion.button
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.95 }}
-      onClick={() => {
-        hapticFeedback.buttonPress();
-        handleNumberClick(number.toString());
-      }}
-      className="w-full h-16 text-2xl font-medium rounded-lg
-                 bg-white hover:bg-gray-50 border border-gray-200
-                 shadow-sm transition-all duration-200
-                 text-gray-700 relative overflow-hidden"
-    >
-      <motion.div
-        initial={false}
-        animate={{
-          backgroundColor: ["rgba(79, 70, 229, 0)", "rgba(79, 70, 229, 0.1)", "rgba(79, 70, 229, 0)"],
-        }}
-        transition={{ duration: 0.3 }}
-      >
-        {number}
-      </motion.div>
-    </motion.button>
-  );
-
-  const formatTime = (ms: number) => {
-    if (ms < 1000) return `${ms}ms`;
-    const seconds = Math.floor(ms / 1000);
-    const remainingMs = Math.floor((ms % 1000) / 100);
-    return `${seconds}.${remainingMs}s`;
-  };
-
-  const formatDateTime = (date: Date) => {
-    return new Date(date).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true
-    });
   };
 
   const checkAnswer = () => {
@@ -207,6 +170,7 @@ const MultiplicationGame = () => {
     setHistory([newHistory, ...history].slice(0, 5));
 
     if (correct) {
+      hapticFeedback.success();
       setScore(score + 10);
       setStreak(streak + 1);
       setTimeout(generateNewProblem, 1000);
@@ -215,44 +179,30 @@ const MultiplicationGame = () => {
     }
   };
 
-  const handleNumberClick = (num: string) => {
-    if (userAnswer.length < 3) {
-      setUserAnswer(userAnswer + num);
-    }
-  };
-
-  const handleDelete = () => {
-    setUserAnswer(userAnswer.slice(0, -1));
-  };
-
-  const handleKeyPress = (event: KeyboardEvent) => {
-    if (event.key >= '0' && event.key <= '9') {
-      handleNumberClick(event.key);
-    } else if (event.key === 'Backspace') {
-      handleDelete();
-    } else if (event.key === 'Enter') {
-      checkAnswer();
-    }
-  };
-
-  const [setIsLoading] = useState(true);
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyPress);
-    return () => {
-      window.removeEventListener('keydown', handleKeyPress);
-    };
-  }, [userAnswer]);
-
-
-  useEffect(() => {
-    // 2초 후 스플래시 화면 숨기기
-    const timer = setTimeout(() => {
-      // setIsLoading(false);
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, []);
+  const NumberButton = ({ number }: { number: number }) => (
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={() => {
+        hapticFeedback.buttonPress();
+        handleNumberClick(number.toString());
+      }}
+      className="w-full h-16 text-2xl font-medium rounded-lg
+                 bg-white hover:bg-gray-50 border border-gray-200
+                 shadow-sm transition-all duration-200
+                 text-gray-700 relative overflow-hidden"
+    >
+      <motion.div
+        initial={false}
+        animate={{
+          backgroundColor: ["rgba(79, 70, 229, 0)", "rgba(79, 70, 229, 0.1)", "rgba(79, 70, 229, 0)"]
+        }}
+        transition={{ duration: 0.3 }}
+      >
+        {number}
+      </motion.div>
+    </motion.button>
+  );
 
   return (
     <div className="max-w-md mx-auto p-4 min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
@@ -300,7 +250,7 @@ const MultiplicationGame = () => {
                       size="sm"
                       disabled={currentPage === 0}
                       onClick={() => setCurrentPage(prev => prev - 1)}
-                      className="w-8 h-8 flex items-center justify-center" // `className` 속성 추가
+                      className="w-8 h-8 flex items-center justify-center"
                     >
                       <ChevronLeft className="w-4 h-4" />
                     </Button>
@@ -309,9 +259,9 @@ const MultiplicationGame = () => {
                       size="sm"
                       disabled={currentPage === totalPages - 1}
                       onClick={() => setCurrentPage(prev => prev + 1)}
-                      className="w-8 h-8 flex items-center justify-center" // `className` 속성 추가
+                      className="w-8 h-8 flex items-center justify-center"
                     >
-                      <ChevronRight className="w-4 h-4" />
+                      <ChevronRight className="w-5 h-5" />
                     </Button>
                   </div>
                 </div>
@@ -359,7 +309,6 @@ const MultiplicationGame = () => {
               <X className="w-4 h-4 text-red-500" />
               <AlertDescription className="text-red-600">
                 Incorrect!
-                {/* The correct answer is {num1 * num2}. */}
               </AlertDescription>
             </Alert>
           </motion.div>
@@ -447,3 +396,18 @@ const MultiplicationGame = () => {
 };
 
 export default MultiplicationGame;
+
+const formatTime = (ms: number) => {
+  if (ms < 1000) return `${ms}ms`;
+  const seconds = Math.floor(ms / 1000);
+  const remainingMs = Math.floor((ms % 1000) / 100);
+  return `${seconds}.${remainingMs}s`;
+};
+
+const formatDateTime = (date: Date) => {
+  return new Date(date).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true
+  });
+};
