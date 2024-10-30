@@ -1,0 +1,8 @@
+{
+  "appId": "site.smap.next",
+  "appName": "구구단 with smap",
+  "webDir": "public",
+  "server": {
+    "androidScheme": "https"
+  }
+}

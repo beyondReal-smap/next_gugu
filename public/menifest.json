@@ -1,0 +1,42 @@
+// manifest.json (public 폴더에 저장)
+{
+    "name": "Multiplication Practice",
+    "short_name": "MultiPrac",
+    "description": "Practice multiplication tables with interactive exercises",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#4f46e5",
+    "icons": [
+      {
+        "src": "/icons/icon-192x192.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "purpose": "any maskable"
+      },
+      {
+        "src": "/icons/icon-512x512.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "any maskable"
+      }
+    ],
+    "shortcuts": [
+        {
+          "name": "Start Practice",
+          "short_name": "Practice",
+          "description": "Start a new practice session",
+          "url": "/practice",
+          "icons": [{ "src": "/icons/practice-192x192.png", "sizes": "192x192" }]
+        }
+      ],
+      "screenshots": [
+        {
+          "src": "/screenshots/1.png",
+          "sizes": "1170x2532",
+          "type": "image/png",
+          "platform": "narrow",
+          "label": "Multiplication Game"
+        }
+      ]
+  }
