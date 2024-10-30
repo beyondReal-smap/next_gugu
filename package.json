@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && cp -r out/* public/",
-    "cap:sync": "npm run build && npx cap sync",  
+    "build": "next build",  
     "start": "next start",
+    "cap:build": "next build && cp -r out/* public/", 
+    "cap:sync": "npm run cap:build && npx cap sync",
     "static": "next build",
     "mobile": "yarn static && cap sync"
   },
