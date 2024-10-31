@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription } from "./components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
-import confetti from "canvas-confetti";
 
 const MultiplicationGame = () => {
   const [num1, setNum1] = useState(2);
@@ -31,14 +30,9 @@ const MultiplicationGame = () => {
   const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [startTime, setStartTime] = useState<Date | null>(null); // 타입 명시
 
-  const [level, setLevel] = useState(1); // Level 추가
-  const [coins, setCoins] = useState(0); // Coins 추가
-  const [showReward, setShowReward] = useState(false); // Reward Modal 표시 여부
-
   const tablesPerPage = 10;
   const totalTables = 18; // 2단부터 19단까지
   const totalPages = Math.ceil(totalTables / tablesPerPage);
-
 
   // HistoryItem 타입 정의
   interface HistoryItem {
@@ -90,16 +84,6 @@ const MultiplicationGame = () => {
       checkAnswer();
     }
   };
-
-  // Level up 로직
-  useEffect(() => {
-    if (score >= level * 100) {
-      setLevel(level + 1);
-      setCoins(coins + level * 50); // 레벨업 보상 코인 추가
-      setShowReward(true); // 레벨업 시 보상 모달 표시
-      confetti(); // 레벨업 축하 효과
-    }
-  }, [score]);
 
   const handleNumberClick = (num: string) => {
     if (userAnswer.length < 3) {
@@ -168,21 +152,6 @@ const MultiplicationGame = () => {
     setUserAnswer("");
   };
 
-  const formatTime = (ms: number) => {
-    if (ms < 1000) return `${ms}ms`;
-    const seconds = Math.floor(ms / 1000);
-    const remainingMs = Math.floor((ms % 1000) / 100);
-    return `${seconds}.${remainingMs}s`;
-  };
-
-  const formatDateTime = (date: Date) => {
-    return new Date(date).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true
-    });
-  };
-
   const checkAnswer = () => {
     if (!userAnswer) return;
 
@@ -205,11 +174,6 @@ const MultiplicationGame = () => {
       setScore(score + 10);
       setStreak(streak + 1);
       setTimeout(generateNewProblem, 1000);
-      setCoins(coins + 10); // 정답 시 코인 추가
-      if (streak >= 5) { // Streak 보상 추가
-        setCoins(coins + streak * 5);
-        confetti();
-      }
     } else {
       handleWrongAnswer();
     }
@@ -427,44 +391,23 @@ const MultiplicationGame = () => {
           </CardContent>
         </Card>
       )}
-      <div className="max-w-md mx-auto p-4 min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 relative"> {/* relative 추가 */}
-        {/* ... (Existing code) */}
-
-        {/* Reward Modal */}
-        <AnimatePresence>
-          {showReward && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.5 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-            >
-              <Card className="bg-white p-6 rounded-lg shadow-xl">
-                <div className="flex flex-col items-center">
-                  <Award className="w-16 h-16 text-yellow-500 mb-4" />
-                  <h3 className="text-xl font-medium text-gray-800 mb-2">Level Up!</h3>
-                  <p className="text-gray-600 mb-4">You reached level {level}!</p>
-                  <p className="text-gray-600 mb-4">You earned {level * 50} coins!</p> {/* 레벨업 보상 코인 표시 */}
-                  <Button onClick={() => setShowReward(false)}>Continue</Button>
-                </div>
-              </Card>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-
-        <div className="fixed bottom-4 left-4 bg-white p-4 rounded-lg shadow-md"> {/* 코인 표시 */}
-          <span className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-yellow-400" /> {/* 코인 아이콘 */}
-            {coins}
-          </span>
-        </div>
-      </div>
     </div>
-
   );
 };
 
 export default MultiplicationGame;
 
+const formatTime = (ms: number) => {
+  if (ms < 1000) return `${ms}ms`;
+  const seconds = Math.floor(ms / 1000);
+  const remainingMs = Math.floor((ms % 1000) / 100);
+  return `${seconds}.${remainingMs}s`;
+};
 
+const formatDateTime = (date: Date) => {
+  return new Date(date).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true
+  });
+};
