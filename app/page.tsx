@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { Alert, AlertDescription } from "./components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
+import Confetti from 'react-confetti';
 
 const MultiplicationGame = () => {
   // 기존 상태 관리
