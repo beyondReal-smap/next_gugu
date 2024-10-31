@@ -29,6 +29,7 @@ const MultiplicationGame = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [startTime, setStartTime] = useState<Date | null>(null); // 타입 명시
+  const [level, setLevel] = useState(1); // 단계별 난이도
 
   const tablesPerPage = 10;
   const totalTables = 18; // 2단부터 19단까지
@@ -171,8 +172,11 @@ const MultiplicationGame = () => {
 
     if (correct) {
       hapticFeedback.success();
-      setScore(score + 10);
+      setScore(score + (10 * level)); // 단계별 점수 증가
       setStreak(streak + 1);
+      if (streak % 5 === 0) {
+        setLevel(prev => prev + 1); // 일정 스트릭 달성 시 레벨 상승
+      }
       setTimeout(generateNewProblem, 1000);
     } else {
       handleWrongAnswer();
