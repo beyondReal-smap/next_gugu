@@ -468,12 +468,18 @@ const MultiplicationGame = () => {
       </AnimatePresence>
 
       <div className="mb-6 flex justify-center">
-       {characters.map((char) => (
-        <button key={char.id} onClick={() => setSelectedCharacter(char.id)} className={`p-2 rounded-full ${selectedCharacter === char.id ? 'bg-indigo-200' : ''}`}>
-          <img src={char.src} alt={char.name} className="w-16 h-16 rounded-full" />
-        </button>
-      ))}
-    </div>
+        {characters.map((char) => (
+          <button key={char.id} onClick={() => setSelectedCharacter(char.id)} className={`p-2 rounded-full ${selectedCharacter === char.id ? 'bg-indigo-200' : ''}`}>
+            <Image
+              src={char.src}
+              alt={char.name}
+              width={64} // 이미지 너비 (필수)
+              height={64} // 이미지 높이 (필수)
+              className="rounded-full"
+            />
+          </button>
+        ))}
+      </div>
 
     <div className="mb-6 flex justify-center gap-4">
         <Button onClick={() => setGameMode("practice")} variant={gameMode === "practice" ? "default" : "outline"}>연습 모드</Button>
