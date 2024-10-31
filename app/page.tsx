@@ -12,7 +12,7 @@ import {
   Timer,
   ChevronRight,
   ChevronLeft,
-  Award, 
+  Award,
   Clock
 } from "lucide-react";
 import { Alert, AlertDescription } from "./components/ui/alert";
@@ -69,10 +69,10 @@ const MultiplicationGame = () => {
       }, 1000);
     } else if (gameMode === "timeAttack" && timeLeft === 0) {
       clearInterval(timerInterval!);
-       // 타임 어택 종료 시 로직 (예: 결과 화면 표시)
-       alert("Time's up! Your score: " + timeAttackScore);
-       setGameMode("practice"); // 게임 모드를 다시 "practice"로 변경
-       setTimeAttackScore(0); // 점수 초기화
+      // 타임 어택 종료 시 로직 (예: 결과 화면 표시)
+      alert("Time's up! Your score: " + timeAttackScore);
+      setGameMode("practice"); // 게임 모드를 다시 "practice"로 변경
+      setTimeAttackScore(0); // 점수 초기화
     }
 
     return () => {
@@ -160,49 +160,49 @@ const MultiplicationGame = () => {
     setUserAnswer(userAnswer.slice(0, -1));
   };
 
-    // 햅틱 피드백 함수들
-    const hapticFeedback = {
-      success: () => {
-        if ('vibrate' in navigator) {
-          // Android: 성공 패턴: 짧은 진동 두 번
-          navigator.vibrate([50, 30, 50]);
-        }
-  
-        // iOS 햅틱 피드백
-        if ('window' in globalThis && 'ImpactFeedbackGenerator' in window) {
-          const generator = new (window as any).ImpactFeedbackGenerator('medium');
-          generator.prepare();
-          generator.impactOccurred();
-        }
-      },
-  
-      error: () => {
-        if ('vibrate' in navigator) {
-          // Android: 실패 패턴: 긴 진동 한 번
-          navigator.vibrate(300);
-        }
-  
-        // iOS 햅틱 피드백
-        if ('window' in globalThis && 'NotificationFeedbackGenerator' in window) {
-          const generator = new (window as any).NotificationFeedbackGenerator('error');
-          generator.prepare();
-          generator.notificationOccurred();
-        }
-      },
-  
-      buttonPress: () => {
-        if ('vibrate' in navigator) {
-          navigator.vibrate(10);
-        }
-  
-        // iOS 햅틱 피드백
-        if ('window' in globalThis && 'ImpactFeedbackGenerator' in window) {
-          const generator = new (window as any).ImpactFeedbackGenerator('light');
-          generator.prepare();
-          generator.impactOccurred();
-        }
+  // 햅틱 피드백 함수들
+  const hapticFeedback = {
+    success: () => {
+      if ('vibrate' in navigator) {
+        // Android: 성공 패턴: 짧은 진동 두 번
+        navigator.vibrate([50, 30, 50]);
       }
-    };
+
+      // iOS 햅틱 피드백
+      if ('window' in globalThis && 'ImpactFeedbackGenerator' in window) {
+        const generator = new (window as any).ImpactFeedbackGenerator('medium');
+        generator.prepare();
+        generator.impactOccurred();
+      }
+    },
+
+    error: () => {
+      if ('vibrate' in navigator) {
+        // Android: 실패 패턴: 긴 진동 한 번
+        navigator.vibrate(300);
+      }
+
+      // iOS 햅틱 피드백
+      if ('window' in globalThis && 'NotificationFeedbackGenerator' in window) {
+        const generator = new (window as any).NotificationFeedbackGenerator('error');
+        generator.prepare();
+        generator.notificationOccurred();
+      }
+    },
+
+    buttonPress: () => {
+      if ('vibrate' in navigator) {
+        navigator.vibrate(10);
+      }
+
+      // iOS 햅틱 피드백
+      if ('window' in globalThis && 'ImpactFeedbackGenerator' in window) {
+        const generator = new (window as any).ImpactFeedbackGenerator('light');
+        generator.prepare();
+        generator.impactOccurred();
+      }
+    }
+  };
 
   const handleWrongAnswer = () => {
     hapticFeedback.error();
@@ -259,16 +259,16 @@ const MultiplicationGame = () => {
       if (newLevel > level) {
         setLevel(newLevel);
 
-          // 업적 확인 및 갱신
-          setAchievements(prevAchievements => {
-            const updatedAchievements = prevAchievements.map(achievement => {
-              if (achievement.name === "Level Up!" && newLevel >= 5 && !achievement.unlocked) {
-                return { ...achievement, unlocked: true };
-              }
-              return achievement;
-            });
-            return updatedAchievements;
+        // 업적 확인 및 갱신
+        setAchievements(prevAchievements => {
+          const updatedAchievements = prevAchievements.map(achievement => {
+            if (achievement.name === "Level Up!" && newLevel >= 5 && !achievement.unlocked) {
+              return { ...achievement, unlocked: true };
+            }
+            return achievement;
           });
+          return updatedAchievements;
+        });
       }
 
       setTimeout(generateNewProblem, 1000);
@@ -309,12 +309,12 @@ const MultiplicationGame = () => {
   return (
     <div className="max-w-md mx-auto p-4 min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <div className="mb-8 flex justify-center">
-         {gameMode === "timeAttack" && (
+        {gameMode === "timeAttack" && (
           <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
             <Clock className="w-5 h-5 text-red-500 mr-2" />
-           <span className="text-xl font-medium text-gray-700">{timeLeft}s</span>
+            <span className="text-xl font-medium text-gray-700">{timeLeft}s</span>
           </div>
-         )}
+        )}
       </div>
 
       <header className="flex justify-between items-center mb-8">
@@ -333,25 +333,25 @@ const MultiplicationGame = () => {
               <span className="text-xl font-medium text-gray-700">{streak}</span>
             </motion.div>
           )}
-             <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
+          <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
             <span className="text-xl font-medium text-gray-700">Lv. {level}</span>
           </div>
         </div>
         <div className="flex gap-2">
-        <Button
-          variant="outline"
-          className="w-12 h-12 rounded-lg bg-white"
-          onClick={() => setShowAchievements(!showAchievements)}
-        >
-          <Award className="w-5 h-5 text-gray-600" />
-        </Button>
-        <Button
-          variant="outline"
-          className="w-12 h-12 rounded-lg bg-white"
-          onClick={() => setShowSettings(!showSettings)}
-        >
-          <Settings2 className="w-5 h-5 text-gray-600" />
-        </Button>
+          <Button
+            variant="outline"
+            className="w-12 h-12 rounded-lg bg-white"
+            onClick={() => setShowAchievements(!showAchievements)}
+          >
+            <Award className="w-5 h-5 text-gray-600" />
+          </Button>
+          <Button
+            variant="outline"
+            className="w-12 h-12 rounded-lg bg-white"
+            onClick={() => setShowSettings(!showSettings)}
+          >
+            <Settings2 className="w-5 h-5 text-gray-600" />
+          </Button>
         </div>
       </header>
 
@@ -371,7 +371,7 @@ const MultiplicationGame = () => {
                   {achievements.map((achievement, index) => (
                     <li key={index} className={`flex items-center p-3 rounded-lg border ${achievement.unlocked ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'}`}>
                       <span className={`mr-3 font-medium ${achievement.unlocked ? 'text-green-600' : 'text-gray-600'}`}>
-                       {achievement.name}
+                        {achievement.name}
                       </span>
                       <span className="text-sm text-gray-500">{achievement.description}</span>
                     </li>
@@ -428,7 +428,7 @@ const MultiplicationGame = () => {
                         whileTap={{ scale: 0.98 }}
                         onClick={() => {
                           setSelectedTable(table);
-                           setScore(0); // 선택한 테이블이 바뀌면 점수 초기화
+                          setScore(0); // 선택한 테이블이 바뀌면 점수 초기화
                           setStreak(0); // 선택한 테이블이 바뀌면 streak 초기화
                           setShowSettings(false);
                         }}
@@ -481,16 +481,13 @@ const MultiplicationGame = () => {
         ))}
       </div>
 
-    <div className="mb-6 flex justify-center gap-4">
-        <Button onClick={() => setGameMode("practice")} variant={gameMode === "practice" ? "default" : "outline"}>연습 모드</Button>
-        <Button onClick={() => {
-           setGameMode("timeAttack");
-           setTimeLeft(30); // 타임어택 시작 시 시간 초기화
-           setTimeAttackScore(0); // 타임어택 시작 시 점수 초기화
-           generateNewProblem(); // 새 문제 생성
-
-        }} variant={gameMode === "timeAttack" ? "default" : "outline"}>타임 어택</Button>
-      </div>
+      <Button className="" onClick={() => setGameMode("practice")} variant={gameMode === "practice" ? "default" : "outline"}>연습 모드</Button>
+      <Button className="" onClick={() => {
+        setGameMode("timeAttack");
+        setTimeLeft(30);
+        setTimeAttackScore(0);
+        generateNewProblem();
+      }} variant={gameMode === "timeAttack" ? "default" : "outline"}>타임 어택</Button>
 
 
       <Card className="bg-white/90 backdrop-blur border-none shadow-lg mb-6">
