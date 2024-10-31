@@ -20,10 +20,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from 'next/image'
 
 // 캐릭터 이미지 import (예시)
-// import character1 from "./assets/character1.png"; // 이미지 경로는 실제 경로로 변경해야 합니다.
-// import character2 from "./assets/character2.png";
-// import character3 from "./assets/character3.png";
-// import character4 from "./assets/character4.png";
+import character1 from "../assets/character1.png"; // 이미지 경로는 실제 경로로 변경해야 합니다.
+import character2 from "../assets/character2.png";
+import character3 from "../assets/character3.png";
+import character4 from "../assets/character4.png";
+
 
 const MultiplicationGame = () => {
   const [num1, setNum1] = useState(2);
