@@ -17,6 +17,11 @@ import {
 import { Alert, AlertDescription } from "./components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
 
+// 캐릭터 이미지 import (예시)
+import character1 from "./assets/character1.png"; // 이미지 경로는 실제 경로로 변경해야 합니다.
+import character2 from "./assets/character2.png";
+import character3 from "./assets/character3.png";
+
 const MultiplicationGame = () => {
   const [num1, setNum1] = useState(2);
   const [num2, setNum2] = useState(1);
@@ -38,6 +43,39 @@ const MultiplicationGame = () => {
   const tablesPerPage = 10;
   const totalTables = 18;
   const totalPages = Math.ceil(totalTables / tablesPerPage);
+
+  const [selectedCharacter, setSelectedCharacter] = useState(0);
+  const [gameMode, setGameMode] = useState("practice"); // "practice" 또는 "timeAttack"
+  const [timeLeft, setTimeLeft] = useState(30); // 타임어택 시간 (초)
+  const [timeAttackScore, setTimeAttackScore] = useState(0);
+
+  const characters = [
+    { id: 0, src: character1, name: "Character 1" },
+    { id: 1, src: character2, name: "Character 2" },
+    { id: 2, src: character3, name: "Character 3" },
+  ];
+
+  useEffect(() => {
+    let timerInterval: NodeJS.Timeout | null = null;
+
+    if (gameMode === "timeAttack" && timeLeft > 0) {
+      timerInterval = setInterval(() => {
+        setTimeLeft(prevTime => prevTime - 1);
+      }, 1000);
+    } else if (gameMode === "timeAttack" && timeLeft === 0) {
+      clearInterval(timerInterval!);
+       // 타임 어택 종료 시 로직 (예: 결과 화면 표시)
+       alert("Time's up! Your score: " + timeAttackScore);
+       setGameMode("practice"); // 게임 모드를 다시 "practice"로 변경
+       setTimeAttackScore(0); // 점수 초기화
+    }
+
+    return () => {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+      }
+    };
+  }, [gameMode, timeLeft]);
 
   interface HistoryItem {
     problem: string;
@@ -192,7 +230,6 @@ const MultiplicationGame = () => {
 
     setHistory([newHistory, ...history].slice(0, 5));
 
-
     if (correct) {
       hapticFeedback.success();
       setScore(score + 10);
@@ -212,7 +249,6 @@ const MultiplicationGame = () => {
         return updatedAchievements;
       });
 
-
       // 레벨 업 로직
       const newLevel = Math.floor(score / 100) + 1;
       if (newLevel > level) {
@@ -230,11 +266,12 @@ const MultiplicationGame = () => {
           });
       }
 
-
-
       setTimeout(generateNewProblem, 1000);
     } else {
       handleWrongAnswer();
+    }
+    if (gameMode === "timeAttack" && correct) {
+      setTimeAttackScore(prevScore => prevScore + 10);
     }
   };
 
@@ -266,6 +303,15 @@ const MultiplicationGame = () => {
 
   return (
     <div className="max-w-md mx-auto p-4 min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+      <div className="mb-8 flex justify-center">
+         {gameMode === "timeAttack" && (
+          <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
+            <Clock className="w-5 h-5 text-red-500 mr-2" />
+           <span className="text-xl font-medium text-gray-700">{timeLeft}s</span>
+          </div>
+         )}
+      </div>
+
       <header className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
@@ -415,6 +461,26 @@ const MultiplicationGame = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <div className="mb-6 flex justify-center">
+       {characters.map((char) => (
+        <button key={char.id} onClick={() => setSelectedCharacter(char.id)} className={`p-2 rounded-full ${selectedCharacter === char.id ? 'bg-indigo-200' : ''}`}>
+          <img src={char.src} alt={char.name} className="w-16 h-16 rounded-full" />
+        </button>
+      ))}
+    </div>
+
+    <div className="mb-6 flex justify-center gap-4">
+        <Button onClick={() => setGameMode("practice")} variant={gameMode === "practice" ? "default" : "outline"}>연습 모드</Button>
+        <Button onClick={() => {
+           setGameMode("timeAttack");
+           setTimeLeft(30); // 타임어택 시작 시 시간 초기화
+           setTimeAttackScore(0); // 타임어택 시작 시 점수 초기화
+           generateNewProblem(); // 새 문제 생성
+
+        }} variant={gameMode === "timeAttack" ? "default" : "outline"}>타임 어택</Button>
+      </div>
+
 
       <Card className="bg-white/90 backdrop-blur border-none shadow-lg mb-6">
         <CardContent className="p-6">
