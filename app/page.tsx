@@ -41,6 +41,130 @@ const MultiplicationGame = () => {
     dragon: { name: "드래곤", color: "text-red-500", price: 300 },
   };
 
+  // 오디오 재생을 위한 유틸리티 함수
+const playSound = (soundId) => {
+  const audio = document.getElementById(soundId);
+  if (audio) {
+    audio.currentTime = 0;
+    audio.play().catch(err => console.log('Audio play failed:', err));
+  }
+};
+
+// 틀린 답 처리 함수
+const handleWrongAnswer = () => {
+  setStreak(0);
+  setCombo(0);
+  playSound('wrongSound');
+  setShowErrorAlert(true);
+  
+  // 3초 후 에러 알림 숨기기
+  setTimeout(() => {
+    setShowErrorAlert(false);
+  }, 3000);
+
+  // 틀린 답에 대한 시각적 피드백을 위한 흔들림 효과
+  const gameCard = document.querySelector('.game-card');
+  if (gameCard) {
+    gameCard.classList.add('shake');
+    setTimeout(() => gameCard.classList.remove('shake'), 500);
+  }
+};
+
+// 성공 애니메이션 실행 함수
+const playSuccessAnimation = () => {
+  playSound('correctSound');
+  
+  // 점수 증가 애니메이션
+  const scoreElement = document.querySelector('.score-display');
+  if (scoreElement) {
+    scoreElement.classList.add('score-pop');
+    setTimeout(() => scoreElement.classList.remove('score-pop'), 500);
+  }
+};
+
+// 캐릭터 구매 함수
+const purchaseCharacter = (characterId, price) => {
+  if (coins >= price && !unlockedCharacters.includes(characterId)) {
+    setCoins(prev => prev - price);
+    setUnlockedCharacters(prev => [...prev, characterId]);
+    setCharacter(characterId);
+    playSound('rewardSound');
+    
+    // 구매 성공 알림 표시
+    setShowReward(true);
+    setTimeout(() => setShowReward(false), 2000);
+  }
+};
+
+// 숫자 삭제 함수
+const handleDelete = () => {
+  playSound('buttonSound');
+  setUserAnswer(prev => prev.slice(0, -1));
+};
+
+// 숫자 입력 함수
+const handleNumberInput = (number) => {
+  playSound('buttonSound');
+  
+  // 최대 2자리수까지만 입력 허용
+  if (userAnswer.length < 2) {
+    setUserAnswer(prev => prev + number);
+  }
+};
+
+// 키보드 입력 처리 함수
+const handleKeyPress = (event) => {
+  if (event.key >= '0' && event.key <= '9') {
+    handleNumberInput(event.key);
+  } else if (event.key === 'Backspace') {
+    handleDelete();
+  } else if (event.key === 'Enter') {
+    checkAnswer();
+  }
+};
+
+// 키보드 이벤트 리스너 설정
+useEffect(() => {
+  window.addEventListener('keydown', handleKeyPress);
+  return () => {
+    window.removeEventListener('keydown', handleKeyPress);
+  };
+}, [userAnswer]); // userAnswer가 변경될 때마다 이벤트 리스너 업데이트
+
+// CSS 애니메이션을 위한 스타일
+const styles = `
+  .shake {
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+  }
+
+  @keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+  }
+
+  .score-pop {
+    animation: pop 0.3s ease-in-out;
+  }
+
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+`;
+
+// 스타일 주입
+useEffect(() => {
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = styles;
+  document.head.appendChild(styleSheet);
+  return () => {
+    document.head.removeChild(styleSheet);
+  };
+}, []);
+
   // 레벨업에 필요한 점수 계산
   const scoreForNextLevel = level * 100;
 
