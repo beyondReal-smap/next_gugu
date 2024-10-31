@@ -11,12 +11,31 @@ import {
   Check,
   Timer,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  Award,
+  Star,
+  TrophyIcon
 } from "lucide-react";
 import { Alert, AlertDescription } from "./components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
 
+const CHARACTER_THEMES = [
+  { name: "Robot", color: "text-blue-500" },
+  { name: "Dinosaur", color: "text-green-500" },
+  { name: "Space Explorer", color: "text-purple-500" },
+  { name: "Pirate", color: "text-orange-500" },
+  { name: "Superhero", color: "text-red-500" },
+];
+
 const MultiplicationGame = () => {
+  // 기존 상태 변수들...
+  const [level, setLevel] = useState(1);
+  const [unlockedCharacters, setUnlockedCharacters] = useState<string[]>([CHARACTER_THEMES[0].name]);
+  const [currentCharacter, setCurrentCharacter] = useState(CHARACTER_THEMES[0]);
+  const [achievements, setAchievements] = useState<string[]>([]);
+  const [timeAttackMode, setTimeAttackMode] = useState(false);
+  const [remainingTime, setRemainingTime] = useState(30);
+
   const [num1, setNum1] = useState(2);
   const [num2, setNum2] = useState(1);
   const [userAnswer, setUserAnswer] = useState("");
@@ -74,6 +93,48 @@ const MultiplicationGame = () => {
       window.removeEventListener('keydown', handleKeyPress);
     };
   }, [userAnswer]);
+
+  // 타임 어택 모드 관리
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (timeAttackMode && remainingTime > 0) {
+      timer = setInterval(() => {
+        setRemainingTime(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            handleGameOver();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [timeAttackMode, remainingTime]);
+
+  // 게임 오버 처리
+  const handleGameOver = () => {
+    setTimeAttackMode(false);
+    // 게임 오버 로직 추가 (예: 최고 점수 저장, 업적 해제 등)
+    if (score >= 100) {
+      addAchievement("Time Attack Rookie");
+    }
+  };
+
+  // 업적 추가 함수
+  const addAchievement = (achievement: string) => {
+    if (!achievements.includes(achievement)) {
+      setAchievements(prev => [...prev, achievement]);
+
+      // 캐릭터 잠금 해제 로직
+      if (achievement === "Multiplication Master") {
+        const newCharacter = CHARACTER_THEMES[achievements.length % CHARACTER_THEMES.length];
+        setUnlockedCharacters(prev =>
+          prev.includes(newCharacter.name) ? prev : [...prev, newCharacter.name]
+        );
+      }
+    }
+  };
 
   const handleKeyPress = (event: KeyboardEvent) => {
     if (event.key >= '0' && event.key <= '9') {
@@ -152,12 +213,27 @@ const MultiplicationGame = () => {
     setUserAnswer("");
   };
 
+  // 기존의 checkAnswer 함수 수정
   const checkAnswer = () => {
     if (!userAnswer) return;
 
+    const correct = num1 * num2 === parseInt(userAnswer);
+
+    if (correct) {
+      // 연속 정답 시 추가 보상
+      if (streak >= 4) {
+        addAchievement("Streak Champion");
+      }
+
+      // 레벨 시스템 추가
+      if (score % 50 === 0) {
+        setLevel(prev => prev + 1);
+        addAchievement("Level Up!");
+      }
+    }
+
     const endTime = new Date();
     const timeTaken = startTime ? endTime.getTime() - startTime.getTime() : 0;
-    const correct = num1 * num2 === parseInt(userAnswer);
 
     const newHistory: HistoryItem = {
       problem: `${num1} × ${num2}`,
@@ -202,6 +278,93 @@ const MultiplicationGame = () => {
         {number}
       </motion.div>
     </motion.button>
+  );
+
+  const renderAchievementsSection = () => (
+    <Card className="bg-white/90 backdrop-blur border-none shadow-lg mt-4">
+      <CardContent className="p-6">
+        <h3 className="text-lg font-medium text-gray-700 mb-4 flex items-center">
+          <TrophyIcon className="w-6 h-6 mr-2 text-amber-500" />
+          Achievements
+        </h3>
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            "Multiplication Starter",
+            "Streak Champion",
+            "Time Attack Rookie",
+            "Multiplication Master"
+          ].map((achievement) => (
+            <div
+              key={achievement}
+              className={`p-2 rounded-lg text-center text-sm 
+                ${achievements.includes(achievement)
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-gray-100 text-gray-400'}`}
+            >
+              {achievement}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderCharacterSelection = () => (
+    <Card className="bg-white/90 backdrop-blur border-none shadow-lg mt-4">
+      <CardContent className="p-6">
+        <h3 className="text-lg font-medium text-gray-700 mb-4 flex items-center">
+          <Star className="w-6 h-6 mr-2 text-purple-500" />
+          Characters
+        </h3>
+        <div className="grid grid-cols-3 gap-3">
+          {CHARACTER_THEMES.map((character) => (
+            <motion.button
+              key={character.name}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setCurrentCharacter(character)}
+              disabled={!unlockedCharacters.includes(character.name)}
+              className={`p-3 rounded-lg text-center 
+                ${unlockedCharacters.includes(character.name)
+                  ? `${character.color} bg-opacity-10 border`
+                  : 'bg-gray-200 text-gray-400'} 
+                ${currentCharacter.name === character.name ? 'ring-2 ring-indigo-500' : ''}`}
+            >
+              {character.name}
+            </motion.button>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderTimeAttackMode = () => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="mb-4"
+    >
+      <Card className="bg-white/90 backdrop-blur border-none shadow-lg">
+        <CardContent className="p-6">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center">
+              <Timer className="w-6 h-6 mr-2 text-red-500" />
+              <span className="text-lg font-medium">Time Remaining: {remainingTime}s</span>
+            </div>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => {
+                setTimeAttackMode(false);
+                setRemainingTime(30);
+              }}
+            >
+              End Mode
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 
   return (
@@ -391,6 +554,28 @@ const MultiplicationGame = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* 타임 어택 모드 렌더링 */}
+      {timeAttackMode && renderTimeAttackMode()}
+
+      {/* 기존 게임 섹션... */}
+
+      {/* 새로운 섹션들 추가 */}
+      {renderAchievementsSection()}
+      {renderCharacterSelection()}
+
+      {/* 타임 어택 모드 시작 버튼 */}
+      <Button
+        className="w-full mt-4"
+        onClick={() => {
+          setTimeAttackMode(true);
+          setRemainingTime(30);
+          setScore(0);
+          setStreak(0);
+        }}
+      >
+        Start Time Attack Mode
+      </Button>
     </div>
   );
 };
