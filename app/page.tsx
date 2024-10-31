@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import character1 from "./assets/character1.png"; // 이미지 경로는 실제 경로로 변경해야 합니다.
 import character2 from "./assets/character2.png";
 import character3 from "./assets/character3.png";
+import character4 from "./assets/character4.png";
 
 const MultiplicationGame = () => {
   const [num1, setNum1] = useState(2);
@@ -53,6 +54,7 @@ const MultiplicationGame = () => {
     { id: 0, src: character1, name: "Character 1" },
     { id: 1, src: character2, name: "Character 2" },
     { id: 2, src: character3, name: "Character 3" },
+    { id: 3, src: character4, name: "Character 4" },
   ];
 
   useEffect(() => {
