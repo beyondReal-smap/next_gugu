@@ -467,12 +467,12 @@ const MultiplicationGame = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-4 left-4 right-4 z-50"
+            className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50" // 화면 중앙 배치
           >
             <Alert className="bg-red-50 border-red-200">
               <X className="w-4 h-4 text-red-500" />
               <AlertDescription className="text-red-600">
-                Incorrect!
+                {errorAlertMessage}
               </AlertDescription>
             </Alert>
           </motion.div>
