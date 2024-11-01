@@ -42,7 +42,7 @@ const MultiplicationGame = () => {
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [showAchievements, setShowAchievements] = useState(false);
-
+  const [errorAlertMessage, setErrorAlertMessage] = useState("");
 
   const tablesPerPage = 10;
   const totalTables = 18;
@@ -206,13 +206,25 @@ const MultiplicationGame = () => {
 
   const handleWrongAnswer = () => {
     hapticFeedback.error();
+
+    const encouragingMessages = [
+      "Oops! Try again! You've got this!",
+      "Not quite. Don't give up!",
+      "So close! Keep practicing!",
+      "Mistakes help you learn. Try again!",
+      "You're doing great! Give it another shot!"
+    ];
+    const randomMessage = encouragingMessages[Math.floor(Math.random() * encouragingMessages.length)];
+    setErrorAlertMessage(randomMessage);
+
     setShowErrorAlert(true);
 
     setTimeout(() => {
       setShowErrorAlert(false);
+      setErrorAlertMessage("");
     }, 2000);
 
-    setScore(Math.max(0, score - 15)); // 점수가 0 밑으로 내려가지 않도록 수정
+    setScore(Math.max(0, score - 15));
     setStreak(0);
     setUserAnswer("");
   };
