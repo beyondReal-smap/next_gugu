@@ -13,13 +13,12 @@ import {
   ChevronRight,
   ChevronLeft,
   Award,
-  Clock
+  Clock,
+  XCircle 
 } from "lucide-react";
-// import { Alert, AlertDescription } from "./components/ui/alert";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription } from "./components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from 'next/image'
-import { CheckCircle, XCircle } from "lucide-react";
 
 // 캐릭터 이미지 import (예시)
 import character1 from "../assets/character1.png"; // 이미지 경로는 실제 경로로 변경해야 합니다.
@@ -471,15 +470,15 @@ const MultiplicationGame = () => {
             exit={{ opacity: 0, y: -20 }}
             className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50"
           >
-            <Alert className="rounded-lg bg-red-50 border border-red-200 shadow-md">
+            <div className="p-4 rounded-lg bg-red-50 border border-red-200 shadow-md">
               <div className="flex items-center gap-x-2">
                 <XCircle className="h-6 w-6 text-red-500" />
-                <AlertTitle className="font-medium text-red-700">Incorrect!</AlertTitle>
+                <h2 className="font-medium text-red-700">Incorrect!</h2>
               </div>
-              <AlertDescription className="mt-2 text-sm text-red-600">
+              <p className="mt-2 text-sm text-red-600">
                 {errorAlertMessage}
-              </AlertDescription>
-            </Alert>
+              </p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
