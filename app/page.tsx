@@ -15,7 +15,8 @@ import {
   Award,
   Clock
 } from "lucide-react";
-import { Alert, AlertDescription } from "./components/ui/alert";
+// import { Alert, AlertDescription } from "./components/ui/alert";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { motion, AnimatePresence } from "framer-motion";
 import Image from 'next/image'
 import { CheckCircle, XCircle } from "lucide-react";
