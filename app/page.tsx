@@ -350,20 +350,25 @@ const MultiplicationGame = () => {
             <span className="text-xl font-medium text-gray-700">Lv. {level}</span>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="mb-6 flex justify-center gap-4">
           <Button
-            variant="outline"
-            className="w-12 h-12 rounded-lg bg-white"
-            onClick={() => setShowAchievements(!showAchievements)}
+            className="px-6 py-3"
+            onClick={() => setGameMode("practice")}
+            variant={gameMode === "practice" ? "default" : "outline"}
           >
-            <Award className="w-5 h-5 text-gray-600" />
+            연습 모드
           </Button>
           <Button
-            variant="outline"
-            className="w-12 h-12 rounded-lg bg-white"
-            onClick={() => setShowSettings(!showSettings)}
+            className="px-6 py-3"
+            onClick={() => {
+              setGameMode("timeAttack");
+              setTimeLeft(30);
+              setTimeAttackScore(0);
+              generateNewProblem();
+            }}
+            variant={gameMode === "timeAttack" ? "default" : "outline"}
           >
-            <Settings2 className="w-5 h-5 text-gray-600" />
+            타임 어택
           </Button>
         </div>
       </header>
