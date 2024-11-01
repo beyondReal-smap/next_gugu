@@ -470,12 +470,12 @@ const MultiplicationGame = () => {
             exit={{ opacity: 0, y: -20 }}
             className="fixed inset-0 flex items-center justify-center z-50"
           >
-            <div className="p-4 rounded-lg bg-red-50 border border-red-200 shadow-md">
-              <div className="flex items-center gap-x-2">
-                <XCircle className="h-6 w-6 text-red-500" />
-                <h2 className="font-medium text-red-700">Incorrect!</h2>
+            <div className="p-6 rounded-xl bg-blue-100 border border-blue-300 shadow-lg max-w-md">
+              <div className="flex items-center gap-x-3">
+                <XCircle className="h-8 w-8 text-blue-500" />
+                <h2 className="text-2xl font-semibold text-blue-700">Incorrect!</h2>
               </div>
-              <p className="mt-2 text-sm text-red-600">
+              <p className="mt-4 text-lg text-blue-600">
                 {errorAlertMessage}
               </p>
             </div>
