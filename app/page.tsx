@@ -280,7 +280,7 @@ const MultiplicationGame = () => {
             </Button>
             <Button
               variant="default"
-              className="h-12 bg-violet-400 text-white hover:bg-violet-600 text-xl font-bold" // indigo-400에서 변경
+              className="h-12 bg-violet-400 text-black hover:bg-violet-600 text-xl font-bold " // indigo-400에서 변경
               onClick={checkAnswer}
               disabled={!userAnswer}
             >
@@ -989,11 +989,10 @@ const MultiplicationGame = () => {
                     <h3 className="text-lg font-bold text-black">구구단 선택</h3>
                     <button
                       onClick={handleCloseSettings}
-                      className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                      className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors text-black"
                     >
                       ✕
                     </button>
-
                   </div>
                   {/* 현재 단 통계 */}
                   {practiceStats[selectedTable] && (
@@ -1108,7 +1107,7 @@ const MultiplicationGame = () => {
                     <h3 className="text-lg font-bold text-black">타임어택 기록</h3>
                     <button
                       onClick={handleCloseSettings}
-                      className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                      className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors text-black"
                     >
                       ✕
                     </button>
@@ -1253,7 +1252,7 @@ const MultiplicationGame = () => {
         history.length > 0 && (
           <Card className="mb-6">
             <CardContent className="p-4">
-              <h3 className="font-bold mb-4">최근 기록</h3>
+              <h3 className="font-bold mb-4 text-black">최근 기록</h3>
               <div className="space-y-2">
                 {history.slice(0, 10).map((item, index) => (
                   <div
