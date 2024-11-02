@@ -811,7 +811,7 @@ const MultiplicationGame = () => {
                 <Button
                   variant="ghost"
                   className="w-full h-[54px] bg-white"
-                  onClick={(e) => {
+                  onClick={(e: React.MouseEvent) => {
                     e.stopPropagation();
                     setShowScoreInfo(!showScoreInfo);
                     setShowStreakInfo(false);
@@ -829,7 +829,7 @@ const MultiplicationGame = () => {
                 <Button
                   variant="ghost"
                   className="w-full h-[54px] bg-white"
-                  onClick={(e) => {
+                  onClick={(e: React.MouseEvent) => {
                     e.stopPropagation();
                     setShowStreakInfo(!showStreakInfo);
                     setShowScoreInfo(false);
@@ -847,7 +847,7 @@ const MultiplicationGame = () => {
                 <Button
                   variant="ghost"
                   className="w-full h-[54px] bg-white"
-                  onClick={(e) => {
+                  onClick={(e: React.MouseEvent) => {
                     e.stopPropagation();
                     setShowTableInfo(!showTableInfo);
                     setShowScoreInfo(false);
