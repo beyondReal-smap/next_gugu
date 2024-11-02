@@ -1209,7 +1209,7 @@ const MultiplicationGame = () => {
               <Button
                 key={num}
                 variant="outline"
-                className="h-12 bg-indigo-100 text-xl font-bold text-black"
+                className="h-12 text-xl font-bold text-black"
                 onClick={() => handleNumberInput(num)}
               >
                 {num}
@@ -1228,7 +1228,7 @@ const MultiplicationGame = () => {
             {/* 0 버튼 */}
             <Button
               variant="outline"
-              className="h-12 bg-indigo-100 text-xl font-bold text-black"
+              className="h-12 text-xl font-bold text-black"
               onClick={() => handleNumberInput(0)}
             >
               0
