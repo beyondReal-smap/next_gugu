@@ -149,6 +149,7 @@ const MultiplicationGame = () => {
             <Button
               variant="outline"
               onClick={confirmDialog.onCancel}
+              className="px-4"
             >
               취소
             </Button>
@@ -158,6 +159,7 @@ const MultiplicationGame = () => {
                 confirmDialog.onConfirm();
                 setConfirmDialog(prev => ({ ...prev, show: false }));
               }}
+              className="px-4"
             >
               확인
             </Button>
@@ -716,6 +718,7 @@ const MultiplicationGame = () => {
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="h-4 w-4"
                       onClick={() => setShowSettings(false)}
                     >
                       <X className="h-4 w-4" />
@@ -835,6 +838,7 @@ const MultiplicationGame = () => {
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="h-4 w-4"
                       onClick={() => setShowSettings(false)}
                     >
                       <X className="h-4 w-4" />
@@ -934,6 +938,7 @@ const MultiplicationGame = () => {
               <Button
                 key={num}
                 variant="outline"
+                className="h-12"
                 onClick={() => {
                   if (userAnswer.length < 3) {
                     setUserAnswer(userAnswer + num);
@@ -945,18 +950,25 @@ const MultiplicationGame = () => {
             ))}
             <Button
               variant="outline"
+              className="h-12"
               onClick={() => setUserAnswer(userAnswer.slice(0, -1))}
             >
               ←
             </Button>
-            <Button onClick={checkAnswer}>확인</Button>
+            <Button
+              variant="outline"
+              className="h-12"
+              onClick={checkAnswer}
+            >
+              확인
+            </Button>
           </div>
         </CardContent>
       </Card>
 
       {/* 히스토리 표시 수정 */}
       {history.length > 0 && (
-        <Card>
+        <Card className="mb-6">
           <CardContent className="p-4">
             <h3 className="font-bold mb-4">최근 기록</h3>
             <div className="space-y-2">
