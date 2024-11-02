@@ -280,7 +280,7 @@ const MultiplicationGame = () => {
             </Button>
             <Button
               variant="default"
-              className="h-12 bg-violet-400 text-black hover:bg-violet-600 text-xl font-bold " // indigo-400에서 변경
+              className="h-12 bg-violet-400 text-black hover:bg-violet-600 text-xl font-bold text-black" 
               onClick={checkAnswer}
               disabled={!userAnswer}
             >
@@ -1250,7 +1250,7 @@ const MultiplicationGame = () => {
       {history.length > 0 && (
         <Card className="mb-6">
           <CardContent className="p-4">
-            <h3 className="font-bold mb-4">최근 기록</h3>
+            <h3 className="font-bold mb-4 text-black">최근 기록</h3>
             {/* ScrollView 추가 */}
             <div className="max-h-96 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}> {/* iOS 스크롤 성능 향상 */}
               <div className="space-y-2">
