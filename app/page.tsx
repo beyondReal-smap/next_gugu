@@ -843,7 +843,7 @@ const MultiplicationGame = () => {
                 </Button>
                 {showStreakInfo && <StreakInfoModal />}
               </div>
-              <div className="col-span-3 relative"> {/* relative 추가 */}
+              <div className="col-span-4 relative"> {/* relative 추가 */}
                 <Button
                   variant="ghost"
                   className="w-full h-[54px] bg-white"
@@ -861,7 +861,7 @@ const MultiplicationGame = () => {
                 </Button>
                 {showTableInfo && <TableInfoModal />}
               </div>
-              <div className="col-span-3 flex justify-end">
+              <div className="col-span-2 flex justify-end">
                 <Button
                   variant="outline"
                   size="icon"
@@ -888,13 +888,13 @@ const MultiplicationGame = () => {
                   <span className="text-sm font-medium text-black tabular-nums">{solvedProblems}/15</span>
                 </div>
               </div>
-              <div className="col-span-3">
+              <div className="col-span-4">
                 <div className="flex items-center gap-3 bg-white h-[54px] px-4 rounded-lg shadow-sm justify-center">
                   <Trophy className="w-6 h-6 text-indigo-500 flex-shrink-0" />
                   <span className="text-sm font-medium text-black">{timeAttackLevel}단</span>
                 </div>
               </div>
-              <div className="col-span-3 flex justify-end">
+              <div className="col-span-2 flex justify-end">
                 <Button
                   variant="outline"
                   size="icon"
