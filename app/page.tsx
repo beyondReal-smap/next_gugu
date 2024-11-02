@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import {
@@ -17,7 +17,11 @@ import {
   Percent,
   Activity,
   Award,
-  Star
+  Star,
+  Info,  // Info 아이콘 추가
+  AlertCircle,  // 대체 아이콘 옵션
+  PlayCircle,  // Play 아이콘 수정
+  PauseCircle  // Pause 아이콘 수정
 } from "lucide-react";
 import { Alert, AlertDescription } from "./components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
@@ -100,12 +104,133 @@ const MultiplicationGame = () => {
   const [totalAttempts, setTotalAttempts] = useState(0);
   const [successfulAttempts, setSuccessfulAttempts] = useState(0);
 
+  // 추가: 스코어 기준 설명을 위한 state
+  const [showScoreInfo, setShowScoreInfo] = useState(false);
+  const [showStreakInfo, setShowStreakInfo] = useState(false);
+  const [showTableInfo, setShowTableInfo] = useState(false);
+
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogProps>({
     show: false,
     message: '',
     onConfirm: () => { },
     onCancel: () => { }
   });
+
+  // 모달 ref 추가
+  const scoreInfoRef = useRef<HTMLDivElement>(null);
+  const streakInfoRef = useRef<HTMLDivElement>(null);
+  const tableInfoRef = useRef<HTMLDivElement>(null);
+
+  // 모달 외부 클릭 감지를 위한 effect
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showScoreInfo && scoreInfoRef.current && !scoreInfoRef.current.contains(event.target as Node)) {
+        setShowScoreInfo(false);
+      }
+      if (showStreakInfo && streakInfoRef.current && !streakInfoRef.current.contains(event.target as Node)) {
+        setShowStreakInfo(false);
+      }
+      if (showTableInfo && tableInfoRef.current && !tableInfoRef.current.contains(event.target as Node)) {
+        setShowTableInfo(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showScoreInfo, showStreakInfo, showTableInfo]);
+
+  // ScoreInfoModal 컴포넌트 수정
+  const ScoreInfoModal = () => (
+    <div
+      ref={scoreInfoRef}
+      className="absolute top-full left-0 mt-2 bg-white p-4 rounded-lg shadow-lg z-50 w-64"
+    >
+      <h4 className="font-bold mb-2">점수 기준</h4>
+      <ul className="space-y-2 text-sm">
+        <li className="flex items-center gap-2">
+          <Check className="w-4 h-4 text-green-500" />
+          <span>정답: +10점</span>
+        </li>
+        <li className="flex items-center gap-2">
+          <X className="w-4 h-4 text-red-500" />
+          <span>오답: -15점</span>
+        </li>
+        <li className="flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-blue-500" />
+          <span>최저 점수: 0점</span>
+        </li>
+      </ul>
+    </div>
+  );
+
+  // 스트릭 정보 모달 수정
+  const StreakInfoModal = () => {
+    // 스트릭 계산 로직 수정
+    const maxStreak = history.length > 0
+      ? Math.max(...history.reduce((acc: number[], curr, index) => {
+        if (curr.correct) {
+          if (index === 0 || !history[index - 1].correct) {
+            acc.push(1);
+          } else {
+            acc.push(acc[acc.length - 1] + 1);
+          }
+        } else {
+          acc.push(0);
+        }
+        return acc;
+      }, [0]))
+      : 0;
+
+    return (
+      <div
+        ref={streakInfoRef}
+        className="absolute top-full left-0 mt-2 bg-white p-4 rounded-lg shadow-lg z-50 w-64"
+      >
+        <h4 className="font-bold mb-2">연속 정답</h4>
+        <div className="space-y-2 text-sm">
+          <div className="flex items-center gap-2">
+            <Trophy className="w-4 h-4 text-yellow-500" />
+            <span>최고 기록: {maxStreak}회</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Target className="w-4 h-4 text-red-500" />
+            <span>현재: {streak}회</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // 현재 단 정보 모달
+  const TableInfoModal = () => {
+    const stats = practiceStats[selectedTable] || { attempts: 0, correct: 0 };
+    const accuracy = stats.attempts > 0 ? Math.round((stats.correct / stats.attempts) * 100) : 0;
+
+    return (
+      <div
+        ref={tableInfoRef}
+        className="absolute top-full left-0 mt-2 bg-white p-4 rounded-lg shadow-lg z-50 w-64"
+      >
+        <h4 className="font-bold mb-2">{selectedTable}단 통계</h4>
+        <div className="space-y-2 text-sm">
+          <div className="flex items-center gap-2">
+            <Hash className="w-4 h-4 text-blue-500" />
+            <span>총 시도: {stats.attempts}회</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Check className="w-4 h-4 text-green-500" />
+            <span>정답: {stats.correct}회</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Percent className="w-4 h-4 text-purple-500" />
+            <span>정확도: {accuracy}%</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   // 알림 모달 상태
   const [alertModal, setAlertModal] = useState<AlertModal>({
@@ -275,51 +400,47 @@ const MultiplicationGame = () => {
     });
   };
 
-
-  // 연습모드 설정 패널 수정
-  const PracticeSettings = () => (
-    <Card className="mb-6">
-      <CardContent className="p-4">
-        <h3 className="text-lg font-bold mb-4 text-gray-700">구구단 선택</h3>
-        <div className="grid grid-cols-4 gap-3">
-          {Array.from({ length: 18 }, (_, i) => i + 2).map((table) => (
-            // 구구단 선택 버튼 수정 (PracticeSettings 컴포넌트 내부)
-            <Button
-              key={table}
-              variant={selectedTable === table ? "default" : "outline"}
-              onClick={() => {
-                setSelectedTable(table);
-                setShowSettings(false);
-                setUsedProblems(new Set());
-                generateNewProblem();
-              }}
-              className="h-12 text-base"
-            >
-              {table}단
-            </Button>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-
   // 타이머 효과 수정
   useEffect(() => {
+    let lastTickTime = Date.now();
     let timer: NodeJS.Timeout;
-    if (gameMode === 'timeAttack' && timerActive && !isPaused && timeLeft > 0 && !isTimeAttackComplete) {
+
+    const shouldRunTimer =
+      gameMode === 'timeAttack' &&
+      timerActive &&
+      !isPaused &&
+      !showSettings &&
+      timeLeft > 0 &&
+      !isTimeAttackComplete;
+
+    if (shouldRunTimer) {
+      lastTickTime = Date.now();
+
       timer = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev <= 0) {
+        const now = Date.now();
+        const deltaTime = now - lastTickTime;
+        lastTickTime = now;
+
+        setTimeLeft((prevTime) => {
+          const decrease = Math.floor(deltaTime / 1000);
+          const newTime = Math.max(0, prevTime - decrease);
+
+          if (newTime <= 0) {
+            clearInterval(timer);
             handleTimeAttackEnd(false);
             return 0;
           }
-          return prev - 1;
+          return newTime;
         });
-      }, 1000);
+      }, 100);
     }
 
-    return () => clearInterval(timer);
-  }, [timeLeft, gameMode, timerActive, isPaused, isTimeAttackComplete]);
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+      }
+    };
+  }, [gameMode, timerActive, isPaused, showSettings, isTimeAttackComplete]);
 
   // 저장 함수 수정
   const saveGameState = () => {
@@ -340,13 +461,21 @@ const MultiplicationGame = () => {
       }
     }
   };
-  // 모드 변경 핸들러 수정
+
+  // 설정 버튼 클릭 핸들러 수정
+  const handleSettingsClick = () => {
+    setShowSettings(true);
+  };
+
+  // 설정 닫기 핸들러 수정
+  const handleCloseSettings = () => {
+    setShowSettings(false);
+  };
+
+  // 모드 변경 핸들러 수정 (타이머 자동 시작)
   const handleModeChange = (newMode: 'practice' | 'timeAttack') => {
     if (newMode === gameMode) return;
 
-    // 현재 실행 중인 타이머나 상태 초기화
-    setTimerActive(false);
-    setIsPaused(false);
     setUsedProblems(new Set());
 
     if (newMode === 'timeAttack') {
@@ -354,25 +483,35 @@ const MultiplicationGame = () => {
       setTimeLeft(45);
       setSolvedProblems(0);
       setIsTimeAttackComplete(false);
-      showAlert(getRandomTimeAttackMessage(), 'info', () => {
-        setTimerActive(true);
-        generateNewProblem();
-      });
+      setTimerActive(true);
+      setIsPaused(false);
+      showAlert(getRandomTimeAttackMessage(), 'info');
+      generateNewProblem();
     } else {
       setGameMode('practice');
+      setTimerActive(false);
+      setIsPaused(true);
       showAlert(getRandomPracticeStartMessage(), 'info', () => {
         generateNewProblem();
       });
     }
   };
 
-  // 타임어택 모드 타이머 수정
+  // 타이머 효과 수정 (더 간단하게)
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (gameMode === 'timeAttack' && timeLeft > 0 && !isTimeAttackComplete) {
+
+    const shouldRunTimer =
+      gameMode === 'timeAttack' &&
+      !showSettings &&
+      timeLeft > 0 &&
+      !isTimeAttackComplete;
+
+    if (shouldRunTimer) {
       timer = setInterval(() => {
         setTimeLeft(prev => {
           if (prev <= 0) {
+            clearInterval(timer);
             handleTimeAttackEnd(false);
             return 0;
           }
@@ -381,8 +520,12 @@ const MultiplicationGame = () => {
       }, 1000);
     }
 
-    return () => clearInterval(timer);
-  }, [timeLeft, gameMode, isTimeAttackComplete]);
+    return () => {
+      if (timer) {
+        clearInterval(timer);
+      }
+    };
+  }, [gameMode, showSettings, isTimeAttackComplete]);
 
   // 새로운 문제 생성 함수 수정
   const generateNewProblem = () => {
@@ -443,10 +586,34 @@ const MultiplicationGame = () => {
     saveGameState();
   };
 
-  // 타임어택 완료 처리 함수 수정
+  // 타이머 토글 함수 수정
+  const toggleTimer = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isPaused) {
+      // 처음 시작할 때만 45초로 초기화 (timeLeft가 45초일 때)
+      if (timeLeft === 45 && solvedProblems === 0) {
+        setTimeLeft(45);
+        setSolvedProblems(0);
+        setIsTimeAttackComplete(false);
+        generateNewProblem();
+      }
+      setTimerActive(true);
+      setIsPaused(false);
+      showAlert('타이머 시작!', 'info');
+    } else {
+      // 일시정지할 때는 현재 시간 유지
+      setTimerActive(false);
+      setIsPaused(true);
+      showAlert('일시정지!', 'info');
+    }
+  };
+  // 타임어택 종료 핸들러 수정
   const handleTimeAttackEnd = (success: boolean) => {
     setTimerActive(false);
     setIsPaused(true);
+    setIsTimeAttackComplete(true);
     setTotalAttempts(prev => prev + 1);
 
     if (success) {
@@ -454,30 +621,40 @@ const MultiplicationGame = () => {
       const nextLevel = timeAttackLevel + 1;
       showAlert(`축하합니다! ${timeAttackLevel}단을 마스터했습니다!\n다음 레벨: ${nextLevel}단`, 'success', () => {
         setTimeAttackLevel(nextLevel);
-        setTimeLeft(45);
-        setSolvedProblems(0);
-        setIsTimeAttackComplete(false);
-        setUsedProblems(new Set()); // 새 레벨 시작 시 사용된 문제 목록 초기화
-        setIsPaused(false);
-        setTimerActive(true);
-        generateNewProblem();
+        resetTimeAttack();
       });
     } else {
-      showAlert('시간 초과! 다시 도전해보세요.', 'error', () => {
-        setTimeLeft(45);
-        setSolvedProblems(0);
-        setIsTimeAttackComplete(false);
-        setUsedProblems(new Set()); // 실패 후 재시작 시 사용된 문제 목록 초기화
-        setIsPaused(false);
-        setTimerActive(true);
-        generateNewProblem();
+      // 실패 메시지 개선
+      const message = solvedProblems === 15
+        ? '아쉽습니다! 시간이 초과되었습니다.'
+        : `시간 초과! ${solvedProblems}개 문제 해결\n목표: 15개`;
+
+      showAlert(message, 'error', () => {
+        resetTimeAttack();
       });
     }
 
     saveGameState();
   };
 
-  // 답안 체크 함수 수정
+  // 타임어택 리셋 함수 수정
+  const resetTimeAttack = () => {
+    setTimeLeft(45);
+    setSolvedProblems(0);
+    setIsTimeAttackComplete(false);
+    setUsedProblems(new Set());
+    setIsPaused(true); // 항상 일시정지 상태로 시작
+    setTimerActive(false); // 타이머 비활성화
+    generateNewProblem();
+  };
+
+  useEffect(() => {
+    // 시간이 0이 되었을 때 자동으로 게임 종료
+    if (timeLeft === 0 && gameMode === 'timeAttack' && !isTimeAttackComplete) {
+      handleTimeAttackEnd(false);
+    }
+  }, [timeLeft, gameMode, isTimeAttackComplete]);
+  // checkAnswer 함수 수정
   const checkAnswer = () => {
     if (!userAnswer) return;
 
@@ -494,10 +671,21 @@ const MultiplicationGame = () => {
 
     if (gameMode === 'practice') {
       updatePracticeStats(selectedTable, correct);
-    }
 
-    if (correct) {
-      if (gameMode === 'timeAttack') {
+      // 점수 계산 로직 수정
+      if (correct) {
+        setScore(prev => prev + 10); // 정답 시 10점 추가
+        setStreak(prev => prev + 1);
+        setUserAnswer("");
+        generateNewProblem();
+      } else {
+        setScore(prev => Math.max(0, prev - 15)); // 오답 시 15점 감소, 최소값 0
+        setStreak(0);
+        handleWrongAnswer();
+      }
+    } else {
+      // 타임어택 모드 로직은 그대로 유지
+      if (correct) {
         const newSolved = solvedProblems + 1;
         setSolvedProblems(newSolved);
         setUserAnswer("");
@@ -509,17 +697,11 @@ const MultiplicationGame = () => {
           generateNewProblem();
         }
       } else {
-        setScore(prev => prev + 10);
-        setStreak(prev => prev + 1);
-        setUserAnswer("");
-        generateNewProblem();
+        handleWrongAnswer();
       }
-
-      setHistory(prev => [newHistory, ...prev]);
-    } else {
-      handleWrongAnswer();
     }
 
+    setHistory(prev => [newHistory, ...prev]);
     saveGameState();
   };
 
@@ -622,30 +804,68 @@ const MultiplicationGame = () => {
 
 
       <header className="flex items-center gap-4 mb-8">
-        <div className="grid grid-cols-12 gap-2 w-full"> {/* grid-cols-4에서 grid-cols-12로 변경하여 더 세밀한 조정 가능 */}
+        <div className="grid grid-cols-12 gap-2 w-full">
           {gameMode === 'practice' ? (
             <>
-              <div className="col-span-4 flex items-center gap-3 bg-white px-4 py-3 rounded-lg shadow-sm justify-center"> {/* col-span-4로 더 넓은 너비 할당 */}
-                <BarChart2 className="w-6 h-6 text-indigo-500 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-500">{score}</span>
+              <div className="col-span-4 relative">
+                <Button
+                  variant="ghost"
+                  className="w-full h-[54px] bg-white"
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    setShowScoreInfo(!showScoreInfo);
+                    setShowStreakInfo(false);
+                    setShowTableInfo(false);
+                  }}
+                >
+                  <div className="flex items-center justify-center w-full gap-3">
+                    <BarChart2 className="w-6 h-6 text-indigo-500 flex-shrink-0" />
+                    <span className="text-sm font-medium text-gray-500 tabular-nums">{score}</span>
+                  </div>
+                </Button>
+                {showScoreInfo && <ScoreInfoModal />}
               </div>
-              <div className="col-span-3 flex items-center gap-3 bg-white px-4 py-3 rounded-lg shadow-sm justify-center">
-                {streak >= 0 && (
-                  <>
+              <div className="col-span-3 relative">
+                <Button
+                  variant="ghost"
+                  className="w-full h-[54px] bg-white"
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    setShowStreakInfo(!showStreakInfo);
+                    setShowScoreInfo(false);
+                    setShowTableInfo(false);
+                  }}
+                >
+                  <div className="flex items-center gap-3">
                     <Target className="w-6 h-6 text-red-500 flex-shrink-0" />
                     <span className="text-sm font-medium text-gray-500">{streak}</span>
-                  </>
-                )}
+                  </div>
+                </Button>
+                {showStreakInfo && <StreakInfoModal />}
               </div>
-              <div className="col-span-3 flex items-center gap-3 bg-white px-4 py-3 rounded-lg shadow-sm justify-center">
-                <BookOpen className="w-6 h-6 text-blue-500 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-500">{selectedTable}단</span>
+              <div className="col-span-3 relative">
+                <Button
+                  variant="ghost"
+                  className="w-full h-[54px] bg-white"
+                  onClick={(e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    setShowTableInfo(!showTableInfo);
+                    setShowScoreInfo(false);
+                    setShowStreakInfo(false);
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <BookOpen className="w-6 h-6 text-blue-500 flex-shrink-0" />
+                    <span className="text-sm font-medium text-gray-500">{selectedTable}단</span>
+                  </div>
+                </Button>
+                {showTableInfo && <TableInfoModal />}
               </div>
-              <div className="col-span-2 flex justify-center"> {/* 설정 버튼 컨테이너 */}
+              <div className="col-span-2">
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setShowSettings(!showSettings)}
+                  onClick={handleSettingsClick}
                   className="h-[54px] w-[54px] flex items-center justify-center bg-white"
                 >
                   <Cog className="h-6 w-6 text-gray-600" />
@@ -654,10 +874,10 @@ const MultiplicationGame = () => {
             </>
           ) : (
             <>
-              <div className="col-span-4 flex items-center gap-3 bg-white px-4 py-3 rounded-lg shadow-sm justify-center"> {/* col-span-4로 더 넓은 너비 할당 */}
+              <div className="col-span-4 flex items-center gap-3 bg-white px-4 py-3 rounded-lg shadow-sm justify-center">
                 <Clock className="w-6 h-6 text-red-500 flex-shrink-0" />
                 <span className="text-sm font-medium text-gray-500 tabular-nums">
-                  {timerActive ? `${timeLeft}초` : '준비중'}
+                  {timeLeft}초
                 </span>
               </div>
               <div className="col-span-3 flex items-center gap-3 bg-white px-4 py-3 rounded-lg shadow-sm justify-center">
@@ -668,11 +888,11 @@ const MultiplicationGame = () => {
                 <Trophy className="w-6 h-6 text-indigo-500 flex-shrink-0" />
                 <span className="text-sm font-medium text-gray-500">{timeAttackLevel}단</span>
               </div>
-              <div className="col-span-2 flex justify-center"> {/* 설정 버튼 컨테이너 */}
+              <div className="col-span-2">
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setShowSettings(!showSettings)}
+                  onClick={handleSettingsClick}
                   className="h-[54px] w-[54px] flex items-center justify-center bg-white"
                 >
                   <Cog className="h-6 w-6 text-gray-600" />
@@ -683,21 +903,24 @@ const MultiplicationGame = () => {
         </div>
       </header>
 
-      <div className="flex justify-center gap-4 mb-6">
-        <Button
-          onClick={() => handleModeChange('practice')}
-          variant={gameMode === 'practice' ? "default" : "outline"}
-          className="px-6 py-2 min-w-[120px]"
-        >
-          연습모드
-        </Button>
-        <Button
-          onClick={() => handleModeChange('timeAttack')}
-          variant={gameMode === 'timeAttack' ? "default" : "outline"}
-          className="px-6 py-2 min-w-[120px]"
-        >
-          타임어택
-        </Button>
+      {/* 모드 선택 영역 - 간단하게 유지 */}
+      <div className="mb-4">
+        <div className="flex justify-center gap-4">
+          <Button
+            onClick={() => handleModeChange('practice')}
+            variant={gameMode === 'practice' ? "default" : "outline"}
+            className="px-6 py-2 min-w-[120px]"
+          >
+            연습모드
+          </Button>
+          <Button
+            onClick={() => handleModeChange('timeAttack')}
+            variant={gameMode === 'timeAttack' ? "default" : "outline"}
+            className="px-6 py-2 min-w-[120px]"
+          >
+            타임어택
+          </Button>
+        </div>
       </div>
 
       {/* 설정 패널 수정 */}
@@ -715,14 +938,13 @@ const MultiplicationGame = () => {
                 <CardContent className="p-4">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-bold text-gray-900">구구단 선택</h3>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-4 w-4"
-                      onClick={() => setShowSettings(false)}
+                    <button
+                      onClick={handleCloseSettings}
+                      className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
                     >
-                      <X className="h-4 w-4" />
-                    </Button>
+                      ✕
+                    </button>
+
                   </div>
                   {/* 현재 단 통계 */}
                   {practiceStats[selectedTable] && (
@@ -835,14 +1057,13 @@ const MultiplicationGame = () => {
                 <CardContent className="p-4">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-bold text-gray-900">타임어택 기록</h3>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-4 w-4"
-                      onClick={() => setShowSettings(false)}
+                    <button
+                      onClick={handleCloseSettings}
+                      className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
                     >
-                      <X className="h-4 w-4" />
-                    </Button>
+                      ✕
+                    </button>
+
                   </div>
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -927,7 +1148,7 @@ const MultiplicationGame = () => {
       </AnimatePresence>
 
 
-      {/* 문제 표시 및 답안 입력 UI */}
+      {/* 숫자패드 텍스트 굵기 수정 */}
       <Card className="mb-6">
         <CardContent className="p-6">
           <div className="text-4xl font-bold text-center mb-6">
@@ -938,7 +1159,7 @@ const MultiplicationGame = () => {
               <Button
                 key={num}
                 variant="outline"
-                className="h-12"
+                className="h-12 text-xl font-bold" // 텍스트 크기와 굵기 증가
                 onClick={() => {
                   if (userAnswer.length < 3) {
                     setUserAnswer(userAnswer + num);
@@ -950,14 +1171,14 @@ const MultiplicationGame = () => {
             ))}
             <Button
               variant="outline"
-              className="h-12"
+              className="h-12 bg-blue-200 text-xl font-bold" // 텍스트 크기와 굵기 증가
               onClick={() => setUserAnswer(userAnswer.slice(0, -1))}
             >
               ←
             </Button>
             <Button
-              variant="outline"
-              className="h-12"
+              variant="default"
+              className="h-12 bg-indigo-400 text-white hover:bg-violet-600 text-xl font-bold" // 텍스트 크기와 굵기 증가
               onClick={checkAnswer}
             >
               확인
@@ -967,39 +1188,41 @@ const MultiplicationGame = () => {
       </Card>
 
       {/* 히스토리 표시 수정 */}
-      {history.length > 0 && (
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <h3 className="font-bold mb-4">최근 기록</h3>
-            <div className="space-y-2">
-              {history.slice(0, 10).map((item, index) => (
-                <div
-                  key={index}
-                  className={`p-3 rounded-lg border ${item.correct
-                    ? 'bg-green-50 border-green-200 text-green-700'
-                    : 'bg-red-50 border-red-200 text-red-700'
-                    } flex justify-between items-center`}
-                >
-                  <div className="flex items-center gap-2">
-                    {item.correct ? (
-                      <Check className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <X className="w-5 h-5 text-red-500" />
-                    )}
-                    <span>
-                      {item.problem} = {item.userAnswer}
+      {
+        history.length > 0 && (
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <h3 className="font-bold mb-4">최근 기록</h3>
+              <div className="space-y-2">
+                {history.slice(0, 10).map((item, index) => (
+                  <div
+                    key={index}
+                    className={`p-3 rounded-lg border ${item.correct
+                      ? 'bg-green-50 border-green-200 text-green-700'
+                      : 'bg-red-50 border-red-200 text-red-700'
+                      } flex justify-between items-center`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {item.correct ? (
+                        <Check className="w-5 h-5 text-green-500" />
+                      ) : (
+                        <X className="w-5 h-5 text-red-500" />
+                      )}
+                      <span>
+                        {item.problem} = {item.userAnswer}
+                      </span>
+                    </div>
+                    <span className="text-sm text-gray-500">
+                      {new Date(item.timestamp).toLocaleTimeString()}
                     </span>
                   </div>
-                  <span className="text-sm text-gray-500">
-                    {new Date(item.timestamp).toLocaleTimeString()}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )
+      }
+    </div >
   );
 };
 
