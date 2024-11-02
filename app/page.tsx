@@ -350,7 +350,7 @@ const MultiplicationGame = () => {
     "훌륭해요!\n{n}단 연습을 시작해볼까요? 🌟",
     "잘 선택했어요!\n{n}단을 정복해봐요! 🚀",
     "{n}단, 이제 시작해볼까요?\n할 수 있어요! ✨"
-];
+  ];
 
   // 격려 메시지 선택 함수
   const getRandomEncouragingMessage = (tableNumber: number) => {
@@ -587,7 +587,6 @@ const MultiplicationGame = () => {
       showAlert('일시정지!', 'info');
     }
   };
-  // 타임어택 종료 핸들러 수정
   const handleTimeAttackEnd = (success: boolean) => {
     setTimerActive(false);
     setIsPaused(true);
@@ -597,15 +596,18 @@ const MultiplicationGame = () => {
     if (success) {
       setSuccessfulAttempts(prev => prev + 1);
       const nextLevel = timeAttackLevel + 1;
-      showAlert(`축하합니다! ${timeAttackLevel}단을 마스터했습니다!\n다음 레벨: ${nextLevel}단`, 'success', () => {
+      triggerHapticFeedback('impactHeavy'); // 강한 임팩트로 성취감 전달
+      showAlert(`축하합니다!\n${timeAttackLevel}단을 마스터했습니다!\n다음 레벨: ${nextLevel}단`, 'success', () => {
         setTimeAttackLevel(nextLevel);
         resetTimeAttack();
       });
     } else {
+      // 경고음 느낌의 햅틱 피드백
+      triggerHapticFeedback('warning');
       // 실패 메시지 개선
       const message = solvedProblems === 15
-        ? '아쉽습니다! 시간이 초과되었습니다.'
-        : `시간 초과! ${solvedProblems}개 문제 해결\n목표: 15개`;
+        ? '아쉽습니다!\n시간이 초과되었습니다.'
+        : `시간 초과!\n${solvedProblems}개 문제 해결\n목표: 15개`;
 
       showAlert(message, 'error', () => {
         resetTimeAttack();
