@@ -1237,7 +1237,7 @@ const MultiplicationGame = () => {
             {/* 확인 버튼 - 틀렸을 때만 사용 가능 */}
             <Button
               variant="default"
-              className="h-12 bg-red-100 text-xl hover:bg-red-600 text-xl font-bold text-black"
+              className="h-12 bg-red-200 text-xl hover:bg-red-600 text-xl font-bold text-black"
               onClick={checkAnswer}
               disabled={!userAnswer}
             >
