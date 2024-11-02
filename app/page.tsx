@@ -261,7 +261,7 @@ const MultiplicationGame = () => {
     }
   }>({});
 
-  // 확인 대화상자 컴포넌트
+  // 확인 대화상자 컴포넌트 수정
   const ConfirmDialog = () => {
     if (!confirmDialog.show) return null;
 
@@ -269,20 +269,19 @@ const MultiplicationGame = () => {
       <div className="fixed inset-0 flex items-center justify-center z-50">
         <div className="absolute inset-0 bg-black bg-opacity-50" />
         <div className="relative bg-white rounded-lg p-6 max-w-sm mx-4 shadow-xl">
-          <h3 className="text-lg font-bold mb-4">{confirmDialog.message}</h3>
-          <div className="flex justify-end gap-3">
+          <h3 className="text-lg font-bold mb-4 text-black">{confirmDialog.message}</h3> {/* 텍스트 색상 변경 */}
+          <div className="flex justify-between gap-4"> {/* 버튼 배치 수정 */}
             <Button
               variant="outline"
               onClick={confirmDialog.onCancel}
-              className="px-4"
+              className="w-1/2 px-4 border-blue-500 text-blue-500" // 파란색 border 추가
             >
               취소
             </Button>
             <Button
               variant="default"
-              className="h-12 bg-violet-400 text-black hover:bg-violet-600 text-xl font-bold text-black" 
-              onClick={checkAnswer}
-              disabled={!userAnswer}
+              onClick={confirmDialog.onConfirm} // onConfirm 수정
+              className="w-1/2 bg-blue-500 text-white hover:bg-blue-700 text-xl font-bold" // 파란색 배경 및 흰색 텍스트
             >
               확인
             </Button>
@@ -1281,7 +1280,7 @@ const MultiplicationGame = () => {
             </div>
           </CardContent>
         </Card>
-        )
+      )
       }
     </div >
   );
