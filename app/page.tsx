@@ -147,8 +147,8 @@ const MultiplicationGame = () => {
       ref={scoreInfoRef}
       className="absolute top-full left-0 mt-2 bg-white p-4 rounded-lg shadow-lg z-50 w-64"
     >
-      <h4 className="font-bold mb-2">점수 기준</h4>
-      <ul className="space-y-2 text-sm">
+      <h4 className="font-bold mb-2 text-black">점수 기준</h4>
+      <ul className="space-y-2 text-sm text-black">
         <li className="flex items-center gap-2">
           <Check className="w-4 h-4 text-green-500" />
           <span>정답: +10점</span>
@@ -188,8 +188,8 @@ const MultiplicationGame = () => {
         ref={streakInfoRef}
         className="absolute top-full left-0 mt-2 bg-white p-4 rounded-lg shadow-lg z-50 w-64"
       >
-        <h4 className="font-bold mb-2">연속 정답</h4>
-        <div className="space-y-2 text-sm">
+        <h4 className="font-bold mb-2 text-black">연속 정답</h4>
+        <div className="space-y-2 text-sm text-black">
           <div className="flex items-center gap-2">
             <Trophy className="w-4 h-4 text-yellow-500" />
             <span>최고 기록: {maxStreak}회</span>
@@ -213,10 +213,10 @@ const MultiplicationGame = () => {
         ref={tableInfoRef}
         className="absolute top-full left-0 mt-2 bg-white p-4 rounded-lg shadow-lg z-50 w-64"
       >
-        <h4 className="font-bold mb-2">{selectedTable}단 통계</h4>
-        <div className="space-y-2 text-sm">
+        <h4 className="font-bold mb-2 text-black">{selectedTable}단 통계</h4>
+        <div className="space-y-2 text-sm text-black">
           <div className="flex items-center gap-2">
-            <Hash className="w-4 h-4 text-blue-500" />
+            <Hash className="w-4 h-4 text-violet-500" />
             <span>총 시도: {stats.attempts}회</span>
           </div>
           <div className="flex items-center gap-2">
@@ -279,12 +279,10 @@ const MultiplicationGame = () => {
               취소
             </Button>
             <Button
-              variant="destructive"
-              onClick={() => {
-                confirmDialog.onConfirm();
-                setConfirmDialog(prev => ({ ...prev, show: false }));
-              }}
-              className="px-4"
+              variant="default"
+              className="h-12 bg-violet-400 text-white hover:bg-violet-600 text-xl font-bold" // indigo-400에서 변경
+              onClick={checkAnswer}
+              disabled={!userAnswer}
             >
               확인
             </Button>
@@ -375,7 +373,7 @@ const MultiplicationGame = () => {
     "45초의 운명을 건 대결! 당신의 실력을 증명하세요! ⭐",
     "시간제한 도전! 긴장된다고? 더 짜릿하지 않나요? 🚀",
     "더 높은 단계로 가는 길! 15문제를 정복하세요! 🌟",
-    "진정한 구구단 고수의 길로! 이 도전을 받아들이시겠습니까? 🔥",
+    "진정한 구구 고수의 길로! 이 도전을 받아들이시겠습니까? 🔥",
     "시간이 당신의 적이 될 수는 없습니다! 도전하세요! ✨"
   ];
 
@@ -383,6 +381,17 @@ const MultiplicationGame = () => {
   const getRandomTimeAttackMessage = () => {
     const randomIndex = Math.floor(Math.random() * timeAttackMessages.length);
     return timeAttackMessages[randomIndex];
+  };
+
+  // 햅틱 반응을 위한 함수
+  const triggerHapticFeedback = (type: 'success' | 'error') => {
+    if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
+      if (type === 'success') {
+        window.navigator.vibrate(100); // 짧은 진동 (100ms)
+      } else {
+        window.navigator.vibrate([200, 50, 200]); // 긴 진동 패턴
+      }
+    }
   };
 
   // 정답 체크 시 통계 업데이트
@@ -703,17 +712,20 @@ const MultiplicationGame = () => {
       updatePracticeStats(selectedTable, correct);
 
       if (correct) {
+        triggerHapticFeedback('success'); // 정답 시 햅틱 피드백
         setScore(prev => prev + 10);
         setStreak(prev => prev + 1);
         setUserAnswer("");
         generateNewProblem();
       } else {
+        triggerHapticFeedback('error'); // 오답 시 햅틱 피드백
         setScore(prev => Math.max(0, prev - 15));
         setStreak(0);
         handleWrongAnswer();
       }
     } else {
       if (correct) {
+        triggerHapticFeedback('success'); // 정답 시 햅틱 피드백
         const newSolved = solvedProblems + 1;
         setSolvedProblems(newSolved);
         setUserAnswer("");
@@ -725,6 +737,7 @@ const MultiplicationGame = () => {
           generateNewProblem();
         }
       } else {
+        triggerHapticFeedback('error'); // 오답 시 햅틱 피드백
         handleWrongAnswer();
       }
     }
@@ -814,7 +827,7 @@ const MultiplicationGame = () => {
                 ) : alertModal.type === 'error' ? (
                   <XCircle className="h-8 w-8 text-red-500" />
                 ) : (
-                  <Activity className="h-8 w-8 text-blue-500" />
+                  <Activity className="h-8 w-8 text-violet-500" />
                 )}
                 <p className={`text-lg font-medium whitespace-pre-line
         ${alertModal.type === 'success' ? 'text-green-700' :
@@ -849,7 +862,7 @@ const MultiplicationGame = () => {
                   }}
                 >
                   <div className="flex items-center justify-center w-full gap-3">
-                    <BarChart2 className="w-6 h-6 text-indigo-500 flex-shrink-0" />
+                    <BarChart2 className="w-6 h-6 text-red-500 flex-shrink-0" />
                     <span className="text-sm font-medium text-black tabular-nums">{score}</span>
                   </div>
                 </Button>
@@ -867,7 +880,7 @@ const MultiplicationGame = () => {
                   }}
                 >
                   <div className="flex items-center justify-center w-full gap-3">
-                    <Target className="w-6 h-6 text-red-500 flex-shrink-0" />
+                    <Target className="w-6 h-6 text-amber-500 flex-shrink-0" />
                     <span className="text-sm font-medium text-black">{streak}</span>
                   </div>
                 </Button>
@@ -885,7 +898,7 @@ const MultiplicationGame = () => {
                   }}
                 >
                   <div className="flex items-center justify-center w-full gap-3">
-                    <BookOpen className="w-6 h-6 text-blue-500 flex-shrink-0" />
+                    <BookOpen className="w-6 h-6 text-indigo-500 flex-shrink-0" />
                     <span className="text-sm font-medium text-black">{selectedTable}단</span>
                   </div>
                 </Button>
@@ -990,7 +1003,7 @@ const MultiplicationGame = () => {
                         <div className="text-center">
                           <p className="text-sm text-black">시도</p>
                           <div className="flex items-center justify-center gap-1 mt-1">
-                            <Hash className="w-4 h-4 text-blue-500" />
+                            <Hash className="w-4 h-4 text-violet-500" />
                             <p className="text-lg font-bold text-black">
                               {practiceStats[selectedTable].attempts}
                             </p>
@@ -1124,7 +1137,7 @@ const MultiplicationGame = () => {
                       <div className="bg-gray-50 p-3 rounded-lg">
                         <p className="text-sm text-black">총 시도</p>
                         <div className="flex items-center gap-2">
-                          <Target className="w-5 h-5 text-blue-500" />
+                          <Target className="w-5 h-5 text-violet-500" />
                           <p className="text-2xl font-bold text-black">{totalAttempts}회</p>
                         </div>
                       </div>
@@ -1187,7 +1200,7 @@ const MultiplicationGame = () => {
       {/* 숫자패드 부분 수정 */}
       <Card className="mb-6">
         <CardContent className="p-6">
-          <div className="text-4xl font-bold text-center mb-6 text-gray-900">
+          <div className="text-4xl font-bold text-center mb-6 text-black">
             {num1} × {num2} = {userAnswer || "_"}
           </div>
           <div className="grid grid-cols-3 gap-2">
@@ -1196,7 +1209,7 @@ const MultiplicationGame = () => {
               <Button
                 key={num}
                 variant="outline"
-                className="h-12 text-xl font-bold text-gray-900"
+                className="h-12 bg-indigo-100 text-xl font-bold text-black"
                 onClick={() => handleNumberInput(num)}
               >
                 {num}
@@ -1206,7 +1219,7 @@ const MultiplicationGame = () => {
             {/* 지우기 버튼 */}
             <Button
               variant="outline"
-              className="h-12 bg-blue-200 text-xl font-bold text-gray-900"
+              className="h-12 bg-amber-100 text-xl font-bold text-black"
               onClick={() => setUserAnswer(userAnswer.slice(0, -1))}
             >
               ←
@@ -1215,7 +1228,7 @@ const MultiplicationGame = () => {
             {/* 0 버튼 */}
             <Button
               variant="outline"
-              className="h-12 text-xl font-bold text-gray-900"
+              className="h-12 bg-indigo-100 text-xl font-bold text-black"
               onClick={() => handleNumberInput(0)}
             >
               0
@@ -1224,7 +1237,7 @@ const MultiplicationGame = () => {
             {/* 확인 버튼 - 틀렸을 때만 사용 가능 */}
             <Button
               variant="default"
-              className="h-12 bg-indigo-400 text-white hover:bg-violet-600 text-xl font-bold"
+              className="h-12 bg-red-100 text-xl hover:bg-red-600 text-xl font-bold text-black"
               onClick={checkAnswer}
               disabled={!userAnswer}
             >
