@@ -763,10 +763,6 @@ const MultiplicationGame = () => {
     );
   };
 
-  useEffect(() => {
-    initHapticFeedback();
-  }, []);
-
   // 키보드 입력 핸들러 수정
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
