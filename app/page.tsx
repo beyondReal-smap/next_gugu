@@ -807,11 +807,16 @@ const MultiplicationGame = () => {
         <div className="grid grid-cols-12 gap-2 w-full">
           {gameMode === 'practice' ? (
             <>
-              <div className="col-span-3">
+              <div className="col-span-3 relative"> {/* relative 추가 */}
                 <Button
                   variant="ghost"
                   className="w-full h-[54px] bg-white"
-                  onClick={(e) => {/* ... */ }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowScoreInfo(!showScoreInfo);
+                    setShowStreakInfo(false);
+                    setShowTableInfo(false);
+                  }}
                 >
                   <div className="flex items-center justify-center w-full gap-3">
                     <BarChart2 className="w-6 h-6 text-indigo-500 flex-shrink-0" />
@@ -820,11 +825,16 @@ const MultiplicationGame = () => {
                 </Button>
                 {showScoreInfo && <ScoreInfoModal />}
               </div>
-              <div className="col-span-3">
+              <div className="col-span-3 relative"> {/* relative 추가 */}
                 <Button
                   variant="ghost"
                   className="w-full h-[54px] bg-white"
-                  onClick={(e) => {/* ... */ }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowStreakInfo(!showStreakInfo);
+                    setShowScoreInfo(false);
+                    setShowTableInfo(false);
+                  }}
                 >
                   <div className="flex items-center justify-center w-full gap-3">
                     <Target className="w-6 h-6 text-red-500 flex-shrink-0" />
@@ -833,11 +843,16 @@ const MultiplicationGame = () => {
                 </Button>
                 {showStreakInfo && <StreakInfoModal />}
               </div>
-              <div className="col-span-3">
+              <div className="col-span-3 relative"> {/* relative 추가 */}
                 <Button
                   variant="ghost"
                   className="w-full h-[54px] bg-white"
-                  onClick={(e) => {/* ... */ }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowTableInfo(!showTableInfo);
+                    setShowScoreInfo(false);
+                    setShowStreakInfo(false);
+                  }}
                 >
                   <div className="flex items-center justify-center w-full gap-3">
                     <BookOpen className="w-6 h-6 text-blue-500 flex-shrink-0" />
