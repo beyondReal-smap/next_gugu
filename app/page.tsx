@@ -802,21 +802,16 @@ const MultiplicationGame = () => {
       {/* 확인 대화상자 */}
       <ConfirmDialog />
 
-
+      {/* 헤더 부분만 수정 */}
       <header className="flex items-center gap-4 mb-8">
         <div className="grid grid-cols-12 gap-2 w-full">
           {gameMode === 'practice' ? (
             <>
-              <div className="col-span-4 relative">
+              <div className="col-span-3">
                 <Button
                   variant="ghost"
                   className="w-full h-[54px] bg-white"
-                  onClick={(e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    setShowScoreInfo(!showScoreInfo);
-                    setShowStreakInfo(false);
-                    setShowTableInfo(false);
-                  }}
+                  onClick={(e) => {/* ... */ }}
                 >
                   <div className="flex items-center justify-center w-full gap-3">
                     <BarChart2 className="w-6 h-6 text-indigo-500 flex-shrink-0" />
@@ -825,43 +820,33 @@ const MultiplicationGame = () => {
                 </Button>
                 {showScoreInfo && <ScoreInfoModal />}
               </div>
-              <div className="col-span-3 relative">
+              <div className="col-span-3">
                 <Button
                   variant="ghost"
                   className="w-full h-[54px] bg-white"
-                  onClick={(e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    setShowStreakInfo(!showStreakInfo);
-                    setShowScoreInfo(false);
-                    setShowTableInfo(false);
-                  }}
+                  onClick={(e) => {/* ... */ }}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-full gap-3">
                     <Target className="w-6 h-6 text-red-500 flex-shrink-0" />
                     <span className="text-sm font-medium text-black">{streak}</span>
                   </div>
                 </Button>
                 {showStreakInfo && <StreakInfoModal />}
               </div>
-              <div className="col-span-3 relative">
+              <div className="col-span-3">
                 <Button
                   variant="ghost"
                   className="w-full h-[54px] bg-white"
-                  onClick={(e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    setShowTableInfo(!showTableInfo);
-                    setShowScoreInfo(false);
-                    setShowStreakInfo(false);
-                  }}
+                  onClick={(e) => {/* ... */ }}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-full gap-3">
                     <BookOpen className="w-6 h-6 text-blue-500 flex-shrink-0" />
                     <span className="text-sm font-medium text-black">{selectedTable}단</span>
                   </div>
                 </Button>
                 {showTableInfo && <TableInfoModal />}
               </div>
-              <div className="col-span-2">
+              <div className="col-span-3 flex justify-end">
                 <Button
                   variant="outline"
                   size="icon"
@@ -874,21 +859,27 @@ const MultiplicationGame = () => {
             </>
           ) : (
             <>
-              <div className="col-span-4 flex items-center gap-3 bg-white px-4 py-3 rounded-lg shadow-sm justify-center">
-                <Clock className="w-6 h-6 text-red-500 flex-shrink-0" />
-                <span className="text-sm font-medium text-black tabular-nums">
-                  {timeLeft}초
-                </span>
+              <div className="col-span-3">
+                <div className="flex items-center gap-3 bg-white h-[54px] px-4 rounded-lg shadow-sm justify-center">
+                  <Clock className="w-6 h-6 text-red-500 flex-shrink-0" />
+                  <span className="text-sm font-medium text-black tabular-nums">
+                    {timeLeft}s
+                  </span>
+                </div>
               </div>
-              <div className="col-span-3 flex items-center gap-3 bg-white px-4 py-3 rounded-lg shadow-sm justify-center">
-                <Medal className="w-6 h-6 text-amber-500 flex-shrink-0" />
-                <span className="text-sm font-medium text-black tabular-nums">{solvedProblems}/15</span>
+              <div className="col-span-3">
+                <div className="flex items-center gap-3 bg-white h-[54px] px-4 rounded-lg shadow-sm justify-center">
+                  <Medal className="w-6 h-6 text-amber-500 flex-shrink-0" />
+                  <span className="text-sm font-medium text-black tabular-nums">{solvedProblems}/15</span>
+                </div>
               </div>
-              <div className="col-span-3 flex items-center gap-3 bg-white px-4 py-3 rounded-lg shadow-sm justify-center">
-                <Trophy className="w-6 h-6 text-indigo-500 flex-shrink-0" />
-                <span className="text-sm font-medium text-black">{timeAttackLevel}단</span>
+              <div className="col-span-3">
+                <div className="flex items-center gap-3 bg-white h-[54px] px-4 rounded-lg shadow-sm justify-center">
+                  <Trophy className="w-6 h-6 text-indigo-500 flex-shrink-0" />
+                  <span className="text-sm font-medium text-black">{timeAttackLevel}단</span>
+                </div>
               </div>
-              <div className="col-span-2">
+              <div className="col-span-3 flex justify-end">
                 <Button
                   variant="outline"
                   size="icon"
