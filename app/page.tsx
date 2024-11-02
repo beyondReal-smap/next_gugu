@@ -820,7 +820,7 @@ const MultiplicationGame = () => {
                 >
                   <div className="flex items-center justify-center w-full gap-3">
                     <BarChart2 className="w-6 h-6 text-indigo-500 flex-shrink-0" />
-                    <span className="text-sm font-medium text-gray-500 tabular-nums">{score}</span>
+                    <span className="text-sm font-medium text-gray-900 tabular-nums">{score}</span>
                   </div>
                 </Button>
                 {showScoreInfo && <ScoreInfoModal />}
@@ -838,7 +838,7 @@ const MultiplicationGame = () => {
                 >
                   <div className="flex items-center gap-3">
                     <Target className="w-6 h-6 text-red-500 flex-shrink-0" />
-                    <span className="text-sm font-medium text-gray-500">{streak}</span>
+                    <span className="text-sm font-medium text-gray-900">{streak}</span>
                   </div>
                 </Button>
                 {showStreakInfo && <StreakInfoModal />}
@@ -856,7 +856,7 @@ const MultiplicationGame = () => {
                 >
                   <div className="flex items-center gap-3">
                     <BookOpen className="w-6 h-6 text-blue-500 flex-shrink-0" />
-                    <span className="text-sm font-medium text-gray-500">{selectedTable}단</span>
+                    <span className="text-sm font-medium text-gray-900">{selectedTable}단</span>
                   </div>
                 </Button>
                 {showTableInfo && <TableInfoModal />}
@@ -876,17 +876,17 @@ const MultiplicationGame = () => {
             <>
               <div className="col-span-4 flex items-center gap-3 bg-white px-4 py-3 rounded-lg shadow-sm justify-center">
                 <Clock className="w-6 h-6 text-red-500 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-500 tabular-nums">
+                <span className="text-sm font-medium text-gray-900 tabular-nums">
                   {timeLeft}초
                 </span>
               </div>
               <div className="col-span-3 flex items-center gap-3 bg-white px-4 py-3 rounded-lg shadow-sm justify-center">
                 <Medal className="w-6 h-6 text-amber-500 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-500 tabular-nums">{solvedProblems}/15</span>
+                <span className="text-sm font-medium text-gray-900 tabular-nums">{solvedProblems}/15</span>
               </div>
               <div className="col-span-3 flex items-center gap-3 bg-white px-4 py-3 rounded-lg shadow-sm justify-center">
                 <Trophy className="w-6 h-6 text-indigo-500 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-500">{timeAttackLevel}단</span>
+                <span className="text-sm font-medium text-gray-900">{timeAttackLevel}단</span>
               </div>
               <div className="col-span-2">
                 <Button
@@ -904,7 +904,7 @@ const MultiplicationGame = () => {
       </header>
 
       {/* 모드 선택 영역 - 간단하게 유지 */}
-      <div className="mb-4">
+      <div className="mb-8">
         <div className="flex justify-center gap-4">
           <Button
             onClick={() => handleModeChange('practice')}
@@ -952,7 +952,7 @@ const MultiplicationGame = () => {
                       <h4 className="text-md font-semibold mb-3 text-gray-700">{selectedTable}단 통계</h4>
                       <div className="grid grid-cols-3 gap-4">
                         <div className="text-center">
-                          <p className="text-sm text-gray-500">시도</p>
+                          <p className="text-sm text-gray-900">시도</p>
                           <div className="flex items-center justify-center gap-1 mt-1">
                             <Hash className="w-4 h-4 text-blue-500" />
                             <p className="text-lg font-bold text-gray-900">
@@ -961,7 +961,7 @@ const MultiplicationGame = () => {
                           </div>
                         </div>
                         <div className="text-center">
-                          <p className="text-sm text-gray-500">정답</p>
+                          <p className="text-sm text-gray-900">정답</p>
                           <div className="flex items-center justify-center gap-1 mt-1">
                             <Check className="w-4 h-4 text-green-500" />
                             <p className="text-lg font-bold text-gray-900">
@@ -970,7 +970,7 @@ const MultiplicationGame = () => {
                           </div>
                         </div>
                         <div className="text-center">
-                          <p className="text-sm text-gray-500">정확도</p>
+                          <p className="text-sm text-gray-900">정확도</p>
                           <div className="flex items-center justify-center gap-1 mt-1">
                             <Percent className="w-4 h-4 text-purple-500" />
                             <p className="text-lg font-bold text-gray-900">
@@ -1068,14 +1068,14 @@ const MultiplicationGame = () => {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm text-gray-500">현재 레벨</p>
+                        <p className="text-sm text-gray-900">현재 레벨</p>
                         <div className="flex items-center gap-2">
                           <Trophy className="w-5 h-5 text-indigo-500" />
                           <p className="text-2xl font-bold text-gray-900">{timeAttackLevel}단</p>
                         </div>
                       </div>
                       <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm text-gray-500">최고 레벨</p>
+                        <p className="text-sm text-gray-900">최고 레벨</p>
                         <div className="flex items-center gap-2">
                           <Award className="w-5 h-5 text-amber-500" />
                           <p className="text-2xl font-bold text-gray-900">
@@ -1086,14 +1086,14 @@ const MultiplicationGame = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm text-gray-500">총 시도</p>
+                        <p className="text-sm text-gray-900">총 시도</p>
                         <div className="flex items-center gap-2">
                           <Target className="w-5 h-5 text-blue-500" />
                           <p className="text-2xl font-bold text-gray-900">{totalAttempts}회</p>
                         </div>
                       </div>
                       <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm text-gray-500">성공</p>
+                        <p className="text-sm text-gray-900">성공</p>
                         <div className="flex items-center gap-2">
                           <Check className="w-5 h-5 text-green-500" />
                           <p className="text-2xl font-bold text-gray-900">{successfulAttempts}회</p>
@@ -1101,7 +1101,7 @@ const MultiplicationGame = () => {
                       </div>
                     </div>
                     <div className="bg-gray-50 p-3 rounded-lg">
-                      <p className="text-sm text-gray-500">성공률</p>
+                      <p className="text-sm text-gray-900">성공률</p>
                       <div className="flex items-center gap-2">
                         <Star className="w-5 h-5 text-yellow-500" />
                         <p className="text-2xl font-bold text-gray-900">
@@ -1212,7 +1212,7 @@ const MultiplicationGame = () => {
                         {item.problem} = {item.userAnswer}
                       </span>
                     </div>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-gray-900">
                       {new Date(item.timestamp).toLocaleTimeString()}
                     </span>
                   </div>
