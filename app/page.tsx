@@ -560,25 +560,48 @@ const MultiplicationGame = () => {
     generateNewProblem();
   }, [selectedTable, gameMode, timeAttackLevel]);
 
-  // 틀린 답 처리 수정
-  const handleWrongAnswer = () => {
-    const newHistory: HistoryItem = {
-      problem: `${num1} × ${num2}`,
-      userAnswer: parseInt(userAnswer),
-      correct: false,
-      timestamp: new Date(),
-      timeTaken: 0,
-      mode: gameMode,
-      table: num1
-    };
+  // 숫자 입력 처리 함수 수정
+  const handleNumberInput = (num: number) => {
+    if (userAnswer.length < 3) {
+      const newAnswer = userAnswer + num;
+      setUserAnswer(newAnswer);
 
-    setHistory(prev => [newHistory, ...prev]);
+      // 자동 정답 체크 로직을 여기로 이동
+      const currentAnswer = parseInt(newAnswer);
+      const correctAnswer = num1 * num2;
+
+      if (currentAnswer === correctAnswer) {
+        checkAnswer(newAnswer); // checkAnswer 함수에 현재 답을 전달
+      } else if (newAnswer.length >= correctAnswer.toString().length) {
+        checkAnswer(newAnswer);
+      }
+    }
+  };
+
+  // handleWrongAnswer 함수 수정
+  const handleWrongAnswer = () => {
+    const userInput = parseInt(userAnswer);
+
+    // 유효한 숫자일 때만 기록 저장
+    if (!isNaN(userInput)) {
+      const newHistory: HistoryItem = {
+        problem: `${num1} × ${num2}`,
+        userAnswer: userInput,
+        correct: false,
+        timestamp: new Date(),
+        timeTaken: 0,
+        mode: gameMode,
+        table: num1
+      };
+
+      setHistory(prev => [newHistory, ...prev]);
+    }
+
     showAlert("틀렸습니다. 다시 시도해보세요!", 'error');
 
     if (gameMode === 'practice') {
       setStreak(0);
     } else {
-      // 타임어택 모드에서는 틀려도 계속 진행
       generateNewProblem();
     }
 
@@ -655,36 +678,41 @@ const MultiplicationGame = () => {
     }
   }, [timeLeft, gameMode, isTimeAttackComplete]);
   // checkAnswer 함수 수정
-  const checkAnswer = () => {
-    if (!userAnswer) return;
+  const checkAnswer = (answer: string = userAnswer) => {
+    if (!answer || isNaN(parseInt(answer))) return; // 숫자로 변환할 수 없는 입력은 무시
 
-    const correct = num1 * num2 === parseInt(userAnswer);
-    const newHistory: HistoryItem = {
-      problem: `${num1} × ${num2}`,
-      userAnswer: parseInt(userAnswer),
-      correct,
-      timestamp: new Date(),
-      timeTaken: 0,
-      mode: gameMode,
-      table: num1
-    };
+    const userInput = parseInt(answer);
+    const correct = num1 * num2 === userInput;
+
+    // 유효한 숫자일 때만 기록 저장
+    if (!isNaN(userInput)) {
+      const newHistory: HistoryItem = {
+        problem: `${num1} × ${num2}`,
+        userAnswer: userInput,
+        correct,
+        timestamp: new Date(),
+        timeTaken: 0,
+        mode: gameMode,
+        table: num1
+      };
+
+      setHistory(prev => [newHistory, ...prev]);
+    }
 
     if (gameMode === 'practice') {
       updatePracticeStats(selectedTable, correct);
 
-      // 점수 계산 로직 수정
       if (correct) {
-        setScore(prev => prev + 10); // 정답 시 10점 추가
+        setScore(prev => prev + 10);
         setStreak(prev => prev + 1);
         setUserAnswer("");
         generateNewProblem();
       } else {
-        setScore(prev => Math.max(0, prev - 15)); // 오답 시 15점 감소, 최소값 0
+        setScore(prev => Math.max(0, prev - 15));
         setStreak(0);
         handleWrongAnswer();
       }
     } else {
-      // 타임어택 모드 로직은 그대로 유지
       if (correct) {
         const newSolved = solvedProblems + 1;
         setSolvedProblems(newSolved);
@@ -701,7 +729,6 @@ const MultiplicationGame = () => {
       }
     }
 
-    setHistory(prev => [newHistory, ...prev]);
     saveGameState();
   };
 
@@ -730,21 +757,24 @@ const MultiplicationGame = () => {
   };
 
 
-  // 키보드 입력 처리
+  // 키보드 입력 핸들러 수정
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       if (event.key >= '0' && event.key <= '9') {
-        setUserAnswer(prev => prev.length < 3 ? prev + event.key : prev);
+        if (userAnswer.length < 3) {
+          const newKey = parseInt(event.key);
+          handleNumberInput(newKey); // handleNumberInput 함수를 재사용
+        }
       } else if (event.key === 'Backspace') {
         setUserAnswer(prev => prev.slice(0, -1));
-      } else if (event.key === 'Enter') {
+      } else if (event.key === 'Enter' && userAnswer) {
         checkAnswer();
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [userAnswer]);
+  }, [userAnswer, num1, num2]); // 의존성 추가
 
   if (!isClient) {
     return null; // 또는 로딩 상태를 표시
@@ -1154,7 +1184,7 @@ const MultiplicationGame = () => {
       </AnimatePresence>
 
 
-      {/* 숫자패드 부분만 수정 */}
+      {/* 숫자패드 부분 수정 */}
       <Card className="mb-6">
         <CardContent className="p-6">
           <div className="text-4xl font-bold text-center mb-6 text-gray-900">
@@ -1167,11 +1197,7 @@ const MultiplicationGame = () => {
                 key={num}
                 variant="outline"
                 className="h-12 text-xl font-bold text-gray-900"
-                onClick={() => {
-                  if (userAnswer.length < 3) {
-                    setUserAnswer(userAnswer + num);
-                  }
-                }}
+                onClick={() => handleNumberInput(num)}
               >
                 {num}
               </Button>
@@ -1190,20 +1216,17 @@ const MultiplicationGame = () => {
             <Button
               variant="outline"
               className="h-12 text-xl font-bold text-gray-900"
-              onClick={() => {
-                if (userAnswer.length < 3) {
-                  setUserAnswer(userAnswer + '0');
-                }
-              }}
+              onClick={() => handleNumberInput(0)}
             >
               0
             </Button>
 
-            {/* 확인 버튼 */}
+            {/* 확인 버튼 - 틀렸을 때만 사용 가능 */}
             <Button
               variant="default"
               className="h-12 bg-indigo-400 text-white hover:bg-violet-600 text-xl font-bold"
               onClick={checkAnswer}
+              disabled={!userAnswer}
             >
               확인
             </Button>
