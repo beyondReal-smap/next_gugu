@@ -868,7 +868,7 @@ const MultiplicationGame = () => {
                   onClick={handleSettingsClick}
                   className="h-[54px] w-[54px] flex items-center justify-center bg-white"
                 >
-                  <Cog className="h-6 w-6 text-gray-600" />
+                  <Cog className="h-6 w-6 text-black" />
                 </Button>
               </div>
             </>
@@ -895,7 +895,7 @@ const MultiplicationGame = () => {
                   onClick={handleSettingsClick}
                   className="h-[54px] w-[54px] flex items-center justify-center bg-white"
                 >
-                  <Cog className="h-6 w-6 text-gray-600" />
+                  <Cog className="h-6 w-6 text-black" />
                 </Button>
               </div>
             </>
@@ -1148,18 +1148,19 @@ const MultiplicationGame = () => {
       </AnimatePresence>
 
 
-      {/* 숫자패드 텍스트 굵기 수정 */}
+      {/* 숫자패드 부분만 수정 */}
       <Card className="mb-6">
         <CardContent className="p-6">
-          <div className="text-4xl font-bold text-center mb-6">
+          <div className="text-4xl font-bold text-center mb-6 text-gray-900">
             {num1} × {num2} = {userAnswer || "_"}
           </div>
           <div className="grid grid-cols-3 gap-2">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((num) => (
+            {/* 1-9까지 숫자 */}
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
               <Button
                 key={num}
                 variant="outline"
-                className="h-12 text-xl font-bold" // 텍스트 크기와 굵기 증가
+                className="h-12 text-xl font-bold text-gray-900"
                 onClick={() => {
                   if (userAnswer.length < 3) {
                     setUserAnswer(userAnswer + num);
@@ -1169,16 +1170,33 @@ const MultiplicationGame = () => {
                 {num}
               </Button>
             ))}
+
+            {/* 지우기 버튼 */}
             <Button
               variant="outline"
-              className="h-12 bg-blue-200 text-xl font-bold" // 텍스트 크기와 굵기 증가
+              className="h-12 bg-blue-200 text-xl font-bold text-gray-900"
               onClick={() => setUserAnswer(userAnswer.slice(0, -1))}
             >
               ←
             </Button>
+
+            {/* 0 버튼 */}
+            <Button
+              variant="outline"
+              className="h-12 text-xl font-bold text-gray-900"
+              onClick={() => {
+                if (userAnswer.length < 3) {
+                  setUserAnswer(userAnswer + '0');
+                }
+              }}
+            >
+              0
+            </Button>
+
+            {/* 확인 버튼 */}
             <Button
               variant="default"
-              className="h-12 bg-indigo-400 text-white hover:bg-violet-600 text-xl font-bold" // 텍스트 크기와 굵기 증가
+              className="h-12 bg-indigo-400 text-white hover:bg-violet-600 text-xl font-bold"
               onClick={checkAnswer}
             >
               확인
@@ -1186,6 +1204,7 @@ const MultiplicationGame = () => {
           </div>
         </CardContent>
       </Card>
+
 
       {/* 히스토리 표시 수정 */}
       {
