@@ -383,17 +383,6 @@ const MultiplicationGame = () => {
     return timeAttackMessages[randomIndex];
   };
 
-  // 햅틱 반응을 위한 함수
-  const triggerHapticFeedback = (type: 'success' | 'error') => {
-    if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
-      if (type === 'success') {
-        window.navigator.vibrate(100); // 짧은 진동 (100ms)
-      } else {
-        window.navigator.vibrate([200, 50, 200]); // 긴 진동 패턴
-      }
-    }
-  };
-
   // 정답 체크 시 통계 업데이트
   const updatePracticeStats = (tableNumber: number, isCorrect: boolean) => {
     setPracticeStats(prev => {
@@ -681,6 +670,11 @@ const MultiplicationGame = () => {
   };
 
   useEffect(() => {
+    // 컴포넌트 마운트 시 테스트
+    triggerHapticFeedback('success');
+  }, []);
+
+  useEffect(() => {
     // 시간이 0이 되었을 때 자동으로 게임 종료
     if (timeLeft === 0 && gameMode === 'timeAttack' && !isTimeAttackComplete) {
       handleTimeAttackEnd(false);
@@ -769,6 +763,9 @@ const MultiplicationGame = () => {
     );
   };
 
+  useEffect(() => {
+    initHapticFeedback();
+  }, []);
 
   // 키보드 입력 핸들러 수정
   useEffect(() => {
