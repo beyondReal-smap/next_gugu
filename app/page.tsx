@@ -564,47 +564,15 @@ const MultiplicationGame = () => {
       const newAnswer = userAnswer + num;
       setUserAnswer(newAnswer);
 
-      // 자동 정답 체크 로직을 여기로 이동
+      // 자동 정답 체크 로직
       const currentAnswer = parseInt(newAnswer);
       const correctAnswer = num1 * num2;
 
-      if (currentAnswer === correctAnswer) {
-        checkAnswer(newAnswer); // checkAnswer 함수에 현재 답을 전달
-      } else if (newAnswer.length >= correctAnswer.toString().length) {
-        checkAnswer(newAnswer);
+      // 입력한 숫자가 정답과 자릿수가 같거나 더 큰 경우에만 자동 체크
+      if (newAnswer.length >= correctAnswer.toString().length) {
+        checkAnswer(newAnswer, true);
       }
     }
-  };
-
-  // handleWrongAnswer 함수 수정
-  const handleWrongAnswer = () => {
-    const userInput = parseInt(userAnswer);
-
-    // 유효한 숫자일 때만 기록 저장
-    if (!isNaN(userInput)) {
-      const newHistory: HistoryItem = {
-        problem: `${num1} × ${num2}`,
-        userAnswer: userInput,
-        correct: false,
-        timestamp: new Date(),
-        timeTaken: 0,
-        mode: gameMode,
-        table: num1
-      };
-
-      setHistory(prev => [newHistory, ...prev]);
-    }
-
-    showAlert("틀렸습니다. 다시 시도해보세요!", 'error');
-
-    if (gameMode === 'practice') {
-      setStreak(0);
-    } else {
-      generateNewProblem();
-    }
-
-    setUserAnswer("");
-    saveGameState();
   };
 
   // 타이머 토글 함수 수정
@@ -681,45 +649,58 @@ const MultiplicationGame = () => {
     }
   }, [timeLeft, gameMode, isTimeAttackComplete]);
   // checkAnswer 함수 수정
-  const checkAnswer = (answer: string = userAnswer) => {
-    if (!answer || isNaN(parseInt(answer))) return; // 숫자로 변환할 수 없는 입력은 무시
+  const checkAnswer = (answer: string = userAnswer, isAutoCheck: boolean = false) => {
+    if (!answer || isNaN(parseInt(answer))) return;
 
     const userInput = parseInt(answer);
     const correct = num1 * num2 === userInput;
 
-    // 유효한 숫자일 때만 기록 저장
-    if (!isNaN(userInput)) {
-      const newHistory: HistoryItem = {
-        problem: `${num1} × ${num2}`,
-        userAnswer: userInput,
-        correct,
-        timestamp: new Date(),
-        timeTaken: 0,
-        mode: gameMode,
-        table: num1
-      };
+    // 이미 처리된 답안인지 확인
+    const isAlreadyAnswered = history.some(item =>
+      item.problem === `${num1} × ${num2}` &&
+      item.userAnswer === userInput &&
+      Date.now() - new Date(item.timestamp).getTime() < 1000
+    );
 
-      setHistory(prev => [newHistory, ...prev]);
+    if (isAlreadyAnswered) {
+      return;
     }
+
+    // 유효한 숫자일 때만 기록 저장
+    const newHistory: HistoryItem = {
+      problem: `${num1} × ${num2}`,
+      userAnswer: userInput,
+      correct,
+      timestamp: new Date(),
+      timeTaken: 0,
+      mode: gameMode,
+      table: num1
+    };
+
+    setHistory(prev => [newHistory, ...prev]);
 
     if (gameMode === 'practice') {
       updatePracticeStats(selectedTable, correct);
 
       if (correct) {
-        triggerHapticFeedback('success'); // 정답 시 햅틱 피드백
+        triggerHapticFeedback('success');
         setScore(prev => prev + 10);
         setStreak(prev => prev + 1);
         setUserAnswer("");
         generateNewProblem();
       } else {
-        triggerHapticFeedback('error'); // 오답 시 햅틱 피드백
+        triggerHapticFeedback('error');
         setScore(prev => Math.max(0, prev - 15));
         setStreak(0);
-        handleWrongAnswer();
+        // 오답일 경우 항상 답 지우기
+        setUserAnswer("");
+        if (!isAutoCheck) {
+          showAlert("틀렸습니다. 다시 시도해보세요!", 'error');
+        }
       }
     } else {
       if (correct) {
-        triggerHapticFeedback('success'); // 정답 시 햅틱 피드백
+        triggerHapticFeedback('success');
         const newSolved = solvedProblems + 1;
         setSolvedProblems(newSolved);
         setUserAnswer("");
@@ -731,8 +712,15 @@ const MultiplicationGame = () => {
           generateNewProblem();
         }
       } else {
-        triggerHapticFeedback('error'); // 오답 시 햅틱 피드백
-        handleWrongAnswer();
+        triggerHapticFeedback('error');
+        // 오답일 경우 항상 답 지우기
+        setUserAnswer("");
+        if (!isAutoCheck) {
+          showAlert("틀렸습니다. 다시 시도해보세요!", 'error');
+        }
+        if (gameMode === 'timeAttack') {
+          generateNewProblem();
+        }
       }
     }
 
