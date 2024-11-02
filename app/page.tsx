@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
+import { triggerHapticFeedback } from '../src/utils/hapticFeedback';
 import {
   BarChart2,
   Target,
