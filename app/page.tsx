@@ -952,7 +952,7 @@ const MultiplicationGame = () => {
       </header>
 
       {/* 모드 선택 영역 - 간단하게 유지 */}
-      <div className="mb-8">
+      <div className="mb-1">
         <div className="flex justify-center gap-4">
           <Button
             onClick={() => handleModeChange('practice')}
