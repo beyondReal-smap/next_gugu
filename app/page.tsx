@@ -820,7 +820,7 @@ const MultiplicationGame = () => {
                 >
                   <div className="flex items-center justify-center w-full gap-3">
                     <BarChart2 className="w-6 h-6 text-indigo-500 flex-shrink-0" />
-                    <span className="text-sm font-medium text-gray-900 tabular-nums">{score}</span>
+                    <span className="text-sm font-medium text-black tabular-nums">{score}</span>
                   </div>
                 </Button>
                 {showScoreInfo && <ScoreInfoModal />}
@@ -838,7 +838,7 @@ const MultiplicationGame = () => {
                 >
                   <div className="flex items-center gap-3">
                     <Target className="w-6 h-6 text-red-500 flex-shrink-0" />
-                    <span className="text-sm font-medium text-gray-900">{streak}</span>
+                    <span className="text-sm font-medium text-black">{streak}</span>
                   </div>
                 </Button>
                 {showStreakInfo && <StreakInfoModal />}
@@ -856,7 +856,7 @@ const MultiplicationGame = () => {
                 >
                   <div className="flex items-center gap-3">
                     <BookOpen className="w-6 h-6 text-blue-500 flex-shrink-0" />
-                    <span className="text-sm font-medium text-gray-900">{selectedTable}단</span>
+                    <span className="text-sm font-medium text-black">{selectedTable}단</span>
                   </div>
                 </Button>
                 {showTableInfo && <TableInfoModal />}
@@ -876,17 +876,17 @@ const MultiplicationGame = () => {
             <>
               <div className="col-span-4 flex items-center gap-3 bg-white px-4 py-3 rounded-lg shadow-sm justify-center">
                 <Clock className="w-6 h-6 text-red-500 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-900 tabular-nums">
+                <span className="text-sm font-medium text-black tabular-nums">
                   {timeLeft}초
                 </span>
               </div>
               <div className="col-span-3 flex items-center gap-3 bg-white px-4 py-3 rounded-lg shadow-sm justify-center">
                 <Medal className="w-6 h-6 text-amber-500 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-900 tabular-nums">{solvedProblems}/15</span>
+                <span className="text-sm font-medium text-black tabular-nums">{solvedProblems}/15</span>
               </div>
               <div className="col-span-3 flex items-center gap-3 bg-white px-4 py-3 rounded-lg shadow-sm justify-center">
                 <Trophy className="w-6 h-6 text-indigo-500 flex-shrink-0" />
-                <span className="text-sm font-medium text-gray-900">{timeAttackLevel}단</span>
+                <span className="text-sm font-medium text-black">{timeAttackLevel}단</span>
               </div>
               <div className="col-span-2">
                 <Button
@@ -937,7 +937,7 @@ const MultiplicationGame = () => {
               <Card className="bg-white/95 backdrop-blur shadow-lg">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold text-gray-900">구구단 선택</h3>
+                    <h3 className="text-lg font-bold text-black">구구단 선택</h3>
                     <button
                       onClick={handleCloseSettings}
                       className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
@@ -952,28 +952,28 @@ const MultiplicationGame = () => {
                       <h4 className="text-md font-semibold mb-3 text-gray-700">{selectedTable}단 통계</h4>
                       <div className="grid grid-cols-3 gap-4">
                         <div className="text-center">
-                          <p className="text-sm text-gray-900">시도</p>
+                          <p className="text-sm text-black">시도</p>
                           <div className="flex items-center justify-center gap-1 mt-1">
                             <Hash className="w-4 h-4 text-blue-500" />
-                            <p className="text-lg font-bold text-gray-900">
+                            <p className="text-lg font-bold text-black">
                               {practiceStats[selectedTable].attempts}
                             </p>
                           </div>
                         </div>
                         <div className="text-center">
-                          <p className="text-sm text-gray-900">정답</p>
+                          <p className="text-sm text-black">정답</p>
                           <div className="flex items-center justify-center gap-1 mt-1">
                             <Check className="w-4 h-4 text-green-500" />
-                            <p className="text-lg font-bold text-gray-900">
+                            <p className="text-lg font-bold text-black">
                               {practiceStats[selectedTable].correct}
                             </p>
                           </div>
                         </div>
                         <div className="text-center">
-                          <p className="text-sm text-gray-900">정확도</p>
+                          <p className="text-sm text-black">정확도</p>
                           <div className="flex items-center justify-center gap-1 mt-1">
                             <Percent className="w-4 h-4 text-purple-500" />
-                            <p className="text-lg font-bold text-gray-900">
+                            <p className="text-lg font-bold text-black">
                               {practiceStats[selectedTable].attempts > 0
                                 ? Math.round((practiceStats[selectedTable].correct / practiceStats[selectedTable].attempts) * 100)
                                 : 0}
@@ -1056,7 +1056,7 @@ const MultiplicationGame = () => {
               <Card className="bg-white/95 backdrop-blur shadow-lg">
                 <CardContent className="p-4">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-bold text-gray-900">타임어택 기록</h3>
+                    <h3 className="text-lg font-bold text-black">타임어택 기록</h3>
                     <button
                       onClick={handleCloseSettings}
                       className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
@@ -1068,17 +1068,17 @@ const MultiplicationGame = () => {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm text-gray-900">현재 레벨</p>
+                        <p className="text-sm text-black">현재 레벨</p>
                         <div className="flex items-center gap-2">
                           <Trophy className="w-5 h-5 text-indigo-500" />
-                          <p className="text-2xl font-bold text-gray-900">{timeAttackLevel}단</p>
+                          <p className="text-2xl font-bold text-black">{timeAttackLevel}단</p>
                         </div>
                       </div>
                       <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm text-gray-900">최고 레벨</p>
+                        <p className="text-sm text-black">최고 레벨</p>
                         <div className="flex items-center gap-2">
                           <Award className="w-5 h-5 text-amber-500" />
-                          <p className="text-2xl font-bold text-gray-900">
+                          <p className="text-2xl font-bold text-black">
                             {Math.max(timeAttackLevel, parseInt(localStorage.getItem('highestTimeAttackLevel') || '2'))}단
                           </p>
                         </div>
@@ -1086,25 +1086,25 @@ const MultiplicationGame = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm text-gray-900">총 시도</p>
+                        <p className="text-sm text-black">총 시도</p>
                         <div className="flex items-center gap-2">
                           <Target className="w-5 h-5 text-blue-500" />
-                          <p className="text-2xl font-bold text-gray-900">{totalAttempts}회</p>
+                          <p className="text-2xl font-bold text-black">{totalAttempts}회</p>
                         </div>
                       </div>
                       <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm text-gray-900">성공</p>
+                        <p className="text-sm text-black">성공</p>
                         <div className="flex items-center gap-2">
                           <Check className="w-5 h-5 text-green-500" />
-                          <p className="text-2xl font-bold text-gray-900">{successfulAttempts}회</p>
+                          <p className="text-2xl font-bold text-black">{successfulAttempts}회</p>
                         </div>
                       </div>
                     </div>
                     <div className="bg-gray-50 p-3 rounded-lg">
-                      <p className="text-sm text-gray-900">성공률</p>
+                      <p className="text-sm text-black">성공률</p>
                       <div className="flex items-center gap-2">
                         <Star className="w-5 h-5 text-yellow-500" />
-                        <p className="text-2xl font-bold text-gray-900">
+                        <p className="text-2xl font-bold text-black">
                           {totalAttempts > 0 ? Math.round((successfulAttempts / totalAttempts) * 100) : 0}%
                         </p>
                       </div>
@@ -1212,7 +1212,7 @@ const MultiplicationGame = () => {
                         {item.problem} = {item.userAnswer}
                       </span>
                     </div>
-                    <span className="text-sm text-gray-900">
+                    <span className="text-sm text-black">
                       {new Date(item.timestamp).toLocaleTimeString()}
                     </span>
                   </div>
