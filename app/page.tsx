@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
-import { triggerHapticFeedback } from '../src/utils/hapticFeedback';
+import { triggerHapticFeedback, HAPTIC_TYPES } from '../src/utils/hapticFeedback';
 import {
   BarChart2,
   Target,
@@ -848,7 +848,7 @@ const MultiplicationGame = () => {
         masteredLevel: Math.max(masteredLevel, timeAttackLevel)
       }));
     
-      triggerHapticFeedback('impactHeavy');
+      triggerHapticFeedback(HAPTIC_TYPES.TIME_ATTACK_SUCCESS);
       showAlert(
         `축하합니다! 🎉\n${timeAttackLevel}단을 완벽하게 마스터했어요!\n다음은 ${nextLevel}단이에요.\n준비되셨나요? 💪`,
         'success'
@@ -859,7 +859,7 @@ const MultiplicationGame = () => {
       resetTimeAttack();
       generateNewProblem();
     } else {
-      triggerHapticFeedback('warning');
+      triggerHapticFeedback(HAPTIC_TYPES.TIME_ATTACK_FAIL);
       let message;
       if (solvedProblems === 0) {
         message = `아쉽지만 아직 문제를 풀지 못했어요.\n${timeAttackLevel}단을 천천히 시작해봐요! 💫`;
@@ -951,7 +951,7 @@ const MultiplicationGame = () => {
 
   useEffect(() => {
     // 컴포넌트 마운트 시 테스트
-    triggerHapticFeedback('impactHeavy');
+    triggerHapticFeedback(HAPTIC_TYPES.IMPACT_HEAVY);
   }, []);
 
   // timeLeft가 0이 되었을 때 한 번만 실행되도록 useEffect 수정
@@ -995,13 +995,13 @@ const MultiplicationGame = () => {
       updatePracticeStats(selectedTable, correct);
 
       if (correct) {
-        triggerHapticFeedback('success');
+        triggerHapticFeedback(HAPTIC_TYPES.SUCCESS);
         setScore(prev => prev + 10);
         setStreak(prev => prev + 1);
         setUserAnswer("");
         generateNewProblem();
       } else {
-        triggerHapticFeedback('error');
+        triggerHapticFeedback(HAPTIC_TYPES.ERROR);
         setScore(prev => Math.max(0, prev - 15));
         setStreak(0);
         // 오답일 경우 항상 답 지우기
@@ -1012,7 +1012,7 @@ const MultiplicationGame = () => {
       }
     } else {
       if (correct) {
-        triggerHapticFeedback('success');
+        triggerHapticFeedback(HAPTIC_TYPES.SUCCESS);
         const newSolved = solvedProblems + 1;
         setSolvedProblems(newSolved);
         setUserAnswer("");
@@ -1037,7 +1037,7 @@ const MultiplicationGame = () => {
         };
         localStorage.setItem('multiplicationGame', JSON.stringify(updatedGameState));
       } else {
-        triggerHapticFeedback('error');
+        triggerHapticFeedback(HAPTIC_TYPES.ERROR);
         setUserAnswer("");
         if (!isAutoCheck) {
           showAlert("틀렸습니다. 다시 시도해보세요!", 'error');
