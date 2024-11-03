@@ -104,7 +104,7 @@ const TimeAttackTableSelectModal = React.memo(({
       setIsPaused(false);
     }
   }, [setShowTableSelectModal, gameMode, isTimeAttackComplete, setIsPaused]);
-
+  TimeAttackTableSelectModal.displayName = 'TimeAttackTableSelectModal'; // display name 추가
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
