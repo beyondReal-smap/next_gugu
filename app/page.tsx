@@ -850,7 +850,7 @@ const MultiplicationGame = () => {
     
       triggerHapticFeedback('impactHeavy');
       showAlert(
-        `축하합니다! 🎉\n${timeAttackLevel}단을 완벽하게 마스터했어요!\n\n다음은 ${nextLevel}단이에요.\n준비되셨나요? 💪`,
+        `축하합니다! 🎉\n${timeAttackLevel}단을 완벽하게 마스터했어요!\n다음은 ${nextLevel}단이에요.\n준비되셨나요? 💪`,
         'success'
       );
     
@@ -935,7 +935,7 @@ const MultiplicationGame = () => {
         handleTimeAttackEnd(true);
       } else {
         // 아직 목표를 달성하지 못한 경우
-        showAlert(`목표가 ${count}개로 변경되었습니다!\n${solvedProblems}/${count}문제 해결! 🎯`, 'info');
+        showAlert(`목표가 ${count}개로 변경되었습니다! 🎯`, 'info');
       }
     } else {
       showAlert(`목표 문제 수가 ${count}개로 변경되었습니다! 🎯`, 'info');
