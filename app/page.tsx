@@ -1435,7 +1435,7 @@ const MultiplicationGame = () => {
                         <p className="text-sm text-black">총 시도</p>
                         <div className="flex items-center gap-2">
                           <Target className="w-5 h-5 text-violet-500" />
-                          <p className="text-2xl font-bold text-black">{totalAttempts}���</p>
+                          <p className="text-2xl font-bold text-black">{totalAttempts}회</p>
                         </div>
                       </div>
                       <div className="bg-gray-50 p-3 rounded-lg">
