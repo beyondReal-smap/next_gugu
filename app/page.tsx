@@ -951,7 +951,7 @@ const MultiplicationGame = () => {
 
   useEffect(() => {
     // 컴포넌트 마운트 시 테스트
-    triggerHapticFeedback('success');
+    triggerHapticFeedback('impactHeavy');
   }, []);
 
   // timeLeft가 0이 되었을 때 한 번만 실행되도록 useEffect 수정
