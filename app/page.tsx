@@ -152,19 +152,19 @@ const TimeAttackTableSelectModal = React.memo(({
                     `}
                     disabled={isLocked}
                   >
-                    <span>{table}단</span>
+                    {table}단
                   </Button>
+                  {isLocked && (
+                    <Lock className="w-4 h-4 text-gray-400 absolute top-1 right-1" />
+                  )}
+                  {/* 마스터 표시 */}
                   {isMastered && (
                     <span
                       className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full z-10"
                       title="마스터 완료!"
                     />
                   )}
-                  {isLocked && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Lock className="w-6 h-6 text-gray-400" />
-                    </div>
-                  )}
+                
                 </div>
               );
             })}
