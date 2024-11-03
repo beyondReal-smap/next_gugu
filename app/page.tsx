@@ -86,7 +86,7 @@ const ProblemCountSettings = React.memo(({
   problemCountRef
 }: ProblemCountSettingsProps) => {
   const countOptions = [10, 15, 20];
-
+  ProblemCountSettings.displayName = 'ProblemCountSettings'; // display name 추가
   return (
     <motion.div
       ref={problemCountRef}  // ref 전달
@@ -161,7 +161,7 @@ const TimeAttackTableSelectModal = React.memo(({
       setIsPaused(false);
     }
   }, [setShowTableSelectModal, gameMode, isTimeAttackComplete, setIsPaused]);
-
+  TimeAttackTableSelectModal.displayName = 'TimeAttackTableSelectModal'; // display name 추가
   return (
     <motion.div
       initial={{ opacity: 0, y: -20 }}
