@@ -141,7 +141,7 @@ const TimeAttackTableSelectModal = React.memo(({
                       setUsedProblems(new Set());
                       showAlert(`${table}단에 도전합니다!\n준비되셨나요? 💪`, 'success');
                       resetTimeAttack();
-                      generateNewProblem();
+                      generateNewProblem(); //  여기서 호출
                       if (gameMode === 'timeAttack') setIsPaused(false);
                     }}
                     className={`
@@ -164,7 +164,7 @@ const TimeAttackTableSelectModal = React.memo(({
                       title="마스터 완료!"
                     />
                   )}
-                
+
                 </div>
               );
             })}
@@ -294,10 +294,12 @@ const MultiplicationGame = () => {
                       onClick={() => {
                         if (isLocked) return;
                         setTimeAttackLevel(table);
-                        setShowSettings(false);
+                        setShowTableSelectModal(false);
                         setUsedProblems(new Set());
                         showAlert(`${table}단에 도전합니다!\n준비되셨나요? 💪`, 'success');
                         resetTimeAttack();
+                        generateNewProblem(); //  여기서 호출
+                        if (gameMode === 'timeAttack') setIsPaused(false);
                       }}
                       className={`
                         h-12 text-base w-full
@@ -689,8 +691,6 @@ const MultiplicationGame = () => {
   const handleModeChange = (newMode: 'practice' | 'timeAttack') => {
     if (newMode === gameMode) return;
 
-    setUsedProblems(new Set());
-
     if (newMode === 'timeAttack') {
       setGameMode('timeAttack');
       setTimeLeft(selectedTime);  // 선택된 시간으로 설정
@@ -766,11 +766,10 @@ const MultiplicationGame = () => {
     setUserAnswer("");
   };
 
-  // 모드나 단 변경시 사용된 문제 초기화
+  // useEffect 추가
   useEffect(() => {
-    setUsedProblems(new Set());
     generateNewProblem();
-  }, [selectedTable, gameMode]);
+  }, [timeAttackLevel, gameMode, selectedTable]);
 
   // 숫자 입력 처리 함수 수정
   const handleNumberInput = (num: number) => {
@@ -831,35 +830,37 @@ const MultiplicationGame = () => {
       setSuccessfulAttempts(prev => prev + 1);
       const nextLevel = timeAttackLevel + 1;
       setMasteredLevel(current => Math.max(current, timeAttackLevel));
-      // localStorage에 마스터 레벨 저장 추가
+
       localStorage.setItem('multiplicationGame', JSON.stringify({
-        // ... 기존 데이터
         masteredLevel: Math.max(masteredLevel, timeAttackLevel)
       }));
+
       triggerHapticFeedback('impactHeavy');
       showAlert(
         `대단해요! 🎉\n${timeAttackLevel}단을 완벽하게 마스터했습니다!\n\n다음 레벨 도전!\n${nextLevel}단 준비되셨나요? 💪`,
-        'success',
-        () => {
-          setTimeAttackLevel(nextLevel);
-          resetTimeAttack();
-        }
+        'success', () => { /* 콜백에서 generateNewProblem 제거 */ }
       );
+
+      setTimeAttackLevel(nextLevel); // 이 부분의 위치를 showAlert 밖으로 이동
+      setUsedProblems(new Set()); // usedProblems 초기화
+      resetTimeAttack();
+      generateNewProblem()
     } else {
       triggerHapticFeedback('warning');
 
       let message;
       if (solvedProblems === 0) {
-        message = `${timeAttackLevel}단 도전!\n하나씩 해결하다보면\n어느새 마스터가 되어있을 거예요! 💫\n\n지금까지 ${solvedProblems}문제 해결!`;
+        message = `${timeAttackLevel}단 도전!\n하나씩 해결하다보면\n어느새 마스터가 되어있을 거예요! 💫\n지금까지 ${solvedProblems}문제 해결!`;
       } else if (solvedProblems < 5) {
-        message = `${timeAttackLevel}단 도전!\n한 걸음씩 나아가고 있어요!\n다음에는 더 잘할 수 있을 거예요! ⭐\n\n지금까지 ${solvedProblems}문제 해결!`;
+        message = `${timeAttackLevel}단 도전!\n한 걸음씩 나아가고 있어요!\n다음에는 더 잘할 수 있을 거예요! ⭐\n지금까지 ${solvedProblems}문제 해결!`;
       } else if (solvedProblems < 10) {
-        message = `${timeAttackLevel}단 도전!\n잘하고 있어요!\n조금만 더 연습하면 금방 성공할 거예요! 🌟\n\n지금까지 ${solvedProblems}문제 해결!`;
+        message = `${timeAttackLevel}단 도전!\n잘하고 있어요!\n조금만 더 연습하면 금방 성공할 거예요! 🌟\n지금까지 ${solvedProblems}문제 해결!`;
       } else if (solvedProblems < 15) {
-        message = `${timeAttackLevel}단 도전!\n거의 다 왔어요!\n다음에는 꼭 성공할 수 있을 거예요! ✨\n\n지금까지 ${solvedProblems}문제 해결!`;
+        message = `${timeAttackLevel}단 도전!\n거의 다 왔어요!\n다음에는 꼭 성공할 수 있을 거예요! ✨\n지금까지 ${solvedProblems}문제 해결!`;
       }
 
       showAlert(message || '시간이 종료되었습니다! 다시 도전해보세요! 💪', 'error', () => {
+        setUsedProblems(new Set()); // usedProblems 초기화 추가
         resetTimeAttack();
       });
     }
