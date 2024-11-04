@@ -8,6 +8,18 @@ export function triggerHapticFeedback(type) {
 
   console.log('Attempting to trigger haptic feedback:', type);
 
+  // Android Native Haptic
+  if (window?.Android?.vibrate) {
+    try {
+      const androidType = mapToAndroidType(type);
+      window.Android.vibrate(androidType);
+      console.log('Android haptic feedback triggered:', androidType);
+      return;
+    } catch (error) {
+      console.error('Failed to trigger Android haptic feedback:', error);
+    }
+  }
+
   // iOS Native Haptic
   if (window?.webkit?.messageHandlers?.hapticFeedbackHandler) {
     try {
@@ -22,53 +34,63 @@ export function triggerHapticFeedback(type) {
   // Fallback to Vibration API
   if (window.navigator?.vibrate) {
     try {
-      switch (type.toLowerCase()) {
-        case 'timeattacksuccess':
-          // 성공 패턴: 긴 진동 후 짧은 진동
-          window.navigator.vibrate([150, 100, 75]);
-          break;
-
-        case 'timeattackfail':
-          // 실패 패턴: 짧은 진동 세 번
-          window.navigator.vibrate([100, 50, 100, 50, 100]);
-          break;
-
-        case 'success':
-          window.navigator.vibrate(100);
-          break;
-
-        case 'error':
-          window.navigator.vibrate([100, 50, 100]);
-          break;
-
-        case 'warning':
-          window.navigator.vibrate([50, 25, 50]);
-          break;
-
-        case 'impactlight':
-          window.navigator.vibrate(50);
-          break;
-
-        case 'impactmedium':
-          window.navigator.vibrate(75);
-          break;
-
-        case 'impactheavy':
-          window.navigator.vibrate(100);
-          break;
-
-        default:
-          console.warn('Unknown haptic type:', type);
-          window.navigator.vibrate(50);
-      }
-      console.log('Vibration feedback triggered:', type);
+      const pattern = getVibrationPattern(type);
+      window.navigator.vibrate(pattern);
+      console.log('Vibration feedback triggered:', type, 'pattern:', pattern);
     } catch (error) {
       console.error('Failed to trigger vibration feedback:', error);
     }
   }
 }
 
-// 사용 예시
+// 안드로이드 네이티브 타입으로 매핑
+function mapToAndroidType(type) {
+  switch (type.toLowerCase()) {
+    case 'timeattacksuccess':
+      return 'complete'; // 레벨 완료와 비슷한 피드백
+    case 'timeattackfail':
+      return 'wrong';   // 오답과 비슷한 피드백
+    case 'success':
+      return 'correct'; // 정답과 비슷한 피드백
+    case 'error':
+      return 'wrong';   // 오답과 비슷한 피드백
+    case 'warning':
+      return 'click';   // 기본 클릭과 비슷한 피드백
+    case 'impactlight':
+      return 'click';   // 가벼운 클릭
+    case 'impactmedium':
+      return 'click';   // 중간 강도 클릭
+    case 'impactheavy':
+      return 'complete'; // 강한 피드백
+    default:
+      return 'click';   // 기본값
+  }
+}
+
+// 진동 패턴 정의
+function getVibrationPattern(type) {
+  switch (type.toLowerCase()) {
+    case 'timeattacksuccess':
+      return [150, 100, 75];
+    case 'timeattackfail':
+      return [100, 50, 100, 50, 100];
+    case 'success':
+      return [100];
+    case 'error':
+      return [100, 50, 100];
+    case 'warning':
+      return [50, 25, 50];
+    case 'impactlight':
+      return [50];
+    case 'impactmedium':
+      return [75];
+    case 'impactheavy':
+      return [100];
+    default:
+      return [50];
+  }
+}
+
 export const HAPTIC_TYPES = {
   TIME_ATTACK_SUCCESS: 'timeAttackSuccess',
   TIME_ATTACK_FAIL: 'timeAttackFail',
