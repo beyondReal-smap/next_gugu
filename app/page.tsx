@@ -14,6 +14,42 @@ import { Alert, AlertDescription } from "./components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
 import HeaderSection from './HeaderSection';
 import SettingsModal from "./SettingsModal";
+import RollingBanner from './RollingBanner';
+
+// 배너 아이템 인터페이스 정의
+export interface BannerItem {
+  type: 'content' | 'ad';  // type 속성 추가
+  icon?: string;
+  text?: string;
+  image?: string;
+  link?: string;
+  backgroundColor?: string;
+  textColor?: string;
+}
+
+// 배너 아이템 데이터
+const bannerItems: BannerItem[] = [
+  {
+    type: 'content' as const,
+    text: "곱셈의 순서를 바꾸어도 결과는 같아요!",
+    icon: "🎯",
+    image: "/api/placeholder/120/80",
+    backgroundColor: "bg-blue-50",
+    textColor: "text-blue-700"
+  },
+  {
+    type: 'ad' as const,
+  },
+  {
+    type: 'content' as const,
+    text: "구구단 학습 방법 알아보기",
+    image: "/api/placeholder/120/80",
+    link: "https://example.com/learning",
+    backgroundColor: "bg-emerald-50",
+    textColor: "text-emerald-700"
+  },
+  // ... 더 많은 아이템
+];
 
 interface TableStats {
   [key: number]: {
@@ -727,7 +763,7 @@ const MultiplicationGame = () => {
 
   // 격려 메시지 배열 수정
   const encouragingMessages = [
-    "훌륭해요! 이제 {n}단을 도전해봐요! ���",
+    "훌륭해요! 이제 {n}단을 도전해봐요! ",
     "{n}단 연습을 시작합니다!\n함께 해봐요! 🎉",
     "{n}단, 어렵지 않아요!\n지금부터 시작해요! 🌟",
     "{n}단 마스터를 향해!\n힘내세요! 💪",
@@ -739,7 +775,7 @@ const MultiplicationGame = () => {
     "시간과의 대결!\n지금 시작합니다! ⏱️",
     "타임어택 모드로\n실력을 시험해보세요! ⚡",
     "빠르고 정확하게!\n당신의 한계를 넘어봐요! 🚀",
-    "긴장감 넘치는 타임어택!\n준비되셨나요? 🏃‍♂️",
+    "긴장감 넘치는 타임어택!\n준비되���나요? 🏃‍♂️",
     "최고 기록에 도전하세요!\n파이팅! 💥",
   ];
 
@@ -859,16 +895,16 @@ const MultiplicationGame = () => {
       setIsPaused(false);
       setTimerActive(true);
     }
-  
+
     if (userAnswer.length < 3) {
       const newAnswer = userAnswer + num;
       setUserAnswer(newAnswer);
-  
+
       // setTimeout을 사용하여 상태 업데이트가 UI에 반영될 시간을 줍니다
       setTimeout(() => {
         const currentAnswer = parseInt(newAnswer);
         const correctAnswer = num1 * num2;
-  
+
         // 입력한 숫자가 정답과 자릿수가 같거나 더 큰 경우에만 자동 체크
         if (newAnswer.length >= correctAnswer.toString().length) {
           checkAnswer(newAnswer, true);
@@ -1058,21 +1094,21 @@ const MultiplicationGame = () => {
     if (gameMode === 'timeAttack' && isTimeAttackComplete) {
       return;
     }
-  
+
     if (!answer || isNaN(parseInt(answer))) return;
-  
+
     const userInput = parseInt(answer);
     const correct = num1 * num2 === userInput;
-  
+
     // Check if the answer was already processed
     const isAlreadyAnswered = history.some(item =>
       item.problem === `${num1} × ${num2}` &&
       item.userAnswer === userInput &&
       Date.now() - new Date(item.timestamp).getTime() < 1000
     );
-  
+
     if (isAlreadyAnswered) return;
-  
+
     // Save record
     const newHistory: HistoryItem = {
       problem: `${num1} × ${num2}`,
@@ -1083,14 +1119,14 @@ const MultiplicationGame = () => {
       mode: gameMode,
       table: num1
     };
-  
+
     setHistory(prev => [newHistory, ...prev]);
-  
+
     // 약간의 지연 후에 다음 동작을 실행합니다
     setTimeout(() => {
       if (gameMode === 'practice') {
         updatePracticeStats(selectedTable, correct);
-  
+
         if (correct) {
           triggerHapticFeedback(HAPTIC_TYPES.SUCCESS);
           setScore(prev => prev + 10);
@@ -1110,10 +1146,10 @@ const MultiplicationGame = () => {
         if (correct) {
           triggerHapticFeedback(HAPTIC_TYPES.SUCCESS);
           setUserAnswer("");
-  
+
           // 다음 문제 수를 먼저 계산
           const nextSolvedCount = solvedProblems + 1;
-  
+
           // 목표 달성 체크
           if (nextSolvedCount === requiredProblems) {
             setSolvedProblems(nextSolvedCount);
@@ -1122,11 +1158,11 @@ const MultiplicationGame = () => {
             saveGameState();
             return;
           }
-  
+
           // 아직 목표에 도달하지 않은 경우
           setSolvedProblems(nextSolvedCount);
           generateNewProblem();
-  
+
           // Save time attack progress
           saveGameState();
         } else {
@@ -1138,7 +1174,7 @@ const MultiplicationGame = () => {
           generateNewProblem();
         }
       }
-  
+
       // practice 모드일 때만 마지막에 저장
       if (gameMode === 'practice') {
         saveGameState();
@@ -1375,7 +1411,7 @@ const MultiplicationGame = () => {
       <div className="bg-white/50 p-3 rounded-xl backdrop-blur-sm mb-4 relative shadow-lg border border-indigo-100/50 z-[1]">
         <div className="bg-white/80 rounded-lg p-4 shadow-sm">
           {/* 최근 기록 표시 - 카드 형태로 변경 */}
-          <div className="h-7 mb-1"> {/* 높이 살짝 증가 */}
+          <div className="h-7 mb-1"> {/* 이 살짝 증가 */}
             {history.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -1406,7 +1442,7 @@ const MultiplicationGame = () => {
           </div>
 
           {/* 키패드 그리드 */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-2 scale-90 transform origin-top">
             {/* 1-9까지 숫자 */}
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
               <motion.button
@@ -1415,11 +1451,11 @@ const MultiplicationGame = () => {
                 initial="initial"
                 whileHover="hover"
                 whileTap="tap"
-                className="h-16 bg-gradient-to-b from-white to-indigo-50 
-                        text-indigo-600 rounded-lg text-xl font-bold
-                        shadow-sm hover:shadow-md border-2 border-indigo-100
-                        hover:border-indigo-300 hover:from-indigo-50 
-                        hover:to-indigo-100 active:scale-95 transition-all"
+                className="h-12 bg-gradient-to-b from-white to-indigo-50 
+              text-indigo-600 rounded-lg text-xl font-bold
+              shadow-sm hover:shadow-md border-2 border-indigo-100
+              hover:border-indigo-300 hover:from-indigo-50 
+              hover:to-indigo-100 active:scale-95 transition-all"
                 onClick={() => handleNumberInput(num)}
               >
                 {num}
@@ -1432,13 +1468,13 @@ const MultiplicationGame = () => {
               initial="initial"
               whileHover="hover"
               whileTap="tap"
-              className="h-16 bg-gradient-to-b from-white to-rose-50 
-                    text-rose-600 rounded-lg text-xl font-bold shadow-sm 
-                    hover:shadow-md border-2 border-rose-200
-                    hover:border-rose-300 hover:from-rose-50 hover:to-rose-100"
+              className="h-12 bg-gradient-to-b from-white to-rose-50 
+          text-rose-600 rounded-lg text-xl font-bold shadow-sm 
+          hover:shadow-md border-2 border-rose-200
+          hover:border-rose-300 hover:from-rose-50 hover:to-rose-100"
               onClick={() => setUserAnswer(userAnswer.slice(0, -1))}
             >
-              <Delete className="w-6 h-6 mx-auto" />
+              <Delete className="w-5 h-5 mx-auto" />
             </motion.button>
 
             {/* 0 버튼 */}
@@ -1447,11 +1483,11 @@ const MultiplicationGame = () => {
               initial="initial"
               whileHover="hover"
               whileTap="tap"
-              className="h-16 bg-gradient-to-b from-white to-indigo-50 
-                    text-indigo-600 rounded-lg text-xl font-bold shadow-sm 
-                    hover:shadow-md border-2 border-indigo-100
-                    hover:border-indigo-300 hover:from-indigo-50 
-                    hover:to-indigo-100"
+              className="h-12 bg-gradient-to-b from-white to-indigo-50 
+          text-indigo-600 rounded-lg text-xl font-bold shadow-sm 
+          hover:shadow-md border-2 border-indigo-100
+          hover:border-indigo-300 hover:from-indigo-50 
+          hover:to-indigo-100"
               onClick={() => handleNumberInput(0)}
             >
               0
@@ -1463,9 +1499,9 @@ const MultiplicationGame = () => {
               initial="initial"
               whileHover="hover"
               whileTap="tap"
-              className={`h-16 rounded-lg text-xl font-bold shadow-sm 
-                    hover:shadow-md transition-all border-2
-                    ${userAnswer
+              className={`h-12 rounded-lg text-xl font-bold shadow-sm 
+          hover:shadow-md transition-all border-2
+          ${userAnswer
                   ? 'bg-gradient-to-b from-emerald-500 to-emerald-600 text-white border-emerald-400 hover:border-emerald-500 hover:from-emerald-600 hover:to-emerald-700'
                   : 'bg-gradient-to-b from-gray-50 to-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
                 }`}
@@ -1475,46 +1511,9 @@ const MultiplicationGame = () => {
               확인
             </motion.button>
           </div>
+          <RollingBanner items={bannerItems} />
         </div>
       </div>
-
-
-      {history.length > 0 && (
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <h3 className="font-bold mb-4 text-black">최근 기록</h3>
-            {/* ScrollView 추가 */}
-            <div className="max-h-96 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}> {/* iOS 스크롤 성능 향상 */}
-              <div className="space-y-2">
-                {history.slice(0, 10).map((item, index) => (
-                  <div
-                    key={index}
-                    className={`p-3 rounded-lg border ${item.correct
-                      ? 'bg-green-50 border-green-200 text-green-700'
-                      : 'bg-red-50 border-red-200 text-red-700'
-                      } flex justify-between items-center`}
-                  >
-                    <div className="flex items-center gap-2">
-                      {item.correct ? (
-                        <Check className="w-5 h-5 text-green-500" />
-                      ) : (
-                        <X className="w-5 h-5 text-red-500" />
-                      )}
-                      <span>
-                        {item.problem} = {item.userAnswer}
-                      </span>
-                    </div>
-                    <span className="text-sm text-black">
-                      {new Date(item.timestamp).toLocaleTimeString()}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )
-      }
     </div >
   );
 };
