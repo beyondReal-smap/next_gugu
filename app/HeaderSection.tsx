@@ -620,7 +620,8 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                                         <Clock className={`${iconBaseStyle} ${timeLeft <= 10 ? 'text-rose-500' : 'text-blue-500'}`} />
                                                     </motion.div>
                                                 </div>
-                                                {!timerActive && !isTimeAttackComplete && (
+                                                {/* 시작 버튼 표시 조건 수정 */}
+                                                {(!timerActive || isPaused) && !isTimeAttackComplete && (
                                                     <motion.button
                                                         initial={{ opacity: 0 }}
                                                         animate={{ opacity: 1 }}
@@ -635,8 +636,8 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                                             }
                                                         }}
                                                         className="mt-1 self-center flex items-center gap-1.5 px-3 py-1 
-                                                        bg-indigo-500 hover:bg-indigo-600 text-white rounded 
-                                                        transition-colors text-xs font-medium"
+                                bg-indigo-500 hover:bg-indigo-600 text-white rounded 
+                                transition-colors text-xs font-medium"
                                                     >
                                                         <PlayCircle className="w-3.5 h-3.5" />
                                                         시작
@@ -645,11 +646,11 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                             </div>
                                         </div>
                                         <div className={`
-                                            absolute inset-0 bg-gradient-to-r 
-                                            ${timeLeft <= 10 ? 'from-rose-500/10' : 'from-blue-500/10'} 
-                                            to-transparent opacity-0 group-hover:opacity-100 transition-opacity
-                                            rounded-xl
-                                        `} />
+            absolute inset-0 bg-gradient-to-r 
+            ${timeLeft <= 10 ? 'from-rose-500/10' : 'from-blue-500/10'} 
+            to-transparent opacity-0 group-hover:opacity-100 transition-opacity
+            rounded-xl
+        `} />
                                     </div>
                                     <AnimatePresence>
                                         {showTimerSettings && (
