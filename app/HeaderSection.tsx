@@ -6,6 +6,8 @@ import {
     Trophy, Cog, Check, X, AlertCircle, Hash,
     Percent, Info, Star, Award, PlayCircle, Lock
 } from "lucide-react";
+import TimeAttackTableSelectModal from './TimeAttackTableSelectModal';
+import PracticeTableSelectModal from './PracticeTableSelectModal';
 
 interface TimeAttackTableSelectModalProps {
     masteredLevel: number;
@@ -81,6 +83,7 @@ interface HeaderSectionProps {
     generateNewProblem: () => void;
     setTimeAttackLevel: (level: number) => void;
     usedProblems: Set<string>;
+    setSelectedTable: (table: number) => void; // 추가된 prop
 }
 
 interface InfoModalProps {
@@ -118,7 +121,7 @@ const BaseModal: React.FC<{
                 className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]"
                 onClick={onClose}
             />
-            <div 
+            <div
                 className="absolute z-[101]"
                 style={{
                     top: `${(rect?.bottom || 0) + window.scrollY + 16}px`, // 16px로 증가
@@ -137,7 +140,7 @@ const BaseModal: React.FC<{
                 >
                     <div className="relative"> {/* 상대 위치 컨테이너 추가 */}
                         {/* 모달 화살표 추가 */}
-                        <div 
+                        <div
                             className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white rotate-45"
                             style={{
                                 boxShadow: '-2px -2px 2px rgba(0,0,0,0.03)'
@@ -267,131 +270,6 @@ const TimerSettingsModal: React.FC<TimerSettingsModalProps> = ({
     );
 };
 
-
-// TimeAttackTableSelectModal 컴포넌트
-const TimeAttackTableSelectModal: React.FC<TimeAttackTableSelectModalProps> = ({
-    masteredLevel,
-    timeAttackLevel,
-    setTimeAttackLevel,
-    setShowTableSelectModal,
-    setUsedProblems,
-    showAlert,
-    resetTimeAttack,
-    generateNewProblem,
-    gameMode,
-    setIsPaused,
-    isTimeAttackComplete,
-    timerActive,
-}) => {
-    const modalRef = useRef<HTMLDivElement>(null);
-
-    const handleCloseTableSelectModal = useCallback(() => {
-        setShowTableSelectModal(false);
-        if (gameMode === 'timeAttack' && !isTimeAttackComplete && timerActive) {
-            setIsPaused(false);
-        }
-    }, [setShowTableSelectModal, gameMode, isTimeAttackComplete, setIsPaused, timerActive]);
-
-    return (
-        <BaseModal 
-            show={true} 
-            onClose={handleCloseTableSelectModal} 
-            width="max-w-lg" 
-            position="center"
-            cardRef={modalRef}
-        >
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                <h3 className="text-lg font-bold text-gray-900">단수 선택</h3>
-                <button
-                    onClick={handleCloseTableSelectModal}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                    <X className="h-5 w-5" />
-                </button>
-            </div>
-
-            <div className="p-6">
-                <div className="grid grid-cols-4 gap-3">
-                    {Array.from({ length: 18 }, (_, i) => i + 2).map((table) => {
-                        const isMastered = table <= masteredLevel;
-                        const isCurrent = table === timeAttackLevel;
-                        const isLocked = !isMastered && table > masteredLevel + 1;
-
-                        return (
-                            <motion.div
-                                key={table}
-                                whileHover={isLocked ? {} : { scale: 1.05 }}
-                                whileTap={isLocked ? {} : { scale: 0.95 }}
-                                className="relative"
-                            >
-                                <button
-                                    onClick={() => {
-                                        if (isLocked) return;
-                                        setTimeAttackLevel(table);
-                                        setShowTableSelectModal(false);
-                                        setUsedProblems(new Set());
-                                        showAlert(`${table}단에 도전합니다!\n준비되셨나요? 💪`, 'success');
-                                        resetTimeAttack();
-                                        generateNewProblem();
-                                        if (gameMode === 'timeAttack') setIsPaused(false);
-                                    }}
-                                    disabled={isLocked}
-                                    className={`
-                                        w-full aspect-square rounded-xl text-base font-medium
-                                        flex items-center justify-center relative
-                                        transition-all duration-300 shadow-sm
-                                        ${isLocked
-                                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                            : isCurrent
-                                                ? 'bg-indigo-500 text-white shadow-indigo-100'
-                                                : isMastered
-                                                    ? 'bg-emerald-50 text-emerald-600 border-2 border-emerald-200'
-                                                    : 'bg-white text-gray-600 border-2 border-gray-200 hover:border-indigo-200 hover:bg-indigo-50'
-                                        }
-                                    `}
-                                >
-                                    <div className="flex flex-col items-center gap-1">
-                                        <span>{table}단</span>
-                                        {isMastered && (
-                                            <Check className="w-4 h-4 text-emerald-500" />
-                                        )}
-                                        {isLocked && (
-                                            <Lock className="w-4 h-4 text-gray-400" />
-                                        )}
-                                    </div>
-                                </button>
-                                {isMastered && (
-                                    <motion.div
-                                        initial={{ scale: 0 }}
-                                        animate={{ scale: 1 }}
-                                        className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full 
-                                        border-2 border-white shadow-sm z-10"
-                                        title="마스터 완료!"
-                                    />
-                                )}
-                            </motion.div>
-                        );
-                    })}
-                </div>
-
-                <div className="mt-6 flex items-center justify-center gap-6 text-sm">
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-emerald-500 rounded-full" />
-                        <span className="text-gray-600">마스터 완료</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-indigo-500 rounded-full" />
-                        <span className="text-gray-600">현재 도전 중</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-gray-300 rounded-full" />
-                        <span className="text-gray-600">잠김</span>
-                    </div>
-                </div>
-            </div>
-        </BaseModal>
-    );
-};
 const HeaderSection: React.FC<HeaderSectionProps> = ({
     gameMode,
     score,
@@ -441,11 +319,21 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
     onStreakInfoClose,
     onTableInfoClose,
     onTimerSettingsClose,
+    setSelectedTable,
 }) => {
 
     const scoreCardRef = useRef<HTMLDivElement>(null);
     const streakCardRef = useRef<HTMLDivElement>(null);
     const tableCardRef = useRef<HTMLDivElement>(null);
+
+    const handleTableSelect = (table: number) => {
+        if (gameMode === 'practice') {
+            setTimeAttackLevel(table); // 연습 모드에서도 같은 함수를 사용
+            generateNewProblem();
+            showAlert(`${table}단 연습을 시작합니다! 💪`, 'success');
+        }
+        setShowTableSelectModal(false);
+    };
 
     const containerVariants = {
         hidden: { opacity: 0, y: -20 },
@@ -496,6 +384,91 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
 
     return (
         <div className="relative mb-2">
+            {/* 모달 렌더링 부분 - AnimatePresence로 감싸서 렌더링 */}
+            <AnimatePresence>
+                {showTableSelectModal && (
+                    gameMode === 'practice' ? (
+                        <PracticeTableSelectModal
+                            show={showTableSelectModal}
+                            onClose={() => setShowTableSelectModal(false)}
+                            currentTable={selectedTable}
+                            practiceStats={practiceStats}
+                            onTableSelect={(table) => {
+                                setSelectedTable(table); // 선택한 단수 설정
+                                generateNewProblem(); // 새로운 문제 생성
+                                const savedState = JSON.parse(localStorage.getItem('multiplicationGame') || '{}');
+                                localStorage.setItem('multiplicationGame', JSON.stringify({
+                                    ...savedState,
+                                    selectedTable: table,
+                                    lastPracticeDate: new Date().toISOString()
+                                }));
+                            }}
+                            showAlert={showAlert}
+                        />
+                    ) : (
+                        <TimeAttackTableSelectModal
+                            masteredLevel={masteredLevel}
+                            timeAttackLevel={timeAttackLevel}
+                            setTimeAttackLevel={setTimeAttackLevel}
+                            setShowTableSelectModal={setShowTableSelectModal}
+                            setUsedProblems={setUsedProblems}
+                            showAlert={showAlert}
+                            resetTimeAttack={resetTimeAttack}
+                            generateNewProblem={generateNewProblem}
+                            gameMode={gameMode}
+                            setIsPaused={setIsPaused}
+                            isTimeAttackComplete={isTimeAttackComplete}
+                            timerActive={timerActive}
+                        />
+                    )
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {showScoreInfo && (
+                    <InfoModal
+                        show={showScoreInfo}
+                        onClose={onScoreInfoClose}
+                        title="점수 기준"
+                        cardRef={scoreCardRef}
+                    >
+                        <ul className="space-y-4 text-base text-black"> {/* 글자 크기와 간격 증가 */}
+                            <li className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                                <Check className="w-5 h-5 text-green-500" />
+                                <span>정답: +10점</span>
+                            </li>
+                            <li className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                                <X className="w-5 h-5 text-red-500" />
+                                <span>오답: -15점</span>
+                            </li>
+                            <li className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                                <AlertCircle className="w-5 h-5 text-blue-500" />
+                                <span>최저점: 0점</span>
+                            </li>
+                        </ul>
+                    </InfoModal>
+                )}
+            </AnimatePresence>
+            <AnimatePresence>
+                {showStreakInfo && (
+                    <InfoModal
+                        show={showStreakInfo}
+                        onClose={onStreakInfoClose}
+                        title="연속 정답"
+                        cardRef={streakCardRef}
+                    >
+                        <div className="space-y-4 text-base text-black"> {/* 글자 크기와 간격 증가 */}
+                            <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                                <Trophy className="w-5 h-5 text-yellow-500" />
+                                <span>최고기록: {maxStreak}회</span>
+                            </div>
+                            <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                                <Target className="w-5 h-5 text-red-500" />
+                                <span>현재기록: {streak}회</span>
+                            </div>
+                        </div>
+                    </InfoModal>
+                )}
+            </AnimatePresence>
             <motion.div
                 variants={containerVariants}
                 initial="hidden"
@@ -594,31 +567,6 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                         </div>
                                         <div className="absolute inset-0 bg-gradient-to-r from-rose-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
                                     </div>
-                                    <AnimatePresence>
-                                        {showScoreInfo && (
-                                            <InfoModal
-                                                show={showScoreInfo}
-                                                onClose={onScoreInfoClose}
-                                                title="점수 기준"
-                                                cardRef={scoreCardRef}
-                                            >
-                                                <ul className="space-y-4 text-base text-black"> {/* 글자 크기와 간격 증가 */}
-                                                    <li className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
-                                                        <Check className="w-5 h-5 text-green-500" />
-                                                        <span>정답: +10점</span>
-                                                    </li>
-                                                    <li className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
-                                                        <X className="w-5 h-5 text-red-500" />
-                                                        <span>오답: -15점</span>
-                                                    </li>
-                                                    <li className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
-                                                        <AlertCircle className="w-5 h-5 text-blue-500" />
-                                                        <span>최저 점: 0점</span>
-                                                    </li>
-                                                </ul>
-                                            </InfoModal>
-                                        )}
-                                    </AnimatePresence>
                                 </motion.div>
 
                                 {/* 연속 정답 카드 */}
@@ -638,34 +586,15 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                         </div>
                                         <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
                                     </div>
-                                    <AnimatePresence>
-                                        {showStreakInfo && (
-                                            <InfoModal
-                                                show={showStreakInfo}
-                                                onClose={onStreakInfoClose}
-                                                title="연속 정답"
-                                                cardRef={streakCardRef}
-                                            >
-                                                <div className="space-y-4 text-base text-black"> {/* 글자 크기와 간격 증가 */}
-                                                    <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
-                                                        <Trophy className="w-5 h-5 text-yellow-500" />
-                                                        <span>최고 기록: {maxStreak}회</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
-                                                        <Target className="w-5 h-5 text-red-500" />
-                                                        <span>현재: {streak}회</span>
-                                                    </div>
-                                                </div>
-                                            </InfoModal>
-                                        )}
-                                    </AnimatePresence>
                                 </motion.div>
 
-                                {/* 학습 중 카드 */}
-                                <motion.div variants={itemVariants} className="col-span-4 relative" ref={tableCardRef}>
+                                {/* 연습 모드의 학습 중 카드 부분 */}
+                                <motion.div variants={itemVariants} className="col-span-4 relative">
                                     <div
                                         className={`${baseCardStyle} h-[108px]`}
-                                        onClick={onTableClick}
+                                        onClick={() => {
+                                            setShowTableSelectModal(true);
+                                        }}
                                     >
                                         <div className="p-4 h-full flex flex-col">
                                             <p className={labelStyle}>학습 중</p>
@@ -678,36 +607,8 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                         </div>
                                         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
                                     </div>
-                                    <AnimatePresence>
-                                        {showTableInfo && practiceStats[selectedTable] && (
-                                            <InfoModal
-                                                show={showTableInfo}
-                                                onClose={onTableInfoClose}
-                                                title={`${selectedTable}단 통계`}
-                                                cardRef={tableCardRef}
-                                            >
-                                                <div className="space-y-4 text-base text-black"> {/* 글자 크기와 간격 증가 */}
-                                                    <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
-                                                        <Hash className="w-5 h-5 text-violet-500" />
-                                                        <span>총 시도: {practiceStats[selectedTable].attempts}회</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
-                                                        <Check className="w-5 h-5 text-green-500" />
-                                                        <span>정답: {practiceStats[selectedTable].correct}회</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
-                                                        <Percent className="w-5 h-5 text-purple-500" />
-                                                        <span>정확도: {
-                                                            practiceStats[selectedTable].attempts > 0
-                                                                ? Math.round((practiceStats[selectedTable].correct / practiceStats[selectedTable].attempts) * 100)
-                                                                : 0
-                                                        }%</span>
-                                                    </div>
-                                                </div>
-                                            </InfoModal>
-                                        )}
-                                    </AnimatePresence>
                                 </motion.div>
+
                             </>
                         ) : (
                             // 타임어택 모드 카드들
@@ -841,26 +742,6 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                     </div>
                                 </motion.div>
-
-                                {/* 단수 선택 모달 */}
-                                <AnimatePresence>
-                                    {showTableSelectModal && (
-                                        <TimeAttackTableSelectModal
-                                            masteredLevel={masteredLevel}
-                                            timeAttackLevel={timeAttackLevel}
-                                            setTimeAttackLevel={setTimeAttackLevel}
-                                            setShowTableSelectModal={setShowTableSelectModal}
-                                            setUsedProblems={setUsedProblems}
-                                            showAlert={showAlert}
-                                            resetTimeAttack={resetTimeAttack}
-                                            generateNewProblem={generateNewProblem}
-                                            gameMode={gameMode}
-                                            setIsPaused={setIsPaused}
-                                            isTimeAttackComplete={isTimeAttackComplete}
-                                            timerActive={timerActive}
-                                        />
-                                    )}
-                                </AnimatePresence>
                             </>
                         )}
                     </div>

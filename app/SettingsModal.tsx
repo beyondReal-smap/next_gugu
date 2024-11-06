@@ -12,19 +12,20 @@ interface SettingsModalProps {
     onClose: () => void;
     gameMode: 'practice' | 'timeAttack';
     selectedTable: number;
-    setSelectedTable: (table: number) => void;  // prop 추가
+    setSelectedTable: (table: number) => void;
     timeAttackLevel: number;
     masteredLevel: number;
     totalAttempts: number;
     successfulAttempts: number;
     practiceStats: {
-        [key: number]: {
-            attempts: number;
-            correct: number;
-        }
+      [key: number]: {
+        attempts: number;
+        correct: number;
+      }
     };
     onResetRecords: () => void;
-}
+    generateNewProblem: () => void;  // 추가
+  }
 
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -56,7 +57,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     const iconBaseStyle = "w-5 h-5 transition-transform duration-300 group-hover:scale-110";
 
     return (
-        <div className="fixed inset-0 flex items-start justify-center z-50 pt-20">
+        <div className="fixed inset-0 flex items-start justify-center z-[50] pt-20">
             <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
@@ -165,7 +166,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                             </>
                         ) : (
                             <>
-                                {/* 타임어택 통계 카드들 */}
+                                {/* 초통계 카드들 */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className={baseCardStyle}>
                                         <div className="p-4">
