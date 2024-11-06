@@ -19,7 +19,7 @@ interface RollingBannerProps {
 }
 
 const RollingBanner = ({ 
-  items, 
+  items = [], // 기본값 제공
   autoPlayInterval = 5000 
 }: RollingBannerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -28,12 +28,6 @@ const RollingBanner = ({
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   const minSwipeDistance = 50;
-
-  // 배열이 비어있는 경우 처리
-  if (!items || items.length === 0) return null;
-
-  // 현재 아이템 가져오기
-  const currentItem = items[currentIndex];
 
   const handlePrevious = () => {
     setCurrentIndex((prevIndex) => 
@@ -90,6 +84,13 @@ const RollingBanner = ({
 
     return () => clearInterval(interval);
   }, [isPaused, items.length, autoPlayInterval]);
+
+  // 빈 배열 체크
+  if (!items || items.length === 0) {
+    return null;
+  }
+
+  const currentItem = items[currentIndex];
 
   return (
     <div 
