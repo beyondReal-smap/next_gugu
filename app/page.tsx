@@ -858,21 +858,22 @@ const MultiplicationGame = () => {
     if (gameMode === 'timeAttack' && isPaused && !isTimeAttackComplete) {
       setIsPaused(false);
       setTimerActive(true);
-      // showAlert('시작!', 'info');
     }
-
+  
     if (userAnswer.length < 3) {
       const newAnswer = userAnswer + num;
       setUserAnswer(newAnswer);
-
-      // 자동 정답 체크 로직
-      const currentAnswer = parseInt(newAnswer);
-      const correctAnswer = num1 * num2;
-
-      // 입력한 숫자가 정답과 자릿수가 같거나 더 큰 경우에만 자동 체크
-      if (newAnswer.length >= correctAnswer.toString().length) {
-        checkAnswer(newAnswer, true);
-      }
+  
+      // setTimeout을 사용하여 상태 업데이트가 UI에 반영될 시간을 줍니다
+      setTimeout(() => {
+        const currentAnswer = parseInt(newAnswer);
+        const correctAnswer = num1 * num2;
+  
+        // 입력한 숫자가 정답과 자릿수가 같거나 더 큰 경우에만 자동 체크
+        if (newAnswer.length >= correctAnswer.toString().length) {
+          checkAnswer(newAnswer, true);
+        }
+      }, 100); // 100ms의 지연 시간을 줍니다
     }
   };
 
@@ -1057,21 +1058,21 @@ const MultiplicationGame = () => {
     if (gameMode === 'timeAttack' && isTimeAttackComplete) {
       return;
     }
-
+  
     if (!answer || isNaN(parseInt(answer))) return;
-
+  
     const userInput = parseInt(answer);
     const correct = num1 * num2 === userInput;
-
+  
     // Check if the answer was already processed
     const isAlreadyAnswered = history.some(item =>
       item.problem === `${num1} × ${num2}` &&
       item.userAnswer === userInput &&
       Date.now() - new Date(item.timestamp).getTime() < 1000
     );
-
+  
     if (isAlreadyAnswered) return;
-
+  
     // Save record
     const newHistory: HistoryItem = {
       problem: `${num1} × ${num2}`,
@@ -1082,64 +1083,67 @@ const MultiplicationGame = () => {
       mode: gameMode,
       table: num1
     };
-
+  
     setHistory(prev => [newHistory, ...prev]);
-
-    if (gameMode === 'practice') {
-      updatePracticeStats(selectedTable, correct);
-
-      if (correct) {
-        triggerHapticFeedback(HAPTIC_TYPES.SUCCESS);
-        setScore(prev => prev + 10);
-        setStreak(prev => prev + 1);
-        setUserAnswer("");
-        generateNewProblem();
-      } else {
-        triggerHapticFeedback(HAPTIC_TYPES.ERROR);
-        setScore(prev => Math.max(0, prev - 15));
-        setStreak(0);
-        setUserAnswer("");
-        if (!isAutoCheck) {
-          showAlert("틀렸습니다. 다시 시도해보세요!", 'error');
+  
+    // 약간의 지연 후에 다음 동작을 실행합니다
+    setTimeout(() => {
+      if (gameMode === 'practice') {
+        updatePracticeStats(selectedTable, correct);
+  
+        if (correct) {
+          triggerHapticFeedback(HAPTIC_TYPES.SUCCESS);
+          setScore(prev => prev + 10);
+          setStreak(prev => prev + 1);
+          setUserAnswer("");
+          generateNewProblem();
+        } else {
+          triggerHapticFeedback(HAPTIC_TYPES.ERROR);
+          setScore(prev => Math.max(0, prev - 15));
+          setStreak(0);
+          setUserAnswer("");
+          if (!isAutoCheck) {
+            showAlert("틀렸습니다. 다시 시도해보세요!", 'error');
+          }
         }
-      }
-    } else { // 타임어택 모드
-      if (correct) {
-        triggerHapticFeedback(HAPTIC_TYPES.SUCCESS);
-        setUserAnswer("");
-
-        // 다음 문제 수를 먼저 계산
-        const nextSolvedCount = solvedProblems + 1;
-
-        // 목표 달성 체크
-        if (nextSolvedCount === requiredProblems) {
+      } else { // 타임어택 모드
+        if (correct) {
+          triggerHapticFeedback(HAPTIC_TYPES.SUCCESS);
+          setUserAnswer("");
+  
+          // 다음 문제 수를 먼저 계산
+          const nextSolvedCount = solvedProblems + 1;
+  
+          // 목표 달성 체크
+          if (nextSolvedCount === requiredProblems) {
+            setSolvedProblems(nextSolvedCount);
+            setIsTimeAttackComplete(true);
+            handleTimeAttackEnd(true);
+            saveGameState();
+            return;
+          }
+  
+          // 아직 목표에 도달하지 않은 경우
           setSolvedProblems(nextSolvedCount);
-          setIsTimeAttackComplete(true);
-          handleTimeAttackEnd(true);
+          generateNewProblem();
+  
+          // Save time attack progress
           saveGameState();
-          return;
+        } else {
+          triggerHapticFeedback(HAPTIC_TYPES.ERROR);
+          setUserAnswer("");
+          if (!isAutoCheck) {
+            showAlert("틀렸습니다. 다시 시도해보세요!", 'error');
+          }
+          generateNewProblem();
         }
-
-        // 아직 목표에 도달하지 않은 경우
-        setSolvedProblems(nextSolvedCount);
-        generateNewProblem();
-
-        // Save time attack progress
-        saveGameState();
-      } else {
-        triggerHapticFeedback(HAPTIC_TYPES.ERROR);
-        setUserAnswer("");
-        if (!isAutoCheck) {
-          showAlert("틀렸습니다. 다시 시도해보세요!", 'error');
-        }
-        generateNewProblem();
       }
-    }
-
-    // practice 모드일 때만 마지막에 저장
-    if (gameMode === 'practice') {
-      saveGameState();
-    }
+  
+      // practice 모드일 때만 마지막에 저장
+      if (gameMode === 'practice') {
+        saveGameState();
+      }
+    }, 100); // 100ms의 지연 시간을 줍니다
   };
 
   // 키보드 입력 핸들러 수정

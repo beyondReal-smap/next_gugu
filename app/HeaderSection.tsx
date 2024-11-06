@@ -9,21 +9,6 @@ import {
 import TimeAttackTableSelectModal from './TimeAttackTableSelectModal';
 import PracticeTableSelectModal from './PracticeTableSelectModal';
 
-interface TimeAttackTableSelectModalProps {
-    masteredLevel: number;
-    timeAttackLevel: number;
-    setTimeAttackLevel: (level: number) => void;
-    setShowTableSelectModal: (show: boolean) => void;
-    setUsedProblems: (problems: Set<string>) => void;
-    showAlert: (message: string, type: 'success' | 'error' | 'info' | 'warning') => void;
-    resetTimeAttack: () => void;
-    generateNewProblem: () => void;
-    gameMode: 'practice' | 'timeAttack';
-    setIsPaused: (paused: boolean) => void;
-    isTimeAttackComplete: boolean;
-    timerActive: boolean;
-}
-
 interface HeaderSectionProps {
     gameMode: 'practice' | 'timeAttack';
     score: number;
@@ -393,7 +378,7 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                             onClose={() => setShowTableSelectModal(false)}
                             currentTable={selectedTable}
                             practiceStats={practiceStats}
-                            onTableSelect={(table) => {
+                            onTableSelect={(table: number) => {
                                 setSelectedTable(table); // 선택한 단수 설정
                                 generateNewProblem(); // 새로운 문제 생성
                                 const savedState = JSON.parse(localStorage.getItem('multiplicationGame') || '{}');
