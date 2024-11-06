@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
-import AdBanner from './AdBanner';
 
 interface BannerItem {
   type: 'content' | 'ad';
@@ -21,7 +20,7 @@ interface RollingBannerProps {
 
 const RollingBanner = ({ 
   items, 
-  autoPlayInterval = 5000 
+  autoPlayInterval = 3000 
 }: RollingBannerProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -69,68 +68,56 @@ const RollingBanner = ({
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      <div className="relative px-4 py-3">
-        <div className="flex items-center justify-between">
-          {items.length > 1 && (
-            <button 
-              onClick={handlePrevious}
-              className="absolute left-2 p-1 rounded-full bg-white/90 text-indigo-600 hover:bg-indigo-50 transition-colors z-10"
-              aria-label="Previous banner"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-          )}
-          
-          <div 
-            className={`flex-1 min-h-[3rem] px-8 ${
-              currentItem.type === 'content' && currentItem.link ? 'cursor-pointer hover:opacity-80' : ''
-            }`}
-            onClick={() => handleItemClick(currentItem)}
-            role={currentItem.type === 'content' && currentItem.link ? 'link' : 'presentation'}
+      {/* 메인 컨테이너에 h-16 추가하여 고정 높이 설정 */}
+      <div className="relative h-16 flex items-center">
+        {items.length > 1 && (
+          <button 
+            onClick={handlePrevious}
+            className="absolute left-2 p-1 rounded-full bg-white/90 text-indigo-600 hover:bg-indigo-50 transition-colors z-10"
+            aria-label="Previous banner"
           >
-            {currentItem.type === 'content' ? (
-              <div className="flex items-center justify-center gap-4">
-                {currentItem.image && (
-                  <div className="w-[120px] h-[80px] relative rounded-lg overflow-hidden flex-shrink-0">
-                    <img 
-                      src={currentItem.image} 
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-                
-                <div className={`flex items-center gap-2 ${currentItem.textColor || 'text-indigo-700'}`}>
-                  {currentItem.icon && (
-                    <span className="text-xl" role="img" aria-hidden="true">
-                      {currentItem.icon}
-                    </span>
-                  )}
-                  <span className="text-sm font-medium">
-                    {currentItem.text}
-                  </span>
-                  {currentItem.link && (
-                    <ExternalLink className="w-4 h-4 opacity-70" />
-                  )}
-                </div>
-              </div>
-            ) : (
-              <AdBanner className="w-full h-[80px]" />
-            )}
-          </div>
-
-          {items.length > 1 && (
-            <button 
-              onClick={handleNext}
-              className="absolute right-2 p-1 rounded-full bg-white/90 text-indigo-600 hover:bg-indigo-50 transition-colors z-10"
-              aria-label="Next banner"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+        )}
+        
+        {/* 중앙 정렬을 위한 컨테이너 */}
+        <div 
+          className={`flex-1 h-full flex items-center justify-center px-8
+            ${currentItem.type === 'content' && currentItem.link ? 'cursor-pointer hover:opacity-80' : ''}`}
+          onClick={() => handleItemClick(currentItem)}
+          role={currentItem.type === 'content' && currentItem.link ? 'link' : 'presentation'}
+        >
+          {currentItem.type === 'content' ? (
+            <div className={`flex items-center gap-2 ${currentItem.textColor || 'text-indigo-700'}`}>
+              {currentItem.icon && (
+                <span className="text-2xl flex items-center" role="img" aria-hidden="true">
+                  {currentItem.icon}
+                </span>
+              )}
+              <span className="text-base font-medium">
+                {currentItem.text}
+              </span>
+              {currentItem.link && (
+                <ExternalLink className="w-4 h-4 opacity-70" />
+              )}
+            </div>
+          ) : (
+            <span className="text-sm text-gray-500">Advertisement</span>
           )}
         </div>
+
+        {items.length > 1 && (
+          <button 
+            onClick={handleNext}
+            className="absolute right-2 p-1 rounded-full bg-white/90 text-indigo-600 hover:bg-indigo-50 transition-colors z-10"
+            aria-label="Next banner"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        )}
       </div>
       
+      {/* 인디케이터를 배너 하단에 배치 */}
       {items.length > 1 && (
         <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-1 pb-1">
           {items.map((_, index) => (

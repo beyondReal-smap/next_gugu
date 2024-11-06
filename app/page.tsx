@@ -33,22 +33,81 @@ const bannerItems: BannerItem[] = [
     type: 'content' as const,
     text: "곱셈의 순서를 바꾸어도 결과는 같아요!",
     icon: "🎯",
-    image: "/api/placeholder/120/80",
     backgroundColor: "bg-blue-50",
     textColor: "text-blue-700"
+  },
+  {
+    type: 'content' as const,
+    text: "구구단 학습 방법 알아보기",
+    icon: "📚",
+    link: "https://smap.co.kr",
+    backgroundColor: "bg-emerald-50",
+    textColor: "text-emerald-700"
   },
   {
     type: 'ad' as const,
   },
   {
     type: 'content' as const,
-    text: "구구단 학습 방법 알아보기",
-    image: "/api/placeholder/120/80",
-    link: "https://example.com/learning",
-    backgroundColor: "bg-emerald-50",
-    textColor: "text-emerald-700"
+    text: "0을 곱하면 항상 0이 되어요!",
+    icon: "💡",
+    backgroundColor: "bg-amber-50",
+    textColor: "text-amber-700"
   },
-  // ... 더 많은 아이템
+  {
+    type: 'content' as const,
+    text: "1을 곱하면 수가 변하지 않아요",
+    icon: "✨",
+    backgroundColor: "bg-purple-50",
+    textColor: "text-purple-700"
+  },
+  {
+    type: 'content' as const,
+    text: "2의 곱은 두 번 더하기와 같아요",
+    icon: "🎨",
+    link: "https://smap.co.kr/multiply-tips",
+    backgroundColor: "bg-pink-50",
+    textColor: "text-pink-700"
+  },
+  {
+    type: 'content' as const,
+    text: "5의 곱은 끝자리가 0 또는 5예요",
+    icon: "🌟",
+    backgroundColor: "bg-indigo-50",
+    textColor: "text-indigo-700"
+  },
+  {
+    type: 'ad' as const,
+  },
+  {
+    type: 'content' as const,
+    text: "9의 곱? 10을 곱하고 1번 빼보세요!",
+    icon: "🎮",
+    backgroundColor: "bg-teal-50",
+    textColor: "text-teal-700"
+  },
+  {
+    type: 'content' as const,
+    text: "오늘의 구구단 퀴즈 풀어보기",
+    icon: "🎯",
+    link: "https://smap.co.kr/quiz",
+    backgroundColor: "bg-rose-50",
+    textColor: "text-rose-700"
+  },
+  {
+    type: 'content' as const,
+    text: "매일 조금씩, 꾸준히 연습해요!",
+    icon: "⭐",
+    backgroundColor: "bg-orange-50",
+    textColor: "text-orange-700"
+  },
+  {
+    type: 'content' as const,
+    text: "틀려도 괜찮아요, 다시 도전해보세요!",
+    icon: "🌈",
+    backgroundColor: "bg-cyan-50",
+    textColor: "text-cyan-700"
+  }
 ];
 
 interface TableStats {
@@ -1500,9 +1559,9 @@ const MultiplicationGame = () => {
               whileHover="hover"
               whileTap="tap"
               className={`h-12 rounded-lg text-xl font-bold shadow-sm 
-          hover:shadow-md transition-all border-2
-          ${userAnswer
-                  ? 'bg-gradient-to-b from-emerald-500 to-emerald-600 text-white border-emerald-400 hover:border-emerald-500 hover:from-emerald-600 hover:to-emerald-700'
+        hover:shadow-md transition-all border-2
+        ${userAnswer
+                  ? 'bg-gradient-to-b from-indigo-500 to-indigo-600 text-white border-indigo-400 hover:border-indigo-500 hover:from-indigo-600 hover:to-indigo-700'
                   : 'bg-gradient-to-b from-gray-50 to-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
                 }`}
               onClick={() => checkAnswer()}
