@@ -720,7 +720,7 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                                 <div className="flex items-center gap-1 mt-2">
                                                     <Award className="w-4 h-4 text-yellow-500" />
                                                     <span className="text-xs text-gray-500">
-                                                        최고 : {masteredLevel}단
+                                                        최고:{masteredLevel}단
                                                     </span>
                                                 </div>
                                             </div>
