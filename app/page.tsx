@@ -8,24 +8,16 @@ import {
   Trophy, Cog, X, Check, XCircle, Hash,
   Percent, Activity, Award, Star, Info,
   AlertCircle, PlayCircle, PauseCircle,
-  Lock, Delete
+  Lock, Delete, ShoppingBag, Crown, Sparkles,
+  Ban, Infinity, Zap
 } from "lucide-react";
 import { Alert, AlertDescription } from "./components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
 import HeaderSection from './HeaderSection';
 import SettingsModal from "./SettingsModal";
 import RollingBanner from './RollingBanner';
-
-// 배너 아이템 인터페이스 정의
-export interface BannerItem {
-  type: 'content' | 'ad';  // type 속성 추가
-  icon?: string;
-  text?: string;
-  image?: string;
-  link?: string;
-  backgroundColor?: string;
-  textColor?: string;
-}
+import PurchaseManager from './lib/purchaseManager';
+import { BannerItem } from './types/banner';
 
 // 배너 아이템 데이터
 const bannerItems: BannerItem[] = [
@@ -213,7 +205,7 @@ const TimeAttackResultDialog = ({
               <Clock className="w-8 h-8 text-amber-500" />
             </div>
           )}
-          <h3 className="text-xl font-bold text-center mb-2">
+          <h3 className="text-xl font-suite font-bold text-center mb-2">
             {success ? '축하합니다! 🎉' : '아쉽네요! 😢'}
           </h3>
           <p className="text-center text-gray-600 whitespace-pre-line">{message}</p>
@@ -223,7 +215,7 @@ const TimeAttackResultDialog = ({
         <div className="mb-6">
           <div className="flex justify-between text-sm mb-1">
             <span className="text-gray-500">진행률</span>
-            <span className="font-medium text-indigo-600">{solvedProblems}/{requiredProblems}</span>
+            <span className="font-suite font-medium text-indigo-600">{solvedProblems}/{requiredProblems}</span>
           </div>
           <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
             <div
@@ -240,7 +232,7 @@ const TimeAttackResultDialog = ({
               <Button
                 variant="ghost"
                 onClick={onNext}
-                className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3"
+                className="w-full bg-green-500 hover:bg-green-600 text-white font-suite font-bold py-3"
               >
                 {timeAttackLevel + 1}단 도전하기
               </Button>
@@ -257,7 +249,7 @@ const TimeAttackResultDialog = ({
               <Button
                 variant="ghost"
                 onClick={onRetry}
-                className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3"
+                className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-suite font-bold py-3"
               >
                 다시 도전하기
               </Button>
@@ -294,7 +286,7 @@ const ProblemCountSettings = React.memo(({
       className="absolute top-full left-0 mt-2 bg-white p-4 rounded-lg shadow-lg z-50 w-48"
     >
       <div className="flex justify-between items-center mb-4">
-        <h4 className="text-lg font-bold text-black">문제 수 설정</h4>
+        <h4 className="text-lg font-suite font-bold text-black">문제 수 설정</h4>
         <button
           onClick={onClose}
           className="text-gray-500 hover:text-gray-700"
@@ -464,6 +456,40 @@ const MultiplicationGame = () => {
   const prevTimeAttackLevel = useRef(timeAttackLevel);
   const prevGameMode = useRef(gameMode);
 
+  const [isPremium, setIsPremium] = useState(false);
+  
+  // 구매 버튼 컴포넌트
+  const PurchaseButton = ({ onPurchaseClick, isPremium }: { onPurchaseClick: () => void; isPremium: boolean }) => {
+    if (isPremium) return null;
+
+    return (
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        className="fixed bottom-6 right-1/2 transform translate-x-1/2 z-40
+        bg-gradient-to-r from-violet-600 to-indigo-600 
+        text-white px-6 py-3 rounded-2xl shadow-lg 
+        hover:shadow-xl hover:from-violet-500 hover:to-indigo-500
+        flex items-center gap-2.5"
+        onClick={onPurchaseClick}
+      >
+        <Crown className="w-5 h-5" />
+        <span className="font-suite font-bold">프리미엄 구매하기</span>
+      </motion.button>
+    );
+  };
+
+
+  // 구매 상태 확인
+  useEffect(() => {
+    const checkPurchaseStatus = async () => {
+      const premium = await PurchaseManager.getPurchaseStatus();
+      setIsPremium(premium);
+    };
+
+    checkPurchaseStatus();
+  }, []);
+
   // 타임어택 결과 다이얼로그 상태 추가
   const [timeAttackResult, setTimeAttackResult] = useState<{
     show: boolean;
@@ -564,7 +590,7 @@ const MultiplicationGame = () => {
         className="absolute top-full left-0 mt-2 bg-white p-4 rounded-xl shadow-lg z-50 w-48 border-2 border-indigo-100"
       >
         <div className="flex justify-between items-center mb-4">
-          <h4 className="text-lg font-bold text-indigo-600">타이머 설정</h4>
+          <h4 className="text-lg font-suite font-bold text-indigo-600">타이머 설정</h4>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
@@ -609,7 +635,7 @@ const MultiplicationGame = () => {
       className="absolute top-full left-0 mt-2 bg-white p-4 rounded-lg shadow-lg z-50 w-64"
     >
       <div className="flex justify-between items-center mb-4">
-        <h4 className="text-lg font-bold text-black">점수 기준</h4>
+        <h4 className="text-lg font-suite font-bold text-black">점수 기준</h4>
         <button
           onClick={() => setShowScoreInfo(false)}
           className="text-gray-500 hover:text-gray-700"
@@ -657,7 +683,7 @@ const MultiplicationGame = () => {
         className="absolute top-full left-0 mt-2 bg-white p-4 rounded-lg shadow-lg z-50 w-64"
       >
         <div className="flex justify-between items-center mb-4">
-          <h4 className="text-lg font-bold text-black">연속 정답</h4>
+          <h4 className="text-lg font-suite font-bold text-black">연속 정답</h4>
           <button
             onClick={() => setShowStreakInfo(false)}
             className="text-gray-500 hover:text-gray-700"
@@ -690,7 +716,7 @@ const MultiplicationGame = () => {
         className="absolute top-full left-0 mt-2 bg-white p-4 rounded-lg shadow-lg z-50 w-64"
       >
         <div className="flex justify-between items-center mb-4">
-          <h4 className="text-lg font-bold text-black">{selectedTable}단 통계</h4>
+          <h4 className="text-lg font-suite font-bold text-black">{selectedTable}단 통계</h4>
           <button
             onClick={() => setShowTableInfo(false)}
             className="text-gray-500 hover:text-gray-700"
@@ -753,7 +779,7 @@ const MultiplicationGame = () => {
       <div className="fixed inset-0 flex items-center justify-center z-[100]">
         <div className="absolute inset-0 bg-black bg-opacity-50" />
         <div className="relative bg-white rounded-lg p-6 max-w-sm mx-4 shadow-xl">
-          <h3 className="text-lg font-bold mb-4 text-black">{confirmDialog.message}</h3> {/* 텍스트 색상 변경 */}
+          <h3 className="text-lg font-suite font-bold mb-4 text-black">{confirmDialog.message}</h3> {/* 텍스트 색상 변경 */}
           <div className="flex justify-between gap-4"> {/* 버튼 배치 수정 */}
             <Button
               variant="outline"
@@ -765,7 +791,7 @@ const MultiplicationGame = () => {
             <Button
               variant="default"
               onClick={confirmDialog.onConfirm} // onConfirm 수정
-              className="w-1/2 bg-blue-500 text-white hover:bg-blue-700 text-xl font-bold" // 파란색 배경 및 흰색 텍스트
+              className="w-1/2 bg-blue-500 text-white hover:bg-blue-700 text-xl font-suite font-bold" // 파란색 배경 및 흰색 텍스트
             >
               확인
             </Button>
@@ -828,15 +854,14 @@ const MultiplicationGame = () => {
     "{n}단 마스터를 향해!\n힘내세요! 💪",
     "좋은 선택이에요!\n{n}단을 익혀봅시다! 😊",
   ];
-
-  // 타임어택 모드 시작 메시지 배열 수정
-  const timeAttackMessages = [
-    "시간과의 대결!\n지금 시작합니다! ⏱️",
-    "타임어택 모드로\n실력을 시험해보세요! ⚡",
-    "빠르고 정확하게!\n당신의 한계를 넘어봐요! 🚀",
-    "긴장감 넘치는 타임어택!\n준비되���나요? 🏃‍♂️",
-    "최고 기록에 도전하세요!\n파이팅! 💥",
+  const timeAttackMessages  = [
+    "도전모드 시작!\n지금 바로 도전해보세요! ⏱️",
+    "새로운 기록에 도전!\n자신의 한계를 시험해보세요! ⚡",
+    "도전 정신을 발휘할 시간!\n최고 기록에 도전하세요! 🚀",
+    "짜릿한 도전모드!\n준비되셨나요? 🏃‍♂️",
+    "최고의 실력을 보여주세요!\n파이팅! 💥",
   ];
+  
 
 
   // 연습 모드 시작 메시지 선택 함수
@@ -1356,7 +1381,7 @@ const MultiplicationGame = () => {
                 ) : (
                   <Activity className="h-8 w-8 text-violet-500" />
                 )}
-                <p className={`text-lg font-medium whitespace-pre-line
+                <p className={`text-lg font-suite font-medium whitespace-pre-line
         ${alertModal.type === 'success' ? 'text-green-700' :
                     alertModal.type === 'error' ? 'text-red-700' :
                       'text-blue-700'}
@@ -1446,6 +1471,8 @@ const MultiplicationGame = () => {
         usedProblems={usedProblems}
         setTimeAttackLevel={setTimeAttackLevel}
         setSelectedTable={setSelectedTable}
+        isPremium={isPremium}  // 추가된 부분
+        setIsPremium={setIsPremium}  // 추가된 부분
       />
 
       <AnimatePresence>
@@ -1476,7 +1503,7 @@ const MultiplicationGame = () => {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={`
-                        inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-semibold
+                        inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-suite font-semibold
                         ${history[0].correct
                     ? 'bg-green-50 text-green-700 border border-green-200'
                     : 'bg-red-50 text-red-700 border border-red-200'
@@ -1496,7 +1523,7 @@ const MultiplicationGame = () => {
           </div>
 
           {/* 문제 표시 */}
-          <div className="text-5xl font-bold text-center mb-4 py-2 text-indigo-600">
+          <div className="text-5xl font-suite font-bold text-center mb-4 py-2 text-indigo-600">
             {num1} × {num2} = {userAnswer || "_"}
           </div>
 
@@ -1511,7 +1538,7 @@ const MultiplicationGame = () => {
                 whileHover="hover"
                 whileTap="tap"
                 className="h-12 bg-gradient-to-b from-white to-indigo-50 
-              text-indigo-600 rounded-lg text-xl font-bold
+              text-indigo-600 rounded-lg text-xl font-suite font-bold
               shadow-sm hover:shadow-md border-2 border-indigo-100
               hover:border-indigo-300 hover:from-indigo-50 
               hover:to-indigo-100 active:scale-95 transition-all"
@@ -1528,7 +1555,7 @@ const MultiplicationGame = () => {
               whileHover="hover"
               whileTap="tap"
               className="h-12 bg-gradient-to-b from-white to-rose-50 
-          text-rose-600 rounded-lg text-xl font-bold shadow-sm 
+          text-rose-600 rounded-lg text-xl font-suite font-bold shadow-sm 
           hover:shadow-md border-2 border-rose-200
           hover:border-rose-300 hover:from-rose-50 hover:to-rose-100"
               onClick={() => setUserAnswer(userAnswer.slice(0, -1))}
@@ -1543,7 +1570,7 @@ const MultiplicationGame = () => {
               whileHover="hover"
               whileTap="tap"
               className="h-12 bg-gradient-to-b from-white to-indigo-50 
-          text-indigo-600 rounded-lg text-xl font-bold shadow-sm 
+          text-indigo-600 rounded-lg text-xl font-suite font-bold shadow-sm 
           hover:shadow-md border-2 border-indigo-100
           hover:border-indigo-300 hover:from-indigo-50 
           hover:to-indigo-100"
@@ -1558,7 +1585,7 @@ const MultiplicationGame = () => {
               initial="initial"
               whileHover="hover"
               whileTap="tap"
-              className={`h-12 rounded-lg text-xl font-bold shadow-sm 
+              className={`h-12 rounded-lg text-xl font-suite font-bold shadow-sm 
         hover:shadow-md transition-all border-2
         ${userAnswer
                   ? 'bg-gradient-to-b from-indigo-500 to-indigo-600 text-white border-indigo-400 hover:border-indigo-500 hover:from-indigo-600 hover:to-indigo-700'

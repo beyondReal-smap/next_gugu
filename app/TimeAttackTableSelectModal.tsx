@@ -67,14 +67,14 @@ const TimeAttackTableSelectModal = ({
                 <div className="p-4"> {/* p-6에서 p-4로 패딩 감소 */}
                     <div className="flex justify-between items-center mb-4"> {/* mb-6에서 mb-4로 감소 */}
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900">단 선택</h2>
+                            <h2 className="text-xl font-suite font-bold text-gray-900">단 선택</h2>
                             <p className="text-sm text-gray-500 mt-0.5"> {/* mt-1에서 mt-0.5로 감소 */}
                                 도전할 구구단을 선택하세요
                             </p>
                         </div>
                         <div className="flex items-center gap-2 bg-indigo-50 px-3 py-1.5 rounded-full">
                             <Medal className="w-4 h-4 text-indigo-500" />
-                            <span className="text-sm font-medium text-indigo-700">
+                            <span className="text-sm font-suite font-medium text-indigo-700">
                                 최고기록: {masteredLevel}단
                             </span>
                         </div>
@@ -98,7 +98,7 @@ const TimeAttackTableSelectModal = ({
                                 >
                                     <div className="p-3"> {/* p-4에서 p-3으로 패딩 감소 */}
                                         <div className="flex justify-between items-start mb-1.5"> {/* mb-2에서 mb-1.5로 감소 */}
-                                            <span className="text-lg font-bold text-gray-900">{table}단</span>
+                                            <span className="text-lg font-suite font-bold text-gray-900">{table}단</span>
                                             {status === 'current' && <Check className="w-4 h-4 text-indigo-500" />}
                                             {status === 'mastered' && <Trophy className="w-4 h-4 text-emerald-500" />}
                                             {status === 'available' && <Target className="w-4 h-4 text-amber-500" />}
@@ -122,7 +122,7 @@ const TimeAttackTableSelectModal = ({
                         <Button
                             variant="default"
                             onClick={() => setShowTableSelectModal(false)}
-                            className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2.5 h-auto" // 높이와 폰트 강조 수정
+                            className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-suite font-semibold py-2.5 h-auto" // 높이와 폰트 강조 수정
                         >
                             닫기
                         </Button>

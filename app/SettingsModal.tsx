@@ -52,8 +52,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
     group
   `;
 
-    const labelStyle = "text-xs font-medium text-gray-500";
-    const valueStyle = "text-lg font-bold text-indigo-700";
+    const labelStyle = "text-xs font-suite font-medium text-gray-500";
+    const valueStyle = "text-lg font-suite font-bold text-indigo-700";
     const iconBaseStyle = "w-5 h-5 transition-transform duration-300 group-hover:scale-110";
 
     return (
@@ -67,7 +67,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
             >
                 {/* 헤더 */}
                 <div className="bg-white px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                    <h3 className="text-lg font-bold text-gray-900">설정</h3>
+                    <h3 className="text-lg font-suite font-bold text-gray-900">설정</h3>
                     <button
                         onClick={onClose}
                         className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -80,7 +80,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div className="p-6 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto">
                     {/* 모드별 통계 */}
                     <div className="space-y-4">
-                        <h4 className="text-sm font-semibold text-gray-900 mb-3">
+                        <h4 className="text-sm font-suite font-semibold text-gray-900 mb-3">
                             {gameMode === 'practice' ? '연습 모드 통계' : '타임어택 통계'}
                         </h4>
 
@@ -103,7 +103,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                                     <p className={labelStyle}>시도</p>
                                                     <div className="flex items-center gap-1 mt-1">
                                                         <BarChart2 className="w-4 h-4 text-violet-500" />
-                                                        <p className="text-sm font-semibold text-gray-700">
+                                                        <p className="text-sm font-suite font-semibold text-gray-700">
                                                             {practiceStats[selectedTable].attempts}회
                                                         </p>
                                                     </div>
@@ -112,7 +112,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                                     <p className={labelStyle}>정답</p>
                                                     <div className="flex items-center gap-1 mt-1">
                                                         <Check className="w-4 h-4 text-green-500" />
-                                                        <p className="text-sm font-semibold text-gray-700">
+                                                        <p className="text-sm font-suite font-semibold text-gray-700">
                                                             {practiceStats[selectedTable].correct}회
                                                         </p>
                                                     </div>
@@ -121,7 +121,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                                     <p className={labelStyle}>정확도</p>
                                                     <div className="flex items-center gap-1 mt-1">
                                                         <Star className="w-4 h-4 text-amber-500" />
-                                                        <p className="text-sm font-semibold text-gray-700">
+                                                        <p className="text-sm font-suite font-semibold text-gray-700">
                                                             {practiceStats[selectedTable].attempts > 0
                                                                 ? Math.round((practiceStats[selectedTable].correct / practiceStats[selectedTable].attempts) * 100)
                                                                 : 0}%
@@ -145,7 +145,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                                     whileTap={{ scale: 0.95 }}
                                                     onClick={() => setSelectedTable(table)}
                                                     className={`
-                                            aspect-square rounded-md flex items-center justify-center text-xs font-medium
+                                            aspect-square rounded-md flex items-center justify-center text-xs font-suite font-medium
                                             transition-all duration-200
                                             ${table === selectedTable ? 'ring-2 ring-indigo-500 ring-offset-2' : ''}
                                             ${practiceStats[table]?.attempts > 0
@@ -196,7 +196,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                             <div className="text-center">
                                                 <div className="flex flex-col items-center gap-1 mb-1">
                                                     <Medal className="w-5 h-5 text-violet-500" />
-                                                    <p className="text-xs font-medium text-gray-600">
+                                                    <p className="text-xs font-suite font-medium text-gray-600">
                                                         총 도전
                                                     </p>
                                                 </div>
@@ -205,7 +205,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                             <div className="text-center">
                                                 <div className="flex flex-col items-center gap-1 mb-1">
                                                     <Check className="w-5 h-5 text-emerald-500" />
-                                                    <p className="text-xs font-medium text-gray-600">
+                                                    <p className="text-xs font-suite font-medium text-gray-600">
                                                         성공
                                                     </p>
                                                 </div>
@@ -214,7 +214,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                             <div className="text-center">
                                                 <div className="flex flex-col items-center gap-1 mb-1">
                                                     <Star className="w-5 h-5 text-yellow-500" />
-                                                    <p className="text-xs font-medium text-gray-600">
+                                                    <p className="text-xs font-suite font-medium text-gray-600">
                                                         성공률
                                                     </p>
                                                 </div>

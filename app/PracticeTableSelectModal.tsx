@@ -61,7 +61,7 @@ const PracticeTableSelectModal: React.FC<PracticeTableSelectModalProps> = ({
                 className="relative bg-gray-50 rounded-2xl shadow-xl w-full max-w-2xl mx-4 overflow-hidden"
             >
                 <div className="bg-white px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                    <h3 className="text-lg font-bold text-gray-900">구구단 선택</h3>
+                    <h3 className="text-lg font-suite font-bold text-gray-900">구구단 선택</h3>
                     <button
                         onClick={onClose}
                         className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -98,7 +98,7 @@ const PracticeTableSelectModal: React.FC<PracticeTableSelectModalProps> = ({
                                             }));
                                         }}
                                         className={`
-                                            w-full aspect-square rounded-xl text-base font-medium
+                                            w-full aspect-square rounded-xl text-base font-suite font-medium
                                             flex items-center justify-center relative
                                             transition-all duration-300 shadow-sm
                                             ${isCurrent 

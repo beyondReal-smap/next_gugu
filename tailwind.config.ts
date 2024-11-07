@@ -14,6 +14,7 @@ const config: Config = {
       },
       fontFamily: {
         'suite-variable': ['"Suite Variable"', 'sans-serif'],
+        'suite': ['SUITE', 'sans-serif'],
       },
       keyframes: {
         fadeIn: {

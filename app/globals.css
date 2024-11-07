@@ -6,6 +6,14 @@
   --background: #ffffff;
   --foreground: #171717;
 }
+@import '/styles/SUITE.css';  /* 또는 정확한 경로를 지정 */
+
+/* 선택사항: 전체 앱에 SUITE 폰트를 기본으로 적용 */
+@layer base {
+  html {
+    font-family: SUITE, system-ui, sans-serif;
+  }
+}
 
 @media (prefers-color-scheme: dark) {
   :root {
@@ -17,5 +25,20 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: SUITE, Helvetica, sans-serif;
+}
+
+@keyframes gradient-x {
+  0%, 100% {
+    background-size: 200% 100%;
+    background-position: left center;
+  }
+  50% {
+    background-size: 200% 100%;
+    background-position: right center;
+  }
+}
+
+.animate-gradient-x {
+  animation: gradient-x 3s ease infinite;
 }

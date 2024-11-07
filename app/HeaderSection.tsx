@@ -4,10 +4,13 @@ import { Button } from "./components/ui/button";
 import {
     BarChart2, Target, BookOpen, Clock, Medal,
     Trophy, Cog, Check, X, AlertCircle, Hash,
-    Percent, Info, Star, Award, PlayCircle, Lock
+    Percent, Info, Star, Award, PlayCircle, Lock, Crown,
+    ArrowRight
 } from "lucide-react";
 import TimeAttackTableSelectModal from './TimeAttackTableSelectModal';
 import PracticeTableSelectModal from './PracticeTableSelectModal';
+import PremiumModal from './components/PremiumModal';
+import PurchaseManager from './lib/purchaseManager';
 
 interface HeaderSectionProps {
     gameMode: 'practice' | 'timeAttack';
@@ -69,6 +72,8 @@ interface HeaderSectionProps {
     setTimeAttackLevel: (level: number) => void;
     usedProblems: Set<string>;
     setSelectedTable: (table: number) => void; // 추가된 prop
+    isPremium: boolean;
+    setIsPremium: (value: boolean) => void;
 }
 
 interface InfoModalProps {
@@ -181,7 +186,7 @@ const InfoModal: React.FC<InfoModalProps> = ({ show, onClose, title, children, c
             >
                 {/* 헤더 */}
                 <div className="bg-white px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                    <h3 className="text-lg font-bold text-gray-900">{title}</h3>
+                    <h3 className="text-lg font-suite font-bold text-gray-900">{title}</h3>
                     <button
                         onClick={onClose}
                         className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -219,7 +224,7 @@ const TimerSettingsModal: React.FC<TimerSettingsModalProps> = ({
         >
             <div className="p-4">
                 <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-lg font-bold text-gray-900">타이머 설정</h4>
+                    <h4 className="text-lg font-suite font-bold text-gray-900">타이머 설정</h4>
                     <button
                         onClick={onClose}
                         className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -305,7 +310,105 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
     onTableInfoClose,
     onTimerSettingsClose,
     setSelectedTable,
+    isPremium,
+    setIsPremium,
 }) => {
+    const [showPremiumModal, setShowPremiumModal] = useState(false);
+
+    const handlePurchase = async () => {
+        try {
+            // 실제 구매 로직
+            const success = await PurchaseManager.savePurchaseStatus(true);
+            if (success) {
+                setIsPremium(true);
+                showAlert('프리미엄으로 업그레이드 되었습니다! 🎉', 'success');
+                setShowPremiumModal(false);
+            }
+        } catch (error) {
+            showAlert('구매 중 오류가 발생했습니다', 'error');
+        }
+    };
+
+    // ... existing code ...
+    const PremiumModal: React.FC<{
+        show: boolean;
+        onClose: () => void;
+        onPurchase: () => void; // onPurchase의 타입 추가
+    }> = ({ show, onClose, onPurchase }) => {
+        // ... existing code ...
+        if (!show) return null;
+
+        const benefits = [
+            '📱 광고 없는 깔끔한 학습',
+            '🎯 모든 구구단 학습 가능',
+            '📊 상세한 학습 통계',
+            '🎮 추가 게임 모드',
+            '🌟 프리미엄 테마'
+        ];
+
+        return (
+            <AnimatePresence>
+                {show && (
+                    <>
+                        <div
+                            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]"
+                            onClick={onClose}
+                        />
+                        <div className="fixed inset-0 flex items-center justify-center z-[101] p-4">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                {/* Header */}
+                                <div className="bg-gradient-to-r from-amber-400 to-orange-400 p-6 text-white">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <Crown className="w-8 h-8" />
+                                        <button
+                                            onClick={onClose}
+                                            className="text-white/80 hover:text-white transition-colors"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                    <h2 className="text-2xl font-suite font-bold mb-2">프리미엄으로 업그레이드</h2>
+                                    <p className="font-suite text-white/90">더 나은 학습 경험을 시작하세요</p>
+                                </div>
+
+                                {/* Content */}
+                                <div className="p-6">
+                                    <div className="space-y-4 mb-6">
+                                        {benefits.map((benefit, index) => (
+                                            <div
+                                                key={index}
+                                                className="flex items-center gap-3 bg-amber-50 p-3 rounded-lg"
+                                            >
+                                                <Check className="w-5 h-5 text-amber-500 flex-shrink-0" />
+                                                <span className="text-gray-700">{benefit}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <Button
+                                        variant="default"
+                                        onClick={onPurchase}
+                                        className="w-full h-12 bg-gradient-to-r from-amber-400 to-orange-400 
+                          hover:from-amber-500 hover:to-orange-500 text-white font-suite font-medium
+                          flex items-center justify-center gap-2"
+                                    >
+                                        프리미엄 시작하기
+                                        <ArrowRight className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    </>
+                )}
+            </AnimatePresence>
+        );
+    };
 
     const scoreCardRef = useRef<HTMLDivElement>(null);
     const streakCardRef = useRef<HTMLDivElement>(null);
@@ -348,8 +451,8 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
         cursor-pointer
     `;
 
-    const labelStyle = "text-xs font-medium text-gray-500";
-    const valueStyle = "text-lg font-bold text-indigo-700";
+    const labelStyle = "text-xs font-suite font-bold text-gray-700";
+    const valueStyle = "text-lg font-suite font-bold text-indigo-700";
     const iconBaseStyle = "w-6 h-6 transition-transform duration-300 group-hover:scale-110";
 
     const maxStreak = history.length > 0
@@ -369,6 +472,15 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
 
     return (
         <div className="relative mb-2">
+            <AnimatePresence>
+                {showPremiumModal && (
+                    <PremiumModal
+                        show={showPremiumModal}
+                        onClose={() => setShowPremiumModal(false)}
+                        onPurchase={handlePurchase}
+                    />
+                )}
+            </AnimatePresence>
             {/* 모달 렌더링 부분 - AnimatePresence로 감싸서 렌더링 */}
             <AnimatePresence>
                 {showTableSelectModal && (
@@ -459,73 +571,81 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                 initial="hidden"
                 animate="visible"
             >
-                {/* 모드 선택 및 설정 영역 */}
-                <div className="bg-white/50 p-1.5 rounded-xl backdrop-blur-sm mb-2 relative shadow-lg border border-indigo-100/50">
-                    <div className="flex gap-1">
-                        {/* 모드 선택 그룹 */}
-                        <div className="bg-white/80 rounded-lg p-1 shadow-sm flex-1">
-                            <div className="grid grid-cols-2 gap-1">
-                                {/* 연습모드 버튼 */}
-                                <motion.button
-                                    onClick={() => onModeChange('practice')}
-                                    className={`
-                                        flex items-center justify-center gap-2
-                                        h-11 rounded-md text-base font-medium
-                                        transition-all duration-300
-                                        ${gameMode === 'practice'
-                                            ? 'bg-indigo-500 text-white shadow-md'
-                                            : 'bg-transparent text-gray-500 hover:bg-indigo-50'}
-                                    `}
+                <div className="mb-4">
+                    {/* 모드 선택 세트 */}
+                    <div className="flex w-full gap-2 items-center">
+                        <div className="flex rounded-xl p-1 bg-white flex-1 gap-1 border border-gray-200 shadow-sm">
+                            {/* 연습 모드 버튼 */}
+                            <Button
+                                variant="ghost"
+                                onClick={() => onModeChange('practice')}
+                                className={`flex-1 h-12 flex items-center justify-center px-3 gap-2
+            rounded-lg relative transition-all duration-200
+            ${gameMode === 'practice'
+                                        ? 'bg-blue-500 text-white'
+                                        : 'bg-white hover:bg-gray-50'}`}
+                            >
+                                <BookOpen className={`w-7 h-7 flex-shrink-0 
+            ${gameMode === 'practice' ? 'text-white' : 'text-gray-500'}`}
+                                />
+                                <span className={`text-base font-suite font-medium
+            ${gameMode === 'practice' ? 'text-white' : 'text-gray-600'}`}
                                 >
-                                    <BookOpen className="w-5 h-5" />
-                                    <span>연습모드</span>
-                                </motion.button>
+                                    연습
+                                </span>
+                            </Button>
 
-                                {/* 타임어택 버튼 */}
-                                <motion.button
-                                    onClick={() => onModeChange('timeAttack')}
-                                    className={`
-                                        flex items-center justify-center gap-2
-                                        h-11 rounded-md text-base font-medium
-                                        transition-all duration-300
-                                        ${gameMode === 'timeAttack'
-                                            ? 'bg-indigo-500 text-white shadow-md'
-                                            : 'bg-transparent text-gray-500 hover:bg-indigo-50'}
-                                    `}
+                            {/* 도전 모드 버튼 */}
+                            <Button
+                                variant="ghost"
+                                onClick={() => onModeChange('timeAttack')}
+                                className={`flex-1 h-12 flex items-center justify-center px-3 gap-2
+            rounded-lg relative transition-all duration-200
+            ${gameMode === 'timeAttack'
+                                        ? 'bg-blue-500 text-white'
+                                        : 'bg-white hover:bg-gray-50'}`}
+                            >
+                                <Clock className={`w-7 h-7 flex-shrink-0
+            ${gameMode === 'timeAttack' ? 'text-white' : 'text-gray-500'}`}
+                                />
+                                <span className={`text-base font-suite font-medium
+            ${gameMode === 'timeAttack' ? 'text-white' : 'text-gray-600'}`}
                                 >
-                                    <Clock className="w-5 h-5" />
-                                    <span>타임어택</span>
-                                </motion.button>
-                            </div>
+                                    도전
+                                </span>
+                            </Button>
                         </div>
 
-                        {/* 설정 버튼 */}
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9, rotate: -180 }}
-                            animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                            transition={{ duration: 0.5, delay: 0.2 }}
-                        >
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={onSettingsClick}
-                                className={`
-                                    h-[52px] w-[52px] bg-white
-                                    border-2 border-indigo-100
-                                    hover:border-indigo-300
-                                    shadow-md shadow-indigo-100/30
-                                    transition-all duration-300
-                                    rounded-lg
-                                `}
+                        {/* 프리미엄 버튼 */}
+                        {!isPremium ? (
+                            <motion.button
+                                onClick={() => setShowPremiumModal(true)}
+                                className="h-12 w-12 rounded-xl overflow-hidden
+            bg-gradient-to-r from-amber-400 to-orange-400
+            text-white shadow-sm hover:shadow-md
+            transition-all duration-300 flex items-center justify-center"
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.95 }}
                             >
-                                <motion.div
-                                    whileHover={{ rotate: 90 }}
-                                    transition={{ duration: 0.3 }}
-                                >
-                                    <Cog className="h-5 w-5 text-indigo-600" />
-                                </motion.div>
-                            </Button>
-                        </motion.div>
+                                <Crown className="w-7 h-7" />
+                            </motion.button>
+                        ) : (
+                            <div className="h-12 w-12 rounded-xl bg-white border border-gray-200
+          flex items-center justify-center shadow-sm">
+                                <Crown className="w-7 h-7 text-amber-500" />
+                            </div>
+                        )}
+
+                        {/* 설정 버튼 */}
+                        <motion.button
+                            onClick={onSettingsClick}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="h-12 w-12 flex items-center justify-center rounded-xl
+          bg-white hover:bg-gray-50 border border-gray-200 shadow-sm"
+                        >
+                            <Cog className="w-7 h-7 text-gray-600" />
+                        </motion.button>
                     </div>
                 </div>
 
@@ -637,9 +757,9 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                                         }}
                                                         className="mt-1 self-center flex items-center gap-1.5 px-3 py-1 
                                 bg-indigo-500 hover:bg-indigo-600 text-white rounded 
-                                transition-colors text-xs font-medium"
+                                transition-colors text-xs font-suite font-medium"
                                                     >
-                                                        <PlayCircle className="w-3.5 h-3.5" />
+                                                        <PlayCircle className="w-3 h-3" />
                                                         시작
                                                     </motion.button>
                                                 )}
@@ -680,7 +800,7 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                         onClick={onProblemCountClick}
                                     >
                                         <div className="p-4 h-full flex flex-col">
-                                            <p className={labelStyle}>진행도</p>
+                                            <p className={labelStyle}>문제</p>
                                             <div className="mt-2">
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-center gap-1">
@@ -719,7 +839,7 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                                 </div>
                                                 <div className="flex items-center gap-1 mt-2">
                                                     <Award className="w-4 h-4 text-yellow-500" />
-                                                    <span className="text-xs text-gray-500">
+                                                    <span className={labelStyle}>
                                                         최고:{masteredLevel}단
                                                     </span>
                                                 </div>
