@@ -93,6 +93,86 @@ interface TimerSettingsModalProps {
     onTimeSelect: (time: number) => void;
 }
 
+// PremiumModalContainer 컴포넌트를 새로 만들어 상태 관리를 분리
+const PremiumModalContainer = React.memo(({
+    isPremium,
+    setIsPremium,
+    showAlert
+}: {
+    isPremium: boolean;
+    setIsPremium: (value: boolean) => void;
+    showAlert: (message: string, type: 'success' | 'error' | 'info' | 'warning') => void;
+}) => {
+    const [showPremiumModal, setShowPremiumModal] = useState(false);
+
+    const handlePurchase = async () => {
+        try {
+            const success = await PurchaseManager.savePurchaseStatus(true);
+            if (success) {
+                setIsPremium(true);
+                showAlert('프리미엄으로 업그레이드 되었습니다! 🎉', 'success');
+                setShowPremiumModal(false);
+            }
+        } catch (error) {
+            showAlert('구매 중 오류가 발생했습니다', 'error');
+        }
+    };
+
+    // Premium 상태 체크
+    useEffect(() => {
+        const checkPremiumStatus = async () => {
+            try {
+                const isPremiumUser = await PurchaseManager.getPurchaseStatus();
+                if (isPremiumUser !== isPremium) {
+                    setIsPremium(isPremiumUser);
+                }
+            } catch (error) {
+                console.error('Failed to check premium status:', error);
+            }
+        };
+
+        if (!isPremium) {
+            checkPremiumStatus();
+        }
+    }, [isPremium, setIsPremium]);
+
+    if (isPremium) {
+        return (
+            <div className="h-12 w-12 rounded-xl bg-white border border-gray-200
+                flex items-center justify-center shadow-sm">
+                <Crown className="w-7 h-7 text-amber-500" />
+            </div>
+        );
+    }
+
+    return (
+        <>
+            <motion.button
+                onClick={() => setShowPremiumModal(true)}
+                className="h-12 w-12 rounded-xl overflow-hidden
+                    bg-gradient-to-r from-amber-400 to-orange-400
+                    text-white shadow-sm hover:shadow-md
+                    transition-all duration-300 flex items-center justify-center"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.95 }}
+            >
+                <Crown className="w-7 h-7" />
+            </motion.button>
+            <AnimatePresence>
+                {showPremiumModal && (
+                    <PremiumModal
+                        show={showPremiumModal}
+                        onClose={() => setShowPremiumModal(false)}
+                        onPurchase={handlePurchase}
+                    />
+                )}
+            </AnimatePresence>
+        </>
+    );
+});
+
+PremiumModalContainer.displayName = 'PremiumModalContainer';
+
 // BaseModal 컴포넌트
 const BaseModal: React.FC<{
     show: boolean;
@@ -331,106 +411,22 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
 
     // Premium 상태 체크를 위한 useEffect 수정
     useEffect(() => {
-        let isMounted = true;
-
         const checkPremiumStatus = async () => {
             try {
                 const isPremiumUser = await PurchaseManager.getPurchaseStatus();
-                if (isMounted && isPremiumUser) {
-                    setIsPremium(true);
+                if (isPremiumUser !== isPremium) {  // 상태가 다를 때만 업데이트
+                    setIsPremium(isPremiumUser);
                 }
             } catch (error) {
                 console.error('Failed to check premium status:', error);
             }
         };
 
-        checkPremiumStatus();
-
-        return () => {
-            isMounted = false;
-        };
-    }, []); // 빈 배열로 둬서 마운트 시에만 실행
-
-    // ... existing code ...
-    const PremiumModal: React.FC<{
-        show: boolean;
-        onClose: () => void;
-        onPurchase: () => void; // onPurchase의 타입 추가
-    }> = ({ show, onClose, onPurchase }) => {
-        // ... existing code ...
-        if (!show) return null;
-
-        const benefits = [
-            '📱 광고 없는 깔끔한 학습',
-            '🎯 모든 구구단 학습 가능',
-            '📊 상세한 학습 통계',
-            '🎮 추가 게임 모드',
-            '🌟 프리미엄 테마'
-        ];
-
-        return (
-            <AnimatePresence>
-                {show && (
-                    <>
-                        <div
-                            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]"
-                            onClick={onClose}
-                        />
-                        <div className="fixed inset-0 flex items-center justify-center z-[101] p-4">
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0.95 }}
-                                className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                {/* Header */}
-                                <div className="bg-gradient-to-r from-amber-400 to-orange-400 p-6 text-white">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <Crown className="w-8 h-8" />
-                                        <button
-                                            onClick={onClose}
-                                            className="text-white/80 hover:text-white transition-colors"
-                                        >
-                                            ✕
-                                        </button>
-                                    </div>
-                                    <h2 className="text-2xl font-suite font-bold mb-2">프리미엄으로 업그레이드</h2>
-                                    <p className="font-suite text-white/90">더 나은 학습 경험을 시작하세요</p>
-                                </div>
-
-                                {/* Content */}
-                                <div className="p-6">
-                                    <div className="space-y-4 mb-6">
-                                        {benefits.map((benefit, index) => (
-                                            <div
-                                                key={index}
-                                                className="flex items-center gap-3 bg-amber-50 p-3 rounded-lg"
-                                            >
-                                                <Check className="w-5 h-5 text-amber-500 flex-shrink-0" />
-                                                <span className="text-gray-700">{benefit}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <Button
-                                        variant="default"
-                                        onClick={onPurchase}
-                                        className="w-full h-12 bg-gradient-to-r from-amber-400 to-orange-400 
-                          hover:from-amber-500 hover:to-orange-500 text-white font-suite font-medium
-                          flex items-center justify-center gap-2"
-                                    >
-                                        프리미엄 시작하기
-                                        <ArrowRight className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                            </motion.div>
-                        </div>
-                    </>
-                )}
-            </AnimatePresence>
-        );
-    };
+        // 컴포넌트 마운트 시에만 체크
+        if (!isPremium) {
+            checkPremiumStatus();
+        }
+    }, [isPremium, setIsPremium]); // isPremium과 setIsPremium을 의존성 배열에 추가
 
     const scoreCardRef = useRef<HTMLDivElement>(null);
     const streakCardRef = useRef<HTMLDivElement>(null);
@@ -494,15 +490,6 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
 
     return (
         <div className="relative mb-2">
-            <AnimatePresence>
-                {showPremiumModal && (
-                    <PremiumModal
-                        show={showPremiumModal}
-                        onClose={() => setShowPremiumModal(false)}
-                        onPurchase={handlePurchase}
-                    />
-                )}
-            </AnimatePresence>
             {/* 모달 렌더링 부분 - AnimatePresence로 감싸서 렌더링 */}
             <AnimatePresence>
                 {showTableSelectModal && (
@@ -638,25 +625,12 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                             </Button>
                         </div>
 
-                        {/* 프리미엄 버튼 */}
-                        {!isPremium ? (
-                            <motion.button
-                                onClick={() => setShowPremiumModal(true)}
-                                className="h-12 w-12 rounded-xl overflow-hidden
-            bg-gradient-to-r from-amber-400 to-orange-400
-            text-white shadow-sm hover:shadow-md
-            transition-all duration-300 flex items-center justify-center"
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.95 }}
-                            >
-                                <Crown className="w-7 h-7" />
-                            </motion.button>
-                        ) : (
-                            <div className="h-12 w-12 rounded-xl bg-white border border-gray-200
-          flex items-center justify-center shadow-sm">
-                                <Crown className="w-7 h-7 text-amber-500" />
-                            </div>
-                        )}
+                        {/* PremiumModalContainer로 교체 */}
+                        <PremiumModalContainer
+                            isPremium={isPremium}
+                            setIsPremium={setIsPremium}
+                            showAlert={showAlert}
+                        />
 
                         {/* 설정 버튼 */}
                         <motion.button
