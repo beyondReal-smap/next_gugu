@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from "./components/ui/button";
 import {
@@ -10,6 +10,7 @@ import {
 import TimeAttackTableSelectModal from './TimeAttackTableSelectModal';
 import PracticeTableSelectModal from './PracticeTableSelectModal';
 import PurchaseManager from './lib/purchaseManager';
+import PremiumModal from '../components/PremiumModal';  // Import 추가
 
 
 interface HeaderSectionProps {
@@ -313,11 +314,8 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
     isPremium,
     setIsPremium,
 }) => {
-    const [showPremiumModal, setShowPremiumModal] = useState(false);
-
     const handlePurchase = async () => {
         try {
-            // 실제 구매 로직
             const success = await PurchaseManager.savePurchaseStatus(true);
             if (success) {
                 setIsPremium(true);
@@ -328,6 +326,30 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
             showAlert('구매 중 오류가 발생했습니다', 'error');
         }
     };
+
+    const [showPremiumModal, setShowPremiumModal] = useState(false);
+
+    // Premium 상태 체크를 위한 useEffect 수정
+    useEffect(() => {
+        let isMounted = true;
+
+        const checkPremiumStatus = async () => {
+            try {
+                const isPremiumUser = await PurchaseManager.getPurchaseStatus();
+                if (isMounted && isPremiumUser) {
+                    setIsPremium(true);
+                }
+            } catch (error) {
+                console.error('Failed to check premium status:', error);
+            }
+        };
+
+        checkPremiumStatus();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []); // 빈 배열로 둬서 마운트 시에만 실행
 
     // ... existing code ...
     const PremiumModal: React.FC<{
