@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from "./components/ui/button";
 import {
@@ -93,7 +93,6 @@ interface TimerSettingsModalProps {
     onTimeSelect: (time: number) => void;
 }
 
-// PremiumModalContainer 컴포넌트를 새로 만들어 상태 관리를 분리
 const PremiumModalContainer = React.memo(({
     isPremium,
     setIsPremium,
@@ -104,66 +103,96 @@ const PremiumModalContainer = React.memo(({
     showAlert: (message: string, type: 'success' | 'error' | 'info' | 'warning') => void;
 }) => {
     const [showPremiumModal, setShowPremiumModal] = useState(false);
+    const [showStatusModal, setShowStatusModal] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const hasCheckedRef = useRef(false);
 
-    const handlePurchase = async () => {
+    const handlePurchase = useCallback(async () => {
+        if (isProcessing) return;
+
+        setIsProcessing(true);
         try {
-            const success = await PurchaseManager.savePurchaseStatus(true);
-            if (success) {
+            const purchaseSuccess = await PurchaseManager.purchasePremium();
+            if (purchaseSuccess) {
+                await PurchaseManager.savePurchaseStatus(true);
                 setIsPremium(true);
                 showAlert('프리미엄으로 업그레이드 되었습니다! 🎉', 'success');
                 setShowPremiumModal(false);
+                PurchaseManager.logPurchaseStatus();
             }
         } catch (error) {
+            console.error('Purchase failed:', error);
             showAlert('구매 중 오류가 발생했습니다', 'error');
+        } finally {
+            setIsProcessing(false);
         }
-    };
+    }, [isProcessing, setIsPremium, showAlert]);
 
-    // Premium 상태 체크
+    const handlePremiumClick = useCallback(() => {
+        if (isPremium) {
+            const status = PurchaseManager.getPurchaseStatus();
+            if (status.purchaseDate) {
+                setShowStatusModal(true);
+            }
+        } else {
+            setShowPremiumModal(true);
+        }
+    }, [isPremium]);
+
     useEffect(() => {
         const checkPremiumStatus = async () => {
+            if (hasCheckedRef.current) return;
+
             try {
-                const isPremiumUser = await PurchaseManager.getPurchaseStatus();
-                if (isPremiumUser !== isPremium) {
-                    setIsPremium(isPremiumUser);
+                const status = await PurchaseManager.getPurchaseStatus();
+                if (status.isPremium !== isPremium) {
+                    setIsPremium(status.isPremium);
                 }
+                hasCheckedRef.current = true;
             } catch (error) {
                 console.error('Failed to check premium status:', error);
             }
         };
 
-        if (!isPremium) {
+        if (!hasCheckedRef.current) {
             checkPremiumStatus();
         }
     }, [isPremium, setIsPremium]);
 
-    if (isPremium) {
-        return (
-            <div className="h-12 w-12 rounded-xl bg-white border border-gray-200
-                flex items-center justify-center shadow-sm">
-                <Crown className="w-7 h-7 text-amber-500" />
-            </div>
-        );
-    }
-
     return (
         <>
             <motion.button
-                onClick={() => setShowPremiumModal(true)}
-                className="h-12 w-12 rounded-xl overflow-hidden
-                    bg-gradient-to-r from-amber-400 to-orange-400
-                    text-white shadow-sm hover:shadow-md
-                    transition-all duration-300 flex items-center justify-center"
+                onClick={handlePremiumClick}
+                className={`h-12 w-12 rounded-xl overflow-hidden
+                    ${isPremium
+                        ? 'bg-white border border-gray-200'
+                        : 'bg-gradient-to-r from-amber-400 to-orange-400'
+                    }
+                    flex items-center justify-center shadow-sm hover:shadow-md
+                    transition-all duration-300`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.95 }}
             >
-                <Crown className="w-7 h-7" />
+                <Crown
+                    className={`w-7 h-7 
+                        ${isPremium ? 'text-amber-500' : 'text-white'}`}
+                />
             </motion.button>
+
             <AnimatePresence>
-                {showPremiumModal && (
+                {!isPremium && showPremiumModal && (
                     <PremiumModal
                         show={showPremiumModal}
                         onClose={() => setShowPremiumModal(false)}
-                        onPurchase={handlePurchase}
+                        purchaseDate={PurchaseManager.getPurchaseStatus().purchaseDate}
+                    />
+                )}
+
+                {isPremium && showStatusModal && (
+                    <PremiumModal
+                        show={showStatusModal}
+                        onClose={() => setShowStatusModal(false)}
+                        purchaseDate={PurchaseManager.getPurchaseStatus().purchaseDate}
                     />
                 )}
             </AnimatePresence>
@@ -265,12 +294,12 @@ const InfoModal: React.FC<InfoModalProps> = ({ show, onClose, title, children, c
                 exit={{ opacity: 0, y: -20 }}
                 className="relative bg-gray-50 rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden"
             >
-                {/* 헤더 */}
-                <div className="bg-white px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                    <h3 className="text-lg font-suite font-bold text-gray-900">{title}</h3>
+                {/* 그라데이션 헤더 */}
+                <div className="bg-gradient-to-r from-indigo-500 to-blue-500  px-6 py-4 flex justify-between items-center">
+                    <h3 className="text-xl font-suite font-bold text-white">{title}</h3>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        className="text-white/80 hover:text-white transition-colors"
                     >
                         <X className="h-5 w-5" />
                     </button>
@@ -394,52 +423,40 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
     isPremium,
     setIsPremium,
 }) => {
-    const handlePurchase = async () => {
-        try {
-            const success = await PurchaseManager.savePurchaseStatus(true);
-            if (success) {
-                setIsPremium(true);
-                showAlert('프리미엄으로 업그레이드 되었습니다! 🎉', 'success');
-                setShowPremiumModal(false);
-            }
-        } catch (error) {
-            showAlert('구매 중 오류가 발생했습니다', 'error');
-        }
-    };
-
-    const [showPremiumModal, setShowPremiumModal] = useState(false);
+    const hasCheckedRef = useRef(false);
 
     // Premium 상태 체크를 위한 useEffect 수정
     useEffect(() => {
         const checkPremiumStatus = async () => {
+            if (hasCheckedRef.current) return;
+
             try {
-                const isPremiumUser = await PurchaseManager.getPurchaseStatus();
-                if (isPremiumUser !== isPremium) {  // 상태가 다를 때만 업데이트
-                    setIsPremium(isPremiumUser);
+                const status = await PurchaseManager.getPurchaseStatus();
+                if (status.isPremium !== isPremium) {
+                    setIsPremium(status.isPremium);
                 }
+                hasCheckedRef.current = true;
             } catch (error) {
                 console.error('Failed to check premium status:', error);
             }
         };
 
-        // 컴포넌트 마운트 시에만 체크
-        if (!isPremium) {
+        if (!hasCheckedRef.current) {
             checkPremiumStatus();
         }
-    }, [isPremium, setIsPremium]); // isPremium과 setIsPremium을 의존성 배열에 추가
+    }, []); // 의존성 배열 비우기
+
+    // PremiumModalContainer를 메모이제이션
+    const premiumModalContainer = useMemo(() => (
+        <PremiumModalContainer
+            isPremium={isPremium}
+            setIsPremium={setIsPremium}
+            showAlert={showAlert}
+        />
+    ), [isPremium, setIsPremium, showAlert]);
 
     const scoreCardRef = useRef<HTMLDivElement>(null);
     const streakCardRef = useRef<HTMLDivElement>(null);
-    const tableCardRef = useRef<HTMLDivElement>(null);
-
-    const handleTableSelect = (table: number) => {
-        if (gameMode === 'practice') {
-            setTimeAttackLevel(table); // 연습 모드에서도 같은 함수를 사용
-            generateNewProblem();
-            showAlert(`${table}단 연습을 시작합니다! 💪`, 'success');
-        }
-        setShowTableSelectModal(false);
-    };
 
     const containerVariants = {
         hidden: { opacity: 0, y: -20 },
@@ -689,7 +706,6 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                     </div>
                                 </motion.div>
 
-                                {/* 연습 모드의 학습 중 카드 부분 */}
                                 <motion.div variants={itemVariants} className="col-span-4 relative">
                                     <div
                                         className={`${baseCardStyle} h-[108px]`}
@@ -705,6 +721,32 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                                     <BookOpen className={`${iconBaseStyle} text-indigo-500`} />
                                                 </div>
                                             </div>
+                                            {/* 애니메이션이 있는 클릭 가이드 */}
+                                            <motion.div
+                                                initial={{ opacity: 0.5, y: 0 }}
+                                                animate={{
+                                                    opacity: [0.5, 1, 0.5],
+                                                    y: [0, -3, 0]
+                                                }}
+                                                transition={{
+                                                    duration: 1.5,
+                                                    repeat: Infinity,
+                                                    ease: "easeInOut"
+                                                }}
+                                                className="flex items-center justify-center gap-1 text-indigo-500"
+                                            >
+                                                <span className="text-xs font-medium">Click</span>
+                                                <motion.div
+                                                    animate={{ rotate: [0, 15, 0] }}
+                                                    transition={{
+                                                        duration: 1.5,
+                                                        repeat: Infinity,
+                                                        ease: "easeInOut"
+                                                    }}
+                                                >
+
+                                                </motion.div>
+                                            </motion.div>
                                         </div>
                                         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
                                     </div>

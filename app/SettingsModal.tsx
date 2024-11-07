@@ -18,14 +18,14 @@ interface SettingsModalProps {
     totalAttempts: number;
     successfulAttempts: number;
     practiceStats: {
-      [key: number]: {
-        attempts: number;
-        correct: number;
-      }
+        [key: number]: {
+            attempts: number;
+            correct: number;
+        }
     };
     onResetRecords: () => void;
     generateNewProblem: () => void;  // 추가
-  }
+}
 
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -65,12 +65,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 exit={{ opacity: 0, y: -20 }}
                 className="relative bg-gray-50 rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden"
             >
-                {/* 헤더 */}
-                <div className="bg-white px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                    <h3 className="text-lg font-suite font-bold text-gray-900">설정</h3>
+                {/* 헤더 - 그라데이션 배경 적용 */}
+                <div className="bg-gradient-to-r from-indigo-500 to-blue-500 px-6 py-4 flex justify-between items-center">
+                    <h3 className="text-xl font-suite font-bold text-white">설정</h3>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        className="text-white/80 hover:text-white transition-colors"
                     >
                         <X className="h-5 w-5" />
                     </button>
@@ -232,23 +232,29 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
 
                     {/* 구분선 */}
-                    <div className="border-t border-gray-100 -mx-6" />
+                    <div className="border-t border-gray-200 -mx-6" />
 
                     {/* 초기화 버튼 */}
-                    <div className="space-y-3">
-                        <button
-                            onClick={onResetRecords}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl
-                text-red-600 hover:bg-red-50 transition-colors
-                border-2 border-red-100 hover:border-red-200"
-                        >
-                            <Delete className="w-5 h-5" />
-                            <span className="font-medium">기록 초기화</span>
-                        </button>
-
-                        <p className="text-xs text-gray-500 text-center">
+                    <div className="space-y-4">
+                    <div className="bg-rose-50 p-4 rounded-xl border border-rose-100">
+                        <h4 className="text-base font-suite font-bold text-rose-700 mb-2 flex items-center gap-2">
+                            <AlertCircle className="w-5 h-5" />
+                            기록 초기화
+                        </h4>
+                        <p className="text-sm text-rose-600 mb-4">
                             * 초기화 시 현재 모드의 모든 기록이 삭제됩니다
                         </p>
+                        <Button
+                            variant="destructive"
+                            onClick={onResetRecords}
+                            className="w-full h-11 bg-gradient-to-r from-rose-500 to-orange-500 
+                            hover:from-rose-600 hover:to-red-600 text-white font-suite font-medium
+                            flex items-center justify-center gap-2"
+                        >
+                            <Delete className="w-5 h-5" />
+                            기록 초기화하기
+                        </Button>
+                        </div>
                     </div>
                 </div>
             </motion.div>

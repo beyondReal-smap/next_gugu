@@ -941,18 +941,31 @@ const MultiplicationGame = () => {
       });
     }
   };
-  // generateNewProblem 함수 수정
   const generateNewProblem = useCallback(() => {
     const currentTable = gameMode === 'practice' ? selectedTable : timeAttackLevel;
-    const availableNumbers = Array.from({ length: 18 }, (_, i) => i + 2)
+
+    // 최대 곱할 수 결정
+    let maxMultiplier;
+    if (currentTable <= 9) {
+      // 2~9단은 곱하기 9까지
+      maxMultiplier = 9;
+    } else {
+      // 11단 이상은 자기 자신까지
+      maxMultiplier = currentTable;
+    }
+
+    // 곱할 수 범위 생성 (2부터 maxMultiplier까지)
+    const availableNumbers = Array.from({ length: maxMultiplier - 1 }, (_, i) => i + 2)
       .filter(n => !usedProblems.has(`${currentTable}-${n}`));
 
     if (availableNumbers.length === 0) {
-      const newNum2 = Math.floor(Math.random() * 18) + 2;
+      // 모든 문제를 다 풀었을 경우, 새로운 랜덤 숫자 선택
+      const newNum2 = Math.floor(Math.random() * (maxMultiplier - 1)) + 2;
       setNum1(currentTable);
       setNum2(newNum2);
       setUsedProblems(new Set([`${currentTable}-${newNum2}`]));
     } else {
+      // 아직 풀지 않은 문제가 있는 경우
       const randomIndex = Math.floor(Math.random() * availableNumbers.length);
       const newNum2 = availableNumbers[randomIndex];
       setNum1(currentTable);
