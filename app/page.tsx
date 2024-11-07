@@ -18,6 +18,7 @@ import SettingsModal from "./SettingsModal";
 import RollingBanner from './RollingBanner';
 import PurchaseManager from './lib/purchaseManager';
 import { BannerItem } from './types/banner';
+// import PremiumModal from './components/PremiumModal';
 
 // 배너 아이템 데이터
 const bannerItems: BannerItem[] = [
@@ -35,9 +36,6 @@ const bannerItems: BannerItem[] = [
     link: "https://smap.co.kr",
     backgroundColor: "bg-emerald-50",
     textColor: "text-emerald-700"
-  },
-  {
-    type: 'ad' as const,
   },
   {
     type: 'content' as const,
@@ -70,6 +68,7 @@ const bannerItems: BannerItem[] = [
   },
   {
     type: 'ad' as const,
+    adUnitId: 'your-ad-unit-id' // adUnitId 추가
   },
   {
     type: 'content' as const,
@@ -457,38 +456,30 @@ const MultiplicationGame = () => {
   const prevGameMode = useRef(gameMode);
 
   const [isPremium, setIsPremium] = useState(false);
-  
-  // 구매 버튼 컴포넌트
-  const PurchaseButton = ({ onPurchaseClick, isPremium }: { onPurchaseClick: () => void; isPremium: boolean }) => {
-    if (isPremium) return null;
 
-    return (
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        className="fixed bottom-6 right-1/2 transform translate-x-1/2 z-40
-        bg-gradient-to-r from-violet-600 to-indigo-600 
-        text-white px-6 py-3 rounded-2xl shadow-lg 
-        hover:shadow-xl hover:from-violet-500 hover:to-indigo-500
-        flex items-center gap-2.5"
-        onClick={onPurchaseClick}
-      >
-        <Crown className="w-5 h-5" />
-        <span className="font-suite font-bold">프리미엄 구매하기</span>
-      </motion.button>
-    );
-  };
+  // Premium 구매 핸들러 추가
+  // const handlePurchase = async () => {
+  //   try {
+  //     const success = await PurchaseManager.savePurchaseStatus(true);
+  //     if (success) {
+  //       setIsPremium(true);
+  //       showAlert('프리미엄으로 업그레이드 되었습니다! 🎉', 'success');
+  //       setShowPremiumModal(false);
+  //     }
+  //   } catch (error) {
+  //     showAlert('구매 중 오류가 발생했습니다', 'error');
+  //   }
+  // };
 
+  // // Premium 상태 체크 effect 추가
+  // useEffect(() => {
+  //   const checkPurchaseStatus = async () => {
+  //     const premium = await PurchaseManager.getPurchaseStatus();
+  //     setIsPremium(premium);
+  //   };
 
-  // 구매 상태 확인
-  useEffect(() => {
-    const checkPurchaseStatus = async () => {
-      const premium = await PurchaseManager.getPurchaseStatus();
-      setIsPremium(premium);
-    };
-
-    checkPurchaseStatus();
-  }, []);
+  //   checkPurchaseStatus();
+  // }, []);
 
   // 타임어택 결과 다이얼로그 상태 추가
   const [timeAttackResult, setTimeAttackResult] = useState<{
@@ -854,14 +845,14 @@ const MultiplicationGame = () => {
     "{n}단 마스터를 향해!\n힘내세요! 💪",
     "좋은 선택이에요!\n{n}단을 익혀봅시다! 😊",
   ];
-  const timeAttackMessages  = [
+  const timeAttackMessages = [
     "도전모드 시작!\n지금 바로 도전해보세요! ⏱️",
     "새로운 기록에 도전!\n자신의 한계를 시험해보세요! ⚡",
     "도전 정신을 발휘할 시간!\n최고 기록에 도전하세요! 🚀",
     "짜릿한 도전모드!\n준비되셨나요? 🏃‍♂️",
     "최고의 실력을 보여주세요!\n파이팅! 💥",
   ];
-  
+
 
 
   // 연습 모드 시작 메시지 선택 함수
@@ -1471,8 +1462,8 @@ const MultiplicationGame = () => {
         usedProblems={usedProblems}
         setTimeAttackLevel={setTimeAttackLevel}
         setSelectedTable={setSelectedTable}
-        isPremium={isPremium}  // 추가된 부분
-        setIsPremium={setIsPremium}  // 추가된 부분
+        isPremium={isPremium}
+        setIsPremium={setIsPremium}
       />
 
       <AnimatePresence>
@@ -1596,6 +1587,7 @@ const MultiplicationGame = () => {
             >
               확인
             </motion.button>
+
           </div>
           <RollingBanner items={bannerItems} />
         </div>
