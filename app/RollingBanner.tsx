@@ -4,6 +4,7 @@
 import { useState, useEffect, TouchEvent } from 'react';
 import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import { BannerItem, RollingBannerProps, SubscriptionProduct } from './types/banner';
+import type { WebKitMessageHandlers } from './types/webkit';
 
 declare global {
   interface Window {

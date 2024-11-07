@@ -9,8 +9,6 @@ import {
 } from "lucide-react";
 import TimeAttackTableSelectModal from './TimeAttackTableSelectModal';
 import PracticeTableSelectModal from './PracticeTableSelectModal';
-import PremiumModal from './components/PremiumModal';
-import PurchaseManager from './lib/purchaseManager';
 
 interface HeaderSectionProps {
     gameMode: 'practice' | 'timeAttack';
