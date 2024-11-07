@@ -14,8 +14,32 @@ const nextConfig = {
         fs: false,
       };
     }
+    
+    // 폰트 파일 처리를 위한 규칙 추가
+    config.module.rules.push({
+      test: /\.(woff|woff2|eot|ttf|otf)$/i,
+      type: 'asset/resource',
+      generator: {
+        filename: 'static/fonts/[hash][ext][query]'
+      }
+    });
+
     return config;
   },
+  // 정적 자산에 대한 헤더 설정 추가
+  async headers() {
+    return [
+      {
+        source: '/fonts/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          }
+        ]
+      }
+    ];
+  }
 };
 
 module.exports = nextConfig;
