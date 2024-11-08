@@ -3,31 +3,54 @@
 
 import { useState, useEffect, TouchEvent } from 'react';
 import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
-import { BannerItem, RollingBannerProps, SubscriptionProduct } from './types/banner';
-import type { WebKitMessageHandlers } from './types/webkit';
+import { BannerItem, RollingBannerProps } from './types/banner';
 
-declare global {
-  interface Window {
-    webkit?: {
-      messageHandlers: {
-        openLink: {
-          postMessage: (url: string) => void;
-        };
-        subscribeProduct: {
-          postMessage: (productId: string) => void;
-        };
-        loadAd: {
-          postMessage: (adUnitId: string) => void;
-        };
-      };
-    };
-    Android?: {
-      openLink: (url: string) => void;
-      subscribeProduct: (productId: string) => void;
-      loadAd: (adUnitId: string) => void;
-    };
-  }
+// 네이티브 인터페이스 분리
+interface NativeHandlers {
+  handleLink: (url: string) => void;
+  handleSubscription: (productId: string) => void;
+  loadAd: (adUnitId: string) => void;
 }
+
+const useNativeHandlers = (): NativeHandlers => {
+  const handleLink = (url: string) => {
+    if (window.webkit?.messageHandlers?.storeKit) {
+      window.webkit.messageHandlers.storeKit.postMessage(url);
+    } else if (window.Android?.openLink) {
+      window.Android.openLink(url);
+    } else {
+      try {
+        window.open(url, '_system', 'location=yes');
+      } catch (error) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+    }
+  };
+
+  const handleSubscription = (productId: string) => {
+    if (window.webkit?.messageHandlers?.storeKit) {
+      window.webkit.messageHandlers.storeKit.postMessage(JSON.stringify({
+        type: 'subscription',
+        productId
+      }));
+    } else if (window.Android?.subscribeProduct) {
+      window.Android.subscribeProduct(productId);
+    }
+  };
+
+  const loadAd = (adUnitId: string) => {
+    if (window.webkit?.messageHandlers?.storeKit) {
+      window.webkit.messageHandlers.storeKit.postMessage(JSON.stringify({
+        type: 'loadAd',
+        adUnitId
+      }));
+    } else if (window.Android?.loadAd) {
+      window.Android.loadAd(adUnitId);
+    }
+  };
+
+  return { handleLink, handleSubscription, loadAd };
+};
 
 const RollingBanner = ({ 
   items = [], 
@@ -39,31 +62,12 @@ const RollingBanner = ({
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [adLoaded, setAdLoaded] = useState<{[key: string]: boolean}>({});
+  const { handleLink, handleSubscription, loadAd } = useNativeHandlers();
 
   const minSwipeDistance = 50;
+  const currentItem = items[currentIndex];
 
-  // AdMob 광고 로드 함수
-  const loadAd = (adUnitId: string) => {
-    if (window.webkit?.messageHandlers?.loadAd) {
-      window.webkit.messageHandlers.loadAd.postMessage(adUnitId);
-    } else if (window.Android?.loadAd) {
-      window.Android.loadAd(adUnitId);
-    } else {
-      console.log('AdMob not available');
-    }
-  };
-
-  // 구독 처리 함수
-  const handleSubscription = (productId: string) => {
-    if (window.webkit?.messageHandlers?.subscribeProduct) {
-      window.webkit.messageHandlers.subscribeProduct.postMessage(productId);
-    } else if (window.Android?.subscribeProduct) {
-      window.Android.subscribeProduct(productId);
-    } else {
-      console.log('Subscription not available');
-    }
-  };
-
+  // 아이템 클릭 핸들러
   const handleItemClick = (item: BannerItem, e: React.MouseEvent) => {
     e.preventDefault();
     
@@ -71,17 +75,7 @@ const RollingBanner = ({
       case 'content':
       case 'image':
         if (item.link) {
-          if (window.webkit?.messageHandlers?.openLink) {
-            window.webkit.messageHandlers.openLink.postMessage(item.link);
-          } else if (window.Android?.openLink) {
-            window.Android.openLink(item.link);
-          } else {
-            try {
-              window.open(item.link, '_system', 'location=yes');
-            } catch (error) {
-              window.open(item.link, '_blank', 'noopener,noreferrer');
-            }
-          }
+          handleLink(item.link);
         }
         break;
       
@@ -93,15 +87,51 @@ const RollingBanner = ({
     }
   };
 
+  const handleTouchStart = (e: TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe) {
+      handleNext();
+    }
+    if (isRightSwipe) {
+      handlePrevious();
+    }
+  };
+
+  const handlePrevious = () => {
+    setCurrentIndex((prevIndex) => 
+      prevIndex === 0 ? items.length - 1 : prevIndex - 1
+    );
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prevIndex) => 
+      prevIndex === items.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+
   // 광고 로드 효과
   useEffect(() => {
     items.forEach(item => {
       if (item.type === 'ad' && item.adUnitId && !adLoaded[item.adUnitId]) {
         loadAd(item.adUnitId);
-        setAdLoaded(prev => ({ ...prev, [item.adUnitId as string]: true })); 
+        setAdLoaded(prev => ({ ...prev, [item.adUnitId as string]: true }));
       }
     });
-  }, [items]);
+  }, [items, loadAd, adLoaded]);
 
   // 자동 슬라이드 효과
   useEffect(() => {
@@ -117,49 +147,6 @@ const RollingBanner = ({
 
     return () => clearInterval(interval);
   }, [isPaused, items.length, autoPlayInterval]);
-
-  // 터치 이벤트 핸들러
-  const handlePrevious = () => {
-    setCurrentIndex((prevIndex) => 
-      prevIndex === 0 ? items.length - 1 : prevIndex - 1
-    );
-  };
-
-  const handleNext = () => {
-    setCurrentIndex((prevIndex) => 
-      prevIndex === items.length - 1 ? 0 : prevIndex + 1
-    );
-  };
-
-  const onTouchStart = (e: TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const onTouchMove = (e: TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-    
-    if (isLeftSwipe) {
-      handleNext();
-    }
-    if (isRightSwipe) {
-      handlePrevious();
-    }
-  };
-
-  if (!items || items.length === 0) {
-    return null;
-  }
-
-  const currentItem = items[currentIndex];
 
   const renderBannerContent = (item: BannerItem) => {
     switch (item.type) {
@@ -219,9 +206,9 @@ const RollingBanner = ({
         ${currentItem.type === 'content' ? currentItem.backgroundColor || 'bg-white/80' : 'bg-white'}`}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       <div className="relative h-32 flex items-center">
         {items.length > 1 && (
