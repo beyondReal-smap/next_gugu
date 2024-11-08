@@ -12,10 +12,13 @@ interface NativeHandlers {
   loadAd: (adUnitId: string) => void;
 }
 
-const useNativeHandlers = (): NativeHandlers => {
+const useNativeHandlers = () => {
   const handleLink = (url: string) => {
     if (window.webkit?.messageHandlers?.storeKit) {
-      window.webkit.messageHandlers.storeKit.postMessage(url);
+      window.webkit.messageHandlers.storeKit.postMessage(JSON.stringify({
+        type: 'openLink',
+        url
+      }));
     } else if (window.Android?.openLink) {
       window.Android.openLink(url);
     } else {
