@@ -9,8 +9,9 @@ import {
 } from "lucide-react";
 import TimeAttackTableSelectModal from './TimeAttackTableSelectModal';
 import PracticeTableSelectModal from './PracticeTableSelectModal';
-import PurchaseManager from './lib/purchaseManager';
-import PremiumModal from '../components/PremiumModal';  // Import 추가
+import { usePremium } from '@/contexts/PremiumContext';
+import { PremiumModal } from '@/components/PremiumModal';
+
 
 
 interface HeaderSectionProps {
@@ -73,8 +74,6 @@ interface HeaderSectionProps {
     setTimeAttackLevel: (level: number) => void;
     usedProblems: Set<string>;
     setSelectedTable: (table: number) => void; // 추가된 prop
-    isPremium: boolean;
-    setIsPremium: (value: boolean) => void;
 }
 
 interface InfoModalProps {
@@ -420,8 +419,6 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
     onTableInfoClose,
     onTimerSettingsClose,
     setSelectedTable,
-    isPremium,
-    setIsPremium,
 }) => {
     const hasCheckedRef = useRef(false);
 
