@@ -11,7 +11,7 @@ import {
   Lock, Delete, ShoppingBag, Crown, Sparkles,
   Ban, Infinity, Zap
 } from "lucide-react";
-import { Alert, AlertDescription } from "./components/ui/alert";
+import { Alert, AlertDescription } from "./components/ui/alert"; 
 import { motion, AnimatePresence } from "framer-motion";
 import HeaderSection from './HeaderSection';
 import SettingsModal from "./SettingsModal";

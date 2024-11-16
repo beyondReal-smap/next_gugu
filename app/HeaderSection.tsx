@@ -11,7 +11,7 @@ import TimeAttackTableSelectModal from './TimeAttackTableSelectModal';
 import PracticeTableSelectModal from './PracticeTableSelectModal';
 import { usePremium } from '@/contexts/PremiumContext';
 import { PremiumModal } from './PremiumModal';
-import ProblemCountModal from './ProblemCountModal';
+import ProblemCountModal from './ProblemCountModal'; 
 
 interface HeaderSectionProps {
     gameMode: 'practice' | 'timeAttack';
