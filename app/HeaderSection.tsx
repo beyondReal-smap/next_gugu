@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useMemo, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue } from 'framer-motion';
 import { Button } from "./components/ui/button";
 import {
     BarChart2, Target, BookOpen, Clock, Medal,
@@ -10,9 +10,8 @@ import {
 import TimeAttackTableSelectModal from './TimeAttackTableSelectModal';
 import PracticeTableSelectModal from './PracticeTableSelectModal';
 import { usePremium } from '@/contexts/PremiumContext';
-import { PremiumModal } from '@/components/PremiumModal';
-
-
+import { PremiumModal } from './PremiumModal';
+import ProblemCountModal from './ProblemCountModal';
 
 interface HeaderSectionProps {
     gameMode: 'practice' | 'timeAttack';
@@ -73,7 +72,10 @@ interface HeaderSectionProps {
     generateNewProblem: () => void;
     setTimeAttackLevel: (level: number) => void;
     usedProblems: Set<string>;
-    setSelectedTable: (table: number) => void; // 추가된 prop
+    setSelectedTable: (table: number) => void;
+    isPremium: boolean;
+    setIsPremium: React.Dispatch<React.SetStateAction<boolean>>;
+    onRequiredProblemsChange: (count: number) => void;
 }
 
 interface InfoModalProps {
@@ -92,106 +94,55 @@ interface TimerSettingsModalProps {
     onTimeSelect: (time: number) => void;
 }
 
-const PremiumModalContainer = React.memo(({
-    isPremium,
-    setIsPremium,
-    showAlert
-}: {
-    isPremium: boolean;
-    setIsPremium: (value: boolean) => void;
-    showAlert: (message: string, type: 'success' | 'error' | 'info' | 'warning') => void;
-}) => {
+const PremiumModalContainer = React.memo(() => {
     const [showPremiumModal, setShowPremiumModal] = useState(false);
-    const [showStatusModal, setShowStatusModal] = useState(false);
-    const [isProcessing, setIsProcessing] = useState(false);
-    const hasCheckedRef = useRef(false);
+    const {
+        isPremium,
+        handlePurchase,
+        handleModalOpen: contextHandleModalOpen,
+        handleModalClose: contextHandleModalClose
+    } = usePremium();
 
-    const handlePurchase = useCallback(async () => {
-        if (isProcessing) return;
-
-        setIsProcessing(true);
-        try {
-            const purchaseSuccess = await PurchaseManager.purchasePremium();
-            if (purchaseSuccess) {
-                await PurchaseManager.savePurchaseStatus(true);
-                setIsPremium(true);
-                showAlert('프리미엄으로 업그레이드 되었습니다! 🎉', 'success');
-                setShowPremiumModal(false);
-                PurchaseManager.logPurchaseStatus();
-            }
-        } catch (error) {
-            console.error('Purchase failed:', error);
-            showAlert('구매 중 오류가 발생했습니다', 'error');
-        } finally {
-            setIsProcessing(false);
+    const handleModalOpen = useCallback(() => {
+        setShowPremiumModal(true);
+        if (contextHandleModalOpen) {
+            contextHandleModalOpen();
         }
-    }, [isProcessing, setIsPremium, showAlert]);
+    }, [contextHandleModalOpen]);
 
-    const handlePremiumClick = useCallback(() => {
-        if (isPremium) {
-            const status = PurchaseManager.getPurchaseStatus();
-            if (status.purchaseDate) {
-                setShowStatusModal(true);
-            }
-        } else {
-            setShowPremiumModal(true);
+    const handleModalClose = useCallback(() => {
+        setShowPremiumModal(false);
+        if (contextHandleModalClose) {
+            contextHandleModalClose();
         }
-    }, [isPremium]);
-
-    useEffect(() => {
-        const checkPremiumStatus = async () => {
-            if (hasCheckedRef.current) return;
-
-            try {
-                const status = await PurchaseManager.getPurchaseStatus();
-                if (status.isPremium !== isPremium) {
-                    setIsPremium(status.isPremium);
-                }
-                hasCheckedRef.current = true;
-            } catch (error) {
-                console.error('Failed to check premium status:', error);
-            }
-        };
-
-        if (!hasCheckedRef.current) {
-            checkPremiumStatus();
-        }
-    }, [isPremium, setIsPremium]);
+    }, [contextHandleModalClose]);
 
     return (
         <>
             <motion.button
-                onClick={handlePremiumClick}
-                className={`h-12 w-12 rounded-xl overflow-hidden
+                data-component="premium-button"
+                onClick={handleModalOpen}
+                className={`h-12 w-12 rounded-xl
                     ${isPremium
-                        ? 'bg-white border border-gray-200'
-                        : 'bg-gradient-to-r from-amber-400 to-orange-400'
+                        ? 'bg-white border-2 border-indigo-100'
+                        : 'bg-gradient-to-r from-amber-500 to-orange-400'
                     }
-                    flex items-center justify-center shadow-sm hover:shadow-md
+                    flex items-center justify-center shadow-md hover:shadow-lg
                     transition-all duration-300`}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.95 }}
             >
                 <Crown
-                    className={`w-7 h-7 
+                    className={`w-5 h-5 
                         ${isPremium ? 'text-amber-500' : 'text-white'}`}
                 />
             </motion.button>
 
             <AnimatePresence>
-                {!isPremium && showPremiumModal && (
+                {showPremiumModal && (
                     <PremiumModal
                         show={showPremiumModal}
-                        onClose={() => setShowPremiumModal(false)}
-                        purchaseDate={PurchaseManager.getPurchaseStatus().purchaseDate}
-                    />
-                )}
-
-                {isPremium && showStatusModal && (
-                    <PremiumModal
-                        show={showStatusModal}
-                        onClose={() => setShowStatusModal(false)}
-                        purchaseDate={PurchaseManager.getPurchaseStatus().purchaseDate}
+                        onClose={handleModalClose}
                     />
                 )}
             </AnimatePresence>
@@ -201,7 +152,6 @@ const PremiumModalContainer = React.memo(({
 
 PremiumModalContainer.displayName = 'PremiumModalContainer';
 
-// BaseModal 컴포넌트
 const BaseModal: React.FC<{
     show: boolean;
     onClose: () => void;
@@ -223,11 +173,11 @@ const BaseModal: React.FC<{
             <div
                 className="absolute z-[101]"
                 style={{
-                    top: `${(rect?.bottom || 0) + window.scrollY + 16}px`, // 16px로 증가
+                    top: `${(rect?.bottom || 0) + window.scrollY + 16}px`,
                     left: `${rect?.left || 0}px`,
                     width: rect?.width || '100%',
-                    maxHeight: 'calc(100vh - 200px)', // 최대 높이 제한 추가
-                    overflowY: 'auto' // 내용이 많을 경우 스크롤 가능하도록
+                    maxHeight: 'calc(100vh - 200px)',
+                    overflowY: 'auto'
                 }}
             >
                 <motion.div
@@ -237,10 +187,9 @@ const BaseModal: React.FC<{
                     className="w-full bg-white rounded-xl shadow-xl"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="relative"> {/* 상대 위치 컨테이너 추가 */}
-                        {/* 모달 화살표 추가 */}
+                    <div className="relative">
                         <div
-                            className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white rotate-45"
+                            className="absolute -top-2 left-1/2 transform -tranblue-x-1/2 w-4 h-4 bg-white rotate-45"
                             style={{
                                 boxShadow: '-2px -2px 2px rgba(0,0,0,0.03)'
                             }}
@@ -281,41 +230,131 @@ const CenterModal: React.FC<{
     );
 };
 
-const InfoModal: React.FC<InfoModalProps> = ({ show, onClose, title, children, cardRef }) => {
-    if (!show) return null;
+const InfoModal: React.FC<InfoModalProps> = ({ show, onClose, title, children }) => {
+    const modalRef = useRef<HTMLDivElement>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [exitVelocity, setExitVelocity] = useState(0);
+    const dragY = useMotionValue(0);
+    const windowHeight = typeof window !== 'undefined' ? window.innerHeight : 1000;
+
+    const getExitAnimation = () => {
+        return {
+            y: windowHeight,
+            transition: {
+                type: 'spring',
+                damping: Math.max(15, 30 - Math.abs(exitVelocity / 100)),
+                stiffness: Math.min(300, 200 + Math.abs(exitVelocity)),
+                velocity: exitVelocity,
+                duration: Math.max(0.3, Math.min(0.8, Math.abs(exitVelocity) / 2000))
+            }
+        };
+    };
+
+    const modalVariants = {
+        hidden: { y: windowHeight },
+        visible: {
+            y: 0,
+            transition: {
+                type: 'spring',
+                damping: 30,
+                stiffness: 300
+            }
+        },
+        exit: getExitAnimation()
+    };
+
+    const handleDrag = (_: any, info: { velocity: { y: number }; offset: { y: number } }) => {
+        const speed = Math.abs(info.velocity.y);
+        const offset = info.offset.y;
+
+        if (modalRef.current) {
+            const opacity = Math.max(0, 1 - (offset / (windowHeight * 0.5)));
+            modalRef.current.style.opacity = opacity.toString();
+        }
+
+        if (speed > 500 && offset > 50) {
+            setExitVelocity(info.velocity.y);
+            onClose();
+        }
+    };
+
+    const handleDragEnd = (_: any, info: { offset: { y: number }; velocity: { y: number } }) => {
+        setIsDragging(false);
+
+        const threshold = windowHeight * 0.2;
+
+        if (info.offset.y > threshold || (info.velocity.y > 50 && info.offset.y > 50)) {
+            setExitVelocity(info.velocity.y);
+            onClose();
+        } else {
+            if (modalRef.current) {
+                modalRef.current.style.opacity = '1';
+            }
+        }
+    };
 
     return (
-        <div className="fixed inset-0 flex items-start justify-center z-50 pt-20">
-            <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
-            <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="relative bg-gray-50 rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden"
-            >
-                {/* 그라데이션 헤더 */}
-                <div className="bg-gradient-to-r from-indigo-500 to-blue-500  px-6 py-4 flex justify-between items-center">
-                    <h3 className="text-xl font-suite font-bold text-white">{title}</h3>
-                    <button
-                        onClick={onClose}
-                        className="text-white/80 hover:text-white transition-colors"
+        <AnimatePresence mode="wait">
+            {show && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-50 flex items-end justify-center"
+                >
+                    <motion.div
+                        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => {
+                            setExitVelocity(0);
+                            onClose();
+                        }}
+                    />
+                    <motion.div
+                        ref={modalRef}
+                        style={{ y: dragY }}
+                        variants={modalVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        drag="y"
+                        dragDirectionLock
+                        dragConstraints={{ top: 0 }}
+                        dragElastic={{ top: 0, bottom: 0.7 }}
+                        onDragStart={() => setIsDragging(true)}
+                        onDrag={handleDrag}
+                        onDragEnd={handleDragEnd}
+                        className={`
+                            relative w-full max-w-md bg-white rounded-t-2xl shadow-xl 
+                            overflow-hidden touch-none select-none mb-safe
+                            ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}
+                        `}
                     >
-                        <X className="h-5 w-5" />
-                    </button>
-                </div>
+                        {/* 드래그 핸들 */}
+                        <div className="flex justify-center pt-4 pb-2">
+                            <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+                        </div>
 
-                {/* 콘텐츠 */}
-                <div className="p-6 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
-                    <div className="text-gray-600">
-                        {children}
-                    </div>
-                </div>
-            </motion.div>
-        </div>
+                        {/* 헤더 */}
+                        <div className="px-6 pb-4">
+                            <h3 className="text-xl font-suite font-bold text-indigo-600">{title}</h3>
+                        </div>
+
+                        {/* 컨텐츠 */}
+                        <div className="px-6 pb-6">
+                            <div className="space-y-4">
+                                {children}
+                            </div>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
     );
 };
 
-// TimerSettingsModal 컴포넌트
 const TimerSettingsModal: React.FC<TimerSettingsModalProps> = ({
     show,
     selectedTime,
@@ -327,21 +366,18 @@ const TimerSettingsModal: React.FC<TimerSettingsModalProps> = ({
     const timeOptions = [45, 50, 55, 60];
 
     return (
-        <CenterModal
-            show={show}
-            onClose={onClose}
-        >
+        <CenterModal show={show} onClose={onClose}>
             <div className="p-4">
-                <div className="flex justify-between items-center mb-4">
-                    <h4 className="text-lg font-suite font-bold text-gray-900">타이머 설정</h4>
+                <div className="bg-gradient-to-r from-blue-700 via-blue-600 to-blue-400 -m-4 mb-4 px-6 py-4 flex justify-between items-center">
+                    <h4 className="text-lg font-suite font-bold text-white">타이머 설정</h4>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        className="text-white/80 hover:text-white transition-colors"
                     >
-                        <X className="h-4 w-4" />
+                        <X className="h-5 w-5" />
                     </button>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 px-2">
                     {timeOptions.map((time) => (
                         <Button
                             key={time}
@@ -351,15 +387,18 @@ const TimerSettingsModal: React.FC<TimerSettingsModalProps> = ({
                                 onClose();
                             }}
                             className={`
-                                w-full flex items-center justify-between px-4 h-10
-                                ${selectedTime === time ? 'bg-indigo-500 hover:bg-indigo-600 text-white' : 'hover:bg-gray-50'}
+                                w-full flex items-center justify-between px-4 h-11
+                                border-2
+                                ${selectedTime === time
+                                    ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-blue-400 hover:from-blue-800 hover:to-blue-700 text-white border-transparent'
+                                    : 'hover:bg-gray-50 border-indigo-100'}
                             `}
                         >
                             <div className="flex items-center gap-2">
                                 {selectedTime === time && (
                                     <Check className="w-4 h-4 flex-shrink-0" />
                                 )}
-                                <span className="text-sm">{time}초</span>
+                                <span className="text-sm font-medium">{time}초</span>
                             </div>
                         </Button>
                     ))}
@@ -419,38 +458,50 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
     onTableInfoClose,
     onTimerSettingsClose,
     setSelectedTable,
+    onRequiredProblemsChange
 }) => {
-    const hasCheckedRef = useRef(false);
+    const [showProblemCountModal, setShowProblemCountModal] = useState(false);
 
-    // Premium 상태 체크를 위한 useEffect 수정
+    const updateLocalStorage = useCallback((count: number) => {
+        const savedState = JSON.parse(localStorage.getItem('multiplicationGame') || '{}');
+        localStorage.setItem('multiplicationGame', JSON.stringify({
+            ...savedState,
+            requiredProblems: count,
+            lastUpdated: new Date().toISOString()
+        }));
+    }, []);
+
+    const handleProblemCountSelect = useCallback((count: number) => {
+        onRequiredProblemsChange(count);
+        updateLocalStorage(count);
+        showAlert(`문제 수가 ${count}개로 설정되었습니다.`, 'success');
+    }, [onRequiredProblemsChange, updateLocalStorage, showAlert]);
+
     useEffect(() => {
-        const checkPremiumStatus = async () => {
-            if (hasCheckedRef.current) return;
-
-            try {
-                const status = await PurchaseManager.getPurchaseStatus();
-                if (status.isPremium !== isPremium) {
-                    setIsPremium(status.isPremium);
-                }
-                hasCheckedRef.current = true;
-            } catch (error) {
-                console.error('Failed to check premium status:', error);
-            }
-        };
-
-        if (!hasCheckedRef.current) {
-            checkPremiumStatus();
+        const savedState = JSON.parse(localStorage.getItem('multiplicationGame') || '{}');
+        if (savedState.requiredProblems) {
+            onRequiredProblemsChange(savedState.requiredProblems);
         }
-    }, []); // 의존성 배열 비우기
+    }, [onRequiredProblemsChange]);
 
-    // PremiumModalContainer를 메모이제이션
-    const premiumModalContainer = useMemo(() => (
-        <PremiumModalContainer
-            isPremium={isPremium}
-            setIsPremium={setIsPremium}
-            showAlert={showAlert}
-        />
-    ), [isPremium, setIsPremium, showAlert]);
+    useEffect(() => {
+        if (gameMode === 'timeAttack') {
+            setSolvedProblems(0);
+            setIsTimeAttackComplete(false);
+            setTimerActive(false);
+            setIsPaused(true);
+            setTimeLeft(selectedTime);
+        }
+    }, [
+        requiredProblems,
+        gameMode,
+        selectedTime,
+        setIsPaused,
+        setIsTimeAttackComplete,
+        setSolvedProblems,
+        setTimeLeft,
+        setTimerActive
+    ]);
 
     const scoreCardRef = useRef<HTMLDivElement>(null);
     const streakCardRef = useRef<HTMLDivElement>(null);
@@ -472,20 +523,35 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
         visible: { opacity: 1, y: 0 }
     };
 
-    const baseCardStyle = `
-        relative overflow-hidden
-        bg-white rounded-xl
-        shadow-lg shadow-indigo-100/50
-        border-2 border-indigo-100
-        hover:border-indigo-300
-        transition-all duration-300
-        group
-        cursor-pointer
-    `;
+    const getProgressColor = (solved: number, required: number) => {
+        const percentage = (solved / required) * 100;
 
-    const labelStyle = "text-xs font-suite font-bold text-gray-700";
-    const valueStyle = "text-lg font-suite font-bold text-indigo-700";
-    const iconBaseStyle = "w-6 h-6 transition-transform duration-300 group-hover:scale-110";
+        if (percentage < 30) {
+            return {
+                bg: 'bg-rose-500',
+                from: 'from-rose-500/10',
+                text: 'text-rose-500'
+            };
+        } else if (percentage < 60) {
+            return {
+                bg: 'bg-amber-500',
+                from: 'from-amber-500/10',
+                text: 'text-amber-500'
+            };
+        } else if (percentage < 90) {
+            return {
+                bg: 'bg-emerald-500',
+                from: 'from-emerald-500/10',
+                text: 'text-emerald-500'
+            };
+        } else {
+            return {
+                bg: 'bg-indigo-500',
+                from: 'from-indigo-500/10',
+                text: 'text-indigo-500'
+            };
+        }
+    };
 
     const maxStreak = history.length > 0
         ? Math.max(...history.reduce((acc: number[], curr, index) => {
@@ -502,9 +568,42 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
         }, [0]))
         : 0;
 
+    const baseCardStyle = `
+        relative overflow-hidden
+        bg-white rounded-xl
+        shadow-md
+        border-2 border-indigo-100
+        transition-all duration-300
+        group
+        cursor-pointer
+    `;
+
+    const labelStyle = "text-xs font-suite font-medium text-gray-500";
+    const valueStyle = "text-lg font-suite font-bold text-indigo-700";
+    const iconBaseStyle = "w-5 h-5 transition-transform duration-300 group-hover:scale-110";
+
+    const modeButtonStyle = (isActive: boolean) => `
+        flex-1 h-12 flex items-center justify-center px-3 gap-2
+        rounded-lg relative transition-all duration-200
+        ${isActive
+            ? 'bg-gradient-to-r from-blue-700 via-blue-600 to-blue-400'
+            : 'bg-white hover:bg-gray-50'
+        }
+    `;
+
+    const progressPercentage = useMemo(() => {
+        return (solvedProblems / requiredProblems) * 100;
+    }, [solvedProblems, requiredProblems]);
+
+    const [showPremiumModal, setShowPremiumModal] = useState(false);
+    const {
+        isPremium,
+        handleModalOpen: contextHandleModalOpen,
+        handleModalClose: contextHandleModalClose
+    } = usePremium();
+
     return (
         <div className="relative mb-2">
-            {/* 모달 렌더링 부분 - AnimatePresence로 감싸서 렌더링 */}
             <AnimatePresence>
                 {showTableSelectModal && (
                     gameMode === 'practice' ? (
@@ -514,8 +613,8 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                             currentTable={selectedTable}
                             practiceStats={practiceStats}
                             onTableSelect={(table: number) => {
-                                setSelectedTable(table); // 선택한 단수 설정
-                                generateNewProblem(); // 새로운 문제 생성
+                                setSelectedTable(table);
+                                generateNewProblem();
                                 const savedState = JSON.parse(localStorage.getItem('multiplicationGame') || '{}');
                                 localStorage.setItem('multiplicationGame', JSON.stringify({
                                     ...savedState,
@@ -543,6 +642,7 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                     )
                 )}
             </AnimatePresence>
+
             <AnimatePresence>
                 {showScoreInfo && (
                     <InfoModal
@@ -551,7 +651,7 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                         title="점수 기준"
                         cardRef={scoreCardRef}
                     >
-                        <ul className="space-y-4 text-base text-black"> {/* 글자 크기와 간격 증가 */}
+                        <ul className="space-y-4 text-base text-black">
                             <li className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
                                 <Check className="w-5 h-5 text-green-500" />
                                 <span>정답: +10점</span>
@@ -568,6 +668,7 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                     </InfoModal>
                 )}
             </AnimatePresence>
+
             <AnimatePresence>
                 {showStreakInfo && (
                     <InfoModal
@@ -576,7 +677,7 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                         title="연속 정답"
                         cardRef={streakCardRef}
                     >
-                        <div className="space-y-4 text-base text-black"> {/* 글자 크기와 간격 증가 */}
+                        <div className="space-y-4 text-base text-black">
                             <div className="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
                                 <Trophy className="w-5 h-5 text-yellow-500" />
                                 <span>최고기록: {maxStreak}회</span>
@@ -589,84 +690,132 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                     </InfoModal>
                 )}
             </AnimatePresence>
+
             <motion.div
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
             >
-                <div className="mb-4">
-                    {/* 모드 선택 세트 */}
-                    <div className="flex w-full gap-2 items-center">
-                        <div className="flex rounded-xl p-1 bg-white flex-1 gap-1 border border-gray-200 shadow-sm">
-                            {/* 연습 모드 버튼 */}
-                            <Button
-                                variant="ghost"
-                                onClick={() => onModeChange('practice')}
-                                className={`flex-1 h-12 flex items-center justify-center px-3 gap-2
-            rounded-lg relative transition-all duration-200
-            ${gameMode === 'practice'
-                                        ? 'bg-blue-500 text-white'
-                                        : 'bg-white hover:bg-gray-50'}`}
-                            >
-                                <BookOpen className={`w-7 h-7 flex-shrink-0 
-            ${gameMode === 'practice' ? 'text-white' : 'text-gray-500'}`}
-                                />
-                                <span className={`text-base font-suite font-medium
-            ${gameMode === 'practice' ? 'text-white' : 'text-gray-600'}`}
+                {/* 상단 버튼 영역 */}
+                <div className="bg-white p-3 rounded-xl shadow-md border-2 border-indigo-100 mb-2">
+                    <div className="flex items-center gap-2">
+                        {/* 모드 선택 버튼 그룹 */}
+                        <div className="flex-[3] bg-indigo-50/50 p-1.5 rounded-lg border border-indigo-100 h-14">
+                            <div className="grid grid-cols-2 gap-1.5 h-full">
+                                {/* 연습 모드 버튼 */}
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => onModeChange('practice')}
+                                    className={`
+                        h-full relative overflow-hidden rounded-lg
+                        transition-all duration-300 border-none
+                        ${gameMode === 'practice'
+                                            ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 shadow-md'
+                                            : 'bg-transparent hover:bg-white/50'
+                                        }
+                    `}
                                 >
-                                    연습
-                                </span>
-                            </Button>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <BookOpen className={`w-5 h-5 ${gameMode === 'practice' ? 'text-white' : 'text-indigo-600'
+                                            }`} />
+                                        <span className={`text-sm font-suite font-medium ${gameMode === 'practice' ? 'text-white' : 'text-indigo-600'
+                                            }`}>
+                                            연습
+                                        </span>
+                                    </div>
+                                </Button>
 
-                            {/* 도전 모드 버튼 */}
-                            <Button
-                                variant="ghost"
-                                onClick={() => onModeChange('timeAttack')}
-                                className={`flex-1 h-12 flex items-center justify-center px-3 gap-2
-            rounded-lg relative transition-all duration-200
-            ${gameMode === 'timeAttack'
-                                        ? 'bg-blue-500 text-white'
-                                        : 'bg-white hover:bg-gray-50'}`}
-                            >
-                                <Clock className={`w-7 h-7 flex-shrink-0
-            ${gameMode === 'timeAttack' ? 'text-white' : 'text-gray-500'}`}
-                                />
-                                <span className={`text-base font-suite font-medium
-            ${gameMode === 'timeAttack' ? 'text-white' : 'text-gray-600'}`}
+                                {/* 도전 모드 버튼 */}
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => onModeChange('timeAttack')}
+                                    className={`
+                        h-full relative overflow-hidden rounded-lg
+                        transition-all duration-300 border-none
+                        ${gameMode === 'timeAttack'
+                                            ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 shadow-md'
+                                            : 'bg-transparent hover:bg-white/50'
+                                        }
+                    `}
                                 >
-                                    도전
-                                </span>
-                            </Button>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <Clock className={`w-5 h-5 ${gameMode === 'timeAttack' ? 'text-white' : 'text-indigo-600'
+                                            }`} />
+                                        <span className={`text-sm font-suite font-medium ${gameMode === 'timeAttack' ? 'text-white' : 'text-indigo-600'
+                                            }`}>
+                                            도전
+                                        </span>
+                                    </div>
+                                </Button>
+                            </div>
                         </div>
 
-                        {/* PremiumModalContainer로 교체 */}
-                        <PremiumModalContainer
-                            isPremium={isPremium}
-                            setIsPremium={setIsPremium}
-                            showAlert={showAlert}
-                        />
+                        {/* 작은 버튼들 (프리미엄, 설정) */}
+                        {/* 작은 버튼들 (프리미엄, 설정) */}
+                        <div className="flex gap-2">
+                            {/* 프리미엄 버튼 */}
+                            <div className="flex-1">
+                                <motion.button
+                                    data-component="premium-button"
+                                    onClick={() => {
+                                        if (contextHandleModalOpen) {
+                                            contextHandleModalOpen();
+                                        }
+                                        setShowPremiumModal(true);
+                                    }}
+                                    className={`
+                w-14 h-14 rounded-lg
+                flex items-center justify-center
+                shadow-md hover:shadow-lg
+                transition-all duration-300
+                ${isPremium
+                                            ? 'bg-white border-2 border-indigo-100'
+                                            : 'bg-gradient-to-r from-amber-500 to-orange-400'
+                                        }
+            `}
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.95 }}
+                                >
+                                    <Crown className={`w-5 h-5 ${isPremium ? 'text-amber-500' : 'text-white'}`} />
+                                </motion.button>
 
-                        {/* 설정 버튼 */}
-                        <motion.button
-                            onClick={onSettingsClick}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.95 }}
-                            className="h-12 w-12 flex items-center justify-center rounded-xl
-          bg-white hover:bg-gray-50 border border-gray-200 shadow-sm"
-                        >
-                            <Cog className="w-7 h-7 text-gray-600" />
-                        </motion.button>
+                                <AnimatePresence>
+                                    {showPremiumModal && (
+                                        <PremiumModal
+                                            show={showPremiumModal}
+                                            onClose={() => {
+                                                if (contextHandleModalClose) {
+                                                    contextHandleModalClose();
+                                                }
+                                                setShowPremiumModal(false);
+                                            }}
+                                        />
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
+                            {/* 설정 버튼 */}
+                            <motion.button
+                                onClick={onSettingsClick}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="w-14 h-14 rounded-lg bg-white border-2 border-indigo-100 
+            shadow-md hover:shadow-lg transition-all duration-300
+            flex items-center justify-center"
+                            >
+                                <Cog className="w-5 h-5 text-indigo-600" />
+                            </motion.button>
+                        </div>
                     </div>
                 </div>
 
-                {/* 상태 표시 카드들 컨테이너 */}
-                <div className="bg-white/50 p-3 rounded-xl backdrop-blur-sm mb-2 relative shadow-lg border border-indigo-100/50 z-[2]">
+                {/* 카드 컨테이너 */}
+                <div className="bg-white p-3 rounded-xl shadow-md border-2 border-indigo-100 mb-2">
                     <div className="grid grid-cols-12 gap-3">
                         {gameMode === 'practice' ? (
-                            // 연습 모드 카드들
                             <>
                                 {/* 점수 카드 */}
-                                <motion.div variants={itemVariants} className="col-span-4 relative" ref={scoreCardRef}>
+                                <motion.div data-component="score-card" variants={itemVariants} className="col-span-4 relative" ref={scoreCardRef}>
                                     <div
                                         className={`${baseCardStyle} h-[108px]`}
                                         onClick={onScoreClick}
@@ -685,7 +834,7 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                 </motion.div>
 
                                 {/* 연속 정답 카드 */}
-                                <motion.div variants={itemVariants} className="col-span-4 relative" ref={streakCardRef}>
+                                <motion.div data-component="streak-card" variants={itemVariants} className="col-span-4 relative" ref={streakCardRef}>
                                     <div
                                         className={`${baseCardStyle} h-[108px]`}
                                         onClick={onStreakClick}
@@ -703,7 +852,8 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                     </div>
                                 </motion.div>
 
-                                <motion.div variants={itemVariants} className="col-span-4 relative">
+                                {/* 학습 중 카드 */}
+                                <motion.div data-component="learning-card" variants={itemVariants} className="col-span-4 relative">
                                     <div
                                         className={`${baseCardStyle} h-[108px]`}
                                         onClick={() => {
@@ -718,8 +868,8 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                                     <BookOpen className={`${iconBaseStyle} text-indigo-500`} />
                                                 </div>
                                             </div>
-                                            {/* 애니메이션이 있는 클릭 가이드 */}
                                             <motion.div
+                                                data-component="progress-card"
                                                 initial={{ opacity: 0.5, y: 0 }}
                                                 animate={{
                                                     opacity: [0.5, 1, 0.5],
@@ -734,6 +884,7 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                             >
                                                 <span className="text-xs font-medium">Click</span>
                                                 <motion.div
+                                                    data-component="level-card"
                                                     animate={{ rotate: [0, 15, 0] }}
                                                     transition={{
                                                         duration: 1.5,
@@ -741,17 +892,14 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                                         ease: "easeInOut"
                                                     }}
                                                 >
-
                                                 </motion.div>
                                             </motion.div>
                                         </div>
                                         <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
                                     </div>
                                 </motion.div>
-
                             </>
                         ) : (
-                            // 타임어택 모드 카드들
                             <>
                                 {/* 타이머 카드 */}
                                 <motion.div variants={itemVariants} className="col-span-4 relative">
@@ -775,7 +923,6 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                                         <Clock className={`${iconBaseStyle} ${timeLeft <= 10 ? 'text-rose-500' : 'text-blue-500'}`} />
                                                     </motion.div>
                                                 </div>
-                                                {/* 시작 버튼 표시 조건 수정 */}
                                                 {(!timerActive || isPaused) && !isTimeAttackComplete && (
                                                     <motion.button
                                                         initial={{ opacity: 0 }}
@@ -791,8 +938,8 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                                             }
                                                         }}
                                                         className="mt-1 self-center flex items-center gap-1.5 px-3 py-1 
-                                bg-indigo-500 hover:bg-indigo-600 text-white rounded 
-                                transition-colors text-xs font-suite font-medium"
+                                                            bg-indigo-500 hover:bg-indigo-600 text-white rounded 
+                                                            transition-colors text-xs font-suite font-medium"
                                                     >
                                                         <PlayCircle className="w-3 h-3" />
                                                         시작
@@ -801,38 +948,19 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                             </div>
                                         </div>
                                         <div className={`
-            absolute inset-0 bg-gradient-to-r 
-            ${timeLeft <= 10 ? 'from-rose-500/10' : 'from-blue-500/10'} 
-            to-transparent opacity-0 group-hover:opacity-100 transition-opacity
-            rounded-xl
-        `} />
+                                            absolute inset-0 bg-gradient-to-r 
+                                            ${timeLeft <= 10 ? 'from-rose-500/10' : 'from-blue-500/10'} 
+                                            to-transparent opacity-0 group-hover:opacity-100 transition-opacity
+                                            rounded-xl
+                                        `} />
                                     </div>
-                                    <AnimatePresence>
-                                        {showTimerSettings && (
-                                            <TimerSettingsModal
-                                                show={showTimerSettings}
-                                                selectedTime={selectedTime}
-                                                onClose={onTimerSettingsClose}
-                                                onTimeSelect={(time) => {
-                                                    onTimeSelect(time);
-                                                    setTimeLeft(time);
-                                                    setTimerActive(false);
-                                                    setIsPaused(true);
-                                                    if (solvedProblems === 0) {
-                                                        setSolvedProblems(0);
-                                                        setIsTimeAttackComplete(false);
-                                                    }
-                                                }}
-                                            />
-                                        )}
-                                    </AnimatePresence>
                                 </motion.div>
 
-                                {/* 진행도 카드 */}
+                                {/* 타임어택 진행도 카드 */}
                                 <motion.div variants={itemVariants} className="col-span-4 relative">
                                     <div
                                         className={`${baseCardStyle} h-[108px]`}
-                                        onClick={onProblemCountClick}
+                                        onClick={() => setShowProblemCountModal(true)}
                                     >
                                         <div className="p-4 h-full flex flex-col">
                                             <p className={labelStyle}>문제</p>
@@ -843,19 +971,23 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                                         <span className="text-gray-400">/</span>
                                                         <span className="text-gray-500">{requiredProblems}</span>
                                                     </div>
-                                                    <Medal className={`${iconBaseStyle} text-emerald-500`} />
+                                                    <Medal className={`${iconBaseStyle} ${getProgressColor(solvedProblems, requiredProblems).text}`} />
                                                 </div>
                                                 <div className="h-1 bg-gray-100 rounded-full overflow-hidden mt-2">
                                                     <motion.div
+                                                        key={`${solvedProblems}-${requiredProblems}`}
                                                         initial={{ width: 0 }}
-                                                        animate={{ width: `${(solvedProblems / requiredProblems) * 100}%` }}
-                                                        transition={{ duration: 0.5 }}
-                                                        className="h-full bg-emerald-500 rounded-full"
+                                                        animate={{ width: `${progressPercentage}%` }}
+                                                        transition={{
+                                                            duration: 0.5,
+                                                            ease: "easeInOut"
+                                                        }}
+                                                        className={`h-full rounded-full ${getProgressColor(solvedProblems, requiredProblems).bg}`}
                                                     />
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <div className={`absolute inset-0 bg-gradient-to-r ${getProgressColor(solvedProblems, requiredProblems).from} to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl`} />
                                     </div>
                                 </motion.div>
 
@@ -880,13 +1012,24 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
                                     </div>
                                 </motion.div>
                             </>
                         )}
                     </div>
                 </div>
+
+                <AnimatePresence>
+                    {showProblemCountModal && (
+                        <ProblemCountModal
+                            show={showProblemCountModal}
+                            onClose={() => setShowProblemCountModal(false)}
+                            onCountSelect={handleProblemCountSelect}
+                            currentCount={requiredProblems}
+                        />
+                    )}
+                </AnimatePresence>
             </motion.div>
         </div>
     );
