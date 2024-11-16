@@ -1,8 +1,8 @@
 "use client"
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import { triggerHapticFeedback, HAPTIC_TYPES } from '../src/utils/hapticFeedback';
+import { showInterstitialAd } from '../src/utils/adManager';
 import {
   BarChart2, Target, BookOpen, Clock, Medal,
   Trophy, Cog, X, Check, XCircle, Hash,
@@ -18,86 +18,74 @@ import SettingsModal from "./SettingsModal";
 import RollingBanner from './RollingBanner';
 import PurchaseManager from './lib/purchaseManager';
 import { BannerItem } from './types/banner';
+import ComboAnimation from './ComboAnimation';
 // import PremiumModal from './components/PremiumModal';
 
 // 배너 아이템 데이터
 const bannerItems: BannerItem[] = [
   {
     type: 'content' as const,
-    text: "곱셈의 순서를 바꾸어도 결과는 같아요!",
-    icon: "🎯",
+    text: "우리 아이 위치를 실시간으로 확인하세요",
+    icon: "📍",
+    link: "https://smap.co.kr",
     backgroundColor: "bg-blue-50",
     textColor: "text-blue-700"
   },
   {
     type: 'content' as const,
-    text: "구구단 학습 방법 알아보기",
-    icon: "📚",
-    link: "https://smap.co.kr",
+    text: "자녀의 등하교 도착 알림을 받아보세요",
+    icon: "🏫",
+    link: "https://smap.co.kr/function",
     backgroundColor: "bg-emerald-50",
     textColor: "text-emerald-700"
   },
   {
     type: 'content' as const,
-    text: "0을 곱하면 항상 0이 되어요!",
-    icon: "💡",
-    backgroundColor: "bg-amber-50",
-    textColor: "text-amber-700"
-  },
-  {
-    type: 'content' as const,
-    text: "1을 곱하면 수가 변하지 않아요",
-    icon: "✨",
-    backgroundColor: "bg-purple-50",
-    textColor: "text-purple-700"
-  },
-  {
-    type: 'content' as const,
-    text: "2의 곱은 두 번 더하기와 같아요",
-    icon: "🎨",
-    link: "https://smap.co.kr/multiply-tips",
-    backgroundColor: "bg-pink-50",
-    textColor: "text-pink-700"
-  },
-  {
-    type: 'content' as const,
-    text: "5의 곱은 끝자리가 0 또는 5예요",
-    icon: "🌟",
-    backgroundColor: "bg-indigo-50",
-    textColor: "text-indigo-700"
-  },
-  {
-    type: 'ad' as const,
-    adUnitId: 'your-ad-unit-id' // adUnitId 추가
-  },
-  {
-    type: 'content' as const,
-    text: "9의 곱? 10을 곱하고 1번 빼보세요!",
-    icon: "🎮",
-    backgroundColor: "bg-teal-50",
-    textColor: "text-teal-700"
-  },
-  {
-    type: 'content' as const,
-    text: "오늘의 구구단 퀴즈 풀어보기",
-    icon: "🎯",
-    link: "https://smap.co.kr/quiz",
+    text: "학원, 학교 스케줄을 한눈에 관리해요",
+    icon: "📅",
+    link: "https://smap.co.kr/function",
     backgroundColor: "bg-rose-50",
     textColor: "text-rose-700"
   },
   {
     type: 'content' as const,
-    text: "매일 조금씩, 꾸준히 연습해요!",
-    icon: "⭐",
-    backgroundColor: "bg-orange-50",
-    textColor: "text-orange-700"
+    text: "안전한 등하교 경로 추천받기",
+    icon: "🚸",
+    link: "https://smap.co.kr/function",
+    backgroundColor: "bg-amber-50",
+    textColor: "text-amber-700"
   },
   {
     type: 'content' as const,
-    text: "틀려도 괜찮아요, 다시 도전해보세요!",
-    icon: "🌈",
-    backgroundColor: "bg-cyan-50",
-    textColor: "text-cyan-700"
+    text: "우리 아이 이동 기록 한눈에 보기",
+    icon: "📱",
+    link: "https://smap.co.kr",
+    backgroundColor: "bg-purple-50",
+    textColor: "text-purple-700"
+  },
+  {
+    type: 'content' as const,
+    text: "SMAP으로 우리 가족 안전 지키기",
+    icon: "👨‍👩‍👧‍👦",
+    link: "https://apps.apple.com/us/app/smap-location-history-plans/id6480279658",
+    backgroundColor: "bg-pink-50",
+    textColor: "text-pink-700"
+  },
+  {
+    type: 'content' as const,
+    text: "아이 스케줄 시작 전 알림 받기",
+    icon: "⏰",
+    link: "https://smap.co.kr/function",
+    backgroundColor: "bg-indigo-50",
+    textColor: "text-indigo-700"
+  },
+  {
+    type: 'content' as const,
+    text: "자녀 안전, SMAP과 함께하세요",
+    icon: "💝",
+    link: "https://apps.apple.com/us/app/smap-location-history-plans/id6480279658",
+    backgroundColor: "bg-teal-50",
+    textColor: "text-teal-700"
   }
 ];
 
@@ -170,6 +158,37 @@ interface TimeAttackResultDialogProps {
   onNext?: () => void;
 }
 
+// 진행률에 따른 색상을 결정하는 함수
+const getProgressColor = (solved: number, required: number) => {
+  const percentage = (solved / required) * 100;
+
+  if (percentage < 30) {
+    return {
+      bg: 'bg-rose-500',
+      from: 'from-rose-500/10',
+      text: 'text-rose-500'
+    };
+  } else if (percentage < 60) {
+    return {
+      bg: 'bg-amber-500',
+      from: 'from-amber-500/10',
+      text: 'text-amber-500'
+    };
+  } else if (percentage < 90) {
+    return {
+      bg: 'bg-emerald-500',
+      from: 'from-emerald-500/10',
+      text: 'text-emerald-500'
+    };
+  } else {
+    return {
+      bg: 'bg-indigo-500',
+      from: 'from-indigo-500/10',
+      text: 'text-indigo-500'
+    };
+  }
+};
+
 const TimeAttackResultDialog = ({
   show,
   success,
@@ -207,7 +226,7 @@ const TimeAttackResultDialog = ({
           <h3 className="text-xl font-suite font-bold text-center mb-2">
             {success ? '축하합니다! 🎉' : '아쉽네요! 😢'}
           </h3>
-          <p className="text-center text-gray-600 whitespace-pre-line">{message}</p>
+          <p className="text-center text-black whitespace-pre-line">{message}</p>
         </div>
 
         {/* 진행률 표시 */}
@@ -267,6 +286,8 @@ const TimeAttackResultDialog = ({
   );
 };
 
+TimeAttackResultDialog.displayName = 'TimeAttackResultDialog';
+
 // 별도의 컴포넌트로 분리
 const ProblemCountSettings = React.memo(({
   requiredProblems,
@@ -275,24 +296,30 @@ const ProblemCountSettings = React.memo(({
   problemCountRef
 }: ProblemCountSettingsProps) => {
   const countOptions = [10, 15, 20];
-  ProblemCountSettings.displayName = 'ProblemCountSettings'; // display name 추가
+
   return (
     <motion.div
-      ref={problemCountRef}  // ref 전달
+      ref={problemCountRef}
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="absolute top-full left-0 mt-2 bg-white p-4 rounded-lg shadow-lg z-50 w-48"
+      className="absolute top-full left-0 mt-2 bg-white p-4 rounded-t-2xl rounded-b-lg shadow-lg z-50 w-48 border-2 border-indigo-100"
     >
+      {/* 상단 장식 바 추가 */}
+      <div className="absolute -top-1 left-1/2 transform -translate-x-1/2">
+        <div className="w-12 h-1 bg-gray-300 rounded-full" />
+      </div>
+
       <div className="flex justify-between items-center mb-4">
-        <h4 className="text-lg font-suite font-bold text-black">문제 수 설정</h4>
+        <h4 className="text-lg font-suite font-bold text-indigo-600">문제 수 설정</h4>
         <button
           onClick={onClose}
-          className="text-gray-500 hover:text-gray-700"
+          className="text-gray-400 hover:text-gray-600 transition-colors"
         >
           <X className="h-4 w-4" />
         </button>
       </div>
+
       <div className="space-y-2">
         {countOptions.map((count) => (
           <Button
@@ -301,14 +328,17 @@ const ProblemCountSettings = React.memo(({
             onClick={() => onSelect(count)}
             className={`
               w-full flex items-center justify-between px-4 h-10
-              ${requiredProblems === count ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'hover:bg-gray-50'}
+              ${requiredProblems === count
+                ? 'bg-indigo-500 hover:bg-indigo-600 text-white'
+                : 'hover:bg-indigo-50 border-2 border-indigo-100'}
+              transition-all duration-200
             `}
           >
             <div className="flex items-center gap-2">
               {requiredProblems === count && (
                 <Check className="w-4 h-4 flex-shrink-0" />
               )}
-              <span className="text-sm">{count}문제</span>
+              <span className="text-sm font-medium">{count}문제</span>
             </div>
           </Button>
         ))}
@@ -316,6 +346,8 @@ const ProblemCountSettings = React.memo(({
     </motion.div>
   );
 });
+
+ProblemCountSettings.displayName = 'ProblemCountSettings';
 
 interface TimeAttackTableSelectModalProps {
   masteredLevel: number;
@@ -431,6 +463,7 @@ const MultiplicationGame = () => {
   const [masteredLevel, setMasteredLevel] = useState(1);
 
   const [showTableSelectModal, setShowTableSelectModal] = useState(false);  // 추가
+  const [correctAnswerCount, setCorrectAnswerCount] = useState(0);  // 추가된 부분
 
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogProps>({
     show: false,
@@ -456,6 +489,7 @@ const MultiplicationGame = () => {
   const prevGameMode = useRef(gameMode);
 
   const [isPremium, setIsPremium] = useState(false);
+  const [combo, setCombo] = useState(0);
 
   // Premium 구매 핸들러 추가
   // const handlePurchase = async () => {
@@ -512,10 +546,10 @@ const MultiplicationGame = () => {
 
 
   // 설정 핸들러
-  const handleSettingsClick = () => {
+  const handleSettingsClick = useCallback(() => {
     setShowSettings(true);
-    setIsPaused(true); // 게임 일시정지
-  };
+    setIsPaused(true);
+  }, []);
 
   const handleCloseSettings = () => {
     setShowSettings(false);
@@ -830,16 +864,16 @@ const MultiplicationGame = () => {
 
   // 연습 모드 시작 메시지 배열 수정
   const practiceStartMessages = [
-    "오늘도 구구단 연습 \n시작볼까요? 😊",
+    "오늘도 구구단 연습 시작볼까요? 😊",
     "천천히 함께 연습해봐요! 📚",
-    "구구단, 어렵지 않아요! \n지금 시작해요! 🌟",
+    "구구단, 어렵지 않아요!\n 지금 시작해요! 🌟",
     "재미있게 구구단을 익혀봐요! 😄",
-    "자, 준비되셨나요? \n구구단 연습을 시작해요! 🚀",
+    "자, 준비되셨나요?\n 구구단 연습을 시작해요! 🚀",
   ];
 
   // 격려 메시지 배열 수정
   const encouragingMessages = [
-    "훌륭해요! \n이제 {n}단을 도전해봐요! ",
+    "훌륭해요! 이제 {n}단을 도전해봐요! ",
     "{n}단 연습을 시작합니다!\n함께 해봐요! 🎉",
     "{n}단, 어렵지 않아요!\n지금부터 시작해요! 🌟",
     "{n}단 마스터를 향해!\n힘내세요! 💪",
@@ -919,28 +953,10 @@ const MultiplicationGame = () => {
     }
   };
 
-  // handleModeChange 함수 수정
-  const handleModeChange = (newMode: 'practice' | 'timeAttack') => {
-    if (newMode === gameMode) return;
 
-    if (newMode === 'timeAttack') {
-      setGameMode('timeAttack');
-      setTimeLeft(selectedTime);  // 선택된 시간으로 설정
-      setSolvedProblems(0);
-      setIsTimeAttackComplete(false);
-      setTimerActive(true);
-      setIsPaused(false);
-      showAlert(getRandomTimeAttackMessage(), 'info');
-      generateNewProblem();
-    } else {
-      setGameMode('practice');
-      setTimerActive(false);
-      setIsPaused(true);
-      showAlert(getRandomPracticeStartMessage(), 'info', () => {
-        generateNewProblem();
-      });
-    }
-  };
+
+
+  // generateNewProblem 함수 수정
   const generateNewProblem = useCallback(() => {
     const currentTable = gameMode === 'practice' ? selectedTable : timeAttackLevel;
 
@@ -959,13 +975,11 @@ const MultiplicationGame = () => {
       .filter(n => !usedProblems.has(`${currentTable}-${n}`));
 
     if (availableNumbers.length === 0) {
-      // 모든 문제를 다 풀었을 경우, 새로운 랜덤 숫자 선택
-      const newNum2 = Math.floor(Math.random() * (maxMultiplier - 1)) + 2;
+      const newNum2 = Math.floor(Math.random() * 18) + 2;
       setNum1(currentTable);
       setNum2(newNum2);
       setUsedProblems(new Set([`${currentTable}-${newNum2}`]));
     } else {
-      // 아직 풀지 않은 문제가 있는 경우
       const randomIndex = Math.floor(Math.random() * availableNumbers.length);
       const newNum2 = availableNumbers[randomIndex];
       setNum1(currentTable);
@@ -1000,6 +1014,32 @@ const MultiplicationGame = () => {
       }, 100); // 100ms의 지연 시간을 줍니다
     }
   };
+
+  // 핵심 게임 핸들러
+  const handleModeChange = useCallback((newMode: 'practice' | 'timeAttack') => {
+    setCombo(0);
+    if (newMode === gameMode) return;
+
+    if (newMode === 'timeAttack') {
+      setGameMode('timeAttack');
+      setTimeLeft(selectedTime);
+      setSolvedProblems(0);
+      setIsTimeAttackComplete(false);
+      setTimerActive(true);
+      setIsPaused(false);
+      showAlert(getRandomTimeAttackMessage(), 'info');
+      generateNewProblem();
+      setTimerActive(false);
+      setIsPaused(true);
+    } else {
+      setGameMode('practice');
+      setTimerActive(false);
+      setIsPaused(true);
+      showAlert(getRandomPracticeStartMessage(), 'info', () => {
+        generateNewProblem();
+      });
+    }
+  }, [gameMode, selectedTime, generateNewProblem, showAlert]);
 
   // 타이머 토글 함수 수정
   const toggleTimer = (e: React.MouseEvent) => {
@@ -1060,7 +1100,7 @@ const MultiplicationGame = () => {
       if (solvedProblems === 0) {
         message = `아직 문제를 풀지 못했어요.\n${timeAttackLevel}단을 천천히 시작해봐요!`;
       } else {
-        message = `아쉽네요! ${solvedProblems}/${requiredProblems} 문제를 해결했어요.\n다음에 다시 도전해보세요!`;
+        message = `${solvedProblems}/${requiredProblems} 문제를 해결했어요.\n다음에 다시 도전해보세요!`;
       }
     }
 
@@ -1105,12 +1145,20 @@ const MultiplicationGame = () => {
     }
   }, [timeAttackLevel, gameMode, selectedTable, isTimeAttackComplete]);
 
+  const handleRequiredProblemsChange = useCallback((count: number) => {
+    setRequiredProblems(count);
+    if (gameMode === 'timeAttack' && solvedProblems >= count) {
+      setIsTimeAttackComplete(true);
+      handleTimeAttackEnd(true);
+    }
+  }, [gameMode, solvedProblems, handleTimeAttackEnd]);
+
 
   // 타이머 설정 버튼 클릭 핸들러 수정
-  const handleTimeSelect = (time: number) => {
+  const handleTimeSelect = useCallback((time: number) => {
     setSelectedTime(time);
-    setTimeLeft(time);  // 즉시 현재 타이머 값 변경
-    setTimerActive(false);  // 타이머 일시 정지
+    setTimeLeft(time);
+    setTimerActive(false);
     setIsPaused(true);
     setIsTimeAttackComplete(false);
     setSolvedProblems(0);
@@ -1118,7 +1166,7 @@ const MultiplicationGame = () => {
     generateNewProblem();
     showAlert(`${time}초로 설정되었습니다! ⏰`, 'info');
     setShowTimerSettings(false);
-  };
+  }, [generateNewProblem]);
 
   const handleCountSelect = useCallback((count: number) => {
     if (gameMode === 'timeAttack' && !isPaused && !isTimeAttackComplete) {
@@ -1177,18 +1225,13 @@ const MultiplicationGame = () => {
 
 
   // Update checkAnswer function to save time attack records
-  const checkAnswer = (answer: string = userAnswer, isAutoCheck: boolean = false) => {
-    // 타임어택 모드에서 이미 완료된 경우 추가 답변 처리하지 않음
-    if (gameMode === 'timeAttack' && isTimeAttackComplete) {
-      return;
-    }
-
+  const checkAnswer = useCallback((answer: string = userAnswer, isAutoCheck: boolean = false) => {
+    if (gameMode === 'timeAttack' && isTimeAttackComplete) return;
     if (!answer || isNaN(parseInt(answer))) return;
 
     const userInput = parseInt(answer);
     const correct = num1 * num2 === userInput;
 
-    // Check if the answer was already processed
     const isAlreadyAnswered = history.some(item =>
       item.problem === `${num1} × ${num2}` &&
       item.userAnswer === userInput &&
@@ -1197,7 +1240,6 @@ const MultiplicationGame = () => {
 
     if (isAlreadyAnswered) return;
 
-    // Save record
     const newHistory: HistoryItem = {
       problem: `${num1} × ${num2}`,
       userAnswer: userInput,
@@ -1210,8 +1252,27 @@ const MultiplicationGame = () => {
 
     setHistory(prev => [newHistory, ...prev]);
 
-    // 약간의 지연 후에 다음 동작을 실행합니다
     setTimeout(() => {
+      if (correct) {
+        setCombo(prev => prev + 1);
+
+        if ((combo + 1) % 5 === 0) {
+          triggerHapticFeedback(HAPTIC_TYPES.IMPACT_HEAVY);
+        } else {
+          triggerHapticFeedback(HAPTIC_TYPES.SUCCESS);
+        }
+
+        // correctAnswerCount 업데이트를 함수형 업데이트로 변경
+        setCorrectAnswerCount(prev => {
+          const newCount = prev + 1;
+          if (newCount >= 10 && !isPremium) {
+            showInterstitialAd();
+            return 0;  // 광고 표시 후 카운트 리셋
+          }
+          return newCount;
+        });
+      }
+
       if (gameMode === 'practice') {
         updatePracticeStats(selectedTable, correct);
 
@@ -1226,19 +1287,21 @@ const MultiplicationGame = () => {
           setScore(prev => Math.max(0, prev - 15));
           setStreak(0);
           setUserAnswer("");
+          setCombo(0);
           if (!isAutoCheck) {
             showAlert("틀렸습니다. 다시 시도해보세요!", 'error');
           }
         }
-      } else { // 타임어택 모드
+        saveGameState();
+      } else {
         if (correct) {
-          triggerHapticFeedback(HAPTIC_TYPES.SUCCESS);
+          if ((combo + 1) % 5 !== 0) {
+            triggerHapticFeedback(HAPTIC_TYPES.SUCCESS);
+          }
           setUserAnswer("");
 
-          // 다음 문제 수를 먼저 계산
           const nextSolvedCount = solvedProblems + 1;
 
-          // 목표 달성 체크
           if (nextSolvedCount === requiredProblems) {
             setSolvedProblems(nextSolvedCount);
             setIsTimeAttackComplete(true);
@@ -1247,28 +1310,38 @@ const MultiplicationGame = () => {
             return;
           }
 
-          // 아직 목표에 도달하지 않은 경우
           setSolvedProblems(nextSolvedCount);
           generateNewProblem();
-
-          // Save time attack progress
           saveGameState();
         } else {
           triggerHapticFeedback(HAPTIC_TYPES.ERROR);
           setUserAnswer("");
+          setCombo(0);
           if (!isAutoCheck) {
             showAlert("틀렸습니다. 다시 시도해보세요!", 'error');
           }
           generateNewProblem();
         }
       }
-
-      // practice 모드일 때만 마지막에 저장
-      if (gameMode === 'practice') {
-        saveGameState();
-      }
-    }, 100); // 100ms의 지연 시간을 줍니다
-  };
+    }, 100);
+  }, [
+    gameMode,
+    isTimeAttackComplete,
+    userAnswer,
+    num1,
+    num2,
+    history,
+    combo,
+    isPremium,
+    selectedTable,
+    solvedProblems,
+    requiredProblems,
+    generateNewProblem,
+    handleTimeAttackEnd,
+    saveGameState,
+    showAlert,
+    updatePracticeStats
+  ]);
 
   // 키보드 입력 핸들러 수정
   useEffect(() => {
@@ -1288,6 +1361,24 @@ const MultiplicationGame = () => {
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [userAnswer, num1, num2]); // 의존성 추가
+
+  const handleTimerToggle = useCallback(() => {
+    if (isPaused) {
+      if (timeLeft === selectedTime && solvedProblems === 0) {
+        setTimeLeft(selectedTime);
+        setSolvedProblems(0);
+        setIsTimeAttackComplete(false);
+        generateNewProblem();
+      }
+      setTimerActive(true);
+      setIsPaused(false);
+      showAlert('타이머 시작!', 'info');
+    } else {
+      setTimerActive(false);
+      setIsPaused(true);
+      showAlert('일시정지!', 'info');
+    }
+  }, [isPaused, timeLeft, selectedTime, solvedProblems, generateNewProblem]);
 
   // Combine effects into one
   useEffect(() => {
@@ -1420,7 +1511,7 @@ const MultiplicationGame = () => {
 
       {/* 헤더 부분만 수정 */}
       <HeaderSection
-        // 상태 props
+        // 게임 상태 props
         gameMode={gameMode}
         score={score}
         streak={streak}
@@ -1434,46 +1525,49 @@ const MultiplicationGame = () => {
         showStreakInfo={showStreakInfo}
         showTableInfo={showTableInfo}
         showTimerSettings={showTimerSettings}
+        showProblemCountSettings={showProblemCountSettings}
         selectedTime={selectedTime}
         masteredLevel={masteredLevel}
         practiceStats={practiceStats}
         history={history}
         timerActive={timerActive}
         isTimeAttackComplete={isTimeAttackComplete}
+
+        // 함수 props
         setTimerActive={setTimerActive}
         setIsPaused={setIsPaused}
         setTimeLeft={setTimeLeft}
         setSolvedProblems={setSolvedProblems}
         setIsTimeAttackComplete={setIsTimeAttackComplete}
+        setShowProblemCountSettings={setShowProblemCountSettings}
         showAlert={showAlert}
+        setShowTimerSettings={setShowTimerSettings}
+        onRequiredProblemsChange={handleRequiredProblemsChange}
 
         // 이벤트 핸들러 props
         onModeChange={handleModeChange}
         onSettingsClick={handleSettingsClick}
-        onScoreClick={() => setShowScoreInfo(true)}
-        onStreakClick={() => setShowStreakInfo(true)}
-        onTableClick={() => setShowTableInfo(true)}
-        onTableSelectClick={handleTimeAttackLevelSelect}
-        onProblemCountClick={handleProblemCountClick}
-        onTimerSettingsClick={() => setShowTimerSettings(true)}
-        onTimerToggle={toggleTimer}
-        onTimeSelect={handleTimeSelect}
         onScoreInfoClose={() => setShowScoreInfo(false)}
         onStreakInfoClose={() => setShowStreakInfo(false)}
         onTableInfoClose={() => setShowTableInfo(false)}
         onTimerSettingsClose={() => setShowTimerSettings(false)}
-        showProblemCountSettings={showProblemCountSettings}
-        setShowTimerSettings={setShowTimerSettings}
-        setShowProblemCountSettings={setShowProblemCountSettings}
+        onTimerToggle={handleTimerToggle}
+        onTimeSelect={handleTimeSelect}
+        onScoreClick={() => setShowScoreInfo(true)}
+        onStreakClick={() => setShowStreakInfo(true)}
+        onTableClick={() => setShowTableInfo(true)}
+        onTableSelectClick={() => setShowTableSelectModal(true)}
+        onProblemCountClick={() => setShowProblemCountSettings(true)}
+        onTimerSettingsClick={() => setShowTimerSettings(true)}
 
-        // 누락된 props 추가
+        // 기타 props
         showTableSelectModal={showTableSelectModal}
         setShowTableSelectModal={setShowTableSelectModal}
         setUsedProblems={setUsedProblems}
         resetTimeAttack={resetTimeAttack}
         generateNewProblem={generateNewProblem}
-        usedProblems={usedProblems}
         setTimeAttackLevel={setTimeAttackLevel}
+        usedProblems={usedProblems}
         setSelectedTable={setSelectedTable}
         isPremium={isPremium}
         setIsPremium={setIsPremium}
@@ -1498,115 +1592,147 @@ const MultiplicationGame = () => {
         )}
       </AnimatePresence>
 
-      <div className="bg-white/50 p-3 rounded-xl backdrop-blur-sm mb-4 relative shadow-lg border border-indigo-100/50 z-[1]">
-        <div className="bg-white/80 rounded-lg p-4 shadow-sm">
-          {/* 최근 기록 표시 - 카드 형태로 변경 */}
-          <div className="h-7 mb-1"> {/* 이 살짝 증가 */}
-            {history.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`
-                        inline-flex items-center px-2.5 py-1 rounded-lg text-sm font-suite font-semibold
-                        ${history[0].correct
-                    ? 'bg-green-50 text-green-700 border border-green-200'
-                    : 'bg-red-50 text-red-700 border border-red-200'
-                  }
-                    `}
-              >
-                {history[0].correct ? (
-                  <Check className="w-4 h-4 mr-1.5 flex-shrink-0" />
-                ) : (
-                  <X className="w-4 h-4 mr-1.5 flex-shrink-0" />
-                )}
-                <span>
-                  {history[0].problem} = {history[0].userAnswer}
-                </span>
-              </motion.div>
-            )}
+      {/* ComboAnimation 추가 */}
+      <ComboAnimation combo={combo} />
+
+      {/* 전체 키패드 섹션 */}
+      <div className="relative mb-2">
+        {/* 키패드 컨테이너 */}
+        <div className="bg-white p-3 rounded-xl shadow-md border-2 border-indigo-100 mb-2">
+          <div className="grid grid-cols-12 gap-3">
+            <div className="col-span-12">
+              {/* 최근 기록 표시 - 가로 배열 */}
+              <div className="flex justify-start gap-2 mb-4 h-8 overflow-hidden">
+                <AnimatePresence mode="popLayout" initial={false}>
+                  {history.slice(0, 2).map((record, index) => (
+                    <motion.div
+                      key={`${record.timestamp}-${index}`}
+                      initial={{ opacity: 0, x: -100 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 100 }}
+                      layout
+                      transition={{
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 30,
+                        mass: 0.8
+                      }}
+                      className={`
+                    flex items-center px-3 py-1.5 rounded-xl text-sm font-suite font-medium
+                    shrink-0
+                    ${record.correct
+                          ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                          : 'bg-rose-50 text-rose-600 border border-rose-200'
+                        }
+                `}
+                    >
+                      {record.correct ? (
+                        <Check className="w-4 h-4 mr-2 flex-shrink-0" />
+                      ) : (
+                        <X className="w-4 h-4 mr-2 flex-shrink-0" />
+                      )}
+                      <span>
+                        {record.problem} = {record.userAnswer}
+                      </span>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+
+              {/* 문제 표시 */}
+              <div className="relative overflow-hidden bg-white rounded-xl shadow-md border-2 border-indigo-100 transition-all duration-300 mb-3 p-4">
+                <div className="text-4xl font-suite font-bold text-center text-indigo-600">
+                  {num1} × {num2} = {userAnswer || "_"}
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+              </div>
+
+              {/* 키패드 그리드 - 헤더의 카드들과 일관된 스타일 적용 */}
+              <div className="grid grid-cols-3 gap-2">
+                {/* 1-9까지 숫자 버튼들 */}
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                  <motion.button
+                    key={num}
+                    variants={buttonVariants}
+                    initial="initial"
+                    whileHover="hover"
+                    whileTap="tap"
+                    className="relative h-14 bg-white rounded-xl 
+                                shadow-md border-2 border-indigo-100 
+                                text-xl font-suite font-bold text-indigo-600
+                                transition-all duration-300 overflow-hidden
+                                hover:border-indigo-200 hover:shadow-lg"
+                    onClick={() => handleNumberInput(num)}
+                  >
+                    {num}
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity rounded-xl" />
+                  </motion.button>
+                ))}
+
+                {/* 지우기 버튼 */}
+                <motion.button
+                  variants={buttonVariants}
+                  initial="initial"
+                  whileHover="hover"
+                  whileTap="tap"
+                  className="relative h-14 bg-white rounded-xl 
+                            shadow-md border-2 border-rose-100 
+                            text-xl font-suite font-bold text-rose-600
+                            transition-all duration-300 overflow-hidden
+                            hover:border-rose-200 hover:shadow-lg"
+                  onClick={() => setUserAnswer(userAnswer.slice(0, -1))}
+                >
+                  <Delete className="w-5 h-5 mx-auto" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-rose-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity rounded-xl" />
+                </motion.button>
+
+                {/* 0 버튼 */}
+                <motion.button
+                  variants={buttonVariants}
+                  initial="initial"
+                  whileHover="hover"
+                  whileTap="tap"
+                  className="relative h-14 bg-white rounded-xl 
+                            shadow-md border-2 border-indigo-100 
+                            text-xl font-suite font-bold text-indigo-600
+                            transition-all duration-300 overflow-hidden
+                            hover:border-indigo-200 hover:shadow-lg"
+                  onClick={() => handleNumberInput(0)}
+                >
+                  0
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-transparent opacity-0 hover:opacity-100 transition-opacity rounded-xl" />
+                </motion.button>
+
+                {/* 확인 버튼 */}
+                <motion.button
+                  variants={buttonVariants}
+                  initial="initial"
+                  whileHover="hover"
+                  whileTap="tap"
+                  className={`relative h-14 rounded-xl shadow-md border-2 
+                            text-xl font-suite font-bold transition-all duration-300 overflow-hidden
+                            ${userAnswer
+                      ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white border-transparent hover:from-indigo-600 hover:to-indigo-700'
+                      : 'bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed'
+                    }`}
+                  onClick={() => checkAnswer()}
+                  disabled={!userAnswer}
+                >
+                  확인
+                </motion.button>
+              </div>
+            </div>
           </div>
-
-          {/* 문제 표시 */}
-          <div className="text-5xl font-suite font-bold text-center mb-4 py-2 text-indigo-600">
-            {num1} × {num2} = {userAnswer || "_"}
-          </div>
-
-          {/* 키패드 그리드 */}
-          <div className="grid grid-cols-3 gap-2 scale-90 transform origin-top">
-            {/* 1-9까지 숫자 */}
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-              <motion.button
-                key={num}
-                variants={buttonVariants}
-                initial="initial"
-                whileHover="hover"
-                whileTap="tap"
-                className="h-12 bg-gradient-to-b from-white to-indigo-50 
-              text-indigo-600 rounded-lg text-xl font-suite font-bold
-              shadow-sm hover:shadow-md border-2 border-indigo-100
-              hover:border-indigo-300 hover:from-indigo-50 
-              hover:to-indigo-100 active:scale-95 transition-all"
-                onClick={() => handleNumberInput(num)}
-              >
-                {num}
-              </motion.button>
-            ))}
-
-            {/* 지우기 버튼 */}
-            <motion.button
-              variants={buttonVariants}
-              initial="initial"
-              whileHover="hover"
-              whileTap="tap"
-              className="h-12 bg-gradient-to-b from-white to-rose-50 
-          text-rose-600 rounded-lg text-xl font-suite font-bold shadow-sm 
-          hover:shadow-md border-2 border-rose-200
-          hover:border-rose-300 hover:from-rose-50 hover:to-rose-100"
-              onClick={() => setUserAnswer(userAnswer.slice(0, -1))}
-            >
-              <Delete className="w-5 h-5 mx-auto" />
-            </motion.button>
-
-            {/* 0 버튼 */}
-            <motion.button
-              variants={buttonVariants}
-              initial="initial"
-              whileHover="hover"
-              whileTap="tap"
-              className="h-12 bg-gradient-to-b from-white to-indigo-50 
-          text-indigo-600 rounded-lg text-xl font-suite font-bold shadow-sm 
-          hover:shadow-md border-2 border-indigo-100
-          hover:border-indigo-300 hover:from-indigo-50 
-          hover:to-indigo-100"
-              onClick={() => handleNumberInput(0)}
-            >
-              0
-            </motion.button>
-
-            {/* 확인 버튼 */}
-            <motion.button
-              variants={buttonVariants}
-              initial="initial"
-              whileHover="hover"
-              whileTap="tap"
-              className={`h-12 rounded-lg text-xl font-suite font-bold shadow-sm 
-        hover:shadow-md transition-all border-2
-        ${userAnswer
-                  ? 'bg-gradient-to-b from-indigo-500 to-indigo-600 text-white border-indigo-400 hover:border-indigo-500 hover:from-indigo-600 hover:to-indigo-700'
-                  : 'bg-gradient-to-b from-gray-50 to-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                }`}
-              onClick={() => checkAnswer()}
-              disabled={!userAnswer}
-            >
-              확인
-            </motion.button>
-
-          </div>
-          <RollingBanner items={bannerItems} />
         </div>
+
+        {/* RollingBanner는 키패드 섹션 아래에 별도로 배치 */}
+        <RollingBanner items={bannerItems} />
       </div>
     </div >
   );
 };
+
+// displayName 추가
+MultiplicationGame.displayName = 'MultiplicationGame';
 
 export default MultiplicationGame;
