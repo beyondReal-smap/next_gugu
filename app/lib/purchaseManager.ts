@@ -1,4 +1,5 @@
 // purchaseManager.ts
+import type { WebKitMessageHandlers, AndroidInterface } from '../types/webkit';
 
 interface PurchaseStatus {
   isPremium: boolean;
@@ -7,13 +8,6 @@ interface PurchaseStatus {
 
 declare global {
   interface Window {
-      webkit?: {
-          messageHandlers: {
-              storeKit: {
-                  postMessage: (message: string) => void;
-              }
-          }
-      };
       BillingManager?: {
           initializePurchase: () => Promise<boolean>;
           purchasePremium: () => Promise<boolean>;
