@@ -119,4 +119,4 @@ export const useNativeHandlers = (): NativeHandlers => {
   return { handleLink, openLinkInNewWindow, handleSubscription, loadAd };
 };
 
-export {};
+export {}; 
