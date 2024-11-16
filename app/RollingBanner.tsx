@@ -4,56 +4,7 @@
 import { useState, useEffect, TouchEvent } from 'react';
 import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import { BannerItem, RollingBannerProps } from './types/banner';
-
-// 네이티브 인터페이스 분리
-interface NativeHandlers {
-  handleLink: (url: string) => void;
-  handleSubscription: (productId: string) => void;
-  loadAd: (adUnitId: string) => void;
-}
-
-const useNativeHandlers = () => {
-  const handleLink = (url: string) => {
-    if (window.webkit?.messageHandlers?.storeKit) {
-      window.webkit.messageHandlers.storeKit.postMessage(JSON.stringify({
-        type: 'openLink',
-        url
-      }));
-    } else if (window.Android?.openLink) {
-      window.Android.openLink(url);
-    } else {
-      try {
-        window.open(url, '_system', 'location=yes');
-      } catch (error) {
-        window.open(url, '_blank', 'noopener,noreferrer');
-      }
-    }
-  };
-
-  const handleSubscription = (productId: string) => {
-    if (window.webkit?.messageHandlers?.storeKit) {
-      window.webkit.messageHandlers.storeKit.postMessage(JSON.stringify({
-        type: 'subscription',
-        productId
-      }));
-    } else if (window.Android?.subscribeProduct) {
-      window.Android.subscribeProduct(productId);
-    }
-  };
-
-  const loadAd = (adUnitId: string) => {
-    if (window.webkit?.messageHandlers?.storeKit) {
-      window.webkit.messageHandlers.storeKit.postMessage(JSON.stringify({
-        type: 'loadAd',
-        adUnitId
-      }));
-    } else if (window.Android?.loadAd) {
-      window.Android.loadAd(adUnitId);
-    }
-  };
-
-  return { handleLink, handleSubscription, loadAd };
-};
+import { useNativeHandlers } from './types/webkit';
 
 const RollingBanner = ({ 
   items = [], 
@@ -65,7 +16,7 @@ const RollingBanner = ({
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [adLoaded, setAdLoaded] = useState<{[key: string]: boolean}>({});
-  const { handleLink, handleSubscription, loadAd } = useNativeHandlers();
+  const { handleLink, openLinkInNewWindow, handleSubscription, loadAd } = useNativeHandlers();
 
   const minSwipeDistance = 50;
   const currentItem = items[currentIndex];
@@ -78,7 +29,7 @@ const RollingBanner = ({
       case 'content':
       case 'image':
         if (item.link) {
-          handleLink(item.link);
+          openLinkInNewWindow(item.link);
         }
         break;
       
@@ -157,44 +108,44 @@ const RollingBanner = ({
         return (
           <div 
             className="w-full h-full bg-cover bg-center cursor-pointer"
-            style={{ backgroundImage: `url(${item.imageUrl})` }}
+            style={{ backgroundImage: `url(${item.imageUrl})`, height: '120px' }}
           />
         );
       
       case 'content':
         return (
-          <div className={`flex items-center gap-3 ${item.textColor || 'text-indigo-700'}`}>
+          <div className={`flex items-center gap-2 ${item.textColor || 'text-indigo-700'}`} style={{ padding: '8px' }}>
             {item.icon && (
-              <span className="text-2xl flex items-center" role="img" aria-hidden="true">
+              <span className="text-xl flex items-center" role="img" aria-hidden="true">
                 {item.icon}
               </span>
             )}
-            <span className="text-base font-suite font-medium">
+            <span className="text-sm font-suite font-medium">
               {item.text}
             </span>
             {item.link && (
-              <ExternalLink className="w-4 h-4 opacity-70" />
+              <ExternalLink className="w-3 h-3 opacity-70" />
             )}
           </div>
         );
       
       case 'ad':
         return (
-          <div id={`admob-banner-${item.adUnitId}`} className="w-full h-full flex items-center justify-center">
-            <span className="text-sm text-gray-500">Advertisement</span>
+          <div id={`admob-banner-${item.adUnitId}`} className="w-full h-full flex items-center justify-center" style={{ height: '120px' }}>
+            <span className="text-xs text-gray-500">Advertisement</span>
           </div>
         );
       
       case 'subscription':
         return (
-          <div className="flex flex-col items-center justify-center p-4">
-            <h3 className="text-lg font-suite font-bold mb-2">{item.text}</h3>
+          <div className="flex flex-col items-center justify-center p-2" style={{ height: '120px' }}>
+            <h3 className="text-base font-suite font-bold mb-1">{item.text}</h3>
             {item.description && (
-              <p className="text-sm text-gray-600 mb-4">{item.description}</p>
+              <p className="text-xs text-gray-600 mb-2">{item.description}</p>
             )}
             <button
               onClick={() => item.link && handleSubscription(item.link)}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              className="px-3 py-1 bg-indigo-600 text-white text-xs rounded-lg hover:bg-indigo-700"
             >
               구독하기
             </button>
@@ -213,35 +164,35 @@ const RollingBanner = ({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="relative h-32 flex items-center">
+      <div className="relative h-20 flex items-center">
         {items.length > 1 && (
           <>
             <button 
               onClick={handlePrevious}
-              className="absolute left-2 p-1.5 rounded-full bg-white/80 text-indigo-600 
+              className="absolute left-2 p-1 rounded-full bg-white/80 text-indigo-600 
                        hover:bg-indigo-50 transition-all opacity-0 group-hover:opacity-100 
                        hidden md:flex items-center justify-center
                        shadow-sm hover:shadow-md z-10"
               aria-label="Previous banner"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3 h-3" />
             </button>
 
             <button 
               onClick={handleNext}
-              className="absolute right-2 p-1.5 rounded-full bg-white/80 text-indigo-600 
+              className="absolute right-2 p-1 rounded-full bg-white/80 text-indigo-600 
                        hover:bg-indigo-50 transition-all opacity-0 group-hover:opacity-100
                        hidden md:flex items-center justify-center
                        shadow-sm hover:shadow-md z-10"
               aria-label="Next banner"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3 h-3" />
             </button>
           </>
         )}
         
         <div 
-          className="flex-1 h-full flex items-center justify-center px-8"
+          className="flex-1 h-full flex items-center justify-center px-6"
           onClick={(e) => handleItemClick(currentItem, e)}
           role={currentItem.link ? 'link' : 'presentation'}
         >
@@ -250,13 +201,13 @@ const RollingBanner = ({
       </div>
       
       {items.length > 1 && (
-        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
+        <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1">
           {items.map((_, index) => (
             <div
               key={index}
               className={`h-1 rounded-full transition-all duration-300 ${
                 index === currentIndex 
-                  ? 'w-4 bg-indigo-500' 
+                  ? 'w-3 bg-indigo-500' 
                   : 'w-1 bg-indigo-200 cursor-pointer hover:bg-indigo-300'
               }`}
               role="button"
