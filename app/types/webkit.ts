@@ -1,3 +1,5 @@
+import type { PremiumState, PremiumContext } from './common-types';
+
 // WebKit 메시지 핸들러 타입
 export interface StoreKitMessageHandler {
   postMessage: (message: string) => void;
@@ -13,6 +15,7 @@ export interface WebKitMessageHandlers {
   consoleLog: MessageHandler;
   showInterstitialAd: MessageHandler;
   handlePremiumPurchase: MessageHandler;
+  checkPremiumStatus: MessageHandler;  // 추가
 }
 
 // Android 인터페이스 타입
@@ -28,7 +31,11 @@ export interface AndroidInterface {
 
 // Premium Purchase 콜백 타입
 export interface PremiumPurchaseCallbacks {
-  setPremiumStatus?: (isPremium: boolean, purchaseDate: string | null) => void;
+  setPremiumStatus?: (
+    isPremium: boolean, 
+    purchaseDate: string | undefined, 
+    transactionId: string | undefined
+  ) => void;
   onPremiumPurchaseSuccess?: () => void;
   onPremiumPurchaseFailure?: (error: string) => void;
   closePaymentModal?: () => void;
@@ -41,6 +48,7 @@ declare global {
       messageHandlers: WebKitMessageHandlers;
     };
     Android?: AndroidInterface;
+    __PREMIUM_CONTEXT__?: PremiumContext;  // 공통 타입 사용
   }
 }
 
@@ -58,16 +66,14 @@ export const useNativeHandlers = (): NativeHandlers => {
     // iOS WKWebView
     if (window.webkit?.messageHandlers?.storeKit) {
       window.webkit.messageHandlers.storeKit.postMessage(JSON.stringify({
-        type: 'openSafariView', // SFSafariViewController로 열기
-        data: {
-          url: url
-        }
+        type: 'openSafariView',
+        data: { url }
       }));
-    } 
+    }
     // Android
     else if (window.Android?.openLink) {
       window.Android.openLink(url);
-    } 
+    }
     // 일반 웹브라우저
     else {
       window.open(url, '_blank', 'noopener,noreferrer');
@@ -79,15 +85,13 @@ export const useNativeHandlers = (): NativeHandlers => {
     if (window.webkit?.messageHandlers?.storeKit) {
       window.webkit.messageHandlers.storeKit.postMessage(JSON.stringify({
         type: 'openSafariView',
-        data: {
-          url: url
-        }
+        data: { url }
       }));
-    } 
+    }
     // Android
     else if (window.Android?.openLinkInNewWindow) {
       window.Android.openLinkInNewWindow(url);
-    } 
+    }
     // 일반 웹브라우저
     else {
       window.open(url, '_blank', 'noopener,noreferrer');
@@ -116,7 +120,12 @@ export const useNativeHandlers = (): NativeHandlers => {
     }
   };
 
-  return { handleLink, openLinkInNewWindow, handleSubscription, loadAd };
+  return {
+    handleLink,
+    openLinkInNewWindow,
+    handleSubscription,
+    loadAd
+  };
 };
 
-export {}; 
+export {};
