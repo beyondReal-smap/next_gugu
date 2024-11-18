@@ -963,33 +963,35 @@ const MultiplicationGame = () => {
     // 최대 곱할 수 결정
     let maxMultiplier;
     if (currentTable <= 9) {
-      // 2~9단은 곱하기 9까지
-      maxMultiplier = 9;
+        // 2~9단은 곱하기 9까지
+        maxMultiplier = 9;
     } else {
-      // 11단 이상은 자기 자신까지
-      maxMultiplier = currentTable;
+        // 10단 이상은 자기 자신까지
+        maxMultiplier = currentTable;
     }
 
     // 곱할 수 범위 생성 (2부터 maxMultiplier까지)
     const availableNumbers = Array.from({ length: maxMultiplier - 1 }, (_, i) => i + 2)
-      .filter(n => !usedProblems.has(`${currentTable}-${n}`));
+        .filter(n => !usedProblems.has(`${currentTable}-${n}`));
 
     if (availableNumbers.length === 0) {
-      const newNum2 = Math.floor(Math.random() * 18) + 2;
-      setNum1(currentTable);
-      setNum2(newNum2);
-      setUsedProblems(new Set([`${currentTable}-${newNum2}`]));
+        // 모든 수를 사용했다면 새로운 랜덤 숫자 생성
+        const newNum2 = Math.floor(Math.random() * (maxMultiplier - 1)) + 2;
+        setNum1(currentTable);
+        setNum2(newNum2);
+        setUsedProblems(new Set([`${currentTable}-${newNum2}`]));
     } else {
-      const randomIndex = Math.floor(Math.random() * availableNumbers.length);
-      const newNum2 = availableNumbers[randomIndex];
-      setNum1(currentTable);
-      setNum2(newNum2);
-      const updatedUsedProblems = new Set(usedProblems);
-      updatedUsedProblems.add(`${currentTable}-${newNum2}`);
-      setUsedProblems(updatedUsedProblems);
+        // 사용하지 않은 수 중에서 랜덤 선택
+        const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+        const newNum2 = availableNumbers[randomIndex];
+        setNum1(currentTable);
+        setNum2(newNum2);
+        const updatedUsedProblems = new Set(usedProblems);
+        updatedUsedProblems.add(`${currentTable}-${newNum2}`);
+        setUsedProblems(updatedUsedProblems);
     }
     setUserAnswer("");
-  }, [gameMode, selectedTable, timeAttackLevel, usedProblems]);
+}, [gameMode, selectedTable, timeAttackLevel, usedProblems]);
 
   const handleNumberInput = (num: number) => {
     // 타임어택 모드에서 일시정지 상태일 때 자동 시작
