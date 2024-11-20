@@ -35,17 +35,65 @@ export interface PremiumModalProps {
     onClose: () => void;
 }
 
+type OperationType = 'restore' | 'purchase' | null;
+
 export const PremiumModal = ({ show, onClose }: PremiumModalProps) => {
     const {
         isPremium,
         purchaseDate,
         handlePurchase,
         handleRestore,
-        isProcessing
+        isProcessing: contextProcessing
     } = usePremium();
 
-    const [isRestoring, setIsRestoring] = useState(false);
-    const [restoreError, setRestoreError] = useState<string | null>(null);
+    const [currentOperation, setCurrentOperation] = useState<OperationType>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // 타임아웃 Promise 생성 함수
+    const createTimeoutPromise = (operation: string) => {
+        return new Promise((_, reject) => {
+            setTimeout(() => {
+                reject(new Error(`${operation} 시간이 초과되었습니다`));
+            }, 3000);
+        });
+    };
+
+    // 작업 초기화 함수
+    const resetState = () => {
+        setIsProcessing(false);
+        setCurrentOperation(null);
+        setError(null);
+    };
+
+    const handleOperationWithTimeout = async (operation: OperationType, handler: () => Promise<any>) => {
+        try {
+            setIsProcessing(true);
+            setCurrentOperation(operation);
+            setError(null);
+
+            await Promise.race([
+                handler(),
+                createTimeoutPromise(operation === 'restore' ? '복원' : '구매')
+            ]);
+
+        } catch (error) {
+            setError(error instanceof Error ? error.message : `${operation === 'restore' ? '복원' : '구매'} 중 오류가 발생했습니다`);
+            console.error(`${operation} error:`, error);
+        } finally {
+            setIsProcessing(false);
+            // 3초 후에 에러 메시지와 상태를 초기화
+            setTimeout(resetState, 3000);
+        }
+    };
+
+    const handleRestoreClick = () => {
+        handleOperationWithTimeout('restore', handleRestore);
+    };
+
+    const handlePurchaseClick = () => {
+        handleOperationWithTimeout('purchase', handlePurchase);
+    };
 
     useEffect(() => {
         if (show) {
@@ -54,29 +102,12 @@ export const PremiumModal = ({ show, onClose }: PremiumModalProps) => {
         }
     }, [show, onClose]);
 
-    const handleRestoreWithTimeout = async () => {
-        setIsRestoring(true);
-        setRestoreError(null);
-
-        // Create a timeout promise
-        const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => {
-                reject(new Error('복원 시간이 초과되었습니다'));
-            }, 3000); // 3 seconds timeout
-        });
-
-        try {
-            // Race between the restore operation and timeout
-            await Promise.race([
-                handleRestore(),
-                timeoutPromise
-            ]);
-        } catch (error) {
-            setRestoreError(error instanceof Error ? error.message : '복원 중 오류가 발생했습니다');
-        } finally {
-            setIsRestoring(false);
+    // contextProcessing이 false로 변경되면 상태 초기화
+    useEffect(() => {
+        if (!contextProcessing && isProcessing) {
+            resetState();
         }
-    };
+    }, [contextProcessing]);
 
     const benefits = [
         {
@@ -147,16 +178,16 @@ export const PremiumModal = ({ show, onClose }: PremiumModalProps) => {
                                 </p>
                                 <Button
                                     variant="default"
-                                    onClick={handleRestoreWithTimeout}
-                                    disabled={isRestoring || isProcessing}
+                                    onClick={handleRestoreClick}
+                                    disabled={isProcessing || contextProcessing}
                                     className="w-full !bg-amber-500 !hover:bg-amber-600 text-white py-2.5 rounded-lg font-medium shadow-sm transition-colors border-0 disabled:bg-amber-400 [&:not(:disabled)]:hover:bg-amber-600"
                                 >
-                                    {isRestoring ? '복원 중...' : '구매 복원하기'}
+                                    {currentOperation === 'restore' && isProcessing ? '복원 중...' : '구매 복원하기'}
                                 </Button>
-                                {restoreError && (
+                                {error && currentOperation === 'restore' && (
                                     <p className="text-sm text-red-600 mt-2 flex items-center gap-1">
                                         <AlertCircle className="w-4 h-4" />
-                                        {restoreError}
+                                        {error}
                                     </p>
                                 )}
                             </div>
@@ -179,13 +210,19 @@ export const PremiumModal = ({ show, onClose }: PremiumModalProps) => {
                         <div className="space-y-3 pt-2">
                             <Button
                                 variant="default"
-                                onClick={handlePurchase}
-                                disabled={isProcessing}
+                                onClick={handlePurchaseClick}
+                                disabled={isProcessing || contextProcessing}
                                 className="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white py-2.5 rounded-xl font-medium text-base flex items-center justify-center shadow-sm"
                             >
                                 <Crown className="w-5 h-5 mr-2" />
-                                {isProcessing ? '처리 중...' : '프리미엄 시작하기'}
+                                {currentOperation === 'purchase' && isProcessing ? '처리 중...' : '프리미엄 시작하기'}
                             </Button>
+                            {error && currentOperation === 'purchase' && (
+                                <p className="text-sm text-red-600 mt-2 flex items-center gap-1">
+                                    <AlertCircle className="w-4 h-4" />
+                                    {error}
+                                </p>
+                            )}
                             <Button
                                 variant="default"
                                 onClick={onClose}
