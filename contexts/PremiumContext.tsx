@@ -154,9 +154,30 @@ export function PremiumProvider({ children, showAlert }: PremiumProviderProps) {
     }
   }, []);
 
+  const handleRestore = useCallback(async () => {
+    console.log('[Premium] Starting restore process');
+    if (state.isProcessing) {
+      console.log('[Premium] Restore already in progress');
+      return;
+    }
+  
+    setState(prev => ({ ...prev, isProcessing: true }));
+    
+    try {
+      if (window.webkit?.messageHandlers.restorePurchases) {
+        window.webkit.messageHandlers.restorePurchases.postMessage('');
+      }
+    } catch (error) {
+      console.error('[Premium] Restore error:', error);
+      setState(prev => ({ ...prev, isProcessing: false }));
+      showAlert('구매 복원 중 오류가 발생했습니다', 'error');
+    }
+  }, [state.isProcessing, showAlert]);
+
   const value: PremiumContextType = {
     ...state,
     handlePurchase,
+    handleRestore, // 추가
     handleModalOpen: useCallback(() => setState(prev => ({ ...prev, showModal: true })), []),
     handleModalClose: useCallback(() => setState(prev => ({ ...prev, showModal: false })), []),
     checkPremiumStatus

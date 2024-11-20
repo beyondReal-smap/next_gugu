@@ -15,7 +15,8 @@ export interface WebKitMessageHandlers {
   consoleLog: MessageHandler;
   showInterstitialAd: MessageHandler;
   handlePremiumPurchase: MessageHandler;
-  checkPremiumStatus: MessageHandler;  // 추가
+  restorePurchases: MessageHandler; // 추가
+  checkPremiumStatus: MessageHandler;
 }
 
 // Android 인터페이스 타입
@@ -24,12 +25,14 @@ export interface AndroidInterface {
   subscribeProduct: (productId: string) => void;
   loadAd: (adUnitId: string) => void;
   purchasePremium: () => boolean;
+  restorePurchases: () => void; // 추가
   getPremiumStatus: () => boolean;
   savePurchaseStatus: (status: boolean) => void;
   openLinkInNewWindow: (url: string) => void;
 }
 
 // Premium Purchase 콜백 타입
+// Premium Purchase 콜백 타입 업데이트
 export interface PremiumPurchaseCallbacks {
   setPremiumStatus?: (
     isPremium: boolean, 
@@ -38,6 +41,8 @@ export interface PremiumPurchaseCallbacks {
   ) => void;
   onPremiumPurchaseSuccess?: () => void;
   onPremiumPurchaseFailure?: (error: string) => void;
+  onPremiumRestoreSuccess?: () => void; // 추가
+  onPremiumRestoreFailure?: (error: string) => void; // 추가
   closePaymentModal?: () => void;
 }
 

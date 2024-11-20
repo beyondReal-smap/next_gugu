@@ -43,7 +43,8 @@ export const PremiumModal = ({ show, onClose }: PremiumModalProps) => {
     const { 
         isPremium, 
         purchaseDate, 
-        handlePurchase, 
+        handlePurchase,
+        handleRestore, // 추가
         isProcessing 
     } = usePremium();
 
@@ -171,10 +172,21 @@ export const PremiumModal = ({ show, onClose }: PremiumModalProps) => {
                                 className="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white py-3 rounded-xl font-suite font-bold text-lg flex items-center justify-center"
                             >
                                 <Crown className="w-5 h-5 mr-2 align-middle" />
-                                <span className="align-middle">{isProcessing ? '처리 중...' : '프리미엄 시작하기'}</span>
+                                <span className="align-middle">
+                                    {isProcessing ? '처리 중...' : '프리미엄 시작하기'}
+                                </span>
                             </Button>
                             <Button
                                 variant="outline"
+                                onClick={handleRestore}
+                                disabled={isProcessing}
+                                className="w-full flex items-center justify-center"
+                            >
+                                <Sparkles className="w-4 h-4 mr-2" />
+                                {isProcessing ? '복원 중...' : '구매 복원'}
+                            </Button>
+                            <Button
+                                variant="ghost"
                                 onClick={onClose}
                                 className="w-full"
                             >

@@ -22,12 +22,14 @@ export interface PremiumHandlers {
     purchaseDate: string | undefined, 
     transactionId: string | undefined
   ) => void;
+  restorePurchases?: () => Promise<void>; // 추가
   getState: () => PremiumState;
 }
 
 // Context 타입
 export interface PremiumContextType extends PremiumState {
   handlePurchase: () => Promise<void>;
+  handleRestore: () => Promise<void>; // 반환 타입을 Promise로 변경
   handleModalOpen: () => void;
   handleModalClose: () => void;
   checkPremiumStatus: () => Promise<void>;
@@ -44,11 +46,13 @@ export interface MessageHandler {
   postMessage: (message: string) => void;
 }
 
-// WebKit 메시지 핸들러 타입 확장
+// WebKit 메시지 핸들러 타입 확장 업데이트
 export interface WebKitMessageHandlersWithPremium extends WebKitMessageHandlers {
   checkPremiumStatus: MessageHandler;
   handlePremiumPurchase: MessageHandler;
+  restorePurchases: MessageHandler; // 추가
 }
+
 
 // Window 인터페이스 확장
 declare global {
@@ -65,6 +69,8 @@ declare global {
     ) => void;
     onPremiumPurchaseSuccess?: () => void;
     onPremiumPurchaseFailure?: (error: string) => void;
+    onPremiumRestoreSuccess?: () => void; // 추가
+    onPremiumRestoreFailure?: (error: string) => void; // 추가
     closePaymentModal?: () => void;
     Android?: AndroidInterface;
   }
