@@ -159,7 +159,7 @@ export const PremiumModal = ({ show, onClose }: PremiumModalProps) => {
                             <Button
                                 variant="ghost"
                                 onClick={onClose}
-                                className="w-full py-2.5 text-base font-medium text-slate-500 hover:text-slate-600 hover:bg-slate-50 rounded-xl border-2 border-slate-200 bg-white"
+                                className="w-full py-2.5 text-base font-medium text-slate-500 rounded-xl border-2 border-slate-200 bg-white"
                             >
                                 나중에 하기
                             </Button>
