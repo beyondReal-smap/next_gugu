@@ -15,17 +15,13 @@ const CenterModal = ({ show, onClose, children }: CenterModalProps) => {
 
     return (
         <>
-            <div
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]"
-                onClick={onClose}
-            />
-            <div className="fixed inset-0 flex items-center justify-center z-[101]">
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100]" onClick={onClose} />
+            <div className="fixed inset-0 flex items-center justify-center z-[101] p-4">
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className="w-full max-w-sm bg-white rounded-xl shadow-xl mx-4"
-                    onClick={(e) => e.stopPropagation()}
+                    className="w-full max-w-sm bg-white rounded-xl shadow-xl overflow-hidden"
                 >
                     {children}
                 </motion.div>
@@ -40,36 +36,31 @@ export interface PremiumModalProps {
 }
 
 export const PremiumModal = ({ show, onClose }: PremiumModalProps) => {
-    const { 
-        isPremium, 
-        purchaseDate, 
+    const {
+        isPremium,
+        purchaseDate,
         handlePurchase,
-        handleRestore, // 추가
-        isProcessing 
+        handleRestore,
+        isProcessing
     } = usePremium();
 
     useEffect(() => {
         if (show) {
-            window.closePaymentModal = () => {
-                onClose();
-            };
-
-            return () => {
-                if (window.closePaymentModal) window.closePaymentModal = undefined;
-            };
+            window.closePaymentModal = () => { onClose(); };
+            return () => { window.closePaymentModal = undefined; };
         }
     }, [show, onClose]);
 
     const benefits = [
         {
             icon: <Ban className="w-5 h-5 text-indigo-500" />,
-            text: "광고 없는 깔끔한 학습 환경",
-            description: "10문제마다 나오는 광고가 표시되지 않아요"
+            text: "광고 없는 학습 환경",
+            description: "10문제 후 광고가 표시되지 않아요"
         },
         {
             icon: <Sparkles className="w-5 h-5 text-indigo-500" />,
-            text: "끊김 없는 학습 경험",
-            description: "광고 대기 시간 없이 집중할 수 있어요"
+            text: "끊김 없는 학습",
+            description: "쉬지 않고 계속 풀 수 있어요"
         },
         {
             icon: <Zap className="w-5 h-5 text-indigo-500" />,
@@ -78,117 +69,97 @@ export const PremiumModal = ({ show, onClose }: PremiumModalProps) => {
         }
     ];
 
-    const warnings = [
-        { icon: "📱", text: "프리미엄은 현재 기기에서만 사용 가능" },
-        { icon: "🔄", text: "앱 재설치 시 재구매 필요" },
-        { icon: "⚡", text: "구매 후 즉시 적용" }
-    ];
-
     return (
         <CenterModal show={show} onClose={onClose}>
-            <div className="p-4">
-                <div className="flex justify-between items-center mb-4">
+            <div className="p-4 max-h-[85vh] overflow-y-auto">
+                <div className="flex justify-between items-start mb-4">
                     <div>
-                        <h3 className="text-2xl font-suite font-bold text-indigo-600">
+                        <h3 className="text-xl font-suite font-bold text-indigo-600">
                             {isPremium ? '프리미엄 멤버' : '프리미엄으로 업그레이드'}
                         </h3>
-                        <p className="text-gray-600 mt-1">
+                        <p className="text-sm text-gray-600">
                             {isPremium ? '모든 프리미엄 혜택을 이용 중입니다' : '더 나은 학습 경험을 시작하세요'}
                         </p>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                        <X className="h-6 w-6" />
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                        <X className="h-5 w-5" />
                     </button>
                 </div>
 
                 {isPremium ? (
                     <div className="space-y-3">
-                        <div className="bg-indigo-50 p-3 rounded-xl border-2 border-indigo-100">
-                            <div className="flex items-center gap-2 mb-1">
-                                <Crown className="w-6 h-6 text-indigo-500" />
+                        <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-100">
+                            <div className="flex items-center gap-2">
+                                <Crown className="w-5 h-5 text-indigo-500" />
                                 <span className="font-suite font-bold text-indigo-700">프리미엄 사용 중</span>
                             </div>
                             {purchaseDate && (
-                                <p className="text-sm text-indigo-600">
+                                <p className="text-sm text-indigo-600 mt-1">
                                     구매일: {new Date(purchaseDate).toLocaleDateString()}
                                 </p>
                             )}
                         </div>
-                        
-                        <Button 
+                        <Button
                             variant="outline"
                             onClick={onClose}
-                            className="w-full text-indigo-600 hover:bg-indigo-50"
+                            className="w-full"
                         >
                             닫기
                         </Button>
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        <div className="grid gap-3">
-                            {benefits.map((benefit, index) => (
-                                <div 
-                                    key={index} 
-                                    className="flex items-start gap-4 p-3 rounded-xl bg-white border-2 border-indigo-50 hover:border-indigo-100 transition-colors"
+                        {/* 복원 섹션을 혜택 목록 위로 이동하고 디자인 개선 */}
+                        <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4">
+                            <div className="flex flex-col gap-2">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Sparkles className="w-5 h-5 text-amber-500" />
+                                    <p className="font-bold text-amber-900">이전에 구매하신 적이 있나요?</p>
+                                </div>
+                                <p className="text-sm text-amber-700 mb-2">
+                                    기기 변경 또는 재설치 후에는 구매를 복원해주세요
+                                </p>
+                                <Button
+                                    variant="default"
+                                    onClick={handleRestore}
+                                    disabled={isProcessing}
+                                    className="w-full !bg-amber-500 !hover:bg-amber-600 text-white py-2.5 rounded-lg font-medium shadow-sm transition-colors border-0 disabled:bg-amber-400 [&:not(:disabled)]:hover:bg-amber-600"
                                 >
+                                    {isProcessing ? '복원 중...' : '구매 복원하기'}
+                                </Button>
+                            </div>
+                        </div>
+
+
+                        {/* 혜택 섹션 */}
+                        <div className="flex flex-col divide-y divide-gray-100">
+                            {benefits.map((benefit, index) => (
+                                <div key={index} className="flex items-center gap-3 py-3">
                                     <div className="flex-shrink-0 p-2 bg-indigo-50 rounded-lg">
                                         {benefit.icon}
                                     </div>
                                     <div>
-                                        <h4 className="font-suite font-bold text-gray-900">
-                                            {benefit.text}
-                                        </h4>
-                                        <p className="text-sm text-gray-600 mt-0">
-                                            {benefit.description}
-                                        </p>
+                                        <h4 className="font-bold text-gray-900">{benefit.text}</h4>
+                                        <p className="text-sm text-gray-600">{benefit.description}</p>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-sm text-amber-700">
-                                <AlertCircle className="w-4 h-4" />
-                                <span className="font-medium">구매 전 확인사항</span>
-                            </div>
-                            <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 space-y-2">
-                                {warnings.map((warning, index) => (
-                                    <div key={index} className="flex items-center gap-2 text-sm">
-                                        <span className="text-lg">{warning.icon}</span>
-                                        <span className="text-amber-700">{warning.text}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
+                        <div className="space-y-3 pt-2">
                             <Button
                                 variant="default"
                                 onClick={handlePurchase}
                                 disabled={isProcessing}
-                                className="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white py-3 rounded-xl font-suite font-bold text-lg flex items-center justify-center"
+                                className="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white py-2.5 rounded-xl font-medium text-base flex items-center justify-center shadow-sm"
                             >
-                                <Crown className="w-5 h-5 mr-2 align-middle" />
-                                <span className="align-middle">
-                                    {isProcessing ? '처리 중...' : '프리미엄 시작하기'}
-                                </span>
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={handleRestore}
-                                disabled={isProcessing}
-                                className="w-full flex items-center justify-center"
-                            >
-                                <Sparkles className="w-4 h-4 mr-2" />
-                                {isProcessing ? '복원 중...' : '구매 복원'}
+                                <Crown className="w-5 h-5 mr-2" />
+                                {isProcessing ? '처리 중...' : '프리미엄 시작하기'}
                             </Button>
                             <Button
                                 variant="ghost"
                                 onClick={onClose}
-                                className="w-full"
+                                className="w-full py-2.5 text-base font-medium text-slate-500 hover:text-slate-600 hover:bg-slate-50 rounded-xl border-2 border-slate-200 bg-white"
                             >
                                 나중에 하기
                             </Button>
