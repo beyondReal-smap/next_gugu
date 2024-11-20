@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, AlertCircle, Crown, Sparkles, Zap, Ban } from 'lucide-react';
 import { Button } from "./components/ui/button";
@@ -44,12 +44,39 @@ export const PremiumModal = ({ show, onClose }: PremiumModalProps) => {
         isProcessing
     } = usePremium();
 
+    const [isRestoring, setIsRestoring] = useState(false);
+    const [restoreError, setRestoreError] = useState<string | null>(null);
+
     useEffect(() => {
         if (show) {
             window.closePaymentModal = () => { onClose(); };
             return () => { window.closePaymentModal = undefined; };
         }
     }, [show, onClose]);
+
+    const handleRestoreWithTimeout = async () => {
+        setIsRestoring(true);
+        setRestoreError(null);
+
+        // Create a timeout promise
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => {
+                reject(new Error('복원 시간이 초과되었습니다'));
+            }, 3000); // 3 seconds timeout
+        });
+
+        try {
+            // Race between the restore operation and timeout
+            await Promise.race([
+                handleRestore(),
+                timeoutPromise
+            ]);
+        } catch (error) {
+            setRestoreError(error instanceof Error ? error.message : '복원 중 오류가 발생했습니다');
+        } finally {
+            setIsRestoring(false);
+        }
+    };
 
     const benefits = [
         {
@@ -109,7 +136,6 @@ export const PremiumModal = ({ show, onClose }: PremiumModalProps) => {
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {/* 복원 섹션을 혜택 목록 위로 이동하고 디자인 개선 */}
                         <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4">
                             <div className="flex flex-col gap-2">
                                 <div className="flex items-center gap-2 mb-1">
@@ -121,17 +147,21 @@ export const PremiumModal = ({ show, onClose }: PremiumModalProps) => {
                                 </p>
                                 <Button
                                     variant="default"
-                                    onClick={handleRestore}
-                                    disabled={isProcessing}
+                                    onClick={handleRestoreWithTimeout}
+                                    disabled={isRestoring || isProcessing}
                                     className="w-full !bg-amber-500 !hover:bg-amber-600 text-white py-2.5 rounded-lg font-medium shadow-sm transition-colors border-0 disabled:bg-amber-400 [&:not(:disabled)]:hover:bg-amber-600"
                                 >
-                                    {isProcessing ? '복원 중...' : '구매 복원하기'}
+                                    {isRestoring ? '복원 중...' : '구매 복원하기'}
                                 </Button>
+                                {restoreError && (
+                                    <p className="text-sm text-red-600 mt-2 flex items-center gap-1">
+                                        <AlertCircle className="w-4 h-4" />
+                                        {restoreError}
+                                    </p>
+                                )}
                             </div>
                         </div>
 
-
-                        {/* 혜택 섹션 */}
                         <div className="flex flex-col divide-y divide-gray-100">
                             {benefits.map((benefit, index) => (
                                 <div key={index} className="flex items-center gap-3 py-3">
@@ -157,7 +187,7 @@ export const PremiumModal = ({ show, onClose }: PremiumModalProps) => {
                                 {isProcessing ? '처리 중...' : '프리미엄 시작하기'}
                             </Button>
                             <Button
-                                variant="ghost"
+                                variant="default"
                                 onClick={onClose}
                                 className="w-full py-2.5 text-base font-medium text-slate-500 rounded-xl border-2 border-slate-200 bg-white"
                             >
