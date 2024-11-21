@@ -226,7 +226,7 @@ export const PremiumModal = ({ show, onClose }: PremiumModalProps) => {
                             <Button
                                 variant="default"
                                 onClick={onClose}
-                                className="w-full py-2.5 text-base font-medium text-slate-500 rounded-xl border-2 border-slate-200 bg-white"
+                                className="w-full py-2.5 text-base font-medium text-gray-700 hover:text-white rounded-xl border-2 border-slate-200 bg-white hover:bg-indigo-500 hover:border-indigo-500 transition-all duration-200"
                             >
                                 나중에 하기
                             </Button>
