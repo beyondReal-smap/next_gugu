@@ -11,7 +11,7 @@ import {
   Lock, Delete, ShoppingBag, Crown, Sparkles,
   Ban, Infinity, Zap
 } from "lucide-react";
-import { Alert, AlertDescription } from "./components/ui/alert"; 
+import { Alert, AlertDescription } from "./components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
 import HeaderSection from './HeaderSection';
 import SettingsModal from "./SettingsModal";
@@ -20,6 +20,7 @@ import PurchaseManager from './lib/purchaseManager';
 import { BannerItem } from './types/banner';
 import ComboAnimation from './ComboAnimation';
 // import PremiumModal from './components/PremiumModal';
+import * as gtag from '../src/utils/gtag'
 
 // 배너 아이템 데이터
 const bannerItems: BannerItem[] = [
@@ -963,35 +964,33 @@ const MultiplicationGame = () => {
     // 최대 곱할 수 결정
     let maxMultiplier;
     if (currentTable <= 9) {
-        // 2~9단은 곱하기 9까지
-        maxMultiplier = 9;
+      // 2~9단은 곱하기 9까지
+      maxMultiplier = 9;
     } else {
-        // 10단 이상은 자기 자신까지
-        maxMultiplier = currentTable;
+      // 11단 이상은 자기 자신까지
+      maxMultiplier = currentTable;
     }
 
     // 곱할 수 범위 생성 (2부터 maxMultiplier까지)
     const availableNumbers = Array.from({ length: maxMultiplier - 1 }, (_, i) => i + 2)
-        .filter(n => !usedProblems.has(`${currentTable}-${n}`));
+      .filter(n => !usedProblems.has(`${currentTable}-${n}`));
 
     if (availableNumbers.length === 0) {
-        // 모든 수를 사용했다면 새로운 랜덤 숫자 생성
-        const newNum2 = Math.floor(Math.random() * (maxMultiplier - 1)) + 2;
-        setNum1(currentTable);
-        setNum2(newNum2);
-        setUsedProblems(new Set([`${currentTable}-${newNum2}`]));
+      const newNum2 = Math.floor(Math.random() * 18) + 2;
+      setNum1(currentTable);
+      setNum2(newNum2);
+      setUsedProblems(new Set([`${currentTable}-${newNum2}`]));
     } else {
-        // 사용하지 않은 수 중에서 랜덤 선택
-        const randomIndex = Math.floor(Math.random() * availableNumbers.length);
-        const newNum2 = availableNumbers[randomIndex];
-        setNum1(currentTable);
-        setNum2(newNum2);
-        const updatedUsedProblems = new Set(usedProblems);
-        updatedUsedProblems.add(`${currentTable}-${newNum2}`);
-        setUsedProblems(updatedUsedProblems);
+      const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+      const newNum2 = availableNumbers[randomIndex];
+      setNum1(currentTable);
+      setNum2(newNum2);
+      const updatedUsedProblems = new Set(usedProblems);
+      updatedUsedProblems.add(`${currentTable}-${newNum2}`);
+      setUsedProblems(updatedUsedProblems);
     }
     setUserAnswer("");
-}, [gameMode, selectedTable, timeAttackLevel, usedProblems]);
+  }, [gameMode, selectedTable, timeAttackLevel, usedProblems]);
 
   const handleNumberInput = (num: number) => {
     // 타임어택 모드에서 일시정지 상태일 때 자동 시작
@@ -1267,7 +1266,7 @@ const MultiplicationGame = () => {
         // correctAnswerCount 업데이트를 함수형 업데이트로 변경
         setCorrectAnswerCount(prev => {
           const newCount = prev + 1;
-          if (newCount >= 10 && !isPremium) {
+          if (newCount >= 3 && !isPremium) {
             showInterstitialAd();
             return 0;  // 광고 표시 후 카운트 리셋
           }
