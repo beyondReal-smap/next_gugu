@@ -52,8 +52,8 @@ const suite = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "구구단 연습",
-  description: "즐겁게 구구단을 연습해보세요!",
+  title: "구구단 마스터 — 매일 레벨업하는 구구단 학습",
+  description: "레벨, 스트릭, 마스터리로 매일 성장하는 모던한 구구단 학습 게임.",
 };
 
 export default function RootLayout({
