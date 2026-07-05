@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { Flame, TrendingUp, Star, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useGame } from '@/lib/state/GameProvider';
-import { useSession } from '@/lib/state/SessionProvider';
 import { initSound } from '@/lib/sound';
 
 const POINTS = [
@@ -15,12 +14,10 @@ const POINTS = [
 
 export function Onboarding() {
   const { setOnboarded } = useGame();
-  const { start } = useSession();
 
   const begin = () => {
     initSound(); // 사용자 제스처에서 오디오 활성화
-    setOnboarded(true);
-    start('practice', 2); // 즉시 첫 세션 (쉬운 2단)
+    setOnboarded(true); // 온보딩 종료 → AppShell이 홈 화면 렌더링
   };
 
   return (
@@ -30,9 +27,9 @@ export function Onboarding() {
           <Sparkles className="h-3.5 w-3.5" /> 매일 1분 구구단
         </div>
         <h1 className="text-4xl font-extrabold leading-tight text-text">
-          구구단,<br />게임처럼<br /><span className="text-accent">매일 성장</span>해요
+          구구단,<br />게임처럼<br /><span className="text-accent">재미있게</span> 배워요
         </h1>
-        <p className="mt-3 text-text-muted">레벨 · 스트릭 · 마스터리로 자연스럽게 익히는 모던한 구구단 학습.</p>
+        <p className="mt-3 text-text-muted">레벨 · 스트릭 · 마스터리를 모으며 자연스럽게 구구단을 익혀요.</p>
       </motion.div>
 
       <div className="my-8 space-y-3">
@@ -55,7 +52,7 @@ export function Onboarding() {
         ))}
       </div>
 
-      <Button variant="primary" size="lg" onClick={begin} className="w-full">바로 시작하기</Button>
+      <Button variant="primary" size="lg" onClick={begin} className="w-full">시작하기</Button>
     </div>
   );
 }
