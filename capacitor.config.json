@@ -1,7 +1,7 @@
 {
   "appId": "site.smap.next",
-  "appName": "구구단 with smap",
-  "webDir": "public",
+  "appName": "구구단 마스터",
+  "webDir": "dist",
   "server": {
     "androidScheme": "https"
   }

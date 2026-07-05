@@ -1,0 +1,50 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e2]
+  - main [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - generic [ref=e7]: 안녕하세요 👋
+          - generic [ref=e8]: 오늘도 구구단 한 판!
+        - generic [ref=e9]:
+          - img [ref=e10]
+          - generic [ref=e12]: 1일
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - img [ref=e15]
+          - generic [ref=e18]:
+            - generic [ref=e19]: "0"
+            - generic [ref=e20]: / 20
+        - generic [ref=e21]:
+          - generic [ref=e22]:
+            - img [ref=e23]
+            - text: 오늘의 목표
+          - paragraph [ref=e27]: 정답 20개 더 풀면 달성!
+      - generic [ref=e29]:
+        - generic [ref=e30]:
+          - generic [ref=e31]: "1"
+          - generic [ref=e32]:
+            - generic [ref=e33]: Lv.1
+            - generic [ref=e34]: 구구단 입문자
+        - generic [ref=e35]: 0/60 XP
+      - button "빠른 학습 시작" [ref=e38] [cursor=pointer]:
+        - img [ref=e39]
+        - text: 빠른 학습 시작
+      - link "단 선택해서 학습하기" [ref=e41] [cursor=pointer]:
+        - /url: /learn/
+        - text: 단 선택해서 학습하기
+        - img [ref=e42]
+  - navigation [ref=e44]:
+    - generic [ref=e45]:
+      - link "홈" [ref=e46] [cursor=pointer]:
+        - /url: /
+        - img [ref=e47]
+        - text: 홈
+      - link "학습" [ref=e50] [cursor=pointer]:
+        - /url: /learn/
+        - img [ref=e51]
+        - text: 학습
+      - link "프로필" [ref=e54] [cursor=pointer]:
+        - /url: /profile/
+        - img [ref=e55]
+        - text: 프로필

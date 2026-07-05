@@ -4,6 +4,7 @@ import React from 'react';
 import { ThemeProvider } from '@/lib/state/ThemeProvider';
 import { GameProvider } from '@/lib/state/GameProvider';
 import { SessionProvider } from '@/lib/state/SessionProvider';
+import { AdventureProvider } from '@/lib/state/AdventureProvider';
 import { AppShell } from '@/components/AppShell';
 
 interface ClientLayoutProps {
@@ -16,7 +17,9 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     <ThemeProvider>
       <GameProvider>
         <SessionProvider>
-          <AppShell>{children}</AppShell>
+          <AdventureProvider>
+            <AppShell>{children}</AppShell>
+          </AdventureProvider>
         </SessionProvider>
       </GameProvider>
     </ThemeProvider>

@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 스토어 에셋 중 대용량 APK는 git 제외
+store-assets/*.apk

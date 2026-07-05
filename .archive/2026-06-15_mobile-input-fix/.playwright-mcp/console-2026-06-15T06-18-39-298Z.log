@@ -1,0 +1,2 @@
+[   57275ms] [LOG] Attempting to trigger haptic feedback: success @ http://127.0.0.1:5104/_next/static/chunks/app/layout-83981543bdd0c033.js:0
+[   57275ms] [LOG] Vibration feedback triggered: success pattern: [100] @ http://127.0.0.1:5104/_next/static/chunks/app/layout-83981543bdd0c033.js:0

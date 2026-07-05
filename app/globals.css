@@ -42,6 +42,17 @@
   html {
     font-family: SUITE, system-ui, sans-serif;
   }
+  /* 모바일: 핀치 줌 차단 + 스크롤 팬만 허용.
+     iOS 사파리는 viewport meta의 user-scalable=no를 무시하므로 touch-action으로 이중 차단 */
+  html, body {
+    touch-action: pan-x pan-y;
+  }
+  /* 앱형 스크롤 아키텍처: 문서(body) 스크롤을 끄고 앱 셸 내부 컨테이너가 스크롤을 소유.
+     기기/웹뷰별 문서 스크롤 편차(iOS 고무줄, pull-to-refresh, 줌 상태 팬)에서 자유로워짐 */
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
   body {
     background-color: rgb(var(--bg));
     color: rgb(var(--text));
@@ -56,9 +67,10 @@
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.02em;
   }
-  /* 모바일: 더블탭 줌/300ms 탭 지연 제거로 입력 반응성 확보 */
+  /* 모바일: 더블탭 줌/300ms 탭 지연 제거 + 버튼 위에서 시작한 핀치 줌도 차단
+     (manipulation은 핀치 줌을 허용하므로 pan-x pan-y로 강화) */
   button {
-    touch-action: manipulation;
+    touch-action: pan-x pan-y;
   }
   /* 포커스 가시성 (접근성) */
   :focus-visible {
@@ -68,6 +80,15 @@
 }
 
 @layer components {
+  /* 앱 셸 스크롤 컨테이너 — dvh 미지원 구형 브라우저는 vh로 폴백 */
+  .app-scroll {
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
   /* 모던 카드: 표면색 + 미세 보더 + 절제된 그림자 */
   .card {
     @apply rounded-2xl bg-surface border border-border;

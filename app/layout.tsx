@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import ClientLayout from './ClientLayout';
@@ -54,6 +54,19 @@ const suite = localFont({
 export const metadata: Metadata = {
   title: "구구단 마스터 — 매일 레벨업하는 구구단 학습",
   description: "레벨, 스트릭, 마스터리로 매일 성장하는 모던한 구구단 학습 게임.",
+  icons: {
+    icon: '/icons/icon-192x192.png',
+    apple: '/icons/apple-touch-icon.png', // iOS 홈 화면 추가 시 아이콘
+  },
+};
+
+// 모바일 앱형 UX: 핀치/더블탭 확대 차단 (게임 조작 중 오확대 방지)
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({

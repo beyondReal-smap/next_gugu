@@ -1,0 +1,85 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e2]
+  - main [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - generic [ref=e7]: 안녕하세요 👋
+          - generic [ref=e8]: 오늘도 구구단 한 판!
+        - generic [ref=e9]:
+          - img [ref=e10]
+          - generic [ref=e12]: 1일
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - img [ref=e15]
+          - generic [ref=e18]:
+            - generic [ref=e19]: "0"
+            - generic [ref=e20]: / 20
+        - generic [ref=e21]:
+          - generic [ref=e22]:
+            - img [ref=e23]
+            - text: 오늘의 목표
+          - paragraph [ref=e27]: 정답 20개 더 풀면 달성!
+      - generic [ref=e29]:
+        - generic [ref=e30]:
+          - generic [ref=e31]: "1"
+          - generic [ref=e32]:
+            - generic [ref=e33]: Lv.1
+            - generic [ref=e34]: 구구단 입문자
+        - generic [ref=e35]: 0/60 XP
+      - button "빠른 학습 시작" [ref=e38] [cursor=pointer]:
+        - img [ref=e39]
+        - text: 빠른 학습 시작
+      - link "단 선택해서 학습하기" [ref=e41] [cursor=pointer]:
+        - /url: /learn/
+        - text: 단 선택해서 학습하기
+        - img [ref=e42]
+  - navigation [ref=e44]:
+    - generic [ref=e45]:
+      - link "홈" [ref=e46] [cursor=pointer]:
+        - /url: /
+        - img [ref=e47]
+        - text: 홈
+      - link "학습" [ref=e50] [cursor=pointer]:
+        - /url: /learn/
+        - img [ref=e51]
+        - text: 학습
+      - link "프로필" [ref=e54] [cursor=pointer]:
+        - /url: /profile/
+        - img [ref=e55]
+        - text: 프로필
+  - generic [ref=e59]:
+    - generic [ref=e60]:
+      - button "세션 종료" [ref=e61] [cursor=pointer]:
+        - img [ref=e62]
+      - generic [ref=e67]: 2/10
+    - generic [ref=e128]:
+      - generic [ref=e129]: "5"
+      - generic [ref=e130]: ×
+      - generic [ref=e131]: "2"
+      - generic [ref=e132]: =
+      - generic [ref=e133]: "?"
+    - generic [ref=e76]:
+      - button "1" [ref=e134] [cursor=pointer]:
+        - generic [ref=e135]: "1"
+      - button "2" [ref=e136] [cursor=pointer]:
+        - generic [ref=e137]: "2"
+      - button "3" [ref=e138] [cursor=pointer]:
+        - generic [ref=e139]: "3"
+      - button "4" [ref=e140] [cursor=pointer]:
+        - generic [ref=e141]: "4"
+      - button "5" [ref=e142] [cursor=pointer]:
+        - generic [ref=e143]: "5"
+      - button "6" [ref=e144] [cursor=pointer]:
+        - generic [ref=e145]: "6"
+      - button "7" [ref=e146] [cursor=pointer]:
+        - generic [ref=e147]: "7"
+      - button "8" [ref=e148] [cursor=pointer]:
+        - generic [ref=e149]: "8"
+      - button "9" [ref=e150] [cursor=pointer]:
+        - generic [ref=e151]: "9"
+      - button [ref=e152] [cursor=pointer]:
+        - img [ref=e153]
+      - button "0" [ref=e157] [cursor=pointer]:
+        - generic [ref=e158]: "0"
+      - button "확인" [disabled]

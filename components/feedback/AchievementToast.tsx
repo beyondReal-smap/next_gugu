@@ -7,9 +7,11 @@ import { getAchievement } from '@/lib/achievements';
 interface AchievementToastProps {
   ids: string[];        // 표시할 업적 id 목록 (변경 시 큐잉)
   token: number;        // 트리거 토큰 (같은 ids라도 재표시)
+  // id → 업적 정의 커스텀 조회 (기본: 코어 업적 레지스트리). 어드벤처 등 별도 업적 시스템 겸용
+  resolve?: (id: string) => { name: string; icon: string } | undefined;
 }
 
-export function AchievementToast({ ids, token }: AchievementToastProps) {
+export function AchievementToast({ ids, token, resolve }: AchievementToastProps) {
   const [queue, setQueue] = useState<string[]>([]);
   const [current, setCurrent] = useState<string | null>(null);
 
@@ -28,7 +30,7 @@ export function AchievementToast({ ids, token }: AchievementToastProps) {
     return () => clearTimeout(t);
   }, [queue, current]);
 
-  const def = current ? getAchievement(current) : undefined;
+  const def = current ? (resolve ?? getAchievement)(current) : undefined;
   const Icon = def ? ((Icons as unknown as Record<string, Icons.LucideIcon>)[def.icon] ?? Icons.Award) : Icons.Award;
 
   return (
