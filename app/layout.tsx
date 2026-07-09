@@ -52,8 +52,8 @@ const suite = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "구구단 마스터 — 매일 레벨업하는 구구단 학습",
-  description: "레벨, 스트릭, 마스터리로 매일 성장하는 모던한 구구단 학습 게임.",
+  title: "구구 어드벤처 — 매일 1분, 게임으로 배우는 구구단",
+  description: "3D 월드를 탐험하며 구구단을 정복! 레벨, 스트릭, 마스터리로 매일 성장하는 구구단 학습 게임.",
   icons: {
     icon: '/icons/icon-192x192.png',
     apple: '/icons/apple-touch-icon.png', // iOS 홈 화면 추가 시 아이콘
@@ -77,6 +77,14 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
+        {/* 다크 기본 테마 — 하이드레이션 전에 적용해 라이트 화면 번쩍임 방지 */}
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('gugu.theme');if(t!=='light')document.documentElement.classList.add('dark')}catch(e){}`,
+          }}
+        />
         {/* Google Analytics */}
         <Script
           strategy="afterInteractive"

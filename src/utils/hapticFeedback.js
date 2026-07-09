@@ -1,95 +1,9 @@
 // src/utils/hapticFeedback.js
-
-export function triggerHapticFeedback(type) {
-  // SSR 체크
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  console.log('Attempting to trigger haptic feedback:', type);
-
-  // Android Native Haptic
-  if (window?.Android?.vibrate) {
-    try {
-      const androidType = mapToAndroidType(type);
-      window.Android.vibrate(androidType);
-      console.log('Android haptic feedback triggered:', androidType);
-      return;
-    } catch (error) {
-      console.error('Failed to trigger Android haptic feedback:', error);
-    }
-  }
-
-  // iOS Native Haptic
-  if (window?.webkit?.messageHandlers?.hapticFeedbackHandler) {
-    try {
-      window.webkit.messageHandlers.hapticFeedbackHandler.postMessage(type);
-      console.log('iOS haptic feedback triggered:', type);
-      return;
-    } catch (error) {
-      console.error('Failed to trigger iOS haptic feedback:', error);
-    }
-  }
-
-  // Fallback to Vibration API
-  if (window.navigator?.vibrate) {
-    try {
-      const pattern = getVibrationPattern(type);
-      window.navigator.vibrate(pattern);
-      console.log('Vibration feedback triggered:', type, 'pattern:', pattern);
-    } catch (error) {
-      console.error('Failed to trigger vibration feedback:', error);
-    }
-  }
-}
-
-// 안드로이드 네이티브 타입으로 매핑
-function mapToAndroidType(type) {
-  switch (type.toLowerCase()) {
-    case 'timeattacksuccess':
-      return 'complete'; // 레벨 완료와 비슷한 피드백
-    case 'timeattackfail':
-      return 'wrong';   // 오답과 비슷한 피드백
-    case 'success':
-      return 'correct'; // 정답과 비슷한 피드백
-    case 'error':
-      return 'wrong';   // 오답과 비슷한 피드백
-    case 'warning':
-      return 'click';   // 기본 클릭과 비슷한 피드백
-    case 'impactlight':
-      return 'click';   // 가벼운 클릭
-    case 'impactmedium':
-      return 'click';   // 중간 강도 클릭
-    case 'impactheavy':
-      return 'complete'; // 강한 피드백
-    default:
-      return 'click';   // 기본값
-  }
-}
-
-// 진동 패턴 정의
-function getVibrationPattern(type) {
-  switch (type.toLowerCase()) {
-    case 'timeattacksuccess':
-      return [150, 100, 75];
-    case 'timeattackfail':
-      return [100, 50, 100, 50, 100];
-    case 'success':
-      return [100];
-    case 'error':
-      return [100, 50, 100];
-    case 'warning':
-      return [50, 25, 50];
-    case 'impactlight':
-      return [50];
-    case 'impactmedium':
-      return [75];
-    case 'impactheavy':
-      return [100];
-    default:
-      return [50];
-  }
-}
+// Capacitor 네이티브(iOS/Android)에서는 @capacitor/haptics로 실제 햅틱을 발생시키고,
+// 웹/PWA에서는 Vibration API로 폴백한다.
+// 공개 API(triggerHapticFeedback, HAPTIC_TYPES)는 기존 호출부 호환을 위해 유지.
+import { Capacitor } from '@capacitor/core';
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 
 export const HAPTIC_TYPES = {
   TIME_ATTACK_SUCCESS: 'timeAttackSuccess',
@@ -99,5 +13,74 @@ export const HAPTIC_TYPES = {
   WARNING: 'warning',
   IMPACT_LIGHT: 'impactLight',
   IMPACT_MEDIUM: 'impactMedium',
-  IMPACT_HEAVY: 'impactHeavy'
+  IMPACT_HEAVY: 'impactHeavy',
 };
+
+export function triggerHapticFeedback(type) {
+  // SSR 가드
+  if (typeof window === 'undefined') return;
+
+  // 네이티브(iOS/Android): Capacitor Haptics 사용
+  if (Capacitor.isNativePlatform()) {
+    // 비동기 호출이지만 fire-and-forget. 실패해도 앱 흐름을 막지 않도록 로그만 남긴다.
+    nativeHaptic(type).catch((error) => {
+      console.error('Capacitor haptic 실패:', error);
+    });
+    return;
+  }
+
+  // 웹/PWA: Vibration API 폴백 (iOS Safari는 미지원 — Android/데스크톱 브라우저용)
+  if (window.navigator?.vibrate) {
+    try {
+      window.navigator.vibrate(getVibrationPattern(type));
+    } catch (error) {
+      console.error('Vibration 폴백 실패:', error);
+    }
+  }
+}
+
+// HAPTIC_TYPES → Capacitor Haptics 매핑.
+// - 결과성 피드백(정답/오답/경고)은 notification 햅틱
+// - 탭/입력 피드백은 impact 햅틱
+function nativeHaptic(type) {
+  switch (type) {
+    case HAPTIC_TYPES.SUCCESS:
+    case HAPTIC_TYPES.TIME_ATTACK_SUCCESS:
+      return Haptics.notification({ type: NotificationType.Success });
+    case HAPTIC_TYPES.ERROR:
+    case HAPTIC_TYPES.TIME_ATTACK_FAIL:
+      return Haptics.notification({ type: NotificationType.Error });
+    case HAPTIC_TYPES.WARNING:
+      return Haptics.notification({ type: NotificationType.Warning });
+    case HAPTIC_TYPES.IMPACT_HEAVY:
+      return Haptics.impact({ style: ImpactStyle.Heavy });
+    case HAPTIC_TYPES.IMPACT_MEDIUM:
+      return Haptics.impact({ style: ImpactStyle.Medium });
+    case HAPTIC_TYPES.IMPACT_LIGHT:
+    default:
+      return Haptics.impact({ style: ImpactStyle.Light });
+  }
+}
+
+// 웹 Vibration API 패턴(ms). 네이티브에서는 사용하지 않는다.
+function getVibrationPattern(type) {
+  switch (type) {
+    case HAPTIC_TYPES.TIME_ATTACK_SUCCESS:
+      return [150, 100, 75];
+    case HAPTIC_TYPES.TIME_ATTACK_FAIL:
+      return [100, 50, 100, 50, 100];
+    case HAPTIC_TYPES.SUCCESS:
+      return [100];
+    case HAPTIC_TYPES.ERROR:
+      return [100, 50, 100];
+    case HAPTIC_TYPES.WARNING:
+      return [50, 25, 50];
+    case HAPTIC_TYPES.IMPACT_MEDIUM:
+      return [75];
+    case HAPTIC_TYPES.IMPACT_HEAVY:
+      return [100];
+    case HAPTIC_TYPES.IMPACT_LIGHT:
+    default:
+      return [50];
+  }
+}

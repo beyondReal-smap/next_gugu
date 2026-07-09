@@ -1,12 +1,14 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import * as Icons from 'lucide-react';
-import { Sun, Moon, Volume2, VolumeX, RotateCcw } from 'lucide-react';
+import { Sun, Moon, Volume2, VolumeX, RotateCcw, Sparkles, RefreshCcw, FileText, ShieldCheck } from 'lucide-react';
 import { GameMode } from '@/lib/types';
 import { MODES } from '@/lib/modes';
 import { MODE_ICONS, MODE_TINT } from '@/components/modeIcons';
 import { useGame } from '@/lib/state/GameProvider';
 import { useTheme } from '@/lib/state/ThemeProvider';
+import { usePremium } from '@/lib/state/PremiumProvider';
+import { LEGAL_URLS, FALLBACK_PRICE } from '@/lib/premiumConfig';
 import { Sparkline } from '@/components/ui/Sparkline';
 import { Button } from '@/components/ui/Button';
 import { levelTitle } from '@/lib/level';
@@ -18,11 +20,19 @@ const SCORED_MODES: GameMode[] = ['challenge', 'survival'];
 export function Profile() {
   const { state, levelInfo, resetProgress } = useGame();
   const { theme, toggleTheme } = useTheme();
+  const { isNative, isPremium, openPaywall, restore } = usePremium();
   const [sound, setSound] = useState(true);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [restoreMsg, setRestoreMsg] = useState<string | null>(null);
 
   useEffect(() => { setSound(isSoundEnabled()); }, []);
   const toggleSound = () => { const n = !sound; setSoundEnabled(n); setSound(n); };
+
+  const onRestore = async () => {
+    setRestoreMsg('확인 중…');
+    const ok = await restore();
+    setRestoreMsg(ok ? '구매가 복원되었어요! 🎉' : '복원할 구매 내역이 없어요.');
+  };
 
   const unlocked = new Set(state.unlockedAchievements);
   const accuracyTotal = state.totalCorrect + state.totalWrong;
@@ -33,7 +43,7 @@ export function Profile() {
     .slice(0, 6);
 
   return (
-    <div className="mx-auto max-w-md px-5 pt-6 animate-fade-in">
+    <div className="mx-auto max-w-md px-5 pt-[calc(env(safe-area-inset-top)+1rem)] animate-fade-in">
       {/* 레벨 헤더 */}
       <div className="mb-4 flex items-center gap-4 rounded-3xl border border-border bg-surface p-5">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent text-2xl font-extrabold text-accent-fg num">
@@ -114,6 +124,35 @@ export function Profile() {
             </div>
           );
         })}
+      </div>
+
+      {/* 이용권 */}
+      <div className="mb-2 text-sm font-bold text-text-muted">이용권</div>
+      <div className="mb-4 overflow-hidden rounded-2xl border border-border bg-surface">
+        {isPremium ? (
+          <div className="flex items-center gap-3 px-5 py-4">
+            <span className="text-accent"><Sparkles className="h-5 w-5" /></span>
+            <span className="flex-1 font-bold text-text">평생 이용권</span>
+            <span className="rounded-full bg-accent/12 px-2.5 py-1 text-xs font-extrabold text-accent">이용 중</span>
+          </div>
+        ) : (
+          <Row
+            icon={<Sparkles className="h-5 w-5" />}
+            label="평생 이용권 · 커피 한 잔 값"
+            onClick={openPaywall}
+            action={FALLBACK_PRICE}
+          />
+        )}
+        {isNative && !isPremium && (
+          <>
+            <div className="h-px bg-border" />
+            <Row icon={<RefreshCcw className="h-5 w-5" />} label="구매 복원" onClick={onRestore} action={restoreMsg ?? ''} />
+          </>
+        )}
+        <div className="h-px bg-border" />
+        <Row icon={<FileText className="h-5 w-5" />} label="이용약관" onClick={() => window.open(LEGAL_URLS.terms, '_blank')} action="" />
+        <div className="h-px bg-border" />
+        <Row icon={<ShieldCheck className="h-5 w-5" />} label="개인정보처리방침" onClick={() => window.open(LEGAL_URLS.privacy, '_blank')} action="" />
       </div>
 
       {/* 설정 */}

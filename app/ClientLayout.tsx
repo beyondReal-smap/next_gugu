@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/lib/state/ThemeProvider';
 import { GameProvider } from '@/lib/state/GameProvider';
 import { SessionProvider } from '@/lib/state/SessionProvider';
 import { AdventureProvider } from '@/lib/state/AdventureProvider';
+import { PremiumProvider } from '@/lib/state/PremiumProvider';
 import { AppShell } from '@/components/AppShell';
 
 interface ClientLayoutProps {
@@ -16,11 +17,13 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   return (
     <ThemeProvider>
       <GameProvider>
-        <SessionProvider>
-          <AdventureProvider>
-            <AppShell>{children}</AppShell>
-          </AdventureProvider>
-        </SessionProvider>
+        <PremiumProvider>
+          <SessionProvider>
+            <AdventureProvider>
+              <AppShell>{children}</AppShell>
+            </AdventureProvider>
+          </SessionProvider>
+        </PremiumProvider>
       </GameProvider>
     </ThemeProvider>
   );

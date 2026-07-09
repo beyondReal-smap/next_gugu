@@ -343,7 +343,7 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
   const showAnswer = feedback === 'wrong';
 
   return (
-    <div className="flex h-full flex-col px-5 pt-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
+    <div className="flex h-full flex-col px-5 pt-[calc(env(safe-area-inset-top)+1rem)] pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
       {/* 상단 바 — 모드별 진행 위젯 */}
       <div className="mb-4 flex items-center gap-3">
         <button onClick={onExit} aria-label="세션 종료" className="shrink-0 text-text-muted hover:text-text">

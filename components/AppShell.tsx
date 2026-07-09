@@ -9,6 +9,8 @@ import { TabBar } from '@/components/ui/TabBar';
 import { Onboarding } from '@/features/onboarding/Onboarding';
 import { SessionScreen } from '@/features/session/SessionScreen';
 import { AdventureScreen } from '@/features/adventure';
+import { Paywall } from '@/features/paywall/Paywall';
+import { triggerHapticFeedback, HAPTIC_TYPES } from '@/src/utils/hapticFeedback';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { loaded, state } = useGame();
@@ -22,6 +24,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     mainRef.current?.scrollTo(0, 0);
   }, [pathname]);
+
+  // 전역 탭 햅틱: 모든 인터랙티브 요소(버튼/링크/role=button 등) 탭 시 가벼운 impact 피드백.
+  // 한 곳에서 위임 처리하여 온보딩·탭바·페이월·어드벤처 등 전체 화면을 누락 없이 커버한다.
+  // hapticFeedback 유틸이 네이티브(iOS/Android)/웹을 내부에서 분기하며, data-no-haptic으로 개별 옵트아웃 가능.
+  React.useEffect(() => {
+    const SELECTOR =
+      'button, a[href], [role="button"], [role="tab"], input[type="checkbox"], input[type="radio"]';
+    const onClick = (e: MouseEvent) => {
+      const el = (e.target as HTMLElement | null)?.closest<HTMLElement>(SELECTOR);
+      if (!el || el.hasAttribute('data-no-haptic')) return;
+      if ((el as HTMLButtonElement).disabled || el.getAttribute('aria-disabled') === 'true') return;
+      triggerHapticFeedback(HAPTIC_TYPES.IMPACT_LIGHT);
+    };
+    document.addEventListener('click', onClick);
+    return () => document.removeEventListener('click', onClick);
+  }, []);
 
   // 로드 전 깜빡임 방지
   if (!loaded) return <div className="h-dvh bg-bg" />;
@@ -68,6 +86,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* 페이월 오버레이 — 세션/어드벤처보다 위 (z-60) */}
+      <Paywall />
     </>
   );
 }

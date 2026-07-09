@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Flame, Play, ChevronRight, Target, BookX, Map as MapIcon, Swords } from 'lucide-react';
+import { Flame, Play, ChevronRight, Target, BookX, Map as MapIcon, Swords, Lock } from 'lucide-react';
 import { GameMode } from '@/lib/types';
 import { MODES } from '@/lib/modes';
 import { MODE_ICONS, MODE_TINT } from '@/components/modeIcons';
@@ -10,6 +10,7 @@ import { REGIONS, bossIdFor } from '@/lib/adventure/world';
 import { useGame } from '@/lib/state/GameProvider';
 import { useSession } from '@/lib/state/SessionProvider';
 import { useAdventure } from '@/lib/state/AdventureProvider';
+import { usePremium } from '@/lib/state/PremiumProvider';
 import { ProgressRing } from '@/components/ui/ProgressRing';
 import { Button } from '@/components/ui/Button';
 import { levelTitle } from '@/lib/level';
@@ -22,6 +23,7 @@ export function Home() {
   const { state, levelInfo } = useGame();
   const { start } = useSession();
   const { openAdventure, progress } = useAdventure();
+  const { isPremium, openPaywall } = usePremium();
   const goalPct = state.dailyGoal ? state.dailyCorrect / state.dailyGoal : 0;
   const weakCount = Object.keys(state.wrongPool).length;
   const adv = totalStats(progress);
@@ -29,7 +31,7 @@ export function Home() {
   const nextRegion = REGIONS.find((r) => !clearedBoss(r.table)); // 다음 도전 지역 (전부 클리어면 undefined)
 
   return (
-    <div className="mx-auto max-w-md px-5 pt-6 animate-fade-in">
+    <div className="mx-auto max-w-md px-5 pt-[calc(env(safe-area-inset-top)+1rem)] animate-fade-in">
       {/* 헤더 */}
       <div className="mb-5 flex items-center justify-between">
         <div>
@@ -85,7 +87,7 @@ export function Home() {
       {/* 어드벤처 — 히어로 카드 (3D 월드 탐험 모드) */}
       <motion.button
         whileTap={{ scale: 0.97 }}
-        onClick={openAdventure}
+        onClick={isPremium ? openAdventure : openPaywall}
         className="relative mb-3 w-full overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 p-5 text-left text-white shadow-lg shadow-indigo-500/30"
       >
         {/* 배경 장식 — 빛 원 + 별 반짝임 */}
@@ -106,6 +108,7 @@ export function Home() {
           <div className="min-w-0 flex-1">
             <span className="mb-1.5 inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-extrabold tracking-wide">
               <MapIcon className="h-3.5 w-3.5" /> 어드벤처
+              {!isPremium && <Lock className="h-3 w-3" />}
             </span>
             <span className="block text-xl font-extrabold leading-snug">
               3D 월드를 탐험하며<br />구구단 대결!
@@ -180,7 +183,7 @@ export function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.04 }}
               whileTap={{ scale: 0.96 }}
-              onClick={() => start(id, null)}
+              onClick={() => (isPremium ? start(id, null) : openPaywall())}
               className="relative flex flex-col items-start gap-2 rounded-2xl border border-border bg-surface p-3.5 text-left transition-colors hover:bg-surface-2"
             >
               <span className={`flex h-9 w-9 items-center justify-center rounded-xl ${tint.bg} ${tint.text}`}>
@@ -190,7 +193,11 @@ export function Home() {
                 <span className="block text-sm font-extrabold text-text">{m.name}</span>
                 <span className="block text-xs text-text-muted">{m.tagline}</span>
               </span>
-              {m.scored && best > 0 && (
+              {!isPremium ? (
+                <span className="absolute right-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-accent/12 text-accent">
+                  <Lock className="h-3 w-3" strokeWidth={2.6} />
+                </span>
+              ) : m.scored && best > 0 && (
                 <span className="num absolute right-2.5 top-2.5 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-extrabold text-warning">
                   최고 {best}
                 </span>

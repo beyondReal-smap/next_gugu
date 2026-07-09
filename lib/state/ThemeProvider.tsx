@@ -13,15 +13,14 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light');
+  const [theme, setThemeState] = useState<Theme>('dark');
 
-  // 초기 테마: 저장값 → 시스템 선호 → light
+  // 초기 테마: 저장값 → dark 기본 (사용자가 토글하면 저장값 우선)
   useEffect(() => {
-    let t: Theme = 'light';
+    let t: Theme = 'dark';
     try {
       const saved = localStorage.getItem(KEY) as Theme | null;
       if (saved === 'light' || saved === 'dark') t = saved;
-      else if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) t = 'dark';
     } catch {}
     applyTheme(t);
     setThemeState(t);

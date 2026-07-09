@@ -1,12 +1,14 @@
 "use client";
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shuffle, Trophy, Play } from 'lucide-react';
+import { Shuffle, Trophy, Play, Lock } from 'lucide-react';
 import { GameMode } from '@/lib/types';
 import { MODE_LIST, MODES } from '@/lib/modes';
 import { MODE_ICONS, MODE_TINT } from '@/components/modeIcons';
 import { useGame } from '@/lib/state/GameProvider';
 import { useSession } from '@/lib/state/SessionProvider';
+import { usePremium } from '@/lib/state/PremiumProvider';
+import { isPremiumMode } from '@/lib/premiumConfig';
 import { Button } from '@/components/ui/Button';
 import { Stars } from '@/components/ui/Stars';
 import { MIN_TABLE, MAX_TABLE } from '@/lib/problems';
@@ -16,13 +18,14 @@ const TABLES = Array.from({ length: MAX_TABLE - MIN_TABLE + 1 }, (_, i) => MIN_T
 export function Learn() {
   const { state } = useGame();
   const { start } = useSession();
+  const { isPremium, openPaywall } = usePremium();
   const [mode, setMode] = useState<GameMode>('practice');
   const def = MODES[mode];
 
   const totalStars = Object.values(state.tableMastery).reduce((a, m) => a + m.stars, 0);
 
   return (
-    <div className="mx-auto max-w-md px-5 pt-6 animate-fade-in">
+    <div className="mx-auto max-w-md px-5 pt-[calc(env(safe-area-inset-top)+1rem)] animate-fade-in">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-extrabold text-text">학습</h1>
         <div className="flex items-center gap-1.5 rounded-full bg-warning/12 px-3 py-1.5 text-warning">
@@ -38,11 +41,12 @@ export function Learn() {
           const Icon = MODE_ICONS[m.id];
           const tint = MODE_TINT[m.id];
           const best = m.scored ? state.bestScores[m.id] ?? 0 : 0;
+          const locked = isPremiumMode(m.id) && !isPremium;
           return (
             <motion.button
               key={m.id}
               whileTap={{ scale: 0.97 }}
-              onClick={() => setMode(m.id)}
+              onClick={() => (locked ? openPaywall() : setMode(m.id))}
               aria-pressed={active}
               className={`relative rounded-2xl border p-3.5 text-left transition-colors
                 ${active ? 'border-accent bg-accent/10' : 'border-border bg-surface hover:bg-surface-2'}`}
@@ -52,7 +56,11 @@ export function Learn() {
               </span>
               <span className="block text-sm font-extrabold text-text">{m.name}</span>
               <span className="block text-xs text-text-muted">{m.tagline}</span>
-              {m.scored && best > 0 && (
+              {locked ? (
+                <span className="absolute right-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-accent/12 text-accent">
+                  <Lock className="h-3 w-3" strokeWidth={2.6} />
+                </span>
+              ) : m.scored && best > 0 && (
                 <span className="num absolute right-2.5 top-2.5 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-extrabold text-warning">
                   최고 {best}
                 </span>
