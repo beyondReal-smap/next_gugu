@@ -1,14 +1,16 @@
 "use client";
-// 지역 선택 맵 — 8지역(2~9단), 직전 지역 보스 격파 시 해금
+// 지역 선택 맵 — 8지역(2~9단). 해금: 구규칙 ∪ 로드맵 직전 보스 ∪ 해당 단 별
 import React from 'react';
 import { motion } from 'framer-motion';
 import * as Icons from 'lucide-react';
 import { X, Lock, Crown, Swords, ChevronRight } from 'lucide-react';
 import { RegionDef } from '@/lib/adventure/types';
 import { REGIONS } from '@/lib/adventure/world';
-import { isRegionUnlocked, regionStats, totalStats } from '@/lib/adventure/progress';
+import { isRegionUnlocked, regionStats, totalStats, roadmapPrevTable } from '@/lib/adventure/progress';
 import { ADV_ACHIEVEMENTS } from '@/lib/adventure/achievements';
 import { useAdventure } from '@/lib/state/AdventureProvider';
+import { useGame } from '@/lib/state/GameProvider';
+import { regionFor } from '@/lib/adventure/world';
 
 interface RegionMapProps {
   onSelect: (region: RegionDef) => void;
@@ -17,6 +19,7 @@ interface RegionMapProps {
 
 export function RegionMap({ onSelect, onExit }: RegionMapProps) {
   const { progress } = useAdventure();
+  const { state } = useGame();
   const total = totalStats(progress);
 
   return (
@@ -62,10 +65,10 @@ export function RegionMap({ onSelect, onExit }: RegionMapProps) {
       </div>
 
       {/* 지역 목록 — overscroll-contain: 리스트 끝에서 스크롤이 배경으로 새지 않게 */}
-      <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
+      <div className="scrollbar-hide flex-1 overflow-y-auto overscroll-contain px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
         <div className="flex flex-col gap-2.5">
           {REGIONS.map((region, i) => {
-            const unlocked = isRegionUnlocked(progress, region.table);
+            const unlocked = isRegionUnlocked(progress, region.table, state.tableMastery[region.table]?.stars ?? 0);
             const stats = regionStats(progress, region);
             return (
               <motion.button
@@ -108,7 +111,13 @@ export function RegionMap({ onSelect, onExit }: RegionMapProps) {
                     {unlocked ? (
                       <>주민 격파 <span className="num font-bold">{stats.defeated}/{stats.total}</span>{stats.bossDefeated && ' · 클리어!'}</>
                     ) : (
-                      '이전 지역 보스를 이기면 열려요'
+                      (() => {
+                        const prev = roadmapPrevTable(region.table);
+                        const prevName = prev != null ? regionFor(prev)?.name : null;
+                        return prevName
+                          ? `${prevName} 보스 또는 ${region.table}단 별이면 열려요`
+                          : '이전 지역 보스를 이기면 열려요';
+                      })()
                     )}
                   </span>
                 </span>

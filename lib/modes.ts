@@ -66,8 +66,17 @@ export const MODES: Record<GameMode, ModeDef> = {
     kind: 'fixed', total: 10, timeLimitMs: null, lives: null,
     supportsTable: true, scored: false, xpBonus: 0,
   },
+  adventure: {
+    id: 'adventure',
+    name: '어드벤처',
+    tagline: '월드에서 대결',
+    detail: '3D 월드 주민과 구구단 대결. 학습 모드 기록과는 따로 쌓여요.',
+    kind: 'fixed', total: 0, timeLimitMs: null, lives: null,
+    supportsTable: true, scored: false, xpBonus: 3,
+  },
 };
 
+// 학습 탭에 노출하는 모드. adventure 는 월드 전용이라 제외.
 export const MODE_LIST: ModeDef[] = [
   MODES.practice,
   MODES.timeAttack,

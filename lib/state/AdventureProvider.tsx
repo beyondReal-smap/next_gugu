@@ -3,6 +3,7 @@ import React, { createContext, useContext, useCallback, useEffect, useRef, useSt
 import { AdventureProgress } from '../adventure/types';
 import { DEFAULT_PROGRESS, applyBattle } from '../adventure/progress';
 import { newlyUnlockedAdv } from '../adventure/achievements';
+import { useWebTrial } from './WebTrialProvider';
 
 const STORAGE_KEY = 'gugu.adventure.v1';
 
@@ -10,8 +11,10 @@ interface AdventureContextValue {
   loaded: boolean;
   progress: AdventureProgress;
   open: boolean;
-  openAdventure: () => void;
+  focusTable: number | null;
+  openAdventure: (table?: number) => void;
   closeAdventure: () => void;
+  consumeFocusTable: () => number | null;
   /** 배틀 결과 반영 후, 이번에 새로 해금된 어드벤처 업적 id 반환 */
   recordBattle: (npcId: string, won: boolean) => string[];
   resetAdventure: () => void;
@@ -23,6 +26,7 @@ export function AdventureProvider({ children }: { children: React.ReactNode }) {
   const [progress, setProgress] = useState<AdventureProgress>(DEFAULT_PROGRESS);
   const [loaded, setLoaded] = useState(false);
   const [open, setOpen] = useState(false);
+  const [focusTable, setFocusTable] = useState<number | null>(null);
   const ref = useRef(progress);
   ref.current = progress;
 
@@ -67,8 +71,25 @@ export function AdventureProvider({ children }: { children: React.ReactNode }) {
     }
   }, [progress, loaded]);
 
-  const openAdventure = useCallback(() => setOpen(true), []);
-  const closeAdventure = useCallback(() => setOpen(false), []);
+  const { limited, requireApp } = useWebTrial();
+  // 3D 어드벤처는 앱 전용 — 웹 체험판에서는 설치 안내만 띄운다
+  const openAdventure = useCallback((table?: number) => {
+    if (limited) {
+      requireApp('adventure');
+      return;
+    }
+    setFocusTable(typeof table === 'number' ? table : null);
+    setOpen(true);
+  }, [limited, requireApp]);
+  const closeAdventure = useCallback(() => {
+    setOpen(false);
+    setFocusTable(null);
+  }, []);
+  const consumeFocusTable = useCallback(() => {
+    const t = focusTable;
+    setFocusTable(null);
+    return t;
+  }, [focusTable]);
   const recordBattle = useCallback((npcId: string, won: boolean): string[] => {
     const { next, unlocked } = applyBattle(ref.current, npcId, won);
     setProgress(next);
@@ -78,7 +99,7 @@ export function AdventureProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AdventureContext.Provider
-      value={{ loaded, progress, open, openAdventure, closeAdventure, recordBattle, resetAdventure }}
+      value={{ loaded, progress, open, focusTable, openAdventure, closeAdventure, consumeFocusTable, recordBattle, resetAdventure }}
     >
       {children}
     </AdventureContext.Provider>

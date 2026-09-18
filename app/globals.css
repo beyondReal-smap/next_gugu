@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import '/styles/SUITE.css';
 
 /* ── 모던 디자인 토큰 (라이트 기본 + 다크 토글) ─────────────────
    RGB space-separated 값 → Tailwind에서 rgb(var(--x) / <alpha>) 로 alpha 지원 */
@@ -40,12 +39,9 @@
 
 @layer base {
   html {
-    font-family: SUITE, system-ui, sans-serif;
-  }
-  /* 모바일: 핀치 줌 차단 + 스크롤 팬만 허용.
-     iOS 사파리는 viewport meta의 user-scalable=no를 무시하므로 touch-action으로 이중 차단 */
-  html, body {
-    touch-action: pan-x pan-y;
+    font-family: var(--font-suite), SUITE, system-ui, sans-serif;
+    /* PrefsProvider가 --font-scale 을 1 / 1.15 / 1.3 으로 설정 */
+    font-size: calc(16px * var(--font-scale, 1));
   }
   /* 앱형 스크롤 아키텍처: 문서(body) 스크롤을 끄고 앱 셸 내부 컨테이너가 스크롤을 소유.
      기기/웹뷰별 문서 스크롤 편차(iOS 고무줄, pull-to-refresh, 줌 상태 팬)에서 자유로워짐 */
@@ -56,7 +52,7 @@
   body {
     background-color: rgb(var(--bg));
     color: rgb(var(--text));
-    font-family: SUITE, system-ui, sans-serif;
+    font-family: var(--font-suite), SUITE, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     /* 테마 전환 부드럽게 */
     transition: background-color 0.3s ease, color 0.3s ease;
@@ -66,11 +62,6 @@
     font-family: var(--font-geist-sans), SUITE, ui-sans-serif, sans-serif;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.02em;
-  }
-  /* 모바일: 더블탭 줌/300ms 탭 지연 제거 + 버튼 위에서 시작한 핀치 줌도 차단
-     (manipulation은 핀치 줌을 허용하므로 pan-x pan-y로 강화) */
-  button {
-    touch-action: pan-x pan-y;
   }
   /* 포커스 가시성 (접근성) */
   :focus-visible {
@@ -109,9 +100,22 @@
   .btn-surface {
     @apply btn bg-surface-2 text-text hover:bg-border;
   }
+  /* 네이티브 앱이 /(랜딩)로 시작할 때 /play/ 로 넘어가기 전까지 랜딩을 숨김 (Landing.tsx) */
+  .native-app .landing-root {
+    visibility: hidden;
+  }
 }
 
 @layer utilities {
+  /* 스크롤은 유지하되 스크롤바만 숨김 (Firefox / IE·Edge legacy / WebKit) */
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   .gauge-stripes {
     background-image: linear-gradient(
       45deg,

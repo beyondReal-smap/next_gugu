@@ -1,0 +1,200 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-09-18",
+  "url": "https://gugu.smap.site/guide/4-dan",
+  "readingRule": "한국어 구구단 낭독은 '앞수 뒷수 → 답' 순서입니다. 답이 한 자리면 뒷수 뒤에 '은/는'을 붙이고(예: 이 삼은 육), 답이 두 자리면 붙이지 않습니다(예: 삼 사 십이).",
+  "table": 4,
+  "name": "4단",
+  "learnOrder": 4,
+  "difficulty": "medium",
+  "difficultyRank": 4,
+  "summary": "4단은 2단을 두 번 적용하는 단입니다. 4 × 7은 7을 두 배(14) 한 뒤 다시 두 배(28) 하면 됩니다.",
+  "whyMatters": "'두 배의 두 배' 전략을 몸에 익히면 8단(다시 두 배)까지 같은 방법으로 해결됩니다.",
+  "pattern": "답이 모두 짝수이고 4씩 커집니다. 4 · 8 · 12 · 16 · 20 · 24 · 28 · 32 · 36",
+  "strategies": [
+    {
+      "title": "두 배의 두 배",
+      "detail": "4 × 6 = (6의 두 배 12)의 두 배 = 24. 4단을 통째로 외우지 않아도 2단만으로 만들어 낼 수 있습니다."
+    },
+    {
+      "title": "5단에서 한 묶음 빼기",
+      "detail": "4 × 8이 막히면 5 × 8 = 40에서 8을 빼 32를 얻습니다. 5단이 5·0으로 끝나 계산이 쉬운 점을 활용합니다."
+    },
+    {
+      "title": "20을 기준점으로",
+      "detail": "4 × 5 = 20을 중간 말뚝으로 삼아 앞뒤로 4씩 오르내리면 후반부가 안정됩니다."
+    }
+  ],
+  "commonMistakes": [
+    {
+      "fact": "4x7",
+      "correct": 28,
+      "confusedWith": [
+        24,
+        32
+      ],
+      "why": "4 × 6(24), 4 × 8(32)과 4 간격으로 붙어 있어 한 칸씩 밀립니다.",
+      "fix": "7의 두 배는 14, 14의 두 배는 28이라고 두 단계로 되짚습니다."
+    },
+    {
+      "fact": "4x8",
+      "correct": 32,
+      "confusedWith": [
+        28,
+        36
+      ],
+      "why": "30을 넘어가는 지점이라 자릿수가 흔들립니다.",
+      "fix": "4 × 8 = 32와 8 × 4 = 32를 같이 외워 두 방향에서 확인합니다."
+    }
+  ],
+  "realLife": [
+    "자동차 바퀴 수",
+    "사각형의 변 개수",
+    "네 명이 한 조인 모둠 인원"
+  ],
+  "relatedTables": [
+    2,
+    8
+  ],
+  "questions": [
+    {
+      "q": "4단을 못 외우는 아이는 어떻게 도와야 하나요?",
+      "a": "4단을 통째로 외우게 하기보다 '두 배를 두 번' 하는 방법을 먼저 익히게 하세요. 2단만 알면 4단 전체를 스스로 만들어 낼 수 있어 부담이 크게 줄어듭니다."
+    }
+  ],
+  "facts": [
+    {
+      "id": "4x1",
+      "a": 4,
+      "b": 1,
+      "answer": 4,
+      "expression": "4 × 1 = 4",
+      "reading": "사 일은 사",
+      "commutativePair": "1x4",
+      "commutativePairInScope": false,
+      "isSquare": false,
+      "difficulty": "trivial",
+      "difficultyScore": 1
+    },
+    {
+      "id": "4x2",
+      "a": 4,
+      "b": 2,
+      "answer": 8,
+      "expression": "4 × 2 = 8",
+      "reading": "사 이는 팔",
+      "commutativePair": "2x4",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "easy",
+      "difficultyScore": 2
+    },
+    {
+      "id": "4x3",
+      "a": 4,
+      "b": 3,
+      "answer": 12,
+      "expression": "4 × 3 = 12",
+      "reading": "사 삼 십이",
+      "commutativePair": "3x4",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "easy",
+      "difficultyScore": 2
+    },
+    {
+      "id": "4x4",
+      "a": 4,
+      "b": 4,
+      "answer": 16,
+      "expression": "4 × 4 = 16",
+      "reading": "사 사 십육",
+      "commutativePair": "4x4",
+      "commutativePairInScope": true,
+      "isSquare": true,
+      "difficulty": "easy",
+      "difficultyScore": 2
+    },
+    {
+      "id": "4x5",
+      "a": 4,
+      "b": 5,
+      "answer": 20,
+      "expression": "4 × 5 = 20",
+      "reading": "사 오 이십",
+      "commutativePair": "5x4",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "easy",
+      "difficultyScore": 2
+    },
+    {
+      "id": "4x6",
+      "a": 4,
+      "b": 6,
+      "answer": 24,
+      "expression": "4 × 6 = 24",
+      "reading": "사 육 이십사",
+      "commutativePair": "6x4",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    },
+    {
+      "id": "4x7",
+      "a": 4,
+      "b": 7,
+      "answer": 28,
+      "expression": "4 × 7 = 28",
+      "reading": "사 칠 이십팔",
+      "commutativePair": "7x4",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    },
+    {
+      "id": "4x8",
+      "a": 4,
+      "b": 8,
+      "answer": 32,
+      "expression": "4 × 8 = 32",
+      "reading": "사 팔 삼십이",
+      "commutativePair": "8x4",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    },
+    {
+      "id": "4x9",
+      "a": 4,
+      "b": 9,
+      "answer": 36,
+      "expression": "4 × 9 = 36",
+      "reading": "사 구 삼십육",
+      "commutativePair": "9x4",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    }
+  ],
+  "learningStep": {
+    "step": 4,
+    "table": 4,
+    "difficulty": "medium",
+    "estimatedDays": "3~5일",
+    "goal": "4단을 두 배의 두 배로 만들어 내기",
+    "buildsOn": [
+      2
+    ],
+    "keyIdea": "두 배를 두 번",
+    "recommendedMode": "timeAttack"
+  },
+  "license": {
+    "content": "구구단 곱셈식과 표는 공개된 수학적 사실입니다. 가이드 본문과 학습 전략 텍스트는 인용 시 출처(https://gugu.smap.site)를 표기해 주세요.",
+    "attribution": "구구 어드벤처 (https://gugu.smap.site)"
+  }
+}

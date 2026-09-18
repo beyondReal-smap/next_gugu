@@ -9,6 +9,7 @@ import { TabBar } from '@/components/ui/TabBar';
 import { Onboarding } from '@/features/onboarding/Onboarding';
 import { SessionScreen } from '@/features/session/SessionScreen';
 import { AdventureScreen } from '@/features/adventure';
+import { TrialBanner } from '@/features/webTrial/TrialBanner';
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const { loaded, state } = useGame();
@@ -23,6 +24,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     mainRef.current?.scrollTo(0, 0);
   }, [pathname]);
 
+  // 루트(/)는 앱 설치 랜딩 — 게임 셸(온보딩·탭바·오버레이) 없이 그대로 렌더.
+  // 로드 대기도 하지 않아야 프리렌더 HTML에 랜딩 본문이 남아 크롤러가 읽을 수 있다.
+  if (pathname === '/') return <>{children}</>;
+
   // 로드 전 깜빡임 방지
   if (!loaded) return <div className="h-dvh bg-bg" />;
 
@@ -36,7 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <main ref={mainRef} className="app-scroll pb-24">{children}</main>
+      <main ref={mainRef} className="app-scroll pb-24"><TrialBanner />{children}</main>
       <TabBar />
 
       <AnimatePresence>

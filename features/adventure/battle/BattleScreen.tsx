@@ -22,14 +22,19 @@ import {
   BATTLE_STYLE_NAME,
 } from '@/lib/adventure/battle';
 import { regionFor } from '@/lib/adventure/world';
+import { isNpcDefeated } from '@/lib/adventure/progress';
 import { getAchievement } from '@/lib/achievements';
 import { getAdvAchievement } from '@/lib/adventure/achievements';
 import { useGame } from '@/lib/state/GameProvider';
 import { useAdventure } from '@/lib/state/AdventureProvider';
-import { triggerHapticFeedback, HAPTIC_TYPES } from '@/src/utils/hapticFeedback';
+import { usePrefs } from '@/lib/state/PrefsProvider';
+import { speakProblem } from '@/lib/a11y/speak';
+import { triggerHapticFeedback, HAPTIC_TYPES } from '@/lib/native/haptics';
+import { useAppActive, useShiftClocksOnResume } from '@/lib/native/useAppActive';
 import * as sound from '@/lib/sound';
 import { Keypad } from '@/features/session/Keypad';
 import { Button } from '@/components/ui/Button';
+import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
 import { Stars } from '@/components/ui/Stars';
 import { Confetti } from '@/components/feedback/Confetti';
 import { LevelUpOverlay } from '@/components/feedback/LevelUpOverlay';
@@ -118,13 +123,20 @@ function RaceBar({ score, target, tone }: { score: number; target: number; tone:
 }
 
 // 반격전 문제별 카운트다운 — 리렌더 격리를 위해 분리 (SessionScreen 타이머 교훈)
-function QuestionTimer({ qKey, limitMs, onExpire }: { qKey: number; limitMs: number; onExpire: () => void }) {
+function QuestionTimer({ qKey, limitMs, onExpire, running }: { qKey: number; limitMs: number; onExpire: () => void; running: boolean }) {
   const [left, setLeft] = useState(limitMs);
+  const remainRef = useRef(limitMs);
   useEffect(() => {
     setLeft(limitMs);
+    remainRef.current = limitMs;
+  }, [qKey, limitMs]);
+  useEffect(() => {
+    if (!running) return;
     const start = perfNow();
+    const budget = remainRef.current;
     const id = setInterval(() => {
-      const l = Math.max(0, limitMs - (perfNow() - start));
+      const l = Math.max(0, budget - (perfNow() - start));
+      remainRef.current = l;
       setLeft(l);
       if (l <= 0) {
         clearInterval(id);
@@ -132,7 +144,7 @@ function QuestionTimer({ qKey, limitMs, onExpire }: { qKey: number; limitMs: num
       }
     }, 100);
     return () => clearInterval(id);
-  }, [qKey, limitMs, onExpire]);
+  }, [qKey, limitMs, onExpire, running]);
 
   const urgent = left <= 2000;
   return (
@@ -152,8 +164,11 @@ function QuestionTimer({ qKey, limitMs, onExpire }: { qKey: number; limitMs: num
 
 export function BattleScreen({ npc, onWorld, onRetry, onFlee }: BattleScreenProps) {
   const { state, commitSession } = useGame();
-  const { recordBattle } = useAdventure();
+  const { recordBattle, progress } = useAdventure();
+  const { ttsEnabled } = usePrefs();
+  const appActive = useAppActive();
   const isBoss = npc.kind === 'boss';
+  const rematch = isNpcDefeated(progress, npc.id);
   const style = npc.battle;
   const counterLimit = counterLimitMs(npc.table);
 
@@ -182,6 +197,7 @@ export function BattleScreen({ npc, onWorld, onRetry, onFlee }: BattleScreenProp
   const [end, setEnd] = useState<BattleEnd | null>(null);
   const [confetti, setConfetti] = useState(0);
   const [levelUp, setLevelUp] = useState(false);
+  const [fleeAsk, setFleeAsk] = useState(false);
 
   // 진행 상태 ref
   const phaseRef = useRef<Phase>('intro');
@@ -203,7 +219,11 @@ export function BattleScreen({ npc, onWorld, onRetry, onFlee }: BattleScreenProp
   const wrongPoolRef = useRef(state.wrongPool);
   const qStartRef = useRef(0);
   const battleStartRef = useRef(0);
+  const commitRef = useRef(commitSession);
+  commitRef.current = commitSession;
   phaseRef.current = phase;
+  const clockRefs = useRef([qStartRef, battleStartRef]);
+  useShiftClocksOnResume(clockRefs.current, appActive);
 
   const setProblem = (p: Problem) => { problemRef.current = p; setProblemState(p); };
   const setInput = (v: string) => { inputRef.current = v; setInputState(v); };
@@ -218,13 +238,32 @@ export function BattleScreen({ npc, onWorld, onRetry, onFlee }: BattleScreenProp
     return () => window.clearTimeout(t);
   }, []);
 
-  // 도망가기 계약(이탈 시 커밋 없음) 보장 — 언마운트 후 살아남은 지연 타이머의 finish/커밋 차단
-  useEffect(() => () => { doneRef.current = true; }, []);
+  useEffect(() => {
+    if (!ttsEnabled || phase !== 'play') return;
+    speakProblem(problem.a, problem.b);
+  }, [problem.a, problem.b, qIdx, ttsEnabled, phase]);
+
+  // 언마운트 시 미커밋 답이 있으면 부분 커밋 (격파는 기록하지 않음)
+  useEffect(() => () => {
+    if (doneRef.current) return;
+    if (answersRef.current.length === 0) {
+      doneRef.current = true;
+      return;
+    }
+    doneRef.current = true;
+    commitRef.current(toSessionResult(
+      npc,
+      answersRef.current,
+      maxComboRef.current,
+      Math.round(perfNow() - battleStartRef.current),
+      { partial: true, rematch }
+    ));
+  }, [npc]);
 
   const fns = useRef({
     goNext: () => {},
     finish: (_won: boolean) => {},
-    resolve: (_correct: boolean, _ms: number) => {},
+    resolve: (_correct: boolean, _ms: number, _given?: number) => {},
     submit: (_v: string) => {},
     timeout: () => {},
   });
@@ -244,7 +283,7 @@ export function BattleScreen({ npc, onWorld, onRetry, onFlee }: BattleScreenProp
   fns.current.finish = (won: boolean) => {
     if (doneRef.current) return;
     doneRef.current = true;
-    const result = toSessionResult(npc, answersRef.current, maxComboRef.current, Math.round(perfNow() - battleStartRef.current));
+    const result = toSessionResult(npc, answersRef.current, maxComboRef.current, Math.round(perfNow() - battleStartRef.current), { rematch });
     const commit = commitSession(result);
     const advUnlocked = recordBattle(npc.id, won);
     setEnd({ won, commit, advUnlocked });
@@ -260,9 +299,9 @@ export function BattleScreen({ npc, onWorld, onRetry, onFlee }: BattleScreenProp
   };
 
   // 정오답 공통 처리 — 방식별 분기
-  fns.current.resolve = (correct: boolean, ms: number) => {
+  fns.current.resolve = (correct: boolean, ms: number, given?: number) => {
     const prob = problemRef.current;
-    answersRef.current.push({ a: prob.a, b: prob.b, correct, ms });
+    answersRef.current.push({ a: prob.a, b: prob.b, correct, ms, given });
     floatIdRef.current += 1;
 
     if (correct) {
@@ -330,7 +369,7 @@ export function BattleScreen({ npc, onWorld, onRetry, onFlee }: BattleScreenProp
     if (isNaN(parsed)) { lockRef.current = false; return; }
     lockRef.current = true;
     const ms = Math.round(perfNow() - qStartRef.current);
-    fns.current.resolve(parsed === problemRef.current.a * problemRef.current.b, ms);
+    fns.current.resolve(parsed === problemRef.current.a * problemRef.current.b, ms, parsed);
   };
 
   // 반격전 시간 초과 — 오답 취급 (정답 노출 + 피격)
@@ -338,12 +377,12 @@ export function BattleScreen({ npc, onWorld, onRetry, onFlee }: BattleScreenProp
     if (phaseRef.current !== 'play' || lockRef.current || doneRef.current) return;
     lockRef.current = true;
     setTimedOut(true);
-    fns.current.resolve(false, counterLimit);
+    fns.current.resolve(false, counterLimit, 0);
   };
 
   // 스피드 레이스 — NPC가 일정 간격으로 문제를 "풀어" 추격
   useEffect(() => {
-    if (style !== 'speed' || phase !== 'play') return;
+    if (style !== 'speed' || phase !== 'play' || !appActive) return;
     const id = window.setInterval(() => {
       if (doneRef.current || decidedRef.current) return; // 플레이어가 이미 승리를 확정했으면 추격 중단
       npcScoreRef.current += 1;
@@ -354,7 +393,7 @@ export function BattleScreen({ npc, onWorld, onRetry, onFlee }: BattleScreenProp
       }
     }, racePaceMs(npc.table));
     return () => window.clearInterval(id);
-  }, [style, phase, npc.table]);
+  }, [style, phase, npc.table, appActive]);
 
   // 안정적 입력 핸들러 (빈 deps + ref)
   const handleInput = useCallback((n: number) => {
@@ -421,7 +460,21 @@ export function BattleScreen({ npc, onWorld, onRetry, onFlee }: BattleScreenProp
 
       {/* 상단 바 */}
       <div className="mb-3 flex items-center gap-3">
-        <button onClick={onFlee} aria-label="배틀에서 도망가기" className="shrink-0 text-text-muted hover:text-text">
+        <button
+          onClick={() => {
+            if (doneRef.current || phase === 'end') {
+              onFlee();
+              return;
+            }
+            if (answersRef.current.length === 0) {
+              onFlee();
+              return;
+            }
+            setFleeAsk(true);
+          }}
+          aria-label="배틀에서 도망가기"
+          className="shrink-0 text-text-muted hover:text-text"
+        >
           <X className="h-6 w-6" />
         </button>
         <span className="text-sm font-bold text-text-muted">
@@ -430,13 +483,23 @@ export function BattleScreen({ npc, onWorld, onRetry, onFlee }: BattleScreenProp
         <AnimatePresence>
           {combo >= 2 && (
             <motion.span
-              key={combo}
               initial={{ scale: 0.6, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ opacity: 0 }}
+              exit={{ scale: 0.6, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               className="ml-auto flex items-center gap-1 rounded-full bg-danger/15 px-3 py-1 text-sm font-bold text-danger"
             >
-              <Flame className="h-4 w-4" fill="currentColor" /> {combo} 콤보
+              <Flame className="h-4 w-4" fill="currentColor" />
+              <motion.span
+                key={combo}
+                initial={{ scale: 1.4 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                className="num inline-block"
+              >
+                {combo}
+              </motion.span>
+              콤보
             </motion.span>
           )}
         </AnimatePresence>
@@ -482,11 +545,11 @@ export function BattleScreen({ npc, onWorld, onRetry, onFlee }: BattleScreenProp
 
       {/* 반격전 카운트다운 */}
       {style === 'counter' && phase === 'play' && !feedback && (
-        <QuestionTimer qKey={qIdx} limitMs={counterLimit} onExpire={handleTimeout} />
+        <QuestionTimer qKey={qIdx} limitMs={counterLimit} onExpire={handleTimeout} running={appActive} />
       )}
 
       {/* 문제 */}
-      <div className="flex flex-1 flex-col items-center justify-center">
+      <div className="flex flex-1 flex-col items-center justify-center" aria-live="polite" aria-atomic="true">
         <motion.div
           key={`${problem.a}-${problem.b}-${qIdx}`}
           initial={{ scale: 0.9, opacity: 0, y: 8 }}
@@ -654,6 +717,29 @@ export function BattleScreen({ npc, onWorld, onRetry, onFlee }: BattleScreenProp
           </motion.div>
         )}
       </AnimatePresence>
+
+      {fleeAsk && (
+        <ConfirmSheet
+          title="그만둘까요?"
+          body="지금까지 푼 문제는 저장돼요. 승패는 기록하지 않아요."
+          confirmLabel="저장하고 나가기"
+          cancelLabel="계속 대결"
+          onConfirm={() => {
+            if (!doneRef.current && answersRef.current.length > 0) {
+              doneRef.current = true;
+              commitSession(toSessionResult(
+                npc,
+                answersRef.current,
+                maxComboRef.current,
+                Math.round(perfNow() - battleStartRef.current),
+                { partial: true, rematch }
+              ));
+            }
+            onFlee();
+          }}
+          onCancel={() => setFleeAsk(false)}
+        />
+      )}
     </div>
   );
 }

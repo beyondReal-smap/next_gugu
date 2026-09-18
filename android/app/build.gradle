@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace "site.smap.next"
+    namespace "site.smap.gugudan"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "site.smap.next"
+        applicationId "site.smap.gugudan"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

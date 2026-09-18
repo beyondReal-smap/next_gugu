@@ -58,7 +58,7 @@ export function EncounterPrompt({ npc, defeated, bossLocked, onBattle }: Encount
             {bossLocked
               ? '부하들을 모두 이기면 도전할 수 있어요'
               : defeated
-                ? '이미 격파한 상대 — 연습 대결로 XP를 벌 수 있어요'
+                ? '이미 격파한 상대 — 연습은 가능하고 XP는 조금 받아요'
                 : `“${npc.greeting}”`}
           </p>
         </div>

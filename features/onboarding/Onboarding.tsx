@@ -1,9 +1,11 @@
 "use client";
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Flame, TrendingUp, Star, Sparkles } from 'lucide-react';
+import { Flame, TrendingUp, Star, Sparkles, User, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useGame } from '@/lib/state/GameProvider';
+import { usePrefs } from '@/lib/state/PrefsProvider';
+import { UserRole } from '@/lib/types';
 import { initSound } from '@/lib/sound';
 
 const POINTS = [
@@ -12,11 +14,19 @@ const POINTS = [
   { icon: Star, title: '마스터리', desc: '단별로 별을 모아 완전 정복해요' },
 ];
 
+const ROLES: { id: UserRole; title: string; desc: string; icon: typeof User }[] = [
+  { id: 'child', title: '아이', desc: '구구단을 게임으로 외워요', icon: User },
+  { id: 'guardian', title: '보호자', desc: '설정과 계정을 관리해요', icon: Shield },
+];
+
 export function Onboarding() {
   const { setOnboarded } = useGame();
+  const { setRole } = usePrefs();
+  const [role, setRoleLocal] = useState<UserRole>('child');
 
   const begin = () => {
     initSound(); // 사용자 제스처에서 오디오 활성화
+    setRole(role);
     setOnboarded(true); // 온보딩 종료 → AppShell이 홈 화면 렌더링
   };
 
@@ -27,7 +37,7 @@ export function Onboarding() {
           <Sparkles className="h-3.5 w-3.5" /> 매일 1분 구구단
         </div>
         <h1 className="text-4xl font-extrabold leading-tight text-text">
-          구구단,<br />게임처럼<br /><span className="text-accent">재미있게</span> 배워요
+          구구단을<br />게임으로<br /><span className="text-accent">외워요</span>
         </h1>
         <p className="mt-3 text-text-muted">레벨 · 스트릭 · 마스터리를 모으며 자연스럽게 구구단을 익혀요.</p>
       </motion.div>
@@ -50,6 +60,34 @@ export function Onboarding() {
             </div>
           </motion.div>
         ))}
+      </div>
+
+      <div className="mb-4">
+        <div className="mb-2 text-sm font-bold text-text-muted">누가 쓰나요?</div>
+        <div className="grid grid-cols-2 gap-2.5">
+          {ROLES.map((r) => {
+            const active = role === r.id;
+            return (
+              <button
+                key={r.id}
+                type="button"
+                onClick={() => setRoleLocal(r.id)}
+                aria-pressed={active}
+                className={`flex flex-col items-start gap-2 rounded-2xl border p-3.5 text-left transition-colors
+                  ${active ? 'border-accent bg-accent/10' : 'border-border bg-surface'}`}
+              >
+                <span className={`flex h-9 w-9 items-center justify-center rounded-xl
+                  ${active ? 'bg-accent text-accent-fg' : 'bg-surface-2 text-text-muted'}`}>
+                  <r.icon className="h-5 w-5" strokeWidth={2.4} />
+                </span>
+                <span>
+                  <span className="block font-extrabold text-text">{r.title}</span>
+                  <span className="block text-xs text-text-muted">{r.desc}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <Button variant="primary" size="lg" onClick={begin} className="w-full">시작하기</Button>

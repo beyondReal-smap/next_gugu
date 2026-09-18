@@ -1,0 +1,193 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-09-18",
+  "url": "https://gugu.smap.site/guide/5-dan",
+  "readingRule": "한국어 구구단 낭독은 '앞수 뒷수 → 답' 순서입니다. 답이 한 자리면 뒷수 뒤에 '은/는'을 붙이고(예: 이 삼은 육), 답이 두 자리면 붙이지 않습니다(예: 삼 사 십이).",
+  "table": 5,
+  "name": "5단",
+  "learnOrder": 2,
+  "difficulty": "easy",
+  "difficultyRank": 2,
+  "summary": "5단은 답이 5 아니면 0으로 끝나는 단입니다. 규칙이 눈에 보여서 2단 다음으로 쉽습니다.",
+  "whyMatters": "5단은 다른 단을 계산할 때의 기준점(앵커) 역할을 합니다. 6·7·8·9단이 막힐 때 5단에서 더하거나 빼는 방식으로 답을 만들 수 있습니다.",
+  "pattern": "곱하는 수가 홀수면 답이 5로, 짝수면 0으로 끝납니다. 5 · 10 · 15 · 20 · 25 · 30 · 35 · 40 · 45",
+  "strategies": [
+    {
+      "title": "시계 읽기와 연결",
+      "detail": "시계의 눈금 한 칸이 5분입니다. 5 × 7 = 35는 시계에서 7번째 숫자가 35분이라는 뜻이라, 이미 아는 감각으로 확인됩니다."
+    },
+    {
+      "title": "10단의 절반",
+      "detail": "5 × 8은 10 × 8 = 80의 절반인 40입니다. 큰 수에서 반으로 줄이는 방식이 더 빠른 아이도 많습니다."
+    },
+    {
+      "title": "다른 단의 기준점으로 쓰기",
+      "detail": "6 × 7이 막히면 5 × 7 = 35에 7을 더해 42를 만듭니다. 5단은 계산의 출발점입니다."
+    }
+  ],
+  "commonMistakes": [
+    {
+      "fact": "5x7",
+      "correct": 35,
+      "confusedWith": [
+        30,
+        40
+      ],
+      "why": "5단은 규칙이 쉬운 대신 몇 번째인지 세다가 한 칸씩 밀립니다.",
+      "fix": "홀수 × 5는 반드시 5로 끝난다는 규칙으로 30·40을 먼저 걸러냅니다."
+    }
+  ],
+  "realLife": [
+    "시계의 5분 눈금",
+    "한 손의 손가락 개수",
+    "5개들이 묶음 과자"
+  ],
+  "relatedTables": [
+    10,
+    4,
+    6
+  ],
+  "questions": [
+    {
+      "q": "5단은 왜 쉽게 느껴지나요?",
+      "a": "답이 항상 5 또는 0으로 끝나는 규칙이 눈에 바로 보이기 때문입니다. 게다가 시계 눈금, 손가락처럼 일상에서 5씩 세는 경험이 이미 쌓여 있습니다."
+    },
+    {
+      "q": "구구단은 어떤 순서로 가르치는 게 좋나요?",
+      "a": "2단 → 5단 → 3단 → 4단 → 6단 → 9단 → 7단 → 8단 순서를 권합니다. 규칙이 뚜렷해 성공 경험을 주는 단을 먼저 배치하고, 암기 부담이 큰 7·8단을 마지막에 둡니다."
+    }
+  ],
+  "facts": [
+    {
+      "id": "5x1",
+      "a": 5,
+      "b": 1,
+      "answer": 5,
+      "expression": "5 × 1 = 5",
+      "reading": "오 일은 오",
+      "commutativePair": "1x5",
+      "commutativePairInScope": false,
+      "isSquare": false,
+      "difficulty": "trivial",
+      "difficultyScore": 1
+    },
+    {
+      "id": "5x2",
+      "a": 5,
+      "b": 2,
+      "answer": 10,
+      "expression": "5 × 2 = 10",
+      "reading": "오 이 십",
+      "commutativePair": "2x5",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "easy",
+      "difficultyScore": 2
+    },
+    {
+      "id": "5x3",
+      "a": 5,
+      "b": 3,
+      "answer": 15,
+      "expression": "5 × 3 = 15",
+      "reading": "오 삼 십오",
+      "commutativePair": "3x5",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "easy",
+      "difficultyScore": 2
+    },
+    {
+      "id": "5x4",
+      "a": 5,
+      "b": 4,
+      "answer": 20,
+      "expression": "5 × 4 = 20",
+      "reading": "오 사 이십",
+      "commutativePair": "4x5",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "easy",
+      "difficultyScore": 2
+    },
+    {
+      "id": "5x5",
+      "a": 5,
+      "b": 5,
+      "answer": 25,
+      "expression": "5 × 5 = 25",
+      "reading": "오 오 이십오",
+      "commutativePair": "5x5",
+      "commutativePairInScope": true,
+      "isSquare": true,
+      "difficulty": "easy",
+      "difficultyScore": 2
+    },
+    {
+      "id": "5x6",
+      "a": 5,
+      "b": 6,
+      "answer": 30,
+      "expression": "5 × 6 = 30",
+      "reading": "오 육 삼십",
+      "commutativePair": "6x5",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "easy",
+      "difficultyScore": 2
+    },
+    {
+      "id": "5x7",
+      "a": 5,
+      "b": 7,
+      "answer": 35,
+      "expression": "5 × 7 = 35",
+      "reading": "오 칠 삼십오",
+      "commutativePair": "7x5",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "easy",
+      "difficultyScore": 2
+    },
+    {
+      "id": "5x8",
+      "a": 5,
+      "b": 8,
+      "answer": 40,
+      "expression": "5 × 8 = 40",
+      "reading": "오 팔 사십",
+      "commutativePair": "8x5",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "easy",
+      "difficultyScore": 2
+    },
+    {
+      "id": "5x9",
+      "a": 5,
+      "b": 9,
+      "answer": 45,
+      "expression": "5 × 9 = 45",
+      "reading": "오 구 사십오",
+      "commutativePair": "9x5",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "easy",
+      "difficultyScore": 2
+    }
+  ],
+  "learningStep": {
+    "step": 2,
+    "table": 5,
+    "difficulty": "easy",
+    "estimatedDays": "2~3일",
+    "goal": "5단 9개 식을 3초 안에 답하기",
+    "buildsOn": [],
+    "keyIdea": "답이 5 또는 0으로 끝남 / 시계 눈금",
+    "recommendedMode": "practice"
+  },
+  "license": {
+    "content": "구구단 곱셈식과 표는 공개된 수학적 사실입니다. 가이드 본문과 학습 전략 텍스트는 인용 시 출처(https://gugu.smap.site)를 표기해 주세요.",
+    "attribution": "구구 어드벤처 (https://gugu.smap.site)"
+  }
+}

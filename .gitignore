@@ -42,3 +42,7 @@ next-env.d.ts
 
 # 스토어 에셋 중 대용량 APK는 git 제외
 store-assets/*.apk
+
+# 로컬 백업·실험 산출물 (작업 원칙: .archive 보존, 커밋 제외)
+/.archive/
+/dist.backup_*/

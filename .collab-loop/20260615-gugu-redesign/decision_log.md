@@ -2,7 +2,7 @@
 
 세션: 20260615-gugu-redesign
 참여: Claude(초안/통합) ↔ Codex(critique), 2라운드
-최종본: `/home/jin/smap/next_gugu/docs/DESIGN_final.md`
+최종본: `/home/jin/projects/next_gugu/docs/DESIGN_final.md`
 
 ## 이번 루프에서 바뀐 핵심 내용 (v1 → final)
 1. **서버 의존 후크 전부 후순위 분리**: 위클리 리그/랭킹/푸시/계정/동기화 → 서버 단계(v2). MVP는 로컬 후크(스트릭/데일리골/레벨/마스터리/업적)만으로 리텐션 구성.

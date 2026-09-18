@@ -12,12 +12,12 @@ interface OxPadProps {
 export function OxPad({ onAnswer }: OxPadProps) {
   const press = (v: boolean) => () => { playTap(); onAnswer(v); };
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-2 gap-3 touch-manipulation">
       <motion.button
         whileTap={{ scale: 0.94 }}
         onClick={press(true)}
         aria-label="맞는 식"
-        className="flex h-32 flex-col items-center justify-center gap-1.5 rounded-2xl bg-success/12 text-success
+        className="flex h-32 touch-manipulation flex-col items-center justify-center gap-1.5 rounded-2xl bg-success/12 text-success
           transition-colors hover:bg-success/20 active:bg-success/25"
       >
         <Circle className="h-12 w-12" strokeWidth={3.2} />
@@ -27,7 +27,7 @@ export function OxPad({ onAnswer }: OxPadProps) {
         whileTap={{ scale: 0.94 }}
         onClick={press(false)}
         aria-label="틀린 식"
-        className="flex h-32 flex-col items-center justify-center gap-1.5 rounded-2xl bg-danger/12 text-danger
+        className="flex h-32 touch-manipulation flex-col items-center justify-center gap-1.5 rounded-2xl bg-danger/12 text-danger
           transition-colors hover:bg-danger/20 active:bg-danger/25"
       >
         <X className="h-12 w-12" strokeWidth={3.2} />

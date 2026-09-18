@@ -13,11 +13,12 @@ interface KeypadProps {
 
 export function Keypad({ onInput, onDelete, onSubmit, canSubmit }: KeypadProps) {
   const press = (fn: () => void) => () => { playTap(); fn(); };
-  const Key = ({ children, onClick, className = '' }: { children: React.ReactNode; onClick: () => void; className?: string }) => (
+  const Key = ({ children, onClick, className = '', label }: { children: React.ReactNode; onClick: () => void; className?: string; label: string }) => (
     <motion.button
       whileTap={{ scale: 0.94 }}
       onClick={onClick}
-      className={`flex h-16 items-center justify-center rounded-2xl bg-surface-2 text-2xl font-bold text-text
+      aria-label={label}
+      className={`flex h-16 touch-manipulation items-center justify-center rounded-2xl bg-surface-2 text-2xl font-bold text-text
         transition-colors hover:bg-border active:bg-border ${className}`}
     >
       {children}
@@ -25,17 +26,18 @@ export function Keypad({ onInput, onDelete, onSubmit, canSubmit }: KeypadProps) 
   );
 
   return (
-    <div className="grid grid-cols-3 gap-2.5">
+    <div className="grid grid-cols-3 gap-2.5 touch-manipulation">
       {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
-        <Key key={n} onClick={press(() => onInput(n))}><span className="num">{n}</span></Key>
+        <Key key={n} label={`숫자 ${n}`} onClick={press(() => onInput(n))}><span className="num">{n}</span></Key>
       ))}
-      <Key onClick={press(onDelete)} className="!text-text-muted"><Delete className="h-6 w-6" /></Key>
-      <Key onClick={press(() => onInput(0))}><span className="num">0</span></Key>
+      <Key label="지우기" onClick={press(onDelete)} className="!text-text-muted"><Delete className="h-6 w-6" /></Key>
+      <Key label="숫자 0" onClick={press(() => onInput(0))}><span className="num">0</span></Key>
       <motion.button
         whileTap={{ scale: 0.94 }}
         onClick={press(onSubmit)}
         disabled={!canSubmit}
-        className="flex h-16 items-center justify-center rounded-2xl bg-accent text-lg font-bold text-accent-fg
+        aria-label="확인"
+        className="flex h-16 touch-manipulation items-center justify-center rounded-2xl bg-accent text-lg font-bold text-accent-fg
           transition-[filter] hover:brightness-110 disabled:opacity-40 disabled:pointer-events-none"
       >
         확인

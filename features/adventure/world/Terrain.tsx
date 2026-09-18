@@ -250,18 +250,22 @@ function Landmark({ kind, theme }: { kind: LandmarkKind; theme: RegionTheme }) {
 
 interface TerrainProps {
   region: RegionDef;
+  decoStep?: number; // 2면 소품 절반만
 }
 
-export function Terrain({ region }: TerrainProps) {
+export function Terrain({ region, decoStep = 1 }: TerrainProps) {
   const Deco = DECO_COMPONENTS[region.deco];
   const size = FIELD_BOUND * 2 + 6;
+  const items = decoStep > 1
+    ? region.decoItems.filter((_, i) => i % decoStep === 0)
+    : region.decoItems;
   return (
     <group>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
         <planeGeometry args={[size, size]} />
         <meshStandardMaterial color={region.theme.ground} />
       </mesh>
-      {region.decoItems.map(([x, z, scale], i) => (
+      {items.map(([x, z, scale], i) => (
         <group key={i} position={[x, 0, z]}>
           <Deco accent={region.theme.accent} scale={scale} />
         </group>

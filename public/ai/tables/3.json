@@ -1,0 +1,200 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-09-18",
+  "url": "https://gugu.smap.site/guide/3-dan",
+  "readingRule": "한국어 구구단 낭독은 '앞수 뒷수 → 답' 순서입니다. 답이 한 자리면 뒷수 뒤에 '은/는'을 붙이고(예: 이 삼은 육), 답이 두 자리면 붙이지 않습니다(예: 삼 사 십이).",
+  "table": 3,
+  "name": "3단",
+  "learnOrder": 3,
+  "difficulty": "easy",
+  "difficultyRank": 3,
+  "summary": "3단은 2단에 한 번 더 더하는 단입니다. 3 × 7은 2 × 7(14)에 7을 더한 21입니다.",
+  "whyMatters": "3단을 익히면 6단(3단의 두 배)과 9단(3단의 세 배)으로 곧장 확장됩니다.",
+  "pattern": "답의 각 자리 숫자를 더하면 항상 3의 배수가 됩니다. 예: 24 → 2+4=6, 27 → 2+7=9",
+  "strategies": [
+    {
+      "title": "2단 + 한 번 더",
+      "detail": "3 × 8이 막히면 2 × 8 = 16에 8을 더해 24를 만듭니다. 이미 아는 2단을 발판으로 쓰는 방식입니다."
+    },
+    {
+      "title": "3씩 뛰어 세기 리듬",
+      "detail": "3, 6, 9, 12, 15, 18, 21, 24, 27을 박수와 함께 소리 내면 순서 기억이 강해집니다."
+    },
+    {
+      "title": "자릿수 합 검산",
+      "detail": "답이 3의 배수인지 자릿수 합으로 확인합니다. 3 × 9 = 27이면 2+7=9라 3의 배수가 맞습니다."
+    }
+  ],
+  "commonMistakes": [
+    {
+      "fact": "3x7",
+      "correct": 21,
+      "confusedWith": [
+        24,
+        18
+      ],
+      "why": "3단 후반부는 답 간격이 좁아 3 × 8(24)과 섞입니다.",
+      "fix": "3 × 7 = 21을 '스물하나'로 또렷하게 소리 내 3 × 8과 분리합니다."
+    },
+    {
+      "fact": "3x6",
+      "correct": 18,
+      "confusedWith": [
+        15,
+        21
+      ],
+      "why": "5 × 3(15)과 위치가 가까워 앞뒤 답으로 밀립니다.",
+      "fix": "3 × 6은 6 × 3과 같다는 점을 이용해 6단 쪽 기억으로도 확인합니다."
+    }
+  ],
+  "realLife": [
+    "삼각형의 변 개수",
+    "삼세판 게임",
+    "세 명이 나눠 먹는 간식"
+  ],
+  "relatedTables": [
+    6,
+    9
+  ],
+  "questions": [
+    {
+      "q": "3단이 헷갈릴 때 어떻게 확인하나요?",
+      "a": "답의 각 자리 숫자를 더해 3의 배수인지 봅니다. 3 × 7 = 21이면 2+1=3이라 맞고, 22가 떠올랐다면 2+2=4라서 틀린 답임을 바로 알 수 있습니다."
+    }
+  ],
+  "facts": [
+    {
+      "id": "3x1",
+      "a": 3,
+      "b": 1,
+      "answer": 3,
+      "expression": "3 × 1 = 3",
+      "reading": "삼 일은 삼",
+      "commutativePair": "1x3",
+      "commutativePairInScope": false,
+      "isSquare": false,
+      "difficulty": "trivial",
+      "difficultyScore": 1
+    },
+    {
+      "id": "3x2",
+      "a": 3,
+      "b": 2,
+      "answer": 6,
+      "expression": "3 × 2 = 6",
+      "reading": "삼 이는 육",
+      "commutativePair": "2x3",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "trivial",
+      "difficultyScore": 1
+    },
+    {
+      "id": "3x3",
+      "a": 3,
+      "b": 3,
+      "answer": 9,
+      "expression": "3 × 3 = 9",
+      "reading": "삼 삼은 구",
+      "commutativePair": "3x3",
+      "commutativePairInScope": true,
+      "isSquare": true,
+      "difficulty": "trivial",
+      "difficultyScore": 1
+    },
+    {
+      "id": "3x4",
+      "a": 3,
+      "b": 4,
+      "answer": 12,
+      "expression": "3 × 4 = 12",
+      "reading": "삼 사 십이",
+      "commutativePair": "4x3",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "easy",
+      "difficultyScore": 2
+    },
+    {
+      "id": "3x5",
+      "a": 3,
+      "b": 5,
+      "answer": 15,
+      "expression": "3 × 5 = 15",
+      "reading": "삼 오 십오",
+      "commutativePair": "5x3",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "easy",
+      "difficultyScore": 2
+    },
+    {
+      "id": "3x6",
+      "a": 3,
+      "b": 6,
+      "answer": 18,
+      "expression": "3 × 6 = 18",
+      "reading": "삼 육 십팔",
+      "commutativePair": "6x3",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    },
+    {
+      "id": "3x7",
+      "a": 3,
+      "b": 7,
+      "answer": 21,
+      "expression": "3 × 7 = 21",
+      "reading": "삼 칠 이십일",
+      "commutativePair": "7x3",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    },
+    {
+      "id": "3x8",
+      "a": 3,
+      "b": 8,
+      "answer": 24,
+      "expression": "3 × 8 = 24",
+      "reading": "삼 팔 이십사",
+      "commutativePair": "8x3",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    },
+    {
+      "id": "3x9",
+      "a": 3,
+      "b": 9,
+      "answer": 27,
+      "expression": "3 × 9 = 27",
+      "reading": "삼 구 이십칠",
+      "commutativePair": "9x3",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    }
+  ],
+  "learningStep": {
+    "step": 3,
+    "table": 3,
+    "difficulty": "easy",
+    "estimatedDays": "3~4일",
+    "goal": "3단 자동화, 자릿수 합으로 검산하기",
+    "buildsOn": [
+      2
+    ],
+    "keyIdea": "2단에 한 번 더 더하기",
+    "recommendedMode": "practice"
+  },
+  "license": {
+    "content": "구구단 곱셈식과 표는 공개된 수학적 사실입니다. 가이드 본문과 학습 전략 텍스트는 인용 시 출처(https://gugu.smap.site)를 표기해 주세요.",
+    "attribution": "구구 어드벤처 (https://gugu.smap.site)"
+  }
+}

@@ -1,28 +1,49 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import * as Icons from 'lucide-react';
-import { Sun, Moon, Volume2, VolumeX, RotateCcw } from 'lucide-react';
-import { GameMode } from '@/lib/types';
+import { Sun, Moon, Volume2, VolumeX, RotateCcw, Type, Volume1, Shield, Vibrate, Sparkles } from 'lucide-react';
+import { FontScale, GameMode, GraphicsQuality, UserRole } from '@/lib/types';
 import { MODES } from '@/lib/modes';
 import { MODE_ICONS, MODE_TINT } from '@/components/modeIcons';
 import { useGame } from '@/lib/state/GameProvider';
+import { useAdventure } from '@/lib/state/AdventureProvider';
 import { useTheme } from '@/lib/state/ThemeProvider';
+import { usePrefs } from '@/lib/state/PrefsProvider';
 import { Sparkline } from '@/components/ui/Sparkline';
 import { Button } from '@/components/ui/Button';
+import { Segmented } from '@/components/ui/Segmented';
 import { levelTitle } from '@/lib/level';
 import { ACHIEVEMENTS } from '@/lib/achievements';
+import { totalStats } from '@/lib/adventure/progress';
+import { REGIONS, bossIdFor } from '@/lib/adventure/world';
+
 import { isSoundEnabled, setSoundEnabled } from '@/lib/sound';
+import { isHapticEnabled, setHapticEnabled } from '@/lib/native/haptics';
+import { AccountSection } from '@/features/auth/AccountSection';
+import { ParentReport } from '@/features/profile/ParentReport';
+import { Paywall } from '@/features/premium/Paywall';
 
 const SCORED_MODES: GameMode[] = ['challenge', 'survival'];
 
 export function Profile() {
-  const { state, levelInfo, resetProgress } = useGame();
+  const { state, levelInfo, resetProgress, setDailyGoal } = useGame();
+  const { resetAdventure, progress } = useAdventure();
   const { theme, toggleTheme } = useTheme();
+  const {
+    role, setRole,
+    analyticsConsent, setAnalyticsConsent,
+    ttsEnabled, setTtsEnabled,
+    fontScale, setFontScale,
+    graphicsQuality, setGraphicsQuality,
+  } = usePrefs();
   const [sound, setSound] = useState(true);
+  const [haptic, setHaptic] = useState(true);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [paywallOpen, setPaywallOpen] = useState(false);
 
-  useEffect(() => { setSound(isSoundEnabled()); }, []);
+  useEffect(() => { setSound(isSoundEnabled()); setHaptic(isHapticEnabled()); }, []);
   const toggleSound = () => { const n = !sound; setSoundEnabled(n); setSound(n); };
+  const toggleHaptic = () => { const n = !haptic; setHapticEnabled(n); setHaptic(n); };
 
   const unlocked = new Set(state.unlockedAchievements);
   const accuracyTotal = state.totalCorrect + state.totalWrong;
@@ -116,13 +137,138 @@ export function Profile() {
         })}
       </div>
 
+      {(() => {
+        const adv = totalStats(progress);
+        const bosses = REGIONS.filter((r) => progress.defeatedNpcs.includes(bossIdFor(r.table))).length;
+        return (
+          <div className="mb-4 rounded-2xl border border-border bg-surface px-5 py-4">
+            <div className="mb-1 text-sm font-bold text-text-muted">어드벤처</div>
+            <div className="num text-lg font-extrabold text-text">
+              격파 {adv.defeated}/{adv.total}
+              <span className="ml-2 text-sm font-bold text-text-muted">보스 {bosses}</span>
+            </div>
+          </div>
+        );
+      })()}
+
+      <ParentReport />
+
+      {role === 'guardian' && (
+        <div className="mb-4 overflow-hidden rounded-2xl border border-border bg-surface">
+          <button
+            type="button"
+            onClick={() => setPaywallOpen(true)}
+            className="flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-surface-2"
+          >
+            <span className="text-text-muted"><Sparkles className="h-5 w-5" /></span>
+            <span className="flex-1">
+              <span className="block font-bold text-text">보호자 프리미엄</span>
+              <span className="block text-xs text-text-muted">친절한 힌트 · 오래 보는 리포트 · 결제 없음(아이)</span>
+            </span>
+            <span className="text-sm font-bold text-accent">보기</span>
+          </button>
+        </div>
+      )}
+      <Paywall open={paywallOpen} onClose={() => setPaywallOpen(false)} />
+
+      {/* 계정 — 로그인/구매 복원/계정 삭제 */}
+      <AccountSection />
+
       {/* 설정 */}
       <div className="mb-2 text-sm font-bold text-text-muted">설정</div>
       <div className="overflow-hidden rounded-2xl border border-border bg-surface">
         <Row icon={theme === 'dark' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />} label="다크 모드" onClick={toggleTheme} action={theme === 'dark' ? '켜짐' : '꺼짐'} />
         <div className="h-px bg-border" />
         <Row icon={sound ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />} label="효과음" onClick={toggleSound} action={sound ? '켜짐' : '꺼짐'} />
+        <div className="h-px bg-border" />
+        <Row icon={<Vibrate className="h-5 w-5" />} label="햅틱" onClick={toggleHaptic} action={haptic ? '켜짐' : '꺼짐'} />
+        <div className="h-px bg-border" />
+        <Row icon={<Volume1 className="h-5 w-5" />} label="문제 읽어주기" onClick={() => setTtsEnabled(!ttsEnabled)} action={ttsEnabled ? '켜짐' : '꺼짐'} />
       </div>
+
+      <div className="mt-3 mb-2 text-sm font-bold text-text-muted">큰 글자</div>
+      <div className="mb-4 flex items-center gap-3">
+        <Type className="h-5 w-5 shrink-0 text-text-muted" />
+        <Segmented
+          className="flex-1"
+          value={String(fontScale)}
+          onChange={(v) => setFontScale(Number(v) as FontScale)}
+          options={[
+            { value: '1', label: '기본' },
+            { value: '1.15', label: '크게' },
+            { value: '1.3', label: '더 크게' },
+          ]}
+        />
+      </div>
+
+      <div className="mb-2 text-sm font-bold text-text-muted">3D 움직임</div>
+      <div className="mb-4 grid grid-cols-3 gap-2">
+        {([
+          ['smooth', '부드럽게'],
+          ['auto', '자동'],
+          ['battery', '배터리'],
+        ] as [GraphicsQuality, string][]).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            aria-pressed={graphicsQuality === id}
+            onClick={() => setGraphicsQuality(id)}
+            className={`rounded-2xl border px-3 py-3 text-sm font-extrabold transition-colors
+              ${graphicsQuality === id ? 'border-accent bg-accent/10 text-accent' : 'border-border bg-surface text-text-muted'}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div className="mb-2 text-sm font-bold text-text-muted">오늘의 목표</div>
+      <div className="mb-4 grid grid-cols-3 gap-2">
+        {([10, 20, 30] as const).map((n) => (
+          <button
+            key={n}
+            type="button"
+            aria-pressed={state.dailyGoal === n}
+            onClick={() => setDailyGoal(n)}
+            className={`rounded-2xl border px-4 py-3 text-sm font-extrabold transition-colors
+              ${state.dailyGoal === n ? 'border-accent bg-accent/10 text-accent' : 'border-border bg-surface text-text-muted'}`}
+          >
+            {n}개
+          </button>
+        ))}
+      </div>
+
+      <div className="mb-2 text-sm font-bold text-text-muted">누가 쓰나요?</div>
+      <div className="mb-4 grid grid-cols-2 gap-2">
+        {(['child', 'guardian'] as UserRole[]).map((id) => (
+          <button
+            key={id}
+            type="button"
+            aria-pressed={role === id}
+            onClick={() => setRole(id)}
+            className={`rounded-2xl border px-4 py-3 text-sm font-extrabold transition-colors
+              ${role === id ? 'border-accent bg-accent/10 text-accent' : 'border-border bg-surface text-text-muted'}`}
+          >
+            {id === 'child' ? '아이' : '보호자'}
+          </button>
+        ))}
+      </div>
+
+      {role === 'guardian' && (
+        <>
+          <div className="mb-2 text-sm font-bold text-text-muted">보호자</div>
+          <div className="mb-4 overflow-hidden rounded-2xl border border-border bg-surface">
+            <Row
+              icon={<Shield className="h-5 w-5" />}
+              label="이용 통계 보내기"
+              onClick={() => setAnalyticsConsent(!analyticsConsent)}
+              action={analyticsConsent ? '동의' : '안 함'}
+            />
+            <p className="px-5 pb-3 text-xs text-text-muted">
+              Google Analytics를 익명(IP 마스킹)으로 켭니다. 아이 역할에서는 전송하지 않아요.
+            </p>
+          </div>
+        </>
+      )}
 
       <div className="mt-5 pb-4">
         {!confirmReset ? (
@@ -132,7 +278,7 @@ export function Profile() {
         ) : (
           <div className="flex gap-2">
             <Button variant="surface" className="flex-1" onClick={() => setConfirmReset(false)}>취소</Button>
-            <Button variant="danger" className="flex-1" onClick={() => { resetProgress(); setConfirmReset(false); }}>초기화 확인</Button>
+            <Button variant="danger" className="flex-1" onClick={() => { resetProgress(); resetAdventure(); setConfirmReset(false); }}>초기화 확인</Button>
           </div>
         )}
       </div>

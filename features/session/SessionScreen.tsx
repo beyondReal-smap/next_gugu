@@ -3,14 +3,28 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Flame, Heart, Check } from 'lucide-react';
 import { GameMode, Problem, AnswerRecord, SessionResult, CommitResult } from '@/lib/types';
-import { pickProblem, problemKey, makeStatement, Statement } from '@/lib/problems';
+import { pickProblem, problemKey, makeStatement, updateWrongPool, Statement } from '@/lib/problems';
 import { MODES } from '@/lib/modes';
 import { useGame } from '@/lib/state/GameProvider';
-import { triggerHapticFeedback, HAPTIC_TYPES } from '@/src/utils/hapticFeedback';
+import { usePrefs } from '@/lib/state/PrefsProvider';
+import { useAuth } from '@/lib/state/AuthProvider';
+import { useWebTrial } from '@/lib/state/WebTrialProvider';
+import { speakProblem } from '@/lib/a11y/speak';
+import { triggerHapticFeedback, HAPTIC_TYPES } from '@/lib/native/haptics';
+import { useAppActive, useShiftClocksOnResume } from '@/lib/native/useAppActive';
+import { readLearningIdentity } from '@/lib/learning/identity';
+import { createPracticePlan, selectionReasonLabel, SelectionReason } from '@/lib/learning/remote';
+import { plannedItemsFrom, PlannedItem } from '@/lib/learning/planQueue';
 import * as sound from '@/lib/sound';
+import { Button } from '@/components/ui/Button';
+import { ConfirmSheet } from '@/components/ui/ConfirmSheet';
+import { CoachHint } from './CoachHint';
 import { Keypad } from './Keypad';
 import { OxPad } from './OxPad';
 import { ResultScreen } from './ResultScreen';
+
+const RETRY_MODES: GameMode[] = ['practice', 'missing', 'truefalse'];
+const RETRY_CAP = 2; // 같은 식 추가 재출제 상한 (첫 오답 이후)
 
 function perfNow(): number {
   return typeof performance !== 'undefined' ? performance.now() : 0;
@@ -23,12 +37,13 @@ interface SessionScreenProps {
 }
 
 // 경과 시간 표시 (스피드런) — 본체와 분리해 200ms 리렌더가 세션 화면 전체를 다시 그리지 않게 함
-function SpeedTimer({ startRef }: { startRef: React.MutableRefObject<number> }) {
+function SpeedTimer({ startRef, running }: { startRef: React.MutableRefObject<number>; running: boolean }) {
   const [t, setT] = useState(0);
   useEffect(() => {
+    if (!running) return;
     const id = setInterval(() => setT(perfNow() - startRef.current), 200);
     return () => clearInterval(id);
-  }, [startRef]);
+  }, [startRef, running]);
   return <span className="num w-14 text-right text-sm font-bold text-text-muted">{(t / 1000).toFixed(1)}s</span>;
 }
 
@@ -37,13 +52,16 @@ function CountdownTimer({
   startRef,
   limitMs,
   onExpire,
+  running,
 }: {
   startRef: React.MutableRefObject<number>;
   limitMs: number;
   onExpire: () => void;
+  running: boolean;
 }) {
   const [left, setLeft] = useState(limitMs);
   useEffect(() => {
+    if (!running) return;
     const id = setInterval(() => {
       const l = Math.max(0, limitMs - (perfNow() - startRef.current));
       setLeft(l);
@@ -53,7 +71,7 @@ function CountdownTimer({
       }
     }, 100);
     return () => clearInterval(id);
-  }, [startRef, limitMs, onExpire]);
+  }, [startRef, limitMs, onExpire, running]);
 
   const sec = Math.ceil(left / 1000);
   const urgent = sec <= 10;
@@ -90,6 +108,10 @@ function Hearts({ lives, max }: { lives: number; max: number }) {
 
 export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
   const { state, commitSession } = useGame();
+  const { ttsEnabled, role } = usePrefs();
+  const { user, getAccessToken } = useAuth();
+  const appActive = useAppActive();
+  const { tryPlay } = useWebTrial();
   const def = MODES[mode];
 
   // 첫 문제/문장은 렌더 전에 1회만 생성 (문제와 OX 문장의 짝 보장)
@@ -109,6 +131,14 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
   const [feedback, setFeedback] = useState<null | 'correct' | 'wrong'>(null);
   const [idx, setIdx] = useState(0);
   const [done, setDone] = useState<{ result: SessionResult; commit: CommitResult } | null>(null);
+  const [leaving, setLeaving] = useState(false);
+  const [awaitingRetry, setAwaitingRetry] = useState(false);
+  const [planReason, setPlanReason] = useState<SelectionReason | null>(null);
+  const [coachCtx, setCoachCtx] = useState<{
+    factId: string;
+    submitted: number | boolean | string | undefined;
+    attemptNo: number;
+  } | null>(null);
 
   // 진행 상태 ref (closure 안정 / 리렌더 무관)
   const wrongPoolRef = useRef(state.wrongPool);
@@ -124,18 +154,74 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
   const answersRef = useRef<AnswerRecord[]>([]);
   const wrongListRef = useRef<Problem[]>([]);
   const queueRef = useRef<Problem[]>([]); // 오답 재도전 큐
+  const retryCountRef = useRef<Record<string, number>>({});
   const recentRef = useRef<string[]>([]);
   const maxComboRef = useRef(0);
   const qStartRef = useRef(0);
   const sessionStartRef = useRef(0);
   const sessionIdRef = useRef(0); // 재시작 후 이전 세션의 지연 타이머 무효화
+  const commitRef = useRef(commitSession);
+  commitRef.current = commitSession;
+  const planQueueRef = useRef<PlannedItem[]>([]);
   doneRef.current = !!done;
+  const clockRefs = useRef([sessionStartRef, qStartRef]);
+  useShiftClocksOnResume(clockRefs.current, appActive);
 
   // 세션 시작 시각
   useEffect(() => {
     sessionStartRef.current = perfNow();
     qStartRef.current = perfNow();
   }, []);
+
+  // 적응형 계획은 선택 레이어. 실패·오프라인·비로그인이면 기존 pickProblem 유지.
+  useEffect(() => {
+    if (mode !== 'practice' || role !== 'guardian' || !user) return;
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+    let learnerId: string | null = null;
+    try {
+      learnerId = readLearningIdentity().learnerId;
+    } catch (e) {
+      console.error('학습 신원 읽기 실패, 로컬 출제 유지:', e);
+      return;
+    }
+    if (!learnerId) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const token = await getAccessToken();
+        if (!token || cancelled) return;
+        const plan = await createPracticePlan(token, { learnerId, count: Math.max(5, Math.min(30, def.total || 10)) });
+        if (cancelled) return;
+        planQueueRef.current = plannedItemsFrom(plan.items, table);
+      } catch (e) {
+        console.error('적응형 계획 조회 실패, 로컬 출제 유지:', e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [mode, role, user, table, def.total, getAccessToken]);
+
+  useEffect(() => {
+    if (!ttsEnabled || done) return;
+    speakProblem(problem.a, problem.b);
+  }, [problem.a, problem.b, idx, ttsEnabled, done]);
+
+  // 언마운트 시 미커밋 답이 있으면 부분 커밋 (지연 finish 가 잘려도 유실 방지)
+  useEffect(() => () => {
+    if (doneRef.current) return;
+    if (answersRef.current.length === 0) {
+      doneRef.current = true;
+      return;
+    }
+    doneRef.current = true;
+    commitRef.current({
+      mode,
+      table,
+      answers: answersRef.current,
+      maxCombo: maxComboRef.current,
+      durationMs: Math.round(perfNow() - sessionStartRef.current),
+      partial: true,
+    });
+  }, [mode, table]);
 
   // 상태+ref 동기 헬퍼
   const setProblem = (p: Problem) => { problemRef.current = p; setProblemState(p); };
@@ -148,17 +234,21 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
   // 진행 함수들을 ref에 매 렌더 갱신 → setTimeout/이벤트가 항상 최신 로직 호출 (stale closure 방지)
   const fns = useRef({
     goNext: () => {},
-    finish: () => {},
+    finish: (_partial?: boolean) => {},
+    advance: () => {},
     submit: (_v: string) => {},
     submitOX: (_c: boolean) => {},
-    resolve: (_correct: boolean) => {},
+    resolve: (_correct: boolean, _submitted?: number | boolean) => {},
   });
 
   fns.current.goNext = () => {
     recentRef.current = [...recentRef.current, problemKey(problemRef.current.a, problemRef.current.b)].slice(-4);
-    // 오답 재도전 큐 우선 소진 → 이후 가중 랜덤
+    // 오답 재도전 큐 우선 → 서버 계획 → 로컬 가중 랜덤
     const queued = queueRef.current.shift();
-    const p = queued ?? pickProblem({ table, wrongPool: wrongPoolRef.current, recentKeys: recentRef.current });
+    const planned = queued ? null : planQueueRef.current.shift() ?? null;
+    const p = queued ?? planned?.problem ?? pickProblem({ table, wrongPool: wrongPoolRef.current, recentKeys: recentRef.current });
+    setPlanReason(planned ? planned.reason : null);
+    setCoachCtx(null);
     setProblem(p);
     setStatement(mode === 'truefalse' ? makeStatement(p) : null);
     setInput('');
@@ -167,7 +257,7 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
     lockRef.current = false;
   };
 
-  fns.current.finish = () => {
+  fns.current.finish = (partial = false) => {
     if (doneRef.current) return;
     doneRef.current = true;
     const result: SessionResult = {
@@ -176,16 +266,36 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
       answers: answersRef.current,
       maxCombo: maxComboRef.current,
       durationMs: Math.round(perfNow() - sessionStartRef.current),
+      ...(partial ? { partial: true } : {}),
     };
     const commit = commitSession(result);
+    setLeaving(false);
+    setAwaitingRetry(false);
     setDone({ result, commit });
   };
 
+  fns.current.advance = () => {
+    if (doneRef.current) return;
+    const last = def.kind === 'fixed' && idxRef.current + 1 >= def.total && queueRef.current.length === 0;
+    const outOfLives = def.kind === 'lives' && livesRef.current <= 0;
+    if (last || outOfLives) {
+      fns.current.finish(false);
+      return;
+    }
+    if (queueRef.current.length === 0) {
+      idxRef.current += 1;
+      setIdx(idxRef.current);
+    }
+    fns.current.goNext();
+  };
+
   // 정오답 공통 처리 (키패드/OX 공용)
-  fns.current.resolve = (correct: boolean) => {
+  fns.current.resolve = (correct: boolean, submitted?: number | boolean) => {
     const prob = problemRef.current;
     const ms = Math.round(perfNow() - qStartRef.current);
-    answersRef.current.push({ a: prob.a, b: prob.b, correct, ms });
+    answersRef.current.push({ a: prob.a, b: prob.b, correct, ms, given: submitted });
+    const usesRetry = RETRY_MODES.includes(mode);
+    const key = problemKey(prob.a, prob.b);
 
     if (correct) {
       const c = comboRef.current + 1;
@@ -198,10 +308,13 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
       sound.playCorrect();
       if (c >= 3) sound.playCombo(c);
       triggerHapticFeedback(HAPTIC_TYPES.SUCCESS);
+      if (usesRetry) wrongPoolRef.current = updateWrongPool(wrongPoolRef.current, prob.a, prob.b, true);
     } else {
       comboRef.current = 0;
       setCombo(0);
-      wrongListRef.current.push({ a: prob.a, b: prob.b });
+      if (!wrongListRef.current.some((p) => p.a === prob.a && p.b === prob.b)) {
+        wrongListRef.current.push({ a: prob.a, b: prob.b });
+      }
       setFeedback('wrong');
       sound.playWrong();
       triggerHapticFeedback(HAPTIC_TYPES.ERROR);
@@ -209,20 +322,26 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
         livesRef.current -= 1;
         setLives(livesRef.current);
       }
+      if (usesRetry) {
+        wrongPoolRef.current = updateWrongPool(wrongPoolRef.current, prob.a, prob.b, false);
+        const n = retryCountRef.current[key] || 0;
+        if (n < RETRY_CAP) {
+          retryCountRef.current[key] = n + 1;
+          queueRef.current.unshift({ a: prob.a, b: prob.b });
+        }
+      }
     }
 
-    const last = def.kind === 'fixed' && idxRef.current + 1 >= def.total;
-    const outOfLives = def.kind === 'lives' && livesRef.current <= 0;
+    if (!correct && usesRetry) {
+      const misses = answersRef.current.filter((a) => a.a === prob.a && a.b === prob.b && !a.correct).length;
+      setCoachCtx({ factId: key, submitted, attemptNo: Math.max(1, misses) });
+      setAwaitingRetry(true);
+      return;
+    }
     const sid = sessionIdRef.current;
     window.setTimeout(() => {
       if (doneRef.current || sid !== sessionIdRef.current) return;
-      if (last || outOfLives) {
-        fns.current.finish();
-      } else {
-        idxRef.current += 1;
-        setIdx(idxRef.current);
-        fns.current.goNext();
-      }
+      fns.current.advance();
     }, correct ? 380 : 1050);
   };
 
@@ -231,7 +350,7 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
     const parsed = parseInt(value, 10);
     if (isNaN(parsed)) { lockRef.current = false; return; }
     lockRef.current = true;
-    fns.current.resolve(parsed === expectedFor(problemRef.current));
+    fns.current.resolve(parsed === expectedFor(problemRef.current), parsed);
   };
 
   fns.current.submitOX = (choice: boolean) => {
@@ -239,7 +358,7 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
     const st = statementRef.current;
     if (!st) return;
     lockRef.current = true;
-    fns.current.resolve(choice === st.isTrue);
+    fns.current.resolve(choice === st.isTrue, choice);
   };
 
   // 안정적 입력 핸들러 (빈 deps + ref 참조)
@@ -298,10 +417,12 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
   if (done) {
     const wrongCount = wrongListRef.current.length;
     const restart = (retryWrong: boolean) => {
+      if (!tryPlay()) return; // 다시 하기도 한 판으로 센다(웹 체험판)
       const retained = retryWrong ? [...wrongListRef.current] : [];
       queueRef.current = retained.slice(1); // 첫 문제 제외한 나머지는 큐로
       answersRef.current = [];
       wrongListRef.current = [];
+      retryCountRef.current = {};
       recentRef.current = [];
       maxComboRef.current = 0;
       comboRef.current = 0;
@@ -323,6 +444,11 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
       setLives(livesRef.current);
       setFeedback(null);
       setIdx(0);
+      setAwaitingRetry(false);
+      setCoachCtx(null);
+      setPlanReason(null);
+      planQueueRef.current = [];
+      setLeaving(false);
       setDone(null);
     };
     return (
@@ -343,10 +469,17 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
   const showAnswer = feedback === 'wrong';
 
   return (
-    <div className="flex h-full flex-col px-5 pt-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
+    <div className="relative flex h-full flex-col px-5 pt-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
       {/* 상단 바 — 모드별 진행 위젯 */}
       <div className="mb-4 flex items-center gap-3">
-        <button onClick={onExit} aria-label="세션 종료" className="shrink-0 text-text-muted hover:text-text">
+        <button
+          onClick={() => {
+            if (answersRef.current.length === 0) onExit();
+            else setLeaving(true);
+          }}
+          aria-label="세션 종료"
+          className="shrink-0 text-text-muted hover:text-text"
+        >
           <X className="h-6 w-6" />
         </button>
 
@@ -360,13 +493,13 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
               />
             </div>
             {mode === 'timeAttack'
-              ? <SpeedTimer startRef={sessionStartRef} />
+              ? <SpeedTimer startRef={sessionStartRef} running={appActive} />
               : <span className="num w-10 text-right text-sm font-bold text-text-muted">{idx + 1}/{def.total}</span>}
           </>
         )}
 
         {def.kind === 'timed' && def.timeLimitMs != null && (
-          <CountdownTimer startRef={sessionStartRef} limitMs={def.timeLimitMs} onExpire={handleExpire} />
+          <CountdownTimer startRef={sessionStartRef} limitMs={def.timeLimitMs} onExpire={handleExpire} running={appActive} />
         )}
 
         {def.kind === 'lives' && (
@@ -388,20 +521,35 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
         <AnimatePresence>
           {combo >= 2 && (
             <motion.div
-              key={combo}
               initial={{ scale: 0.6, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ opacity: 0 }}
+              exit={{ scale: 0.6, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
               className="flex items-center gap-1 rounded-full bg-danger/15 px-3 py-1 text-sm font-bold text-danger"
             >
-              <Flame className="h-4 w-4" fill="currentColor" /> {combo} 콤보
+              <Flame className="h-4 w-4" fill="currentColor" />
+              <motion.span
+                key={combo}
+                initial={{ scale: 1.4 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 600, damping: 20 }}
+                className="num inline-block"
+              >
+                {combo}
+              </motion.span>
+              콤보
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
       {/* 문제 */}
-      <div className="flex flex-1 flex-col items-center justify-center">
+      <div className="flex flex-1 flex-col items-center justify-center" aria-live="polite" aria-atomic="true">
+        {planReason && (
+          <span className="mb-3 inline-flex rounded-full bg-accent/10 px-3 py-1 text-xs font-extrabold text-accent">
+            {selectionReasonLabel(planReason)}
+          </span>
+        )}
         <motion.div
           key={`${problem.a}-${problem.b}-${idx}`}
           initial={{ scale: 0.9, opacity: 0, y: 8 }}
@@ -442,7 +590,7 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
           )}
         </motion.div>
         {showAnswer && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 text-sm font-bold text-text-muted">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-3 text-center text-sm font-bold text-text-muted">
             {mode === 'truefalse' && statement
               ? statement.isTrue
                 ? `맞는 식이었어요 — ${problem.a} × ${problem.b} = ${answer}`
@@ -450,12 +598,32 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
               : mode === 'missing'
                 ? `빈칸은 ${problem.b} — ${problem.a} × ${problem.b} = ${answer}`
                 : `정답은 ${answer} 이에요`}
+            {awaitingRetry && (
+              <CoachHint
+                table={problem.a}
+                factId={coachCtx?.factId ?? `${problem.a}x${problem.b}`}
+                submitted={coachCtx?.submitted}
+                attemptNo={coachCtx?.attemptNo ?? 1}
+              />
+            )}
           </motion.div>
         )}
       </div>
 
-      {/* 입력 패드 */}
-      {mode === 'truefalse' ? (
+      {/* 입력 패드 / 오답 후 한 번 더 */}
+      {awaitingRetry ? (
+        <Button
+          variant="primary"
+          size="lg"
+          className="w-full"
+          onClick={() => {
+            setAwaitingRetry(false);
+            fns.current.advance();
+          }}
+        >
+          한 번 더
+        </Button>
+      ) : mode === 'truefalse' ? (
         <OxPad onAnswer={handleOX} />
       ) : (
         <Keypad
@@ -463,6 +631,17 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
           onDelete={handleDelete}
           onSubmit={handleManualSubmit}
           canSubmit={!!input}
+        />
+      )}
+
+      {leaving && (
+        <ConfirmSheet
+          title="그만둘까요?"
+          body="지금까지 기록은 저장돼요"
+          confirmLabel="저장하고 나가기"
+          cancelLabel="계속 풀기"
+          onConfirm={() => fns.current.finish(true)}
+          onCancel={() => setLeaving(false)}
         />
       )}
     </div>

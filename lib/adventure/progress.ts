@@ -2,6 +2,7 @@
 import { AdventureProgress, RegionDef } from './types';
 import { REGIONS, bossIdFor } from './world';
 import { newlyUnlockedAdv } from './achievements';
+import { ROADMAP_TABLES } from '../hints';
 
 export const DEFAULT_PROGRESS: AdventureProgress = {
   version: 1,
@@ -15,10 +16,24 @@ export function isNpcDefeated(p: AdventureProgress, npcId: string): boolean {
   return p.defeatedNpcs.includes(npcId);
 }
 
-// 첫 지역(2단)은 항상 열림, 이후는 직전 지역 보스 격파 시 해금
-export function isRegionUnlocked(p: AdventureProgress, table: number): boolean {
-  if (table <= REGIONS[0].table) return true;
-  return isNpcDefeated(p, bossIdFor(table - 1));
+// 해금은 단조 증가: 구규칙(번호-1 보스) ∪ 로드맵 직전 보스 ∪ 해당 단 별≥1
+export function isRegionUnlocked(
+  p: AdventureProgress,
+  table: number,
+  tableStars = 0
+): boolean {
+  if (table === ROADMAP_TABLES[0] || table <= REGIONS[0].table) return true;
+  if (isNpcDefeated(p, bossIdFor(table - 1))) return true;
+  const idx = ROADMAP_TABLES.indexOf(table);
+  if (idx > 0 && isNpcDefeated(p, bossIdFor(ROADMAP_TABLES[idx - 1]))) return true;
+  if (tableStars >= 1) return true;
+  return false;
+}
+
+export function roadmapPrevTable(table: number): number | null {
+  const idx = ROADMAP_TABLES.indexOf(table);
+  if (idx <= 0) return null;
+  return ROADMAP_TABLES[idx - 1];
 }
 
 // 배틀 결과 반영 + 어드벤처 전용 업적 판정 → 새 진행 상태와 신규 해금 업적 id

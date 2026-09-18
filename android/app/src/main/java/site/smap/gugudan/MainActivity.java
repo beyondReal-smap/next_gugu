@@ -1,4 +1,4 @@
-package site.smap.next;
+package site.smap.gugudan;
 
 import com.getcapacitor.BridgeActivity;
 

@@ -1,0 +1,221 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-09-18",
+  "url": "https://gugu.smap.site/guide/7-dan",
+  "readingRule": "한국어 구구단 낭독은 '앞수 뒷수 → 답' 순서입니다. 답이 한 자리면 뒷수 뒤에 '은/는'을 붙이고(예: 이 삼은 육), 답이 두 자리면 붙이지 않습니다(예: 삼 사 십이).",
+  "table": 7,
+  "name": "7단",
+  "learnOrder": 7,
+  "difficulty": "hard",
+  "difficultyRank": 8,
+  "summary": "7단은 구구단에서 가장 어려운 단으로 꼽힙니다. 답에 눈에 띄는 규칙이 없어 다른 단을 발판으로 삼아야 합니다.",
+  "whyMatters": "7단은 규칙이 없는 만큼 반복 노출과 오답 집중 학습의 효과가 가장 크게 나타나는 구간입니다.",
+  "pattern": "답에 단순한 규칙이 없습니다. 7 · 14 · 21 · 28 · 35 · 42 · 49 · 56 · 63",
+  "strategies": [
+    {
+      "title": "5 × □ + 2 × □로 쪼개기",
+      "detail": "7 × 8 = 5 × 8(40) + 2 × 8(16) = 56. 7을 5와 2로 나눠 이미 쉬운 두 단으로 처리합니다."
+    },
+    {
+      "title": "5·6·7·8 이어 붙이기",
+      "detail": "7 × 8 = 56은 숫자 5, 6, 7, 8을 순서대로 늘어놓은 모양입니다. 56 = 7 × 8로 기억하면 7단·8단에서 동시에 쓸 수 있습니다."
+    },
+    {
+      "title": "요일과 연결",
+      "detail": "일주일이 7일입니다. 3주는 21일, 4주는 28일처럼 달력을 짚으면 7단 중반부가 몸에 익습니다."
+    },
+    {
+      "title": "교환법칙으로 절반만 외우기",
+      "detail": "7 × 3은 3 × 7과 같습니다. 앞 단에서 이미 외운 식은 다시 외울 필요가 없어, 새로 외울 식은 7 × 7, 7 × 8, 7 × 9 세 개뿐입니다."
+    }
+  ],
+  "commonMistakes": [
+    {
+      "fact": "7x8",
+      "correct": 56,
+      "confusedWith": [
+        54,
+        63,
+        48
+      ],
+      "why": "구구단 전체에서 오답률이 가장 높은 식입니다. 6 × 9(54), 7 × 9(63)와 답의 크기가 비슷합니다.",
+      "fix": "5-6-7-8 순서 규칙(56 = 7 × 8)을 문장처럼 외웁니다."
+    },
+    {
+      "fact": "7x6",
+      "correct": 42,
+      "confusedWith": [
+        49,
+        48
+      ],
+      "why": "7 × 7(49)이 바로 옆에 있어 한 칸 밀립니다.",
+      "fix": "6 × 7 = 42를 6단 쪽에서도 익혀 양방향으로 굳힙니다."
+    },
+    {
+      "fact": "7x9",
+      "correct": 63,
+      "confusedWith": [
+        56,
+        72
+      ],
+      "why": "8 × 9(72)와 7 × 8(56) 사이에 끼어 있습니다.",
+      "fix": "9단 규칙으로 확인합니다. 6+3=9이므로 63이 맞습니다."
+    }
+  ],
+  "realLife": [
+    "일주일의 날짜 수",
+    "무지개 색깔 수",
+    "7개씩 든 묶음"
+  ],
+  "relatedTables": [
+    5,
+    2,
+    8
+  ],
+  "questions": [
+    {
+      "q": "구구단에서 가장 어려운 단은 무엇인가요?",
+      "a": "7단입니다. 답에 자릿수 규칙이나 반복 패턴이 없어 다른 단처럼 '규칙으로 확인'하는 방법을 쓸 수 없기 때문입니다. 특히 7 × 8 = 56이 가장 많이 틀리는 식으로 꼽힙니다."
+    },
+    {
+      "q": "7단을 쉽게 외우는 방법이 있나요?",
+      "a": "7을 5와 2로 쪼개는 방법이 가장 실용적입니다. 7 × 6이면 5 × 6(30)과 2 × 6(12)을 더해 42를 얻습니다. 또 교환법칙을 쓰면 실제로 새로 외울 식은 7 × 7, 7 × 8, 7 × 9 세 개뿐입니다."
+    }
+  ],
+  "facts": [
+    {
+      "id": "7x1",
+      "a": 7,
+      "b": 1,
+      "answer": 7,
+      "expression": "7 × 1 = 7",
+      "reading": "칠 일은 칠",
+      "commutativePair": "1x7",
+      "commutativePairInScope": false,
+      "isSquare": false,
+      "difficulty": "trivial",
+      "difficultyScore": 1
+    },
+    {
+      "id": "7x2",
+      "a": 7,
+      "b": 2,
+      "answer": 14,
+      "expression": "7 × 2 = 14",
+      "reading": "칠 이 십사",
+      "commutativePair": "2x7",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    },
+    {
+      "id": "7x3",
+      "a": 7,
+      "b": 3,
+      "answer": 21,
+      "expression": "7 × 3 = 21",
+      "reading": "칠 삼 이십일",
+      "commutativePair": "3x7",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    },
+    {
+      "id": "7x4",
+      "a": 7,
+      "b": 4,
+      "answer": 28,
+      "expression": "7 × 4 = 28",
+      "reading": "칠 사 이십팔",
+      "commutativePair": "4x7",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    },
+    {
+      "id": "7x5",
+      "a": 7,
+      "b": 5,
+      "answer": 35,
+      "expression": "7 × 5 = 35",
+      "reading": "칠 오 삼십오",
+      "commutativePair": "5x7",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "easy",
+      "difficultyScore": 2
+    },
+    {
+      "id": "7x6",
+      "a": 7,
+      "b": 6,
+      "answer": 42,
+      "expression": "7 × 6 = 42",
+      "reading": "칠 육 사십이",
+      "commutativePair": "6x7",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "hard",
+      "difficultyScore": 4
+    },
+    {
+      "id": "7x7",
+      "a": 7,
+      "b": 7,
+      "answer": 49,
+      "expression": "7 × 7 = 49",
+      "reading": "칠 칠 사십구",
+      "commutativePair": "7x7",
+      "commutativePairInScope": true,
+      "isSquare": true,
+      "difficulty": "hard",
+      "difficultyScore": 4
+    },
+    {
+      "id": "7x8",
+      "a": 7,
+      "b": 8,
+      "answer": 56,
+      "expression": "7 × 8 = 56",
+      "reading": "칠 팔 오십육",
+      "commutativePair": "8x7",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "hardest",
+      "difficultyScore": 5
+    },
+    {
+      "id": "7x9",
+      "a": 7,
+      "b": 9,
+      "answer": 63,
+      "expression": "7 × 9 = 63",
+      "reading": "칠 구 육십삼",
+      "commutativePair": "9x7",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "hard",
+      "difficultyScore": 4
+    }
+  ],
+  "learningStep": {
+    "step": 7,
+    "table": 7,
+    "difficulty": "hard",
+    "estimatedDays": "7~14일",
+    "goal": "7 × 7, 7 × 8, 7 × 9 세 식을 자동화하기",
+    "buildsOn": [
+      2,
+      5
+    ],
+    "keyIdea": "5단 + 2단으로 쪼개기 / 56 = 7 × 8",
+    "recommendedMode": "survival"
+  },
+  "license": {
+    "content": "구구단 곱셈식과 표는 공개된 수학적 사실입니다. 가이드 본문과 학습 전략 텍스트는 인용 시 출처(https://gugu.smap.site)를 표기해 주세요.",
+    "attribution": "구구 어드벤처 (https://gugu.smap.site)"
+  }
+}
