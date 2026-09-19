@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { GameMode } from '../types';
 import { useWebTrial } from './WebTrialProvider';
+import { trackMetaCustom } from '@/src/utils/metaPixel';
 
 export interface ActiveSession {
   mode: GameMode;
@@ -23,6 +24,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const start = useCallback((mode: GameMode, table: number | null) => {
     if (!tryPlay()) return;
     setActive({ mode, table });
+    trackMetaCustom('play_start', {
+      mode,
+      table: table == null ? 'mixed' : String(table),
+      content_name: 'web_play',
+    });
   }, [tryPlay]);
   const end = useCallback(() => setActive(null), []);
   return <SessionContext.Provider value={{ active, start, end }}>{children}</SessionContext.Provider>;

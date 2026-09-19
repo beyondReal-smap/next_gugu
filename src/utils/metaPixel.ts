@@ -15,18 +15,25 @@ export function enableMetaPixel(): void {
   if (typeof window === 'undefined') return;
   if (document.getElementById(SCRIPT_ID)) return;
 
-  // Official Meta Pixel base snippet (init + PageView).
-  /* eslint-disable prefer-rest-params, prefer-spread */
   const f = window;
   const b = document;
   const e = 'script';
   const v = 'https://connect.facebook.net/en_US/fbevents.js';
-  if (f.fbq) return;
+  if (f.fbq) {
+    f.fbq('init', META_PIXEL_ID);
+    f.fbq('track', 'PageView');
+    return;
+  }
+
   const n = (f.fbq = function (...args: unknown[]) {
-    if ((n as unknown as { callMethod?: (...a: unknown[]) => void }).callMethod) {
-      (n as unknown as { callMethod: (...a: unknown[]) => void }).callMethod(...args);
+    const fn = n as unknown as {
+      callMethod?: (...a: unknown[]) => void;
+      queue: unknown[];
+    };
+    if (fn.callMethod) {
+      fn.callMethod(...args);
     } else {
-      ((n as unknown as { queue: unknown[] }).queue = (n as unknown as { queue?: unknown[] }).queue || []).push(args);
+      (fn.queue = fn.queue || []).push(args);
     }
   }) as unknown as {
     (...args: unknown[]): void;
@@ -50,8 +57,29 @@ export function enableMetaPixel(): void {
   };
   const s = b.getElementsByTagName(e)[0];
   s?.parentNode?.insertBefore(t, s);
-  /* eslint-enable prefer-rest-params, prefer-spread */
 
   window.fbq?.('init', META_PIXEL_ID);
   window.fbq?.('track', 'PageView');
+}
+
+/** 표준 이벤트 (PageView, ViewContent, Lead, Purchase 등). */
+export function trackMetaEvent(
+  eventName: string,
+  params?: Record<string, unknown>,
+): void {
+  if (typeof window === 'undefined') return;
+  if (typeof window.fbq !== 'function') return;
+  if (params) window.fbq('track', eventName, params);
+  else window.fbq('track', eventName);
+}
+
+/** 커스텀 이벤트 (play_start, app_store_click 등). */
+export function trackMetaCustom(
+  eventName: string,
+  params?: Record<string, unknown>,
+): void {
+  if (typeof window === 'undefined') return;
+  if (typeof window.fbq !== 'function') return;
+  if (params) window.fbq('trackCustom', eventName, params);
+  else window.fbq('trackCustom', eventName);
 }
