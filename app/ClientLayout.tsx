@@ -11,6 +11,7 @@ import { PremiumProvider } from '@/lib/state/PremiumProvider';
 import { WebTrialProvider } from '@/lib/state/WebTrialProvider';
 import { AppShell } from '@/components/AppShell';
 import { AnalyticsLoader } from '@/components/AnalyticsLoader';
+import { MetaPixelLoader } from '@/components/MetaPixelLoader';
 import { ReminderSync } from '@/components/ReminderSync';
 import { LearningSync } from '@/components/LearningSync';
 
@@ -25,6 +26,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     <ThemeProvider>
       <PrefsProvider>
         <AnalyticsLoader />
+        <MetaPixelLoader />
         <AuthProvider>
           <PremiumProvider>
             <GameProvider>

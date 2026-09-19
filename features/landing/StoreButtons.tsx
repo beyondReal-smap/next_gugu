@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import { APP_STORE_URL, PLAY_STORE_URL, StorePlatform } from './stores';
+import { trackMetaCustom } from '@/src/utils/metaPixel';
 
 function AppleLogo() {
   return (
@@ -28,6 +29,12 @@ function StoreButton({ store }: { store: 'ios' | 'android' }) {
       href={ios ? APP_STORE_URL : PLAY_STORE_URL}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={() => {
+        trackMetaCustom('app_store_click', {
+          store: ios ? 'ios' : 'android',
+          content_name: ios ? 'app_store' : 'play_store',
+        });
+      }}
       className="inline-flex min-h-14 min-w-[11.5rem] items-center gap-3 rounded-2xl bg-black px-5 py-2.5 text-white shadow-lg shadow-black/20 ring-1 ring-white/15 transition-transform hover:-translate-y-0.5 active:scale-[0.98]"
     >
       {ios ? <AppleLogo /> : <PlayLogo />}
