@@ -5,6 +5,8 @@ export const OBSTACLE_START = 690;
 export const COLLISION_X = 154;
 export const JUMP_START = 280;
 export const JUMP_END = 30;
+export const RUNNER_SCORE_PER_LEVEL = 3; // 장애물 3개를 넘을 때마다 한 단계 빨라집니다.
+const CLEAR_SPEED = 0.45; // 정답 뒤 장애물을 넘어가는 속도(px/ms)
 
 export interface RunnerQuestion extends Problem {
   choices: number[];
@@ -55,8 +57,17 @@ export function createRunner(table: number | null, phase: 'ready' | 'running' = 
   };
 }
 
+export function runnerLevel(score: number): number {
+  return Math.floor(score / RUNNER_SCORE_PER_LEVEL);
+}
+
 export function answerWindowMs(score: number): number {
-  return Math.max(3200, 6500 - Math.floor(score / 5) * 450);
+  return Math.max(2800, 5000 - runnerLevel(score) * 500);
+}
+
+// 방금 넘은 장애물로 속도 단계가 올랐는지 (다음 장애물이 막 나온 순간)
+export function runnerLeveledUp(state: RunnerState): boolean {
+  return state.combo > 0 && state.outcome === null && state.score > 0 && state.score % RUNNER_SCORE_PER_LEVEL === 0;
 }
 
 export function answerRunner(state: RunnerState, choice: number): RunnerState {
@@ -84,7 +95,7 @@ export function advanceRunner(state: RunnerState, dt: number): RunnerState {
     return state.lives === 0 ? { ...state, hitMs: 0, phase: 'over' } : nextObstacle(state);
   }
 
-  const speed = state.outcome === null ? (OBSTACLE_START - COLLISION_X) / answerWindowMs(state.score) : 0.3;
+  const speed = state.outcome === null ? (OBSTACLE_START - COLLISION_X) / answerWindowMs(state.score) : CLEAR_SPEED;
   const movement = speed * dt;
   const next = { ...state, obstacleX: state.obstacleX - movement, distance: state.distance + movement / 20 };
 

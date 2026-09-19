@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { MotionConfig, motion } from 'framer-motion';
-import { Check, ChevronRight, Footprints, Play, Shuffle, Star, Trophy } from 'lucide-react';
+import { Check, ChevronRight, Footprints, Play, Rows3, Shuffle, Star, Trophy } from 'lucide-react';
 import { GameMode } from '@/lib/types';
 import { MODE_LIST, MODES } from '@/lib/modes';
 import { MODE_ICONS, MODE_TINT } from '@/components/modeIcons';
@@ -60,6 +60,11 @@ export function Learn() {
             <Link href="/runner" className="mt-4 flex items-center gap-3 rounded-2xl border border-emerald-600/25 bg-emerald-500/5 p-4 transition-colors hover:bg-emerald-500/10">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#153f35] text-[#dbef9e]"><Footprints aria-hidden="true" className="h-5 w-5" /></span>
               <span className="min-w-0 flex-1"><span className="block text-sm font-extrabold text-text">구구 점프</span><span className="mt-1 block text-xs leading-relaxed text-text-muted">정답을 골라 장애물 넘기</span></span>
+              <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-text-muted" />
+            </Link>
+            <Link href="/lane-runner" className="mt-2 flex items-center gap-3 rounded-2xl border border-emerald-600/25 bg-emerald-500/5 p-4 transition-colors hover:bg-emerald-500/10">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#153f35] text-[#dbef9e]"><Rows3 aria-hidden="true" className="h-5 w-5" /></span>
+              <span className="min-w-0 flex-1"><span className="block text-sm font-extrabold text-text">구구 레인</span><span className="mt-1 block text-xs leading-relaxed text-text-muted">길을 바꿔 정답 길로 달리기</span></span>
               <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-text-muted" />
             </Link>
           </section>

@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { MotionConfig, motion } from 'framer-motion';
-import { ArrowUpRight, BookOpen, Check, ChevronRight, Flame, Footprints, Map as MapIcon, Play, RotateCcw, Swords, Target } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Check, ChevronRight, Flame, Footprints, Map as MapIcon, Play, RotateCcw, Rows3, Swords, Target } from 'lucide-react';
 import { GameMode } from '@/lib/types';
 import { MODES } from '@/lib/modes';
 import { MODE_ICONS, MODE_TINT } from '@/components/modeIcons';
@@ -133,11 +133,18 @@ export function Home() {
             </div>
             <Link href="/learn" className="flex min-h-11 items-center gap-1 text-sm font-bold text-accent">전체 모드 <ChevronRight aria-hidden="true" className="h-4 w-4" /></Link>
           </div>
-          <Link href="/runner" className="mb-4 flex min-h-24 items-center gap-4 rounded-2xl border border-emerald-600/25 bg-emerald-500/5 px-5 py-4 transition-colors hover:bg-emerald-500/10">
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#153f35] text-[#dbef9e]"><Footprints aria-hidden="true" className="h-6 w-6" /></span>
-            <span className="min-w-0 flex-1"><span className="flex items-center gap-2 text-base font-extrabold text-text">구구 점프 <span className="rounded-full bg-emerald-600/10 px-2 py-0.5 text-[10px] text-emerald-800 dark:text-emerald-200">새 모드</span></span><span className="mt-1 block text-sm text-text-muted">정답을 맞히면 폴짝! 장애물을 넘어 달려요.</span></span>
-            <ArrowUpRight aria-hidden="true" className="h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300" />
-          </Link>
+          <div className="mb-4 grid gap-3 sm:grid-cols-2">
+            <Link href="/runner" className="flex min-h-24 items-center gap-4 rounded-2xl border border-emerald-600/25 bg-emerald-500/5 px-5 py-4 transition-colors hover:bg-emerald-500/10">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#153f35] text-[#dbef9e]"><Footprints aria-hidden="true" className="h-6 w-6" /></span>
+              <span className="min-w-0 flex-1"><span className="block text-base font-extrabold text-text">구구 점프</span><span className="mt-1 block text-sm text-text-muted">정답을 맞히면 폴짝! 장애물을 넘어 달려요.</span></span>
+              <ArrowUpRight aria-hidden="true" className="h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300" />
+            </Link>
+            <Link href="/lane-runner" className="flex min-h-24 items-center gap-4 rounded-2xl border border-emerald-600/25 bg-emerald-500/5 px-5 py-4 transition-colors hover:bg-emerald-500/10">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#153f35] text-[#dbef9e]"><Rows3 aria-hidden="true" className="h-6 w-6" /></span>
+              <span className="min-w-0 flex-1"><span className="flex items-center gap-2 text-base font-extrabold text-text">구구 레인 <span className="rounded-full bg-emerald-600/10 px-2 py-0.5 text-[10px] text-emerald-800 dark:text-emerald-200">새 모드</span></span><span className="mt-1 block text-sm text-text-muted">길을 바꿔 장애물을 피하고 정답 길로!</span></span>
+              <ArrowUpRight aria-hidden="true" className="h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300" />
+            </Link>
+          </div>
           <div className="grid gap-4 lg:grid-cols-[1fr_1.25fr]">
             <button type="button" onClick={() => openAdventure()} className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-border bg-surface p-5 text-left transition-colors hover:bg-surface-2 sm:p-6">
               <span className="flex w-full items-start justify-between gap-3">
