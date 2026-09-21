@@ -136,8 +136,8 @@ struct HomeView: View {
     private func groupHeader(_ icon: String, _ title: String, _ desc: String, _ tint: Color) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             Image(systemName: icon).font(.system(size: 12, weight: .bold)).foregroundStyle(tint)
-            Text(title).font(.suite(.extrabold, 14)).foregroundStyle(Color.gg.text)
-            Text(desc).font(.suite(.medium, 11)).foregroundStyle(Color.gg.textMuted).lineLimit(1)
+            Text(title).font(.suite(.bold, 13)).foregroundStyle(Color.gg.textMuted)
+            Text(desc).font(.suite(.medium, 11)).foregroundStyle(Color.gg.textMuted.opacity(0.75)).lineLimit(1)
             Spacer(minLength: 0)
         }
     }
@@ -259,15 +259,17 @@ struct HomeView: View {
     private func modeRowLabel(icon: String, tint: Color, name: String, tagline: String, meta: String, locked: Bool) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .font(.system(size: 18, weight: .bold)).foregroundStyle(tint)
-                .frame(width: 36, height: 36)
-                .background(tint.opacity(0.15), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    Text(name).font(.suite(.extrabold, 14)).foregroundStyle(Color.gg.text)
-                    Text(tagline).font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted).lineLimit(1)
-                }
-                Text(meta).font(.suite(.bold, 11)).foregroundStyle(Color.gg.textMuted).monospacedDigit()
+                .font(.system(size: 20, weight: .bold)).foregroundStyle(tint)
+                .frame(width: 44, height: 44)
+                .background(tint.opacity(0.15), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(name).font(.suite(.extrabold, 16)).foregroundStyle(Color.gg.text)
+                Text(tagline)
+                    .font(.suite(.medium, 13)).foregroundStyle(Color.gg.textMuted)
+                    .lineLimit(1)
+                Text(meta)
+                    .font(.suite(.bold, 12)).foregroundStyle(Color.gg.textMuted.opacity(0.8))
+                    .monospacedDigit()
             }
             Spacer(minLength: 4)
             if locked {
