@@ -45,6 +45,10 @@ class PremiumStore(
     private var pendingResult: ((PurchaseResult) -> Unit)? = null
     private val main = Handler(Looper.getMainLooper())
 
+    /** 서버 구매 등록에 쓰는 Play 구매 토큰 (검증된 구매가 있을 때만) */
+    var lastPurchaseToken: String? = null
+        private set
+
     private val billing: BillingClient = BillingClient.newBuilder(context)
         .setListener { result, purchases -> onPurchasesUpdated(result, purchases) }
         .enablePendingPurchases(
@@ -108,6 +112,11 @@ class PremiumStore(
                     PremiumConfig.PRODUCT_ID in it.products &&
                         it.purchaseState == Purchase.PurchaseState.PURCHASED
                 }
+                // 서버 구매 등록(POST /api/iap/verify)에 쓸 토큰을 남긴다
+                lastPurchaseToken = purchases.firstOrNull {
+                    PremiumConfig.PRODUCT_ID in it.products &&
+                        it.purchaseState == Purchase.PurchaseState.PURCHASED
+                }?.purchaseToken
                 purchases.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED && !it.isAcknowledged }
                     .forEach { acknowledge(it) }
                 if (owned) grant() else revoke()

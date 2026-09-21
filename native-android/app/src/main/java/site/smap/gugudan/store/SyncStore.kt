@@ -17,6 +17,7 @@ import site.smap.gugudan.services.GuardianDenial
 import site.smap.gugudan.services.LearningApiException
 import site.smap.gugudan.services.LearningIdentityStore
 import site.smap.gugudan.services.LearningOutboxStore
+import site.smap.gugudan.services.PurchaseRegistry
 import java.util.UUID
 
 // 학습 기록 동기화 (iOS SyncStore 이식).
@@ -207,10 +208,21 @@ class SyncStore(
      * 순서가 중요하다 — 서버가 app_metadata 를 바꿔도 손에 든 JWT 는 예전 권한이므로,
      * 토큰을 새로 받은 뒤에야 업로드가 통과한다.
      */
-    suspend fun enableGuardianSync(auth: AuthStore) {
+    suspend fun enableGuardianSync(auth: AuthStore, purchaseToken: String? = null) {
         // 이메일이 붙지 않은 익명 계정은 서버가 거부한다 — 요청하지 않는다
         if (!auth.isPermanent) return
         val token = auth.accessToken() ?: return
+
+        // 구매를 먼저 계정에 연결한다. 이게 없으면 서버가 구매 내역을 못 찾아 거부한다.
+        if (purchaseToken != null) {
+            try {
+                val registered = PurchaseRegistry.register(token, purchaseToken)
+                Log.i(TAG, "구매 등록 완료 premium=${registered.premium}")
+            } catch (e: Exception) {
+                // 이미 등록됐거나 토큰이 만료됐을 수 있다 — guardian 요청은 그대로 시도한다
+                Log.w(TAG, "구매 등록 건너뜀: ${e.message}")
+            }
+        }
 
         try {
             val response = LearningApi.verifyGuardian(token)

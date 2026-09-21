@@ -200,6 +200,15 @@ final class SyncStore {
         // 이메일이 붙지 않은 익명 계정은 서버가 거부한다 — 요청하지 않는다
         guard auth.isPermanent, let token = await auth.accessToken() else { return }
 
+        // 구매를 먼저 계정에 연결한다. 이게 없으면 서버가 구매 내역을 못 찾아 거부한다.
+        do {
+            let registered = try await PurchaseRegistry.register(accessToken: token)
+            print("[Sync] 구매 등록 완료 premium=\(registered.premium)")
+        } catch {
+            // 이미 등록됐거나 영수증이 없을 수 있다 — guardian 요청은 그대로 시도한다
+            print("[Sync] 구매 등록 건너뜀:", error.localizedDescription)
+        }
+
         do {
             let response = try await LearningApi.verifyGuardian(accessToken: token)
             guard response.guardian else { return }

@@ -109,6 +109,14 @@ final class AuthStore {
 
     init() {
         session = Self.loadStored()
+        #if DEBUG
+        // 시뮬레이터 텍스트 입력이 불안정해 검증용으로 코드 입력 단계를 복원한다.
+        // 예) SIMCTL_CHILD_GUGU_TEST_EMAIL=me@x.com SIMCTL_CHILD_GUGU_TEST_CODE=123456
+        let env = ProcessInfo.processInfo.environment
+        if let email = env["GUGU_TEST_EMAIL"], env["GUGU_TEST_CODE"] != nil, !email.isEmpty {
+            promotion = .codeSent(email: email)
+        }
+        #endif
     }
 
     /// 앱 시작 시 1회 호출. 저장된 세션이 있으면 필요할 때만 갱신하고, 없으면 익명 계정을 만든다.
