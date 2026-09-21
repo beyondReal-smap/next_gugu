@@ -10,18 +10,8 @@ struct ProfileView: View {
     @Environment(SyncStore.self) private var sync
     @Environment(\.openURL) private var openURL
 
-    // DEBUG 전용 — 시뮬레이터 한글 입력기 때문에 이메일 타이핑이 어려워 주입 훅을 둔다.
-    // 예) SIMCTL_CHILD_GUGU_TEST_EMAIL=me@example.com
-    @State private var email = ProfileView.devString("GUGU_TEST_EMAIL")
-    @State private var code = ProfileView.devString("GUGU_TEST_CODE")
-
-    private static func devString(_ key: String) -> String {
-        #if DEBUG
-        return ProcessInfo.processInfo.environment[key] ?? ""
-        #else
-        return ""
-        #endif
-    }
+    @State private var email = ""
+    @State private var code = ""
 
     @State private var soundOn = Sound.shared.enabled
     @State private var confirmReset = false
