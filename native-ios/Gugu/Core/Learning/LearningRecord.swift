@@ -41,10 +41,26 @@ enum LearningRecord {
         LearningMode(rawValue: mode.rawValue) ?? .practice
     }
 
+    /// 이 세션에 보낼 tableNo — 모든 문항이 같은 단일 때만 값을 갖는다.
+    ///
+    /// 서버가 두 규칙을 동시에 요구한다.
+    ///  1. 이벤트의 tableNo 는 factId 의 단과 같아야 한다 (API 검증)
+    ///  2. 한 세션의 모든 이벤트가 같은 table_no 여야 한다 (RPC 의 SESSION_MISMATCH)
+    /// 문항별 단을 넣으면 2번이 깨져 첫 문항과 단이 다른 이벤트가 전부 거부된다.
+    /// 단이 섞인 세션은 nil 로 보낸다 — 문항별 단은 factId 에 이미 담겨 있다.
+    private static func sessionTableNo(_ answers: [AnswerRecord]) -> Int? {
+        let tables = Set(answers.map(\.a))
+        return tables.count == 1 ? tables.first : nil
+    }
+
     static func events(from result: SessionResult, ids: Ids, occurredAt: String = LearningContract.nowIso()) -> [PendingLearningEvent] {
         let mode = apiMode(result.mode)
         var seen: [String: Int] = [:]
         var events: [PendingLearningEvent] = []
+        // 범위를 벗어나 실제로 빠지는 문항은 세션 단 판정에서도 제외한다
+        let tableNo = sessionTableNo(result.answers.filter {
+            LearningContract.isInFactRange(a: $0.a, b: $0.b)
+        })
 
         for (index, answer) in result.answers.enumerated() {
             let factId = LearningContract.factId(a: answer.a, b: answer.b)
@@ -67,8 +83,7 @@ enum LearningRecord {
                 sequenceNo: index,
                 factId: factId,
                 mode: mode,
-                // tableNo 는 세션 단이 아니라 문항 단 — 세션 table 과 다르면 서버가 거부한다
-                tableNo: answer.a,
+                tableNo: tableNo,
                 submittedAnswer: submitted,
                 correct: answer.correct,
                 responseMs: max(0, min(LearningContract.maxResponseMs, answer.ms)),

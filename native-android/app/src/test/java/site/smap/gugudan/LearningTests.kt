@@ -114,7 +114,7 @@ class LearningTests {
         assertEquals(LearningMode.PRACTICE, LearningRecord.apiMode(GameMode.ADVENTURE))
     }
 
-    /** 문항 순서·attemptNo·tableNo(문항 단 기준) */
+    /** 문항 순서·attemptNo·tableNo(세션 단 기준) */
     @Test fun sessionToEvents() {
         val result = SessionResult(
             mode = GameMode.PRACTICE, table = null,
@@ -130,10 +130,28 @@ class LearningTests {
         assertEquals(listOf(0, 1, 2), events.map { it.sequenceNo })
         assertEquals(listOf("3x4", "7x2", "3x4"), events.map { it.factId })
         assertEquals(listOf(1, 1, 2), events.map { it.attemptNo })   // 같은 식 재출현
-        assertEquals(listOf(3, 7, 3), events.map { it.tableNo })     // 세션 단(null)이 아니라 문항 a
+        // 단이 섞인 세션은 tableNo 를 null 로 보낸다 — 문항별 단을 넣으면
+        // 서버 RPC 가 첫 문항과 단이 다른 이벤트를 SESSION_MISMATCH 로 전부 거부한다
+        assertEquals(listOf(null, null, null), events.map { it.tableNo })
         assertEquals(GivenAnswer.Number(15), events[1].submittedAnswer)
         assertFalse(events[1].correct)
         events.forEach { LearningContract.validate(it.withEventId(uuid())) }
+    }
+
+    /** 모든 문항이 같은 단이면 tableNo 가 그 단으로 나간다 (서버 세션 일관성 규칙 충족) */
+    @Test fun sessionTableNoForSingleTable() {
+        val result = SessionResult(
+            mode = GameMode.PRACTICE, table = 6,
+            answers = listOf(
+                AnswerRecord(6, 1, true, 1000, GivenAnswer.Number(6)),
+                AnswerRecord(6, 9, false, 1200, GivenAnswer.Number(50)),
+            ),
+            maxCombo = 1, durationMs = 2200,
+        )
+        val events = LearningRecord.events(result, ids)
+        assertEquals(listOf(6, 6), events.map { it.tableNo })
+        // 한 세션 안에서 값이 모두 같아야 서버가 받는다
+        assertEquals(1, events.map { it.tableNo }.toSet().size)
     }
 
     /** given 이 없으면(제출 자체가 없던 문항) 미응답으로 남긴다 — 0 을 만들어 내지 않는다 */

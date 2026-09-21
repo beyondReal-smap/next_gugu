@@ -1,5 +1,6 @@
 package site.smap.gugudan.core.learning
 
+import site.smap.gugudan.core.AnswerRecord
 import site.smap.gugudan.core.GameMode
 import site.smap.gugudan.core.GivenAnswer
 import site.smap.gugudan.core.SessionResult
@@ -45,7 +46,18 @@ object LearningRecord {
         GameMode.ADVENTURE -> LearningMode.PRACTICE
     }
 
-    /** 빈칸 추리는 b 가 정답, 나머지는 a×b */
+    /** 이 세션에 보낼 tableNo — 모든 문항이 같은 단일 때만 값을 갖는다.
+     *
+     * 서버가 두 규칙을 동시에 요구한다.
+     *  1. 이벤트의 tableNo 는 factId 의 단과 같아야 한다 (API 검증)
+     *  2. 한 세션의 모든 이벤트가 같은 table_no 여야 한다 (RPC 의 SESSION_MISMATCH)
+     * 문항별 단을 넣으면 2번이 깨져 첫 문항과 단이 다른 이벤트가 전부 거부된다.
+     * 단이 섞인 세션은 null 로 보낸다 — 문항별 단은 factId 에 이미 담겨 있다. */
+    private fun sessionTableNo(answers: List<AnswerRecord>): Int? {
+        val tables = answers.map { it.a }.toSet()
+        return if (tables.size == 1) tables.first() else null
+    }
+
     fun events(
         result: SessionResult,
         ids: Ids,
@@ -54,6 +66,10 @@ object LearningRecord {
         val mode = apiMode(result.mode)
         val seen = mutableMapOf<String, Int>()
         val events = mutableListOf<PendingLearningEvent>()
+        // 범위를 벗어나 실제로 빠지는 문항은 세션 단 판정에서도 제외한다
+        val tableNo = sessionTableNo(
+            result.answers.filter { LearningContract.isInFactRange(it.a, it.b) }
+        )
 
         result.answers.forEachIndexed { index, answer ->
             val factId = LearningContract.factId(answer.a, answer.b)
@@ -76,8 +92,7 @@ object LearningRecord {
                 sequenceNo = index,
                 factId = factId,
                 mode = mode,
-                // tableNo 는 세션 단이 아니라 문항 단 — 세션 table 과 다르면 서버가 거부한다
-                tableNo = answer.a,
+                tableNo = tableNo,
                 submittedAnswer = submitted,
                 correct = answer.correct,
                 responseMs = answer.ms.coerceIn(0, LearningContract.MAX_RESPONSE_MS),

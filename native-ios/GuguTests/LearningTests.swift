@@ -96,7 +96,7 @@ final class LearningTests: XCTestCase {
         XCTAssertEqual(LearningRecord.apiMode(.adventure), .practice)
     }
 
-    /// 문항 순서·attemptNo·tableNo(문항 단 기준)가 맞는지
+    /// 문항 순서·attemptNo·tableNo(세션 단 기준)가 맞는지
     func testSessionToEvents() {
         let result = SessionResult(
             mode: .practice, table: nil,
@@ -113,14 +113,31 @@ final class LearningTests: XCTestCase {
         XCTAssertEqual(events.map(\.factId), ["3x4", "7x2", "3x4"])
         // 같은 식이 다시 나오면 attemptNo 가 올라간다
         XCTAssertEqual(events.map(\.attemptNo), [1, 1, 2])
-        // tableNo 는 세션 단(nil)이 아니라 문항의 a
-        XCTAssertEqual(events.map(\.tableNo), [3, 7, 3])
+        // 단이 섞인 세션은 tableNo 를 nil 로 보낸다 — 문항별 단을 넣으면
+        // 서버 RPC 가 첫 문항과 단이 다른 이벤트를 SESSION_MISMATCH 로 전부 거부한다
+        XCTAssertEqual(events.map(\.tableNo), [nil, nil, nil])
         XCTAssertEqual(events[1].submittedAnswer, .number(15))
         XCTAssertEqual(events[1].correct, false)
         for e in events { XCTAssertNoThrow(try LearningContract.validate(e.withEventId(uuid()))) }
     }
 
     /// given 이 없는 구기록 — 정답이면 기대값, 오답이면 0
+    /// 모든 문항이 같은 단이면 tableNo 가 그 단으로 나간다 (서버 세션 일관성 규칙 충족)
+    func testSessionTableNoForSingleTable() {
+        let result = SessionResult(
+            mode: .practice, table: 6,
+            answers: [
+                AnswerRecord(a: 6, b: 1, correct: true, ms: 1000, given: .number(6)),
+                AnswerRecord(a: 6, b: 9, correct: false, ms: 1200, given: .number(50)),
+            ],
+            maxCombo: 1, durationMs: 2200
+        )
+        let events = LearningRecord.events(from: result, ids: ids)
+        XCTAssertEqual(events.map(\.tableNo), [6, 6])
+        // 한 세션 안에서 값이 모두 같아야 서버가 받는다
+        XCTAssertEqual(Set(events.map(\.tableNo)).count, 1)
+    }
+
     /// given 이 없으면(제출 자체가 없던 문항) 미응답으로 남긴다 — 0 을 만들어 내지 않는다
     func testSessionToEventsWithoutGiven() {
         let practice = SessionResult(
