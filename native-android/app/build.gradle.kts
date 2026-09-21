@@ -40,8 +40,8 @@ android {
         applicationId = "site.smap.gugudan"
         minSdk = 28          // SceneView(Filament) 요구 — 기기 커버리지 ~97%
         targetSdk = 36
-        versionCode = 15     // vc15: 구구 레인·구구 바구니 모드 추가 + 홈 놀이 묶음 재구성
-        versionName = "2.1.0"
+        versionCode = 16     // vc16: 익명 계정·학습 원장 동기화, 프로필 정리, 구매 복원 노출
+        versionName = "2.2.0"
 
         buildConfigField("String", "SUPABASE_HOST", "\"${supabaseProp("SUPABASE_HOST")}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${supabaseProp("SUPABASE_ANON_KEY")}\"")
