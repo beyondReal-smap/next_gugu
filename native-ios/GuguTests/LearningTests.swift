@@ -121,6 +121,7 @@ final class LearningTests: XCTestCase {
     }
 
     /// given 이 없는 구기록 — 정답이면 기대값, 오답이면 0
+    /// given 이 없으면(제출 자체가 없던 문항) 미응답으로 남긴다 — 0 을 만들어 내지 않는다
     func testSessionToEventsWithoutGiven() {
         let practice = SessionResult(
             mode: .practice, table: 6,
@@ -131,8 +132,10 @@ final class LearningTests: XCTestCase {
             maxCombo: 1, durationMs: 2000
         )
         let events = LearningRecord.events(from: practice, ids: ids)
-        XCTAssertEqual(events[0].submittedAnswer, .number(18))  // 6×3
-        XCTAssertEqual(events[1].submittedAnswer, .number(0))
+        XCTAssertEqual(events[0].submittedAnswer, .noAnswer)
+        XCTAssertEqual(events[1].submittedAnswer, .noAnswer)
+        // 오답에 0 을 넣으면 "아이가 0 이라고 답했다"는 사실이 아닌 기록이 된다
+        XCTAssertNotEqual(events[1].submittedAnswer, .number(0))
 
         // 빈칸 추리는 b 가 정답
         let missing = SessionResult(
@@ -140,7 +143,7 @@ final class LearningTests: XCTestCase {
             answers: [AnswerRecord(a: 6, b: 7, correct: true, ms: 1000)],
             maxCombo: 1, durationMs: 1000
         )
-        XCTAssertEqual(LearningRecord.events(from: missing, ids: ids)[0].submittedAnswer, .number(7))
+        XCTAssertEqual(LearningRecord.events(from: missing, ids: ids)[0].submittedAnswer, .noAnswer)
     }
 
     /// factId 범위를 벗어난 문항은 그 문항만 빠지고 나머지는 남는다

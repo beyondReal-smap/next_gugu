@@ -8,6 +8,8 @@ struct SessionView: View {
     var onExit: () -> Void
 
     @Environment(GameStore.self) private var game
+    @Environment(SyncStore.self) private var sync
+    @Environment(AuthStore.self) private var auth
     @State private var engine: SessionEngine?
 
     var body: some View {
@@ -25,7 +27,12 @@ struct SessionView: View {
         .background(Color.gg.bg.ignoresSafeArea())
         .onAppear {
             if engine == nil {
-                let e = SessionEngine(mode: mode, table: table, game: game)
+                let e = SessionEngine(mode: mode, table: table, game: game) { result in
+                    // 학습 원장에 적재하고 바로 올려 본다.
+                    // 보호자 검증 전이면 flush 가 요청 없이 큐에 남긴다.
+                    sync.record(result)
+                    sync.flush(auth: auth)
+                }
                 e.start()
                 engine = e
             }

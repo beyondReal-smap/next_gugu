@@ -41,11 +41,6 @@ enum LearningRecord {
         LearningMode(rawValue: mode.rawValue) ?? .practice
     }
 
-    /// 빈칸 추리는 b 가 정답, 나머지는 a×b
-    private static func expectedAnswer(mode: GameMode, a: Int, b: Int) -> Int {
-        mode == .missing ? b : a * b
-    }
-
     static func events(from result: SessionResult, ids: Ids, occurredAt: String = LearningContract.nowIso()) -> [PendingLearningEvent] {
         let mode = apiMode(result.mode)
         var seen: [String: Int] = [:]
@@ -60,8 +55,10 @@ enum LearningRecord {
             }
             seen[factId, default: 0] += 1
 
-            let submitted: GivenAnswer = answer.given
-                ?? .number(answer.correct ? expectedAnswer(mode: result.mode, a: answer.a, b: answer.b) : 0)
+            // given 이 없으면 제출 자체가 없었던 문항(배틀 시간 초과 등)이다.
+            // 예전에는 오답일 때 0 을 넣었는데, 이는 "아이가 0 이라고 답했다"는
+            // 사실이 아닌 기록을 만들어 낸다 — 명시적인 미응답 값으로 남긴다.
+            let submitted: GivenAnswer = answer.given ?? .noAnswer
 
             events.append(PendingLearningEvent(
                 learnerId: ids.learnerId,

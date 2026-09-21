@@ -37,8 +37,13 @@ final class SyncStore {
     /// 세션 결과를 큐에 적재한다. 네트워크와 무관하게 항상 성공해야 한다.
     func record(_ result: SessionResult) {
         let identity = LearningIdentityStore.read()
-        // learnerId 는 서버가 배정한다 — 귀속 전에는 올릴 수 없으므로 적재도 하지 않는다
-        guard let learnerId = identity.learnerId else { return }
+        // learnerId 는 서버가 배정한다 — 귀속 전에는 올릴 수 없으므로 적재도 하지 않는다.
+        // 조용히 return 하면 "왜 아무 것도 안 올라가는지" 추적할 단서가 없다 — 반드시 남긴다.
+        guard let learnerId = identity.learnerId else {
+            print("[Sync] 적재 건너뜀: 학습자 귀속 전 (문항 \(result.answers.count)개 버림)")
+            return
+        }
+        print("[Sync] 세션 적재 learner=\(learnerId.prefix(8)) 문항=\(result.answers.count)개")
 
         let ids = LearningRecord.Ids(
             learnerId: learnerId,

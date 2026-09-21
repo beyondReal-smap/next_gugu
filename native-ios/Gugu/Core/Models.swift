@@ -19,13 +19,21 @@ struct Problem: Equatable {
 enum GivenAnswer: Codable, Equatable {
     case number(Int)
     case boolean(Bool)
+    /// 수/참거짓으로 표현할 수 없는 경우 — 시간 초과로 아무 답도 내지 않은 문항 등.
+    /// 서버 계약이 str 을 받으므로 "답이 없었다"를 0 으로 꾸미지 않고 그대로 남긴다.
+    case text(String)
+
+    /// 시간 초과 등으로 제출 자체가 없었음
+    static let noAnswer = GivenAnswer.text("no_answer")
 
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         if let value = try? container.decode(Int.self) {
             self = .number(value)
+        } else if let value = try? container.decode(Bool.self) {
+            self = .boolean(value)
         } else {
-            self = .boolean(try container.decode(Bool.self))
+            self = .text(try container.decode(String.self))
         }
     }
 
@@ -34,6 +42,7 @@ enum GivenAnswer: Codable, Equatable {
         switch self {
         case let .number(value): try container.encode(value)
         case let .boolean(value): try container.encode(value)
+        case let .text(value): try container.encode(value)
         }
     }
 }

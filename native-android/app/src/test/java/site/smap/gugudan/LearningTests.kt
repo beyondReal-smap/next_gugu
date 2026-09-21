@@ -5,6 +5,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -135,7 +136,7 @@ class LearningTests {
         events.forEach { LearningContract.validate(it.withEventId(uuid())) }
     }
 
-    /** given 이 없는 구기록 — 정답이면 기대값, 오답이면 0 */
+    /** given 이 없으면(제출 자체가 없던 문항) 미응답으로 남긴다 — 0 을 만들어 내지 않는다 */
     @Test fun sessionToEventsWithoutGiven() {
         val practice = SessionResult(
             mode = GameMode.PRACTICE, table = 6,
@@ -143,15 +144,17 @@ class LearningTests {
             maxCombo = 1, durationMs = 2000,
         )
         val events = LearningRecord.events(practice, ids)
-        assertEquals(GivenAnswer.Number(18), events[0].submittedAnswer)  // 6×3
-        assertEquals(GivenAnswer.Number(0), events[1].submittedAnswer)
+        assertEquals(GivenAnswer.NoAnswer, events[0].submittedAnswer)
+        assertEquals(GivenAnswer.NoAnswer, events[1].submittedAnswer)
+        // 오답에 0 을 넣으면 "아이가 0 이라고 답했다"는 사실이 아닌 기록이 된다
+        assertNotEquals(GivenAnswer.Number(0), events[1].submittedAnswer)
 
         val missing = SessionResult(
             mode = GameMode.MISSING, table = 6,
             answers = listOf(AnswerRecord(6, 7, true, 1000)),
             maxCombo = 1, durationMs = 1000,
         )
-        assertEquals(GivenAnswer.Number(7), LearningRecord.events(missing, ids)[0].submittedAnswer)
+        assertEquals(GivenAnswer.NoAnswer, LearningRecord.events(missing, ids)[0].submittedAnswer)
     }
 
     /** factId 범위 밖 문항만 빠지고 원래 인덱스는 유지된다 */

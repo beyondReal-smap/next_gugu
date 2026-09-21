@@ -42,6 +42,15 @@ data class Problem(val a: Int, val b: Int)   // a=단(2~9), b=곱하는 수(1~9)
 sealed interface GivenAnswer {
     @JvmInline value class Number(val value: Int) : GivenAnswer
     @JvmInline value class Boolean(val value: kotlin.Boolean) : GivenAnswer
+
+    /** 수/참거짓으로 표현할 수 없는 경우 — 시간 초과로 아무 답도 내지 않은 문항 등.
+     *  서버 계약이 str 을 받으므로 "답이 없었다"를 0 으로 꾸미지 않고 그대로 남긴다. */
+    @JvmInline value class Text(val value: String) : GivenAnswer
+
+    companion object {
+        /** 시간 초과 등으로 제출 자체가 없었음 */
+        val NoAnswer = Text("no_answer")
+    }
 }
 
 /** 수/참거짓을 감싸지 않은 단일 JSON 값으로 넣고 뺀다 (iOS GivenAnswer 와 동일한 형태) */
@@ -55,6 +64,7 @@ object GivenAnswerSerializer : KSerializer<GivenAnswer> {
             when (value) {
                 is GivenAnswer.Number -> JsonPrimitive(value.value)
                 is GivenAnswer.Boolean -> JsonPrimitive(value.value)
+                is GivenAnswer.Text -> JsonPrimitive(value.value)
             }
         )
     }
@@ -64,6 +74,7 @@ object GivenAnswerSerializer : KSerializer<GivenAnswer> {
         val primitive = input.decodeJsonElement().jsonPrimitive
         primitive.intOrNull?.let { return GivenAnswer.Number(it) }
         primitive.booleanOrNull?.let { return GivenAnswer.Boolean(it) }
+        if (primitive.isString) return GivenAnswer.Text(primitive.content)
         error("GivenAnswer 를 해석하지 못했습니다: $primitive")
     }
 }

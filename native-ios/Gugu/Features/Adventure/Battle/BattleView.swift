@@ -10,6 +10,8 @@ struct BattleView: View {
 
     @Environment(GameStore.self) private var game
     @Environment(AdventureStore.self) private var adventure
+    @Environment(SyncStore.self) private var sync
+    @Environment(AuthStore.self) private var auth
     @State private var engine: BattleEngine?
     @State private var confetti = 0
     @State private var levelUp = false
@@ -33,7 +35,12 @@ struct BattleView: View {
         }
         .onAppear {
             if engine == nil {
-                let e = BattleEngine(npc: npc, game: game, adventure: adventure)
+                let e = BattleEngine(npc: npc, game: game, adventure: adventure) { result in
+                    // 학습 원장에 적재하고 바로 올려 본다.
+                    // 보호자 검증 전이면 flush 가 요청 없이 큐에 남긴다.
+                    sync.record(result)
+                    sync.flush(auth: auth)
+                }
                 e.start()
                 engine = e
             }

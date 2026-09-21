@@ -46,9 +46,6 @@ object LearningRecord {
     }
 
     /** 빈칸 추리는 b 가 정답, 나머지는 a×b */
-    private fun expectedAnswer(mode: GameMode, a: Int, b: Int): Int =
-        if (mode == GameMode.MISSING) b else a * b
-
     fun events(
         result: SessionResult,
         ids: Ids,
@@ -67,9 +64,10 @@ object LearningRecord {
             }
             seen[factId] = (seen[factId] ?: 0) + 1
 
-            val submitted = answer.given ?: GivenAnswer.Number(
-                if (answer.correct) expectedAnswer(result.mode, answer.a, answer.b) else 0
-            )
+            // given 이 없으면 제출 자체가 없었던 문항(배틀 시간 초과 등)이다.
+            // 예전에는 오답일 때 0 을 넣었는데, 이는 "아이가 0 이라고 답했다"는
+            // 사실이 아닌 기록을 만들어 낸다 — 명시적인 미응답 값으로 남긴다.
+            val submitted = answer.given ?: GivenAnswer.NoAnswer
 
             events += PendingLearningEvent(
                 learnerId = ids.learnerId,
