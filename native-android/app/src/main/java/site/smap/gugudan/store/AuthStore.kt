@@ -155,6 +155,26 @@ class AuthStore(
         return runCatching { ensureSession().accessToken }.getOrNull()
     }
 
+    /**
+     * 토큰을 강제로 새로 받는다.
+     * app_metadata(보호자 권한)는 JWT 에 박혀 나가므로, 서버가 값을 바꾼 뒤에는
+     * 갱신하지 않으면 계속 예전 권한으로 거부된다.
+     */
+    suspend fun forceRefresh(): Boolean {
+        if (!SupabaseConfig.isConfigured) return false
+        val current = session ?: return false
+        return try {
+            val fresh = SupabaseAuth.refresh(current.refreshToken)
+            session = fresh
+            store(fresh)
+            state = State.Ready
+            true
+        } catch (e: Exception) {
+            Log.w(TAG, "토큰 강제 갱신 실패: ${e.message}")
+            false
+        }
+    }
+
     /** 기기에서 계정 연결을 끊는다 (서버 계정은 남는다 — 삭제는 DELETE /api/account 담당) */
     fun signOutLocally() {
         inflight?.cancel()

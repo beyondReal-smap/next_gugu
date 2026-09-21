@@ -34,6 +34,28 @@ enum LearningApi {
         }
     }
 
+    struct GuardianVerifyResponse: Decodable {
+        var guardian: Bool
+        var products: [String]
+        var verifiedBy: String
+        var verifiedAt: String
+    }
+
+    /// 보호자 권한 설정이 거부되는 사유
+    enum GuardianDenial: String {
+        case anonymous = "ANONYMOUS_NOT_ELIGIBLE"
+        case noPurchase = "NO_PURCHASE_FOUND"
+
+        var message: String {
+            switch self {
+            case .anonymous:
+                return "이메일을 먼저 연결하면 기록 보관을 켤 수 있어요."
+            case .noPurchase:
+                return "이용권을 구매한 계정에서 기록 보관을 켤 수 있어요."
+            }
+        }
+    }
+
     enum ApiError: LocalizedError {
         /// 보호자 검증 전 — 재시도해도 통과하지 않는다
         case permissionDenied(PermissionDenial)
@@ -69,6 +91,12 @@ enum LearningApi {
         let body = try JSONEncoder().encode(["events": events])
         return try await send(path: "/v1/learning/events:batch", method: "POST",
                               accessToken: accessToken, body: body)
+    }
+
+    /// 보호자 권한 설정 — 앱 내 구매 이력을 근거로 서버가 app_metadata 를 세운다.
+    /// 성공 후에는 토큰을 새로 받아야 새 권한이 JWT 에 담긴다.
+    static func verifyGuardian(accessToken: String) async throws -> GuardianVerifyResponse {
+        try await send(path: "/account/guardian", method: "POST", accessToken: accessToken, body: Data())
     }
 
     /// 서버 학습 상태 조회

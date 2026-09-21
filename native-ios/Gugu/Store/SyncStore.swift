@@ -116,4 +116,33 @@ final class SyncStore {
         blockedUserId = nil
         if case .waitingForGuardian = state { state = .idle }
     }
+
+    /// 구매 이력을 근거로 보호자 권한을 켜고 업로드를 재개한다.
+    ///
+    /// 순서가 중요하다 — 서버가 app_metadata 를 바꿔도 손에 든 JWT 는 예전 권한이므로,
+    /// 토큰을 새로 받은 뒤에야 업로드가 통과한다.
+    func enableGuardianSync(auth: AuthStore) async {
+        // 이메일이 붙지 않은 익명 계정은 서버가 거부한다 — 요청하지 않는다
+        guard auth.isPermanent, let token = await auth.accessToken() else { return }
+
+        do {
+            let response = try await LearningApi.verifyGuardian(accessToken: token)
+            guard response.guardian else { return }
+            // 새 권한이 담긴 토큰을 받아야 업로드가 통과한다
+            await auth.forceRefresh()
+            clearGuardianBlock()
+            flush(auth: auth)
+        } catch let error as LearningApi.ApiError {
+            if case let .http(status, code, _) = error, status == 403,
+               let denial = code.flatMap(LearningApi.GuardianDenial.init(rawValue:)) {
+                // 구매 없음/익명 — 정상적인 거부다. 사용자에게 사유를 보여 준다.
+                state = .waitingForGuardian(denial.message)
+                blockedUserId = auth.userId
+                return
+            }
+            print("[Sync] 보호자 권한 설정 실패:", error.localizedDescription)
+        } catch {
+            print("[Sync] 보호자 권한 설정 실패:", error.localizedDescription)
+        }
+    }
 }

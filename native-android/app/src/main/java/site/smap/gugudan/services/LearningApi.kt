@@ -20,6 +20,24 @@ import java.net.URL
 // 주의: gugu.smap.site 는 Cloudflare 뒤에 있고 기본 User-Agent 로 호출하면
 // 봇 차단(HTTP 403, error 1010)에 걸린다. 앱을 식별하는 UA 를 반드시 붙인다.
 
+@kotlinx.serialization.Serializable
+data class GuardianVerifyResponse(
+    val guardian: Boolean = false,
+    val products: List<String> = emptyList(),
+    val verifiedBy: String = "",
+    val verifiedAt: String = "",
+)
+
+/** 보호자 권한 설정이 거부되는 사유 */
+enum class GuardianDenial(val code: String, val message: String) {
+    ANONYMOUS("ANONYMOUS_NOT_ELIGIBLE", "이메일을 먼저 연결하면 기록 보관을 켤 수 있어요."),
+    NO_PURCHASE("NO_PURCHASE_FOUND", "이용권을 구매한 계정에서 기록 보관을 켤 수 있어요.");
+
+    companion object {
+        fun of(code: String?): GuardianDenial? = entries.firstOrNull { it.code == code }
+    }
+}
+
 /** 서버가 업로드를 거부하는 사유 — 보호자 검증이 끝나지 않은 계정 */
 enum class PermissionDenial(val code: String, val message: String) {
     CHILD_ACCOUNT("CHILD_ACCOUNT_UPLOAD_FORBIDDEN", "아이 계정의 학습 기록은 서버에 올리지 않아요."),
@@ -60,6 +78,16 @@ object LearningApi {
         }.toString()
         val text = send("/v1/learning/events:batch", "POST", accessToken, body)
         return runCatching { json.decodeFromString(LearningEventBatchResponse.serializer(), text) }
+            .getOrElse { throw LearningApiException.Malformed() }
+    }
+
+    /**
+     * 보호자 권한 설정 — 앱 내 구매 이력을 근거로 서버가 app_metadata 를 세운다.
+     * 성공 후에는 토큰을 새로 받아야 새 권한이 JWT 에 담긴다.
+     */
+    suspend fun verifyGuardian(accessToken: String): GuardianVerifyResponse {
+        val text = send("/account/guardian", "POST", accessToken, "")
+        return runCatching { json.decodeFromString(GuardianVerifyResponse.serializer(), text) }
             .getOrElse { throw LearningApiException.Malformed() }
     }
 

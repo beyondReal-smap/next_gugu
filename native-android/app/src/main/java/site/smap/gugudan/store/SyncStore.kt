@@ -11,6 +11,7 @@ import site.smap.gugudan.core.SessionResult
 import site.smap.gugudan.core.learning.LearningOutbox
 import site.smap.gugudan.core.learning.LearningRecord
 import site.smap.gugudan.services.LearningApi
+import site.smap.gugudan.services.GuardianDenial
 import site.smap.gugudan.services.LearningApiException
 import site.smap.gugudan.services.LearningIdentityStore
 import site.smap.gugudan.services.LearningOutboxStore
@@ -129,5 +130,37 @@ class SyncStore(
     fun clearGuardianBlock() {
         blockedUserId = null
         if (state is State.WaitingForGuardian) state = State.Idle
+    }
+
+    /**
+     * 구매 이력을 근거로 보호자 권한을 켜고 업로드를 재개한다.
+     *
+     * 순서가 중요하다 — 서버가 app_metadata 를 바꿔도 손에 든 JWT 는 예전 권한이므로,
+     * 토큰을 새로 받은 뒤에야 업로드가 통과한다.
+     */
+    suspend fun enableGuardianSync(auth: AuthStore) {
+        // 이메일이 붙지 않은 익명 계정은 서버가 거부한다 — 요청하지 않는다
+        if (!auth.isPermanent) return
+        val token = auth.accessToken() ?: return
+
+        try {
+            val response = LearningApi.verifyGuardian(token)
+            if (!response.guardian) return
+            // 새 권한이 담긴 토큰을 받아야 업로드가 통과한다
+            auth.forceRefresh()
+            clearGuardianBlock()
+            flush(auth)
+        } catch (e: LearningApiException.Http) {
+            val denial = if (e.status == 403) GuardianDenial.of(e.code) else null
+            if (denial != null) {
+                // 구매 없음/익명 — 정상적인 거부다. 사용자에게 사유를 보여 준다.
+                state = State.WaitingForGuardian(denial.message)
+                blockedUserId = auth.userId
+            } else {
+                Log.w(TAG, "보호자 권한 설정 실패: ${e.message}")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "보호자 권한 설정 실패: ${e.message}")
+        }
     }
 }
