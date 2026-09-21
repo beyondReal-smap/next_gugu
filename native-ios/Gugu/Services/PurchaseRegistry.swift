@@ -3,14 +3,16 @@ import StoreKit
 
 // 구매를 서버에 등록한다 (POST /api/iap/verify).
 //
-// 서버는 purchases 테이블에 (transaction_id, product_id, user_id) 를 남기고,
+// 서버는 purchases 테이블에 (transaction_id, product_id, user_id, environment) 를 남기고,
 // 보호자 권한(POST /api/account/guardian)이 이 기록을 근거로 삼는다.
 // 계정 토큰 없이 부르면 게스트 구매로 기록되고 user_id 가 비므로, 반드시 토큰을 붙인다.
 //
-// 주의: 서버는 레거시 appStoreReceipt(base64) + Apple verifyReceipt 경로를 쓴다.
-// StoreKit 2 의 jwsRepresentation 이 아니라 Bundle 의 영수증 파일을 보내야 한다.
-// Apple 이 verifyReceipt 를 사용 중단 예고했으므로, 장기적으로는 App Store Server API
-// (JWS 검증)로 옮겨야 한다 — 그때 서버와 함께 교체한다.
+// 검증 근거는 StoreKit 2 의 `jwsRepresentation` 을 쓴다. Apple 이 직접 서명한 토큰이라
+// 설치 경로와 무관하게 기기에 존재한다 — 개발 서명으로 직접 설치한 빌드에도 있다.
+// 반면 레거시 `appStoreReceipt` 파일은 App Store·TestFlight 설치본에만 있어서,
+// 직접 설치 빌드에서는 등록 자체가 불가능했다.
+// 서버도 Apple 공식 app-store-server-library 로 JWS 를 검증한다(apple_jws.py).
+// receipt 경로는 심사 중인 2.1.0 Capacitor 빌드 호환을 위해 폴백으로만 남긴다.
 
 enum PurchaseRegistry {
     struct VerifyResponse: Decodable {
@@ -20,7 +22,7 @@ enum PurchaseRegistry {
     }
 
     enum RegistryError: LocalizedError {
-        case noReceipt
+        case noPurchase
         /// 서버는 검증 실패에도 ok=true 를 주고 premium 으로 결과를 알린다
         case notVerified
         case http(status: Int, message: String)
@@ -28,10 +30,10 @@ enum PurchaseRegistry {
 
         var errorDescription: String? {
             switch self {
-            case .noReceipt:
-                return "기기에서 구매 영수증을 찾지 못했습니다"
+            case .noPurchase:
+                return "기기에서 확인된 구매를 찾지 못했습니다"
             case .notVerified:
-                return "스토어가 이 영수증을 확인하지 못했습니다"
+                return "스토어가 이 구매를 확인하지 못했습니다"
             case let .http(status, message):
                 return "구매 등록 응답 \(status): \(message)"
             case .malformedResponse:
@@ -40,7 +42,18 @@ enum PurchaseRegistry {
         }
     }
 
-    /// 앱 번들의 영수증 파일 (StoreKit 2 에서도 App Store 빌드에는 존재한다)
+    /// 보유 중인 상품의 Apple 서명 트랜잭션. 설치 경로와 무관하게 존재한다.
+    static func signedTransaction() async -> String? {
+        for await result in Transaction.currentEntitlements {
+            guard case .verified(let transaction) = result,
+                  transaction.productID == PremiumConfig.productID,
+                  transaction.revocationDate == nil else { continue }
+            return result.jwsRepresentation
+        }
+        return nil
+    }
+
+    /// 앱 번들의 영수증 파일 — App Store·TestFlight 설치본에만 있다 (레거시 폴백)
     static func localReceipt() -> String? {
         guard let url = Bundle.main.appStoreReceiptURL,
               let data = try? Data(contentsOf: url), !data.isEmpty else { return nil }
@@ -50,7 +63,19 @@ enum PurchaseRegistry {
     /// 구매를 계정에 연결한다. 실패해도 프리미엄 자체는 로컬 판정이라 영향이 없다.
     @discardableResult
     static func register(accessToken: String) async throws -> VerifyResponse {
-        guard let receipt = localReceipt() else { throw RegistryError.noReceipt }
+        var body: [String: String] = [
+            "platform": "ios",
+            "productId": PremiumConfig.productID,
+        ]
+        if let jws = await signedTransaction() {
+            body["jws"] = jws
+        } else if let receipt = localReceipt() {
+            // 서명 트랜잭션이 없는 구형 구매 — 레거시 영수증으로 시도한다
+            body["receipt"] = receipt
+        } else {
+            throw RegistryError.noPurchase
+        }
+
         guard let url = URL(string: LearningApi.base + "/iap/verify") else {
             throw RegistryError.malformedResponse
         }
@@ -62,11 +87,7 @@ enum PurchaseRegistry {
         request.setValue(LearningApi.userAgent, forHTTPHeaderField: "User-Agent")
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONEncoder().encode([
-            "platform": "ios",
-            "productId": PremiumConfig.productID,
-            "receipt": receipt,
-        ])
+        request.httpBody = try JSONEncoder().encode(body)
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse else { throw RegistryError.malformedResponse }
