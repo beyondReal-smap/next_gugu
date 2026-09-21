@@ -49,6 +49,8 @@ import site.smap.gugudan.features.lanerunner.LaneRunnerScreen
 import site.smap.gugudan.features.runner.RunnerScreen
 import site.smap.gugudan.features.session.SessionScreen
 import site.smap.gugudan.services.Haptics
+import site.smap.gugudan.services.LearningIdentityStore
+import site.smap.gugudan.services.LearningOutboxStore
 import site.smap.gugudan.services.Persistence
 import site.smap.gugudan.services.Sound
 import site.smap.gugudan.store.*
@@ -75,6 +77,9 @@ class MainActivity : ComponentActivity() {
         val theme = ThemeStore(persistence)
         val router = Router()
         val auth = AuthStore(persistence, lifecycleScope)
+        val sync = SyncStore(
+            LearningIdentityStore(persistence), LearningOutboxStore(persistence), lifecycleScope,
+        )
 
         setContent {
             CompositionLocalProvider(
@@ -85,10 +90,15 @@ class MainActivity : ComponentActivity() {
                 LocalTheme provides theme,
                 LocalRouter provides router,
                 LocalAuth provides auth,
+                LocalSync provides sync,
             ) {
                 GuguTheme(theme.theme) {
                     // 첫 실행 시 조용히 익명 계정을 만든다 — 화면을 막지 않고 실패해도 앱은 그대로 동작
-                    LaunchedEffect(Unit) { auth.start() }
+                    LaunchedEffect(Unit) {
+                        auth.start()
+                        // 보호자 검증이 끝난 계정이면 쌓인 기록을 올린다 (검증 전에는 요청을 보내지 않음)
+                        sync.flush(auth)
+                    }
                     RootScreen()
                 }
             }

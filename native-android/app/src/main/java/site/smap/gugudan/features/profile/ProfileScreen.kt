@@ -50,6 +50,13 @@ import site.smap.gugudan.services.Sound
 import site.smap.gugudan.store.LocalGame
 import site.smap.gugudan.store.LocalPremium
 import site.smap.gugudan.store.LocalTheme
+import site.smap.gugudan.store.AuthStore
+import site.smap.gugudan.store.LocalAuth
+import kotlinx.coroutines.launch
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.text.KeyboardOptions
 
 // 프로필 탭 (iOS ProfileView 이식) — 레벨/통계/업적/이용권/설정
 
@@ -61,7 +68,12 @@ fun ProfileScreen() {
     val game = LocalGame.current
     val theme = LocalTheme.current
     val premium = LocalPremium.current
+    val auth = LocalAuth.current
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    var email by remember { mutableStateOf("") }
+    var code by remember { mutableStateOf("") }
 
     var soundOn by remember { mutableStateOf(Sound.enabled) }
     var confirmReset by remember { mutableStateOf(false) }
@@ -188,6 +200,74 @@ fun ProfileScreen() {
             }
         }
 
+        // 계정 — 익명 계정에 이메일을 붙여 기기를 바꿔도 기록이 남게 한다
+        if (auth.state !is AuthStore.State.Disabled) {
+            Text("기록 지키기", style = suite(FontWeight.Bold, 14), color = gg.textMuted)
+            Column(
+                Modifier.fillMaxWidth().ggCard(16.dp).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                val promotion = auth.promotion
+                when {
+                    promotion is AuthStore.Promotion.Done -> AccountRow(
+                        Icons.Filled.VerifiedUser, gg.success,
+                        "${promotion.email} 에 연결됐어요",
+                        "기기를 바꿔도 이 주소로 기록을 찾을 수 있어요.",
+                    )
+                    promotion is AuthStore.Promotion.CodeSent || promotion is AuthStore.Promotion.Verifying -> {
+                        val target = (promotion as? AuthStore.Promotion.CodeSent)?.email
+                            ?: (promotion as AuthStore.Promotion.Verifying).email
+                        Text(
+                            "$target 로 6자리 확인 코드를 보냈어요.",
+                            style = suite(FontWeight.Medium, 13), color = gg.textMuted,
+                        )
+                        OutlinedTextField(
+                            value = code, onValueChange = { code = it },
+                            placeholder = { Text("확인 코드") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                            singleLine = true, modifier = Modifier.fillMaxWidth(),
+                        )
+                        GGButton(
+                            variant = GGButtonVariant.PRIMARY, size = GGButtonSize.MD,
+                            onClick = { scope.launch { auth.confirmEmailPromotion(code) } },
+                        ) {
+                            Text(if (promotion is AuthStore.Promotion.Verifying) "확인 중…" else "연결 완료하기")
+                        }
+                        PressableCard(onClick = { auth.resetPromotion(); code = "" }) {
+                            Box(Modifier.height(44.dp), contentAlignment = Alignment.Center) {
+                                Text("주소 다시 입력", style = suite(FontWeight.Bold, 12), color = gg.textMuted)
+                            }
+                        }
+                    }
+                    auth.isPermanent -> AccountRow(
+                        Icons.Filled.VerifiedUser, gg.success,
+                        "계정이 연결돼 있어요", "기기를 바꿔도 기록을 찾을 수 있어요.",
+                    )
+                    else -> {
+                        Text(
+                            "보호자 이메일을 넣으면 기기를 바꿔도 기록이 남아요. 비밀번호는 필요 없어요.",
+                            style = suite(FontWeight.Medium, 13), color = gg.textMuted,
+                        )
+                        OutlinedTextField(
+                            value = email, onValueChange = { email = it },
+                            placeholder = { Text("보호자 이메일") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                            singleLine = true, modifier = Modifier.fillMaxWidth(),
+                        )
+                        GGButton(
+                            variant = GGButtonVariant.PRIMARY, size = GGButtonSize.MD,
+                            onClick = { scope.launch { auth.startEmailPromotion(email) } },
+                        ) {
+                            Text(if (promotion is AuthStore.Promotion.Sending) "보내는 중…" else "확인 코드 받기")
+                        }
+                    }
+                }
+                (promotion as? AuthStore.Promotion.Failed)?.let {
+                    Text(it.message, style = suite(FontWeight.Bold, 12), color = gg.warning)
+                }
+            }
+        }
+
         // 이용권
         Text("이용권", style = suite(FontWeight.Bold, 14), color = gg.textMuted)
         Column(Modifier.fillMaxWidth().ggCard(16.dp)) {
@@ -241,6 +321,18 @@ fun ProfileScreen() {
                 GGButton(variant = GGButtonVariant.DANGER, modifier = Modifier.weight(1f),
                     onClick = { game.resetProgress(); confirmReset = false }) { Text("초기화 확인") }
             }
+        }
+    }
+}
+
+@Composable
+private fun AccountRow(icon: ImageVector, tint: Color, title: String, desc: String) {
+    val gg = LocalGG.current
+    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Icon(icon, null, tint = tint, modifier = Modifier.size(18.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(title, style = suite(FontWeight.ExtraBold, 14), color = gg.text)
+            Text(desc, style = suite(FontWeight.Medium, 12), color = gg.textMuted)
         }
     }
 }
