@@ -25,6 +25,8 @@ struct ProfileView: View {
 
     @State private var soundOn = Sound.shared.enabled
     @State private var confirmReset = false
+    @State private var restoring = false
+    @State private var restoreNotice: String?
 
     private let scoredModes: [GameMode] = [.challenge, .survival]
 
@@ -128,10 +130,32 @@ struct ProfileView: View {
     }
 
     private var accuracyTrend: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("최근 정확도 추이").font(.suite(.bold, 14)).foregroundStyle(Color.gg.text)
-            Sparkline(data: game.state.recentAccuracy, color: .gg.accent)
-                .frame(height: 48)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("최근 정확도 추이").font(.suite(.bold, 14)).foregroundStyle(Color.gg.text)
+                    Text("최근 \(game.state.recentAccuracy.count)판 · 점선은 50%")
+                        .font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
+                }
+                Spacer(minLength: 8)
+                // 그래프만으로는 현재 수준을 읽을 수 없어 최신값을 숫자로 집어 준다
+                Text("\(game.state.recentAccuracy.last ?? 0)%")
+                    .font(.suiteNum(.extrabold, 24)).foregroundStyle(Color.gg.accent)
+            }
+            HStack(spacing: 10) {
+                // y축이 0~100 고정임을 눈으로 확인할 수 있게 눈금을 적는다
+                ZStack {
+                    Text("100").frame(maxHeight: .infinity, alignment: .top)
+                    Text("50")
+                    Text("0").frame(maxHeight: .infinity, alignment: .bottom)
+                }
+                .font(.suiteNum(.bold, 9)).foregroundStyle(Color.gg.textMuted)
+                .frame(width: 24, height: 64)
+
+                Sparkline(data: game.state.recentAccuracy, color: .gg.accent,
+                          lowerBound: 0, upperBound: 100, baseline: 50, markLast: true)
+                    .frame(height: 64)
+            }
         }
         .padding(20)
         .ggCard(padding: 0)
@@ -155,19 +179,26 @@ struct ProfileView: View {
     private var achievements: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("업적 (\(unlocked.count)/\(Achievements.all.count))").font(.suite(.bold, 14)).foregroundStyle(Color.gg.textMuted)
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 4), spacing: 10) {
+            // 3열 — 4열에서는 "오백 문제 돌파" 같은 이름이 한 줄로 잘렸다.
+            // 정사각 비율을 버리고 라벨 2줄을 항상 확보해 타일 높이를 맞춘다.
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
                 ForEach(Achievements.all) { a in
                     let on = unlocked.contains(a.id)
-                    VStack(spacing: 4) {
-                        Image(systemName: IconMap.sf(a.icon)).font(.system(size: 18, weight: .semibold))
-                        Text(a.name).font(.suite(.bold, 9)).multilineTextAlignment(.center).lineLimit(2)
+                    VStack(spacing: 8) {
+                        Image(systemName: IconMap.sf(a.icon)).font(.system(size: 22, weight: .semibold))
+                        Text(a.name)
+                            .font(.suite(.bold, 11))
+                            .multilineTextAlignment(.center)
+                            .lineLimit(2, reservesSpace: true)
+                            .minimumScaleFactor(0.85)
                     }
                     .foregroundStyle(on ? Color.gg.accent : Color.gg.textMuted)
                     .frame(maxWidth: .infinity)
-                    .aspectRatio(1, contentMode: .fit)
+                    .padding(.vertical, 14)
+                    .padding(.horizontal, 8)
                     .background(on ? Color.gg.accent.opacity(0.1) : Color.gg.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(on ? Color.gg.accent.opacity(0.3) : Color.gg.border, lineWidth: 1))
-                    .opacity(on ? 1 : 0.5)
+                    .opacity(on ? 1 : 0.55)
                 }
             }
         }
@@ -191,11 +222,34 @@ struct ProfileView: View {
                     row(icon: "sparkles", label: "평생 이용권 · 커피 한 잔 값", action: premium.price) { premium.openPaywall() }
                 }
                 divider
+                row(icon: "arrow.clockwise", label: "구매 복원",
+                    action: restoring ? "확인 중…" : "", onTap: restorePurchase)
+                divider
                 row(icon: "doc.text", label: "이용약관", action: "") { open(PremiumConfig.Legal.terms) }
                 divider
                 row(icon: "checkmark.shield", label: "개인정보처리방침", action: "") { open(PremiumConfig.Legal.privacy) }
             }
             .ggCard(padding: 0)
+
+            if let restoreNotice {
+                Text(restoreNotice)
+                    .font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    /// 이미 보유한 상품은 새 구매 플로우가 뜨지 않으므로, 복원 경로에서도
+    /// 서버 구매 등록과 보호자 권한을 함께 시도한다 (PaywallView.onRestore 와 동일).
+    private func restorePurchase() {
+        guard !restoring else { return }
+        restoring = true
+        restoreNotice = nil
+        Task {
+            let ok = await premium.restore()
+            restoring = false
+            restoreNotice = ok ? "구매를 확인했어요. 기록 보관을 켜는 중이에요." : "복원할 구매 내역이 없어요."
+            if ok { await sync.enableGuardianSync(auth: auth) }
         }
     }
 
@@ -340,6 +394,7 @@ struct ProfileView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .ggCard()
         }
     }
