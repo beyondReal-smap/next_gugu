@@ -32,6 +32,22 @@
 필수(기본값 없는) 필드를 추가하고 서버 `.env` 에 값을 넣지 않으면 재시작이 크래시 루프에 빠진다.
 2026-08-18 에 `DB_SOCKET` 으로 실제 장애가 났다.
 
+## 마이그레이션
+
+Supabase Postgres 의 스키마·함수 변경은 `migrations/` 에 `YYYYMMDD_설명.sql` 로 남긴다.
+2026-09-21 까지는 파일 없이 즉석 적용해서 무엇이 언제 바뀌었는지 알 수 없었다.
+
+적용 전에 **반드시 트랜잭션 안에서 검증하고 롤백한다.** 함수는 `CREATE OR REPLACE`
+가 트랜잭션 안에서도 동작하므로, 같은 트랜잭션에서 바꾼 뒤 실제 호출로 결과를
+확인하고 `rollback` 하면 운영 데이터를 건드리지 않고 검증할 수 있다.
+
+```bash
+# SUPABASE_DB_URL 은 세션 풀러(5432) — 트랜잭션 풀러(6543)로는 DDL 이 실패한다
+uv run --with "psycopg[binary]" python -c '...'   # 트랜잭션 + rollback 검증
+```
+
+되돌리기는 git 이력에서 이전 함수 정의를 꺼내 다시 적용한다.
+
 ## 구성
 
 | 파일 | 역할 |
@@ -53,3 +69,5 @@
 - `ensure_schema()` 가 기동 시 DDL 을 돌린다. 정식 마이그레이션 체계로 옮겨야 한다.
 - 샌드박스 거래도 `raw_status='verified'` 로 기록된다(TestFlight 테스트용).
   `purchases.environment` 로 식별할 수 있으니 정식 출시 전에 정리한다.
+- `answer_events` 가 REST 로 노출되지 않아 원시 이벤트를 대시보드/REST 로 조회할 수 없다.
+  집계(`progress_snapshots`)만 읽을 수 있어 오답 내용 분석은 DB 직접 접속이 필요하다.
