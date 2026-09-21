@@ -1,0 +1,10 @@
+# 실제 비밀값 — 서버에만 둔다
+.env
+*.bak
+*.bak.*
+
+# 로컬 런타임 산출물
+.venv/
+__pycache__/
+*.pyc
+.archive/
