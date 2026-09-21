@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 스플래시/베이스 — 다크 배경(#080B16, 앱 기본 테마)과 일치시켜 흰 깜빡임 방지 -->
+    <style name="Theme.Gugu" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#080B16</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+</resources>
