@@ -25,6 +25,7 @@
 		3D2C3526BC61332196F7BA61 /* Sound.swift in Sources */ = {isa = PBXBuildFile; fileRef = A534DAC93CD84B74B22AA819 /* Sound.swift */; };
 		4007182790927C857DDAAD8F /* Shop.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9DF47FAC92C74033BDE0F5D /* Shop.swift */; };
 		420E37D383AD71882502D179 /* AdventureModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0AC8DF68EA2D94EDCB33946 /* AdventureModels.swift */; };
+		4498DD5A8579AED9AB806F6B /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2B414A5C244F3C1BD05C33A /* Keychain.swift */; };
 		480E32FBFEFA1CBD66F5D4E5 /* Haptics.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6745A779BF02CEA092C2D0A /* Haptics.swift */; };
 		4CA378C37B722E256C47F7C0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 47E37004F5940F268BCD9FA9 /* Assets.xcassets */; };
 		5AC08CCDCC0C96C7F0263226 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC8BCA4A5EF5379067928D87 /* Models.swift */; };
@@ -39,6 +40,7 @@
 		7F831F760CC70945C723AABF /* GameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F6900C60C1949DFBC691D00 /* GameStore.swift */; };
 		86BD94849F1E26BA813C3A5D /* BattleEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62986D1D5FFBFDAF6CDB32CE /* BattleEngine.swift */; };
 		8ADE566C5D3D02558A57ED39 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E87981D42E8C57F66573E700 /* Theme.swift */; };
+		90E2EBDEFBB8E4636C61CBF8 /* SupabaseConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85FFB85099529C87A980E63B /* SupabaseConfig.swift */; };
 		932CFAC16D0A069C503E390F /* SUITE-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 80C37D1A10C87D796CE8F5DF /* SUITE-Bold.ttf */; };
 		933577C7B52EB0418C396767 /* WorldView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CACF1D96A975DD41AC23F26D /* WorldView.swift */; };
 		984E5F761C9F2B8A0FB5AED9 /* Keypad.swift in Sources */ = {isa = PBXBuildFile; fileRef = F087FC7FD1E87A4B0090EFDA /* Keypad.swift */; };
@@ -53,10 +55,12 @@
 		A65D92C661C4B4D76D0197BE /* SessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBA2B910E508458F78410A72 /* SessionView.swift */; };
 		A8474F843A6FC3B875BD2930 /* AdventureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 856292FDA24576EAE6C99663 /* AdventureView.swift */; };
 		ACF9FF6237BD042A804795FA /* Joystick.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EAAB2623DB4F3425AA12416 /* Joystick.swift */; };
+		B72F0385D6BBF213E6164F35 /* SupabaseAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935BAE9D2D9DBEE2262CA223 /* SupabaseAuth.swift */; };
 		BC0879C41B2E3291EB12D7B2 /* WorldRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E5D736799158A2556E561E /* WorldRuntime.swift */; };
 		BF4916C2A4CCD0FAEFC7F082 /* AdventureStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9A0EE24C4B472110DE0BE0D /* AdventureStore.swift */; };
 		C283C45EA44B1B61451BD85B /* LaneRunnerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4FD1729E5F1C22AB693E120 /* LaneRunnerView.swift */; };
 		C3269D458BCD4F1AC8AE1C6C /* SUITE-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F16F88790840C58794AC39C4 /* SUITE-ExtraBold.ttf */; };
+		C546DE401244EE3F312C079A /* AuthStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88EEDB2B1AD487259D3CDFC0 /* AuthStore.swift */; };
 		C81517EA0A0DCC342218C422 /* Commit.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0FF8176479A6203D0060F2D /* Commit.swift */; };
 		C933F1369277AFB1003EE82C /* SmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BD777AA94FD98D910E96C99 /* SmokeTests.swift */; };
 		CBC59015B66F09A187C5FE7D /* SUITE-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D2FB100B9250733172B41B5D /* SUITE-Medium.ttf */; };
@@ -123,13 +127,16 @@
 		80C37D1A10C87D796CE8F5DF /* SUITE-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SUITE-Bold.ttf"; sourceTree = "<group>"; };
 		840B4BC72DC129CF52A49EA2 /* RegionMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionMap.swift; sourceTree = "<group>"; };
 		856292FDA24576EAE6C99663 /* AdventureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdventureView.swift; sourceTree = "<group>"; };
+		85FFB85099529C87A980E63B /* SupabaseConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseConfig.swift; sourceTree = "<group>"; };
 		880A1FE27C882F628DA7DB51 /* LearnView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearnView.swift; sourceTree = "<group>"; };
+		88EEDB2B1AD487259D3CDFC0 /* AuthStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthStore.swift; sourceTree = "<group>"; };
 		8AA944058B2E62FD9CF91DD1 /* SUITE-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SUITE-SemiBold.ttf"; sourceTree = "<group>"; };
 		8B2EF810BB2EA8A11DBF9928 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		8B7511BE44F1445A9E44506D /* Basket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Basket.swift; sourceTree = "<group>"; };
 		8F6900C60C1949DFBC691D00 /* GameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStore.swift; sourceTree = "<group>"; };
 		8FA7C1AD6535EEF1030922DD /* PremiumConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumConfig.swift; sourceTree = "<group>"; };
 		8FCF40BDADFA3308973DCFEE /* Router.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Router.swift; sourceTree = "<group>"; };
+		935BAE9D2D9DBEE2262CA223 /* SupabaseAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseAuth.swift; sourceTree = "<group>"; };
 		9363813D7690534618381779 /* LaneRunnerEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaneRunnerEngine.swift; sourceTree = "<group>"; };
 		986A9A00141410DBA138B5DE /* GuguApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GuguApp.swift; sourceTree = "<group>"; };
 		9B7C7AB4D9496AB60D9E8C2E /* SUITE-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SUITE-Regular.ttf"; sourceTree = "<group>"; };
@@ -143,6 +150,7 @@
 		ACEF9BCAFD5C791FBD2B70D6 /* LaneScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaneScene.swift; sourceTree = "<group>"; };
 		B00841BFA7A6AB78BB568863 /* BasketEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasketEngine.swift; sourceTree = "<group>"; };
 		B1E9870070129D8CB86027AC /* Achievements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Achievements.swift; sourceTree = "<group>"; };
+		B2B414A5C244F3C1BD05C33A /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		B4FD1729E5F1C22AB693E120 /* LaneRunnerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaneRunnerView.swift; sourceTree = "<group>"; };
 		BADFACD8454A08B58D84DA33 /* LaneRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaneRunner.swift; sourceTree = "<group>"; };
 		BC8BCA4A5EF5379067928D87 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
@@ -169,6 +177,7 @@
 		F16F88790840C58794AC39C4 /* SUITE-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SUITE-ExtraBold.ttf"; sourceTree = "<group>"; };
 		F43EF84A222A734E1BC65CC5 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		FBA2B910E508458F78410A72 /* SessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionView.swift; sourceTree = "<group>"; };
+		"TEMP_33E965CF-99AF-4724-9D89-8924A509E9F3" /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -273,6 +282,7 @@
 			isa = PBXGroup;
 			children = (
 				A9A0EE24C4B472110DE0BE0D /* AdventureStore.swift */,
+				88EEDB2B1AD487259D3CDFC0 /* AuthStore.swift */,
 				8F6900C60C1949DFBC691D00 /* GameStore.swift */,
 				452E253920D347E780D4E7E9 /* PremiumStore.swift */,
 				8FCF40BDADFA3308973DCFEE /* Router.swift */,
@@ -418,8 +428,11 @@
 			isa = PBXGroup;
 			children = (
 				E6745A779BF02CEA092C2D0A /* Haptics.swift */,
+				B2B414A5C244F3C1BD05C33A /* Keychain.swift */,
 				C96B353E5DA80D0FC86CA08C /* Persistence.swift */,
 				A534DAC93CD84B74B22AA819 /* Sound.swift */,
+				935BAE9D2D9DBEE2262CA223 /* SupabaseAuth.swift */,
+				85FFB85099529C87A980E63B /* SupabaseConfig.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -444,6 +457,14 @@
 				166B6B36D0237803AEAA8D28 /* PaywallView.swift */,
 			);
 			path = Paywall;
+			sourceTree = "<group>";
+		};
+		"TEMP_E59DE6D8-9CCB-4EF4-8BA0-1E47BA25B332" /* native-ios */ = {
+			isa = PBXGroup;
+			children = (
+				"TEMP_33E965CF-99AF-4724-9D89-8924A509E9F3" /* Config.xcconfig */,
+			);
+			path = "native-ios";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -561,6 +582,7 @@
 				420E37D383AD71882502D179 /* AdventureModels.swift in Sources */,
 				BF4916C2A4CCD0FAEFC7F082 /* AdventureStore.swift in Sources */,
 				A8474F843A6FC3B875BD2930 /* AdventureView.swift in Sources */,
+				C546DE401244EE3F312C079A /* AuthStore.swift in Sources */,
 				F01D32839F41F84CF06E5B94 /* Basket.swift in Sources */,
 				3B9E37D8E10671D849B59F90 /* BasketEngine.swift in Sources */,
 				FBE4F0C243DB9FCF9F241D7B /* BasketView.swift in Sources */,
@@ -576,6 +598,7 @@
 				F22B80453C3583DCBF23A594 /* Hints.swift in Sources */,
 				A03F67D60C43A9C5DFA9DC7C /* HomeView.swift in Sources */,
 				ACF9FF6237BD042A804795FA /* Joystick.swift in Sources */,
+				4498DD5A8579AED9AB806F6B /* Keychain.swift in Sources */,
 				984E5F761C9F2B8A0FB5AED9 /* Keypad.swift in Sources */,
 				1B588FF0B8D4789DFB8B859E /* LaneRunner.swift in Sources */,
 				32182963F88C08A9650E5320 /* LaneRunnerEngine.swift in Sources */,
@@ -612,6 +635,8 @@
 				1BC663EE8660A46728C56751 /* ShopView.swift in Sources */,
 				3D2C3526BC61332196F7BA61 /* Sound.swift in Sources */,
 				6B19CB43568577DF29C9A0E7 /* Sparkline.swift in Sources */,
+				B72F0385D6BBF213E6164F35 /* SupabaseAuth.swift in Sources */,
+				90E2EBDEFBB8E4636C61CBF8 /* SupabaseConfig.swift in Sources */,
 				8ADE566C5D3D02558A57ED39 /* Theme.swift in Sources */,
 				E768A6A00F83C6289CD117A6 /* ThemeStore.swift in Sources */,
 				127AB6DF9C40A767950A11BE /* World.swift in Sources */,
@@ -713,6 +738,7 @@
 		};
 		577D8F43D99D0D1A04D76A2E /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = "TEMP_33E965CF-99AF-4724-9D89-8924A509E9F3" /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
@@ -815,6 +841,7 @@
 		};
 		A38781D2F7BDC5E1814C9883 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = "TEMP_33E965CF-99AF-4724-9D89-8924A509E9F3" /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";

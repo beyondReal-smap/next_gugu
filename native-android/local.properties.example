@@ -1,0 +1,7 @@
+# Android SDK 경로 (Android Studio 가 자동 생성)
+# sdk.dir=/Users/<you>/Library/Android/sdk
+
+# Supabase 설정 — 값 채운 뒤 사용. anon key 는 클라이언트 공개용 키라 앱 포함이 정상이며,
+# service_role 키는 절대 넣지 않는다.
+supabase.host=<project-ref>.supabase.co
+supabase.anon.key=<anon key>

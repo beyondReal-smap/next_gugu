@@ -6,3 +6,6 @@ build/*
 xcuserdata/
 *.xcuserdatad
 DerivedData/
+
+# Supabase 설정 (실제 값)
+Config.xcconfig

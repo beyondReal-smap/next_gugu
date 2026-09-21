@@ -39,6 +39,8 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         ITSAppUsesNonExemptEncryption: false
+        SupabaseHost: "$(SUPABASE_HOST)"
+        SupabaseAnonKey: "$(SUPABASE_ANON_KEY)"
         UIAppFonts:
           - SUITE-Light.ttf
           - SUITE-Regular.ttf
@@ -47,6 +49,11 @@ targets:
           - SUITE-Bold.ttf
           - SUITE-ExtraBold.ttf
           - SUITE-Heavy.ttf
+    # Supabase 값은 Config.xcconfig(gitignore)에서 읽는다. 없으면 빈 값으로 빌드되고
+    # 앱은 인증 없이 그대로 동작한다 (SupabaseConfig.isConfigured == false)
+    configFiles:
+      Debug: Config.xcconfig
+      Release: Config.xcconfig
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: site.smap.gugudan

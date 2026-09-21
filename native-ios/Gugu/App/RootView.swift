@@ -9,6 +9,7 @@ struct RootView: View {
     @State private var premium = PremiumStore()
     @State private var theme = ThemeStore()
     @State private var router = Router()
+    @State private var auth = AuthStore()
 
     var body: some View {
         content
@@ -18,8 +19,11 @@ struct RootView: View {
             .environment(premium)
             .environment(theme)
             .environment(router)
+            .environment(auth)
             .preferredColorScheme(theme.colorScheme)
             .tint(.gg.accent)
+            // 첫 실행 시 조용히 익명 계정을 만든다 — 화면을 막지 않고 실패해도 앱은 그대로 동작
+            .task { await auth.start() }
     }
 
     @ViewBuilder

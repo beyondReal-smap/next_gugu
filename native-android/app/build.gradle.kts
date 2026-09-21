@@ -23,6 +23,15 @@ val playProps = Properties().apply {
 val playCredentialsPath: String? =
     System.getenv("PLAY_CREDENTIALS") ?: playProps.getProperty("credentialsFile")
 
+// Supabase 설정 — local.properties(gitignore) 또는 환경변수. 값이 없으면 빈 문자열로
+// 빌드되고 앱은 인증 없이 그대로 동작한다 (SupabaseConfig.isConfigured == false)
+val localProps = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+fun supabaseProp(name: String): String =
+    System.getenv(name) ?: localProps.getProperty(name.lowercase().replace("_", ".")) ?: ""
+
 android {
     namespace = "site.smap.gugudan"
     compileSdk = 36
@@ -33,6 +42,9 @@ android {
         targetSdk = 36
         versionCode = 15     // vc15: 구구 레인·구구 바구니 모드 추가 + 홈 놀이 묶음 재구성
         versionName = "2.1.0"
+
+        buildConfigField("String", "SUPABASE_HOST", "\"${supabaseProp("SUPABASE_HOST")}\"")
+        buildConfigField("String", "SUPABASE_ANON_KEY", "\"${supabaseProp("SUPABASE_ANON_KEY")}\"")
     }
 
     signingConfigs {
