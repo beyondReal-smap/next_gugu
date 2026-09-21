@@ -15,11 +15,36 @@ struct Problem: Equatable {
     var b: Int   // 곱하는 수 (1~9)
 }
 
+/// 제출한 답 — OX 퀴즈는 참/거짓, 나머지는 수 (웹 `given?: number | boolean` 대응)
+enum GivenAnswer: Codable, Equatable {
+    case number(Int)
+    case boolean(Bool)
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let value = try? container.decode(Int.self) {
+            self = .number(value)
+        } else {
+            self = .boolean(try container.decode(Bool.self))
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case let .number(value): try container.encode(value)
+        case let .boolean(value): try container.encode(value)
+        }
+    }
+}
+
 struct AnswerRecord: Codable, Equatable {
     var a: Int
     var b: Int
     var correct: Bool
     var ms: Int   // 응답 시간(ms)
+    /// 제출한 답 (서버 동기화용, 구기록은 없음)
+    var given: GivenAnswer? = nil
 }
 
 struct SessionResult {

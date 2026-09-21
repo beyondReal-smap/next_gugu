@@ -27,6 +27,10 @@ class Persistence(context: Context) {
 
         /** 익명 계정 세션 (토큰 — 앱 전용 저장소) */
         const val AUTH_SESSION_KEY = "gugu.auth.session.v1"
+
+        /** 서버 동기화 — 학습 신원 / 오프라인 아웃박스 */
+        const val LEARNING_IDENTITY_KEY = "gugu.learning.identity.v1"
+        const val LEARNING_OUTBOX_KEY = "gugu.learning.outbox.v1"
     }
 
     fun loadGameState(): GameState? = decodeOrNull(PROGRESS_KEY) {
