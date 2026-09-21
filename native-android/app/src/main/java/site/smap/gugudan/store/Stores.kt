@@ -175,3 +175,4 @@ val LocalSession = staticCompositionLocalOf<SessionStore> { error("SessionStore 
 val LocalPremium = staticCompositionLocalOf<PremiumStore> { error("PremiumStore 미제공") }
 val LocalTheme = staticCompositionLocalOf<ThemeStore> { error("ThemeStore 미제공") }
 val LocalRouter = staticCompositionLocalOf<Router> { error("Router 미제공") }
+val LocalAuth = staticCompositionLocalOf<AuthStore> { error("AuthStore 미제공") }

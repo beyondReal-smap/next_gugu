@@ -52,6 +52,8 @@ import site.smap.gugudan.services.Haptics
 import site.smap.gugudan.services.Persistence
 import site.smap.gugudan.services.Sound
 import site.smap.gugudan.store.*
+import androidx.lifecycle.lifecycleScope
+import androidx.compose.runtime.LaunchedEffect
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,6 +74,7 @@ class MainActivity : ComponentActivity() {
         val premium = PremiumStore(this, persistence, devForcePremium = devFlag("premium"))
         val theme = ThemeStore(persistence)
         val router = Router()
+        val auth = AuthStore(persistence, lifecycleScope)
 
         setContent {
             CompositionLocalProvider(
@@ -81,8 +84,11 @@ class MainActivity : ComponentActivity() {
                 LocalPremium provides premium,
                 LocalTheme provides theme,
                 LocalRouter provides router,
+                LocalAuth provides auth,
             ) {
                 GuguTheme(theme.theme) {
+                    // 첫 실행 시 조용히 익명 계정을 만든다 — 화면을 막지 않고 실패해도 앱은 그대로 동작
+                    LaunchedEffect(Unit) { auth.start() }
                     RootScreen()
                 }
             }

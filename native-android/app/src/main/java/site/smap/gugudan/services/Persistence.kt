@@ -24,6 +24,9 @@ class Persistence(context: Context) {
         const val RUNNER_BEST_KEY = "gugu.runner.best.v1"
         const val LANE_BEST_KEY = "gugu.lane.best.v1"
         const val BASKET_BEST_KEY = "gugu.basket.best.v1"
+
+        /** 익명 계정 세션 (토큰 — 앱 전용 저장소) */
+        const val AUTH_SESSION_KEY = "gugu.auth.session.v1"
     }
 
     fun loadGameState(): GameState? = decodeOrNull(PROGRESS_KEY) {
