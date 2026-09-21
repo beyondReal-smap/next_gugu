@@ -52,6 +52,10 @@ import site.smap.gugudan.store.LocalPremium
 import site.smap.gugudan.store.LocalTheme
 import site.smap.gugudan.store.AuthStore
 import site.smap.gugudan.store.LocalAuth
+import site.smap.gugudan.store.LocalSync
+import site.smap.gugudan.store.SyncStore
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.History
 import kotlinx.coroutines.launch
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.runtime.rememberCoroutineScope
@@ -69,6 +73,7 @@ fun ProfileScreen() {
     val theme = LocalTheme.current
     val premium = LocalPremium.current
     val auth = LocalAuth.current
+    val sync = LocalSync.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -262,6 +267,40 @@ fun ProfileScreen() {
                         }
                     }
                 }
+                // 귀속 후보가 여럿이면 어느 기록에 이어 붙일지 고르게 한다
+                (sync.state as? SyncStore.State.NeedsLearnerChoice)?.let { choice ->
+                    if (choice.candidates.isNotEmpty()) {
+                        Text("이어서 쓸 기록을 골라 주세요",
+                            style = suite(FontWeight.ExtraBold, 13), color = gg.text)
+                        choice.candidates.forEach { candidate ->
+                            PressableCard(onClick = { scope.launch { sync.chooseLearner(candidate, auth) } }) {
+                                Row(
+                                    Modifier.fillMaxWidth().height(48.dp)
+                                        .clip(RoundedCornerShape(12.dp)).background(gg.surface2)
+                                        .padding(horizontal = 12.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(Icons.Filled.History, null, tint = gg.accent, modifier = Modifier.size(16.dp))
+                                    Column(Modifier.weight(1f)) {
+                                        Text(candidate.displayName,
+                                            style = suite(FontWeight.ExtraBold, 13), color = gg.text)
+                                        Text("마지막 학습 ${candidate.updatedAt.take(10)}",
+                                            style = suite(FontWeight.Medium, 11), color = gg.textMuted)
+                                    }
+                                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null,
+                                        tint = gg.textMuted, modifier = Modifier.size(16.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 보호자 검증 전이면 왜 보관이 꺼져 있는지 알려 준다
+                (sync.state as? SyncStore.State.WaitingForGuardian)?.let {
+                    Text(it.message, style = suite(FontWeight.Medium, 12), color = gg.textMuted)
+                }
+
                 (promotion as? AuthStore.Promotion.Failed)?.let {
                     Text(it.message, style = suite(FontWeight.Bold, 12), color = gg.warning)
                 }

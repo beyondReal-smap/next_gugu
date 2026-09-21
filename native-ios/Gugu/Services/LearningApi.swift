@@ -34,6 +34,20 @@ enum LearningApi {
         }
     }
 
+    /// claim 요청 본문은 문자열과 수가 섞여 있어 값 종류를 감싼다 (서버는 extra="forbid")
+    enum AnyClaimValue: Encodable {
+        case string(String)
+        case int(Int)
+
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.singleValueContainer()
+            switch self {
+            case let .string(value): try container.encode(value)
+            case let .int(value): try container.encode(value)
+            }
+        }
+    }
+
     struct GuardianVerifyResponse: Decodable {
         var guardian: Bool
         var products: [String]
@@ -97,6 +111,22 @@ enum LearningApi {
     /// 성공 후에는 토큰을 새로 받아야 새 권한이 JWT 에 담긴다.
     static func verifyGuardian(accessToken: String) async throws -> GuardianVerifyResponse {
         try await send(path: "/account/guardian", method: "POST", accessToken: accessToken, body: Data())
+    }
+
+    /// 기기 기록의 귀속을 요청한다 — 서버가 학습자를 만들거나 기존 학습자를 알려 준다.
+    /// 보호자 권한이 있는 계정만 호출할 수 있다.
+    static func claim(accessToken: String, installId: String, localEventCount: Int) async throws -> LearningClaimResponse {
+        let body = try JSONEncoder().encode([
+            "installId": AnyClaimValue.string(installId),
+            "localEventCount": AnyClaimValue.int(localEventCount),
+        ])
+        return try await send(path: "/v1/learning/claim", method: "POST", accessToken: accessToken, body: body)
+    }
+
+    /// 후보 중 하나를 골라 귀속을 확정한다
+    static func confirmClaim(accessToken: String, installId: String, learnerId: String) async throws -> LearningClaimConfirmResponse {
+        let body = try JSONEncoder().encode(["installId": installId, "learnerId": learnerId])
+        return try await send(path: "/v1/learning/claim/confirm", method: "POST", accessToken: accessToken, body: body)
     }
 
     /// 서버 학습 상태 조회

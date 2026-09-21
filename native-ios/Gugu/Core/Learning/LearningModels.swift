@@ -58,6 +58,35 @@ struct LearningStateResponse: Codable, Equatable {
     var serverCursor: Int
 }
 
+/// 귀속 후보 — 서버가 이 계정에 딸린 학습자 목록을 준다
+struct LearningClaimCandidate: Codable, Equatable, Identifiable {
+    var learnerId: String
+    var displayName: String
+    var updatedAt: String
+
+    var id: String { learnerId }
+}
+
+/// 귀속 요청 결과.
+/// - createLearner: 서버가 학습자를 새로 만들었다 (learnerId 있음)
+/// - attachToExisting: 기존 학습자에 붙인다 (learnerId 가 없으면 후보 1명을 confirm 으로 확정)
+/// - conflict: 후보가 여럿이거나 다른 계정이 쓰던 기기 — 사용자가 골라야 한다
+struct LearningClaimResponse: Codable, Equatable {
+    enum Action: String, Codable {
+        case createLearner = "create_learner"
+        case attachToExisting = "attach_to_existing"
+        case conflict
+    }
+
+    var action: Action
+    var candidates: [LearningClaimCandidate]
+    var learnerId: String?
+}
+
+struct LearningClaimConfirmResponse: Codable, Equatable {
+    var learnerId: String
+}
+
 enum LearningValidationError: LocalizedError, Equatable {
     case field(String)
 

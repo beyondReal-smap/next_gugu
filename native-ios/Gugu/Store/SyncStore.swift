@@ -15,6 +15,8 @@ final class SyncStore {
         case uploading
         /// 보호자 검증 전 — 큐에 쌓아 두고 기다린다
         case waitingForGuardian(String)
+        /// 귀속 후보가 여럿 — 사용자가 골라야 한다
+        case needsLearnerChoice([LearningClaimCandidate])
         case failed(String)
     }
 
@@ -117,6 +119,79 @@ final class SyncStore {
         if case .waitingForGuardian = state { state = .idle }
     }
 
+    /// 이 기기 기록을 어느 학습자에 붙일지 정한다. learnerId 가 이미 있으면 아무 것도 하지 않는다.
+    ///
+    /// 서버는 세 가지로 답한다.
+    /// - create_learner: 학습자를 새로 만들어 줬다 — 그대로 저장
+    /// - attach_to_existing: 기존 학습자에 붙인다. learnerId 가 없으면 후보 1명을 confirm 으로 확정
+    /// - conflict: 후보가 여럿이거나 다른 계정이 쓰던 기기 — 사용자가 골라야 한다
+    func ensureLearner(auth: AuthStore) async {
+        var identity = LearningIdentityStore.read()
+        if identity.learnerId != nil { return }
+        guard auth.isPermanent, let token = await auth.accessToken() else { return }
+
+        let pending = LearningOutboxStore.read().events.count
+        do {
+            let response = try await LearningApi.claim(
+                accessToken: token, installId: identity.installId, localEventCount: pending
+            )
+            switch response.action {
+            case .createLearner:
+                guard let learnerId = response.learnerId else {
+                    state = .failed("서버가 학습자 아이디를 주지 않았습니다")
+                    return
+                }
+                try bind(learnerId: learnerId, userId: auth.userId)
+            case .attachToExisting:
+                if let learnerId = response.learnerId {
+                    try bind(learnerId: learnerId, userId: auth.userId)
+                } else if response.candidates.count == 1 {
+                    try await confirm(auth: auth, token: token,
+                                      installId: identity.installId,
+                                      learnerId: response.candidates[0].learnerId)
+                } else {
+                    // 붙일 대상을 특정할 수 없다 — 고르게 한다
+                    state = .needsLearnerChoice(response.candidates)
+                }
+            case .conflict:
+                state = .needsLearnerChoice(response.candidates)
+            }
+            identity = LearningIdentityStore.read()
+        } catch {
+            print("[Sync] 귀속 실패:", error.localizedDescription)
+            state = .failed(errorMessage(error))
+        }
+    }
+
+    /// 후보 중 하나를 골라 귀속을 확정한다 (conflict 화면에서 호출)
+    func chooseLearner(_ candidate: LearningClaimCandidate, auth: AuthStore) async {
+        guard let token = await auth.accessToken() else { return }
+        let identity = LearningIdentityStore.read()
+        do {
+            try await confirm(auth: auth, token: token,
+                              installId: identity.installId, learnerId: candidate.learnerId)
+        } catch {
+            print("[Sync] 귀속 확정 실패:", error.localizedDescription)
+            state = .failed(errorMessage(error))
+        }
+    }
+
+    private func confirm(auth: AuthStore, token: String, installId: String, learnerId: String) async throws {
+        let confirmed = try await LearningApi.confirmClaim(
+            accessToken: token, installId: installId, learnerId: learnerId
+        )
+        try bind(learnerId: confirmed.learnerId, userId: auth.userId)
+    }
+
+    private func bind(learnerId: String, userId: String?) throws {
+        try LearningIdentityStore.bindLearner(userId: userId ?? "", learnerId: learnerId)
+        state = .idle
+    }
+
+    private func errorMessage(_ error: Error) -> String {
+        (error as? LearningApi.ApiError)?.localizedDescription ?? error.localizedDescription
+    }
+
     /// 구매 이력을 근거로 보호자 권한을 켜고 업로드를 재개한다.
     ///
     /// 순서가 중요하다 — 서버가 app_metadata 를 바꿔도 손에 든 JWT 는 예전 권한이므로,
@@ -131,6 +206,8 @@ final class SyncStore {
             // 새 권한이 담긴 토큰을 받아야 업로드가 통과한다
             await auth.forceRefresh()
             clearGuardianBlock()
+            // 학습자 귀속이 끝나야 이벤트를 만들 수 있다
+            await ensureLearner(auth: auth)
             flush(auth: auth)
         } catch let error as LearningApi.ApiError {
             if case let .http(status, code, _) = error, status == 403,

@@ -7,6 +7,7 @@ struct ProfileView: View {
     @Environment(ThemeStore.self) private var theme
     @Environment(PremiumStore.self) private var premium
     @Environment(AuthStore.self) private var auth
+    @Environment(SyncStore.self) private var sync
     @Environment(\.openURL) private var openURL
 
     @State private var email = ""
@@ -283,6 +284,44 @@ struct ProfileView: View {
                             }
                         }
                     }
+                }
+
+                // 귀속 후보가 여럿이면 어느 기록에 이어 붙일지 고르게 한다
+                if case let .needsLearnerChoice(candidates) = sync.state, !candidates.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("이어서 쓸 기록을 골라 주세요")
+                            .font(.suite(.extrabold, 13)).foregroundStyle(Color.gg.text)
+                        ForEach(candidates) { candidate in
+                            Button {
+                                Task { await sync.chooseLearner(candidate, auth: auth) }
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "clock.arrow.circlepath")
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundStyle(Color.gg.accent)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(candidate.displayName)
+                                            .font(.suite(.extrabold, 13)).foregroundStyle(Color.gg.text)
+                                        Text("마지막 학습 \(candidate.updatedAt.prefix(10))")
+                                            .font(.suite(.medium, 11)).foregroundStyle(Color.gg.textMuted)
+                                    }
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 12, weight: .bold))
+                                        .foregroundStyle(Color.gg.textMuted)
+                                }
+                                .padding(.horizontal, 12).frame(minHeight: 48)
+                                .background(Color.gg.surface2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            }
+                        }
+                    }
+                }
+
+                // 보호자 검증 전이면 왜 보관이 꺼져 있는지 알려 준다
+                if case let .waitingForGuardian(message) = sync.state {
+                    Text(message)
+                        .font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 if case let .failed(message) = auth.promotion {

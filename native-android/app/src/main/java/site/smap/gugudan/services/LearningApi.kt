@@ -7,8 +7,11 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 import site.smap.gugudan.BuildConfig
 import site.smap.gugudan.core.learning.LearningEvent
+import site.smap.gugudan.core.learning.LearningClaimConfirmResponse
+import site.smap.gugudan.core.learning.LearningClaimResponse
 import site.smap.gugudan.core.learning.LearningEventBatchResponse
 import site.smap.gugudan.core.learning.LearningStateResponse
 import java.io.IOException
@@ -88,6 +91,31 @@ object LearningApi {
     suspend fun verifyGuardian(accessToken: String): GuardianVerifyResponse {
         val text = send("/account/guardian", "POST", accessToken, "")
         return runCatching { json.decodeFromString(GuardianVerifyResponse.serializer(), text) }
+            .getOrElse { throw LearningApiException.Malformed() }
+    }
+
+    /**
+     * 기기 기록의 귀속을 요청한다 — 서버가 학습자를 만들거나 기존 학습자를 알려 준다.
+     * 보호자 권한이 있는 계정만 호출할 수 있다.
+     */
+    suspend fun claim(accessToken: String, installId: String, localEventCount: Int): LearningClaimResponse {
+        val body = buildJsonObject {
+            put("installId", installId)
+            put("localEventCount", localEventCount)
+        }.toString()
+        val text = send("/v1/learning/claim", "POST", accessToken, body)
+        return runCatching { json.decodeFromString(LearningClaimResponse.serializer(), text) }
+            .getOrElse { throw LearningApiException.Malformed() }
+    }
+
+    /** 후보 중 하나를 골라 귀속을 확정한다 */
+    suspend fun confirmClaim(accessToken: String, installId: String, learnerId: String): LearningClaimConfirmResponse {
+        val body = buildJsonObject {
+            put("installId", installId)
+            put("learnerId", learnerId)
+        }.toString()
+        val text = send("/v1/learning/claim/confirm", "POST", accessToken, body)
+        return runCatching { json.decodeFromString(LearningClaimConfirmResponse.serializer(), text) }
             .getOrElse { throw LearningApiException.Malformed() }
     }
 

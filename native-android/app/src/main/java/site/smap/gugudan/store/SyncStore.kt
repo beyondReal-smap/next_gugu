@@ -8,6 +8,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import site.smap.gugudan.core.SessionResult
+import site.smap.gugudan.core.learning.LearningClaimAction
+import site.smap.gugudan.core.learning.LearningClaimCandidate
 import site.smap.gugudan.core.learning.LearningOutbox
 import site.smap.gugudan.core.learning.LearningRecord
 import site.smap.gugudan.services.LearningApi
@@ -33,6 +35,8 @@ class SyncStore(
         data object Uploading : State
         /** 보호자 검증 전 — 큐에 쌓아 두고 기다린다 */
         data class WaitingForGuardian(val message: String) : State
+        /** 귀속 후보가 여럿 — 사용자가 골라야 한다 */
+        data class NeedsLearnerChoice(val candidates: List<LearningClaimCandidate>) : State
         data class Failed(val message: String) : State
     }
 
@@ -133,6 +137,71 @@ class SyncStore(
     }
 
     /**
+     * 이 기기 기록을 어느 학습자에 붙일지 정한다. learnerId 가 이미 있으면 아무 것도 하지 않는다.
+     *
+     * 서버는 세 가지로 답한다.
+     * - CREATE_LEARNER: 학습자를 새로 만들어 줬다 — 그대로 저장
+     * - ATTACH_TO_EXISTING: 기존 학습자에 붙인다. learnerId 가 없으면 후보 1명을 confirm 으로 확정
+     * - CONFLICT: 후보가 여럿이거나 다른 계정이 쓰던 기기 — 사용자가 골라야 한다
+     */
+    suspend fun ensureLearner(auth: AuthStore) {
+        val identity = identityStore.read()
+        if (identity.learnerId != null) return
+        if (!auth.isPermanent) return
+        val token = auth.accessToken() ?: return
+
+        val pending = outboxStore.read().events.size
+        try {
+            val response = LearningApi.claim(token, identity.installId, pending)
+            when (response.action) {
+                LearningClaimAction.CREATE_LEARNER -> {
+                    val learnerId = response.learnerId
+                    if (learnerId == null) {
+                        state = State.Failed("서버가 학습자 아이디를 주지 않았습니다")
+                        return
+                    }
+                    bind(learnerId, auth.userId)
+                }
+                LearningClaimAction.ATTACH_TO_EXISTING -> {
+                    val learnerId = response.learnerId
+                    when {
+                        learnerId != null -> bind(learnerId, auth.userId)
+                        response.candidates.size == 1 ->
+                            confirm(auth, token, identity.installId, response.candidates[0].learnerId)
+                        // 붙일 대상을 특정할 수 없다 — 고르게 한다
+                        else -> state = State.NeedsLearnerChoice(response.candidates)
+                    }
+                }
+                LearningClaimAction.CONFLICT -> state = State.NeedsLearnerChoice(response.candidates)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "귀속 실패: ${e.message}")
+            state = State.Failed(e.message ?: e.toString())
+        }
+    }
+
+    /** 후보 중 하나를 골라 귀속을 확정한다 (conflict 화면에서 호출) */
+    suspend fun chooseLearner(candidate: LearningClaimCandidate, auth: AuthStore) {
+        val token = auth.accessToken() ?: return
+        try {
+            confirm(auth, token, identityStore.read().installId, candidate.learnerId)
+        } catch (e: Exception) {
+            Log.w(TAG, "귀속 확정 실패: ${e.message}")
+            state = State.Failed(e.message ?: e.toString())
+        }
+    }
+
+    private suspend fun confirm(auth: AuthStore, token: String, installId: String, learnerId: String) {
+        val confirmed = LearningApi.confirmClaim(token, installId, learnerId)
+        bind(confirmed.learnerId, auth.userId)
+    }
+
+    private fun bind(learnerId: String, userId: String?) {
+        identityStore.bindLearner(userId ?: "", learnerId)
+        state = State.Idle
+    }
+
+    /**
      * 구매 이력을 근거로 보호자 권한을 켜고 업로드를 재개한다.
      *
      * 순서가 중요하다 — 서버가 app_metadata 를 바꿔도 손에 든 JWT 는 예전 권한이므로,
@@ -149,6 +218,8 @@ class SyncStore(
             // 새 권한이 담긴 토큰을 받아야 업로드가 통과한다
             auth.forceRefresh()
             clearGuardianBlock()
+            // 학습자 귀속이 끝나야 이벤트를 만들 수 있다
+            ensureLearner(auth)
             flush(auth)
         } catch (e: LearningApiException.Http) {
             val denial = if (e.status == 403) GuardianDenial.of(e.code) else null

@@ -66,6 +66,37 @@ data class LearningStateResponse(
     val serverCursor: Int = 0,
 )
 
+/** 귀속 후보 — 서버가 이 계정에 딸린 학습자 목록을 준다 */
+@Serializable
+data class LearningClaimCandidate(
+    val learnerId: String,
+    val displayName: String = "",
+    val updatedAt: String = "",
+)
+
+/**
+ * 귀속 요청 결과.
+ * - CREATE_LEARNER: 서버가 학습자를 새로 만들었다 (learnerId 있음)
+ * - ATTACH_TO_EXISTING: 기존 학습자에 붙인다 (learnerId 가 없으면 후보 1명을 confirm 으로 확정)
+ * - CONFLICT: 후보가 여럿이거나 다른 계정이 쓰던 기기 — 사용자가 골라야 한다
+ */
+@Serializable
+enum class LearningClaimAction {
+    @SerialName("create_learner") CREATE_LEARNER,
+    @SerialName("attach_to_existing") ATTACH_TO_EXISTING,
+    @SerialName("conflict") CONFLICT,
+}
+
+@Serializable
+data class LearningClaimResponse(
+    val action: LearningClaimAction,
+    val candidates: List<LearningClaimCandidate> = emptyList(),
+    val learnerId: String? = null,
+)
+
+@Serializable
+data class LearningClaimConfirmResponse(val learnerId: String)
+
 class LearningValidationException(val field: String) :
     IllegalArgumentException("학습 이벤트 $field 형식이 올바르지 않습니다")
 
