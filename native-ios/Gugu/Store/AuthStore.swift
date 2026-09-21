@@ -27,6 +27,85 @@ final class AuthStore {
 
     var userId: String? { session?.userId }
     var isAnonymous: Bool { session?.isAnonymous ?? false }
+    /// 이메일이 붙은 영구 계정인지
+    var isPermanent: Bool { session != nil && !isAnonymous }
+
+    // MARK: - 이메일 승격 (익명 -> 영구 계정)
+
+    enum Promotion: Equatable {
+        case none
+        case sending
+        /// 확인 코드를 보낸 주소 — 이 화면에서 코드를 입력받는다
+        case codeSent(email: String)
+        case verifying(email: String)
+        case done(email: String)
+        case failed(String)
+    }
+
+    private(set) var promotion: Promotion = .none
+
+    /// 이메일로 확인 코드를 보낸다. 성공해도 아직 승격은 끝나지 않는다.
+    func startEmailPromotion(email: String) async {
+        let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard trimmed.contains("@"), trimmed.count >= 5 else {
+            promotion = .failed("이메일 주소를 확인해 주세요")
+            return
+        }
+        guard let token = await accessToken() else {
+            promotion = .failed("계정 세션이 없어 연결할 수 없습니다")
+            return
+        }
+        promotion = .sending
+        do {
+            try await SupabaseAuth.requestEmailPromotion(accessToken: token, email: trimmed)
+            promotion = .codeSent(email: trimmed)
+        } catch let error as SupabaseAuthError {
+            promotion = .failed(Self.promotionMessage(for: error))
+        } catch {
+            promotion = .failed(error.localizedDescription)
+        }
+    }
+
+    /// 메일로 받은 코드로 승격을 끝낸다
+    func confirmEmailPromotion(code: String) async {
+        guard case let .codeSent(email) = promotion else { return }
+        let trimmed = code.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            promotion = .failed("확인 코드를 입력해 주세요")
+            return
+        }
+        promotion = .verifying(email: email)
+        do {
+            let fresh = try await SupabaseAuth.verifyEmailChange(email: email, token: trimmed)
+            session = fresh
+            store(fresh)
+            state = .ready
+            promotion = .done(email: email)
+        } catch let error as SupabaseAuthError {
+            promotion = .failed(Self.promotionMessage(for: error))
+        } catch {
+            promotion = .failed(error.localizedDescription)
+        }
+    }
+
+    func resetPromotion() { promotion = .none }
+
+    /// 서버 오류 코드를 사용자 문구로 — 발송 제한이 가장 흔하다
+    private static func promotionMessage(for error: SupabaseAuthError) -> String {
+        guard case let .http(_, code, message) = error else { return error.localizedDescription }
+        switch code {
+        case "over_email_send_rate_limit":
+            return "확인 메일을 방금 보냈어요. 잠시 뒤 다시 시도해 주세요."
+        case "email_address_invalid":
+            return "이 이메일 주소는 쓸 수 없어요. 다른 주소를 넣어 주세요."
+        case "email_exists", "user_already_exists":
+            return "이미 연결된 이메일이에요."
+        case "otp_expired":
+            return "확인 코드가 만료됐어요. 다시 보내 주세요."
+        default:
+            return message.isEmpty ? error.localizedDescription : message
+        }
+    }
 
     init() {
         session = Self.loadStored()

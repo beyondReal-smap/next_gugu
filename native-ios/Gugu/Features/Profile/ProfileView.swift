@@ -6,7 +6,11 @@ struct ProfileView: View {
     @Environment(GameStore.self) private var game
     @Environment(ThemeStore.self) private var theme
     @Environment(PremiumStore.self) private var premium
+    @Environment(AuthStore.self) private var auth
     @Environment(\.openURL) private var openURL
+
+    @State private var email = ""
+    @State private var code = ""
 
     @State private var soundOn = Sound.shared.enabled
     @State private var confirmReset = false
@@ -30,6 +34,7 @@ struct ProfileView: View {
                 if game.state.recentAccuracy.count >= 2 { accuracyTrend }
                 if !weakProblems.isEmpty { weakSection }
                 achievements
+                accountSection
                 premiumSection
                 settings
                 resetSection
@@ -214,6 +219,91 @@ struct ProfileView: View {
             }
         }
         .padding(.top, 4)
+    }
+
+    // MARK: 계정 — 익명 계정에 이메일을 붙여 기기를 바꿔도 기록이 남게 한다
+    @ViewBuilder
+    private var accountSection: some View {
+        if auth.state != .disabled {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 8) {
+                    Image(systemName: "person.badge.shield.checkmark")
+                        .font(.system(size: 14, weight: .bold)).foregroundStyle(Color.gg.accent)
+                    Text("기록 지키기").font(.suite(.extrabold, 15)).foregroundStyle(Color.gg.text)
+                }
+
+                switch auth.promotion {
+                case let .done(email):
+                    accountRow(icon: "checkmark.seal.fill", tint: .gg.success,
+                               title: "\(email) 에 연결됐어요",
+                               desc: "기기를 바꿔도 이 주소로 기록을 찾을 수 있어요.")
+                case let .codeSent(email), let .verifying(email):
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("\(email) 로 6자리 확인 코드를 보냈어요.")
+                            .font(.suite(.medium, 13)).foregroundStyle(Color.gg.textMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                        TextField("확인 코드", text: $code)
+                            .textFieldStyle(.plain)
+                            .keyboardType(.numberPad)
+                            .textContentType(.oneTimeCode)
+                            .font(.suiteNum(.extrabold, 20))
+                            .padding(.horizontal, 14).frame(height: 48)
+                            .background(Color.gg.surface2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        GGButton(variant: .primary, size: .md, action: {
+                            Task { await auth.confirmEmailPromotion(code: code) }
+                        }) {
+                            Text(auth.promotion == .verifying(email: email) ? "확인 중…" : "연결 완료하기")
+                        }
+                        Button("주소 다시 입력") { auth.resetPromotion(); code = "" }
+                            .font(.suite(.bold, 12)).foregroundStyle(Color.gg.textMuted)
+                            .frame(minHeight: 44)
+                    }
+                default:
+                    if auth.isPermanent {
+                        accountRow(icon: "checkmark.seal.fill", tint: .gg.success,
+                                   title: "계정이 연결돼 있어요",
+                                   desc: "기기를 바꿔도 기록을 찾을 수 있어요.")
+                    } else {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("보호자 이메일을 넣으면 기기를 바꿔도 기록이 남아요. 비밀번호는 필요 없어요.")
+                                .font(.suite(.medium, 13)).foregroundStyle(Color.gg.textMuted)
+                                .fixedSize(horizontal: false, vertical: true)
+                            TextField("보호자 이메일", text: $email)
+                                .textFieldStyle(.plain)
+                                .keyboardType(.emailAddress)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .font(.suite(.medium, 15))
+                                .padding(.horizontal, 14).frame(height: 48)
+                                .background(Color.gg.surface2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            GGButton(variant: .primary, size: .md, action: {
+                                Task { await auth.startEmailPromotion(email: email) }
+                            }) {
+                                Text(auth.promotion == .sending ? "보내는 중…" : "확인 코드 받기")
+                            }
+                        }
+                    }
+                }
+
+                if case let .failed(message) = auth.promotion {
+                    Text(message)
+                        .font(.suite(.bold, 12)).foregroundStyle(Color.gg.warning)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .ggCard()
+        }
+    }
+
+    private func accountRow(icon: String, tint: Color, title: String, desc: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: icon).font(.system(size: 16, weight: .bold)).foregroundStyle(tint)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title).font(.suite(.extrabold, 14)).foregroundStyle(Color.gg.text)
+                Text(desc).font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 
     private var divider: some View { Rectangle().fill(Color.gg.border).frame(height: 1) }

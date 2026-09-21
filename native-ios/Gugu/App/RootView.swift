@@ -10,6 +10,7 @@ struct RootView: View {
     @State private var theme = ThemeStore()
     @State private var router = Router()
     @State private var auth = AuthStore()
+    @State private var sync = SyncStore()
 
     var body: some View {
         content
@@ -20,10 +21,15 @@ struct RootView: View {
             .environment(theme)
             .environment(router)
             .environment(auth)
+            .environment(sync)
             .preferredColorScheme(theme.colorScheme)
             .tint(.gg.accent)
             // 첫 실행 시 조용히 익명 계정을 만든다 — 화면을 막지 않고 실패해도 앱은 그대로 동작
-            .task { await auth.start() }
+            .task {
+                await auth.start()
+                // 보호자 검증이 끝난 계정이면 쌓인 기록을 올린다 (검증 전에는 요청을 보내지 않음)
+                sync.flush(auth: auth)
+            }
     }
 
     @ViewBuilder

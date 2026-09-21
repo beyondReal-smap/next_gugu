@@ -1,0 +1,135 @@
+import Foundation
+
+// 학습 원장 API 클라이언트 (lib/api/learning.ts 의 네트워크 부분 이식).
+//
+// 주의: gugu.smap.site 는 Cloudflare 뒤에 있고 기본 User-Agent 로 호출하면
+// 봇 차단(HTTP 403, error 1010)에 걸린다. 앱을 식별하는 UA 를 반드시 붙인다.
+
+enum LearningApi {
+    static let base = "https://gugu.smap.site/api"
+
+    /// Cloudflare 봇 차단을 피하기 위한 앱 식별 UA
+    static var userAgent: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0"
+        return "GuguAdventure/\(version).\(build) (iOS)"
+    }
+
+    /// 서버가 업로드를 거부하는 사유 — 보호자 검증이 끝나지 않은 계정
+    enum PermissionDenial: String {
+        case childAccount = "CHILD_ACCOUNT_UPLOAD_FORBIDDEN"
+        case roleUnverified = "ACCOUNT_ROLE_UNVERIFIED"
+        case ageUnverified = "ACCOUNT_AGE_UNVERIFIED"
+
+        /// 사용자에게 보여 줄 설명
+        var message: String {
+            switch self {
+            case .childAccount:
+                return "아이 계정의 학습 기록은 서버에 올리지 않아요."
+            case .roleUnverified:
+                return "보호자 계정으로 확인되면 기록을 안전하게 보관해요."
+            case .ageUnverified:
+                return "보호자 성인 확인이 끝나면 기록 보관이 켜져요."
+            }
+        }
+    }
+
+    enum ApiError: LocalizedError {
+        /// 보호자 검증 전 — 재시도해도 통과하지 않는다
+        case permissionDenied(PermissionDenial)
+        case http(status: Int, code: String?, message: String)
+        case malformedResponse
+        case offline(underlying: String)
+
+        var errorDescription: String? {
+            switch self {
+            case let .permissionDenied(denial):
+                return denial.message
+            case let .http(status, code, message):
+                return "학습 서버 응답 \(status)\(code.map { " (\($0))" } ?? ""): \(message)"
+            case .malformedResponse:
+                return "학습 서버 응답을 해석하지 못했습니다"
+            case let .offline(underlying):
+                return "학습 서버에 연결하지 못했습니다: \(underlying)"
+            }
+        }
+
+        /// 지금 재시도해도 소용없는 상태인지 (권한 문제는 큐를 그대로 두고 멈춘다)
+        var isPermanent: Bool {
+            if case .permissionDenied = self { return true }
+            if case let .http(status, _, _) = self { return status == 400 || status == 404 }
+            return false
+        }
+    }
+
+    // MARK: - 엔드포인트
+
+    /// 이벤트 배치 업로드
+    static func uploadEvents(accessToken: String, events: [LearningEvent]) async throws -> LearningEventBatchResponse {
+        let body = try JSONEncoder().encode(["events": events])
+        return try await send(path: "/v1/learning/events:batch", method: "POST",
+                              accessToken: accessToken, body: body)
+    }
+
+    /// 서버 학습 상태 조회
+    static func fetchState(accessToken: String, learnerId: String? = nil) async throws -> LearningStateResponse {
+        let query = learnerId.map { "?learnerId=\($0)" } ?? ""
+        return try await send(path: "/v1/learning/state\(query)", method: "GET", accessToken: accessToken, body: nil)
+    }
+
+    // MARK: - 내부
+
+    private static func send<T: Decodable>(
+        path: String, method: String, accessToken: String, body: Data?
+    ) async throws -> T {
+        guard let url = URL(string: base + path) else { throw ApiError.malformedResponse }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        request.timeoutInterval = 30
+        request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        if body != nil {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = body
+        }
+
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            // 네트워크 실패는 일시적 — 큐를 유지하고 다음 기회에 재시도한다
+            throw ApiError.offline(underlying: error.localizedDescription)
+        }
+        guard let http = response as? HTTPURLResponse else { throw ApiError.malformedResponse }
+
+        guard (200..<300).contains(http.statusCode) else {
+            let detail = errorDetail(from: data)
+            if http.statusCode == 403, let code = detail.code,
+               let denial = PermissionDenial(rawValue: code) {
+                throw ApiError.permissionDenied(denial)
+            }
+            throw ApiError.http(status: http.statusCode, code: detail.code, message: detail.message)
+        }
+        do {
+            return try JSONDecoder().decode(T.self, from: data)
+        } catch {
+            throw ApiError.malformedResponse
+        }
+    }
+
+    /// FastAPI 는 {"detail": {"code": ..., "message": ...}} 로 오류를 준다
+    private static func errorDetail(from data: Data) -> (code: String?, message: String) {
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return (nil, String(data: data, encoding: .utf8)?.prefix(200).description ?? "")
+        }
+        if let detail = json["detail"] as? [String: Any] {
+            return (detail["code"] as? String, detail["message"] as? String ?? "")
+        }
+        if let detail = json["detail"] as? String {
+            return (nil, detail)
+        }
+        return (nil, String(data: data, encoding: .utf8)?.prefix(200).description ?? "")
+    }
+}

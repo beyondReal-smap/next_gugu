@@ -50,9 +50,34 @@ enum SupabaseAuth {
                        body: ["refresh_token": refreshToken])
     }
 
+    /// 익명 계정에 이메일을 붙인다 — 확인 코드가 그 주소로 발송된다.
+    /// 이 호출만으로는 승격되지 않고, verifyEmailChange 까지 끝나야 영구 계정이 된다.
+    static func requestEmailPromotion(accessToken: String, email: String) async throws {
+        _ = try await request(
+            path: "/auth/v1/user", method: "PUT",
+            body: ["email": email], accessToken: accessToken
+        )
+    }
+
+    /// 메일로 받은 6자리 코드로 이메일 확인을 끝내고 새 세션을 받는다
+    static func verifyEmailChange(email: String, token: String) async throws -> AuthSession {
+        let data = try await request(
+            path: "/auth/v1/verify", method: "POST",
+            body: ["type": "email_change", "email": email, "token": token], accessToken: nil
+        )
+        return try parse(data)
+    }
+
     // MARK: - 내부
 
     private static func post(path: String, body: [String: String]) async throws -> AuthSession {
+        try parse(try await request(path: path, method: "POST", body: body, accessToken: nil))
+    }
+
+    /// GoTrue 공통 호출 — apikey 는 항상, Authorization 은 사용자 토큰이 있을 때만 붙인다
+    private static func request(
+        path: String, method: String, body: [String: String], accessToken: String?
+    ) async throws -> Data {
         guard let base = SupabaseConfig.url, let anonKey = SupabaseConfig.anonKey else {
             throw SupabaseAuthError.notConfigured
         }
@@ -61,11 +86,13 @@ enum SupabaseAuth {
         }
 
         var request = URLRequest(url: url)
-        request.httpMethod = "POST"
+        request.httpMethod = method
         request.timeoutInterval = 20
         request.setValue(anonKey, forHTTPHeaderField: "apikey")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        if let accessToken { request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization") }
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse else { throw SupabaseAuthError.malformedResponse }
@@ -81,7 +108,7 @@ enum SupabaseAuth {
                     ?? ""
             )
         }
-        return try parse(data)
+        return data
     }
 
     private static func parse(_ data: Data) throws -> AuthSession {
