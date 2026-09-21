@@ -27,6 +27,8 @@ import site.smap.gugudan.services.Persistence
 
 enum class PurchaseResult { OK, CANCELLED, PENDING, ERROR }
 
+private const val TAG = "Premium"
+
 class PremiumStore(
     context: Context,
     private val persistence: Persistence,
@@ -49,6 +51,10 @@ class PremiumStore(
     var lastPurchaseToken: String? = null
         private set
 
+    /** 프리미엄 판정 근거 — 로컬 플래그인지 Play 보유 확인인지 구분한다 */
+    var premiumSource: String = "none"
+        private set
+
     private val billing: BillingClient = BillingClient.newBuilder(context)
         .setListener { result, purchases -> onPurchasesUpdated(result, purchases) }
         .enablePendingPurchases(
@@ -56,6 +62,8 @@ class PremiumStore(
         .build()
 
     init {
+        if (isPremium) premiumSource = "local_flag"
+        Log.i(TAG, "시작 판정 isPremium=$isPremium source=$premiumSource")
         if (!devForcePremium) connect()
     }
 
@@ -119,7 +127,8 @@ class PremiumStore(
                 }?.purchaseToken
                 purchases.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED && !it.isAcknowledged }
                     .forEach { acknowledge(it) }
-                if (owned) grant() else revoke()
+                if (owned) grant("play_entitlement") else revoke()
+                Log.i(TAG, "Play 보유 확인 owned=$owned -> isPremium=$isPremium source=$premiumSource token=${lastPurchaseToken?.take(12)}")
                 onDone?.invoke(owned)
             }
         }
@@ -188,13 +197,15 @@ class PremiumStore(
 
     // MARK: 상태/게이트
 
-    private fun grant() {
+    private fun grant(source: String = "play_entitlement") {
+        premiumSource = source
         isPremium = true
         persistence.putString(Persistence.PREMIUM_KEY, "1")
         if (paywallOpen) paywallOpen = false
     }
     private fun revoke() {
         if (devForcePremium) return
+        premiumSource = "none"
         isPremium = false
         persistence.remove(Persistence.PREMIUM_KEY)
     }

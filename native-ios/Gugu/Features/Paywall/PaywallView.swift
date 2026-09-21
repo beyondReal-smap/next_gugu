@@ -4,6 +4,8 @@ import SwiftUI
 
 struct PaywallView: View {
     @Environment(PremiumStore.self) private var premium
+    @Environment(AuthStore.self) private var auth
+    @Environment(SyncStore.self) private var sync
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
 
@@ -163,6 +165,9 @@ struct PaywallView: View {
             let ok = await premium.restore()
             busy = false
             notice = ok ? "구매가 복원되었어요! 🎉" : "복원할 구매 내역이 없어요."
+            // 이미 보유한 상품은 새 구매 플로우가 뜨지 않으므로, 복원 경로에서도
+            // 서버 구매 등록과 보호자 권한을 시도한다.
+            if ok { await sync.enableGuardianSync(auth: auth) }
         }
     }
 

@@ -105,6 +105,14 @@ class MainActivity : ComponentActivity() {
                     LaunchedEffect(premium.isPremium) {
                         if (premium.isPremium) sync.enableGuardianSync(auth, premium.lastPurchaseToken)
                     }
+                    // 이메일 승격이 끝난 직후에도 시도한다.
+                    // 구매가 이미 있던 사용자는 isPremium 이 처음부터 true 라 위 트리거가 발동하지 않고,
+                    // 시작 시점에는 아직 익명이라 enableGuardianSync 가 반환된다 — 그래서 이 트리거가 필요하다.
+                    LaunchedEffect(auth.isPermanent) {
+                        if (auth.isPermanent && premium.isPremium) {
+                            sync.enableGuardianSync(auth, premium.lastPurchaseToken)
+                        }
+                    }
                     RootScreen()
                 }
             }

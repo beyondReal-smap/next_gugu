@@ -30,8 +30,13 @@ final class PremiumStore {
         #endif
     }()
 
+    /// 프리미엄 판정 근거 — 로컬 플래그인지 StoreKit 엔타이틀먼트인지 구분한다
+    private(set) var premiumSource: String = "none"
+
     init() {
         isPremium = Persistence.string(Persistence.premiumKey) == "1"
+        if isPremium { premiumSource = "local_flag" }
+        print("[Premium] 시작 판정 isPremium=\(isPremium) source=\(premiumSource)")
         if devForcePremium { isPremium = true; return }
         // 앱 외부 구매/환불 실시간 반영 (스토어는 앱 수명 동안 유지되므로 별도 취소 불필요)
         updatesTask = observeTransactions()
@@ -98,9 +103,11 @@ final class PremiumStore {
                t.productID == PremiumConfig.productID,
                t.revocationDate == nil {
                 owned = true
+                print("[Premium] 보유 트랜잭션 id=\(t.id) 환경=\(t.environment.rawValue) 구매일=\(t.purchaseDate)")
             }
         }
         if owned { grant() } else { revoke() }
+        print("[Premium] StoreKit 엔타이틀먼트 owned=\(owned) -> isPremium=\(isPremium) source=\(premiumSource)")
     }
 
     private func observeTransactions() -> Task<Void, Never> {
@@ -117,12 +124,14 @@ final class PremiumStore {
 
     // MARK: - 상태
 
-    private func grant() {
+    private func grant(source: String = "storekit_entitlement") {
+        premiumSource = source
         isPremium = true
         Persistence.setString("1", key: Persistence.premiumKey)
         if paywallOpen { paywallOpen = false }
     }
     private func revoke() {
+        premiumSource = "none"
         isPremium = false
         Persistence.remove(Persistence.premiumKey)
     }

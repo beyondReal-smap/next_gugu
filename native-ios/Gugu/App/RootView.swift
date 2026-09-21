@@ -40,6 +40,13 @@ struct RootView: View {
                 guard isPremium else { return }
                 Task { await sync.enableGuardianSync(auth: auth) }
             }
+            // 이메일 승격이 끝난 직후에도 시도한다.
+            // 구매가 이미 있던 사용자는 isPremium 이 처음부터 true 라 위 onChange 가 발동하지 않고,
+            // 시작 시점에는 아직 익명이라 enableGuardianSync 가 반환된다 — 그래서 이 트리거가 필요하다.
+            .onChange(of: auth.isPermanent) { _, isPermanent in
+                guard isPermanent, premium.isPremium else { return }
+                Task { await sync.enableGuardianSync(auth: auth) }
+            }
     }
 
     @ViewBuilder
