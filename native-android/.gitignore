@@ -1,0 +1,11 @@
+# 서명·배포 자격 (시크릿)
+keystore.properties
+keystore/*.jks
+play.properties
+
+# 빌드 산출물
+build/
+app/build/
+.gradle/
+local.properties
+.kotlin/

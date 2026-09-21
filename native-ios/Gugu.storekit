@@ -1,0 +1,44 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "ko_KR",
+        "policyID" : 1,
+        "policyURL" : "https://gugu.smap.site/terms"
+      }
+    ]
+  },
+  "identifier" : "GUGU2026",
+  "nonRenewingSubscriptions" : [ ],
+  "products" : [
+    {
+      "displayPrice" : "4400",
+      "familyShareable" : false,
+      "internalID" : "10000001",
+      "localizations" : [
+        {
+          "description" : "60초 챌린지·서바이벌·빈칸 추리·OX 퀴즈 + 3D 어드벤처 전 지역을 평생 이용",
+          "displayName" : "평생 이용권",
+          "locale" : "ko_KR"
+        }
+      ],
+      "productID" : "site.smap.next.premium",
+      "referenceName" : "평생 이용권",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_developerTeamID" : "ZVXXRV5MTP",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 0,
+    "_locale" : "ko_KR",
+    "_storefront" : "KOR",
+    "_storeKitErrors" : [ ]
+  },
+  "subscriptionGroups" : [ ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

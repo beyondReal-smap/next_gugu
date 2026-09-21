@@ -42,3 +42,6 @@ next-env.d.ts
 
 # 스토어 에셋 중 대용량 APK는 git 제외
 store-assets/*.apk
+
+# 에이전트 작업용 스크래치 (빌드 로그·스크린샷)
+.claude/scratch/

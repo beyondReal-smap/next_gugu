@@ -1,0 +1,8 @@
+# 빌드 산출물 (아카이브·IPA·DerivedData) — ExportOptions 만 남긴다
+build/*
+!build/ExportOptions.plist
+
+# Xcode 사용자별 상태
+xcuserdata/
+*.xcuserdatad
+DerivedData/
