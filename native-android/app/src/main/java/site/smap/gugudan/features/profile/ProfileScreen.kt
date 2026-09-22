@@ -17,6 +17,15 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.PersonRemove
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Add
+import android.provider.Settings
+import site.smap.gugudan.core.ReminderPlanner
+import site.smap.gugudan.features.reminder.rememberEnableReminder
+import site.smap.gugudan.store.LocalReminder
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
@@ -88,6 +97,8 @@ fun ProfileScreen() {
     var restoring by remember { mutableStateOf(false) }
     var restoreNotice by remember { mutableStateOf<String?>(null) }
     var confirmDeleteAccount by remember { mutableStateOf(false) }
+    val reminder = LocalReminder.current
+    val enableReminder = rememberEnableReminder { }
     var deletingAccount by remember { mutableStateOf(false) }
     var deleteNotice by remember { mutableStateOf<String?>(null) }
 
@@ -463,6 +474,54 @@ fun ProfileScreen() {
                 soundOn = !soundOn
                 Sound.setEnabled(soundOn)
             }
+            Divider()
+            SettingRow(
+                if (reminder.settings.enabled) Icons.Filled.Notifications else Icons.Filled.NotificationsOff,
+                "학습 알림", if (reminder.settings.enabled) "켜짐" else "꺼짐",
+            ) {
+                if (reminder.settings.enabled) reminder.disable() else enableReminder(reminder.settings.hour)
+            }
+            if (reminder.settings.enabled) {
+                Divider()
+                // 알림 시각 — 야간 발송을 막기 위해 8~20시 안에서만 고른다
+                val hour = reminder.settings.hour
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Icon(Icons.Filled.Schedule, null, tint = gg.textMuted, modifier = Modifier.size(20.dp))
+                    Text("알림 시각", style = suite(FontWeight.Bold, 15), color = gg.text,
+                         modifier = Modifier.weight(1f))
+                    HourStepButton(Icons.Filled.Remove, "한 시간 앞당기기",
+                        enabled = hour > ReminderPlanner.ALLOWED_HOURS.first) {
+                        reminder.setHour(hour - 1, state)
+                    }
+                    Text(ReminderPlanner.hourLabel(hour), style = suite(FontWeight.Bold, 14),
+                         color = gg.accent, textAlign = TextAlign.Center,
+                         modifier = Modifier.widthIn(min = 64.dp))
+                    HourStepButton(Icons.Filled.Add, "한 시간 늦추기",
+                        enabled = hour < ReminderPlanner.ALLOWED_HOURS.last) {
+                        reminder.setHour(hour + 1, state)
+                    }
+                }
+            }
+        }
+        // 앱에서는 켰지만 시스템 설정에서 꺼진 경우 — 앱이 대신 켤 수 없어 설정으로 안내한다
+        if (reminder.deniedBySystem) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("휴대폰 설정에서 구구 어드벤처 알림이 꺼져 있어요.",
+                     style = suite(FontWeight.Medium, 12), color = gg.warning, modifier = Modifier.weight(1f))
+                Text(
+                    "설정 열기", style = suite(FontWeight.Bold, 12), color = gg.accent,
+                    modifier = Modifier.heightIn(min = 44.dp).wrapContentHeight().clickable {
+                        context.startActivity(
+                            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        )
+                    },
+                )
+            }
         }
 
         // 초기화
@@ -511,6 +570,19 @@ private fun MiniStat(modifier: Modifier, label: String, value: String) {
 private fun Divider() {
     val gg = LocalGG.current
     Box(Modifier.fillMaxWidth().height(1.dp).background(gg.border))
+}
+
+@Composable
+private fun HourStepButton(icon: ImageVector, description: String, enabled: Boolean, onTap: () -> Unit) {
+    val gg = LocalGG.current
+    Box(
+        Modifier.size(36.dp).clip(CircleShape).background(gg.surface2)
+            .clickable(enabled = enabled) { Haptics.impactLight(); onTap() },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, description, tint = if (enabled) gg.text else gg.textMuted.copy(alpha = 0.4f),
+             modifier = Modifier.size(16.dp))
+    }
 }
 
 @Composable

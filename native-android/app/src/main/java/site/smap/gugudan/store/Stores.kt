@@ -177,3 +177,4 @@ val LocalTheme = staticCompositionLocalOf<ThemeStore> { error("ThemeStore 미제
 val LocalRouter = staticCompositionLocalOf<Router> { error("Router 미제공") }
 val LocalAuth = staticCompositionLocalOf<AuthStore> { error("AuthStore 미제공") }
 val LocalSync = staticCompositionLocalOf<SyncStore> { error("SyncStore 미제공") }
+val LocalReminder = staticCompositionLocalOf<ReminderStore> { error("ReminderStore 미제공") }

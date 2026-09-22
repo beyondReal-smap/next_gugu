@@ -11,6 +11,8 @@ struct RootView: View {
     @State private var router = Router()
     @State private var auth = AuthStore()
     @State private var sync = SyncStore()
+    @State private var reminder = ReminderStore()
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         content
@@ -22,6 +24,7 @@ struct RootView: View {
             .environment(router)
             .environment(auth)
             .environment(sync)
+            .environment(reminder)
             .preferredColorScheme(theme.colorScheme)
             .tint(.gg.accent)
             // 첫 실행 시 조용히 익명 계정을 만든다 — 화면을 막지 않고 실패해도 앱은 그대로 동작
@@ -46,6 +49,16 @@ struct RootView: View {
             .onChange(of: auth.isPermanent) { _, isPermanent in
                 guard isPermanent, premium.isPremium else { return }
                 Task { await sync.enableGuardianSync(auth: auth) }
+            }
+            // 학습 알림 재예약 — 앱 시작, 앱으로 돌아올 때(날짜가 바뀌었을 수 있다),
+            // 학습해서 오늘 진척이 바뀔 때. 오늘 목표를 채웠다면 이때 오늘 알림이 빠진다.
+            .task { await reminder.reschedule(state: game.state) }
+            .onChange(of: scenePhase) { _, phase in
+                guard phase == .active else { return }
+                Task { await reminder.reschedule(state: game.state) }
+            }
+            .onChange(of: game.state.dailyCorrect) { _, _ in
+                Task { await reminder.reschedule(state: game.state) }
             }
     }
 

@@ -8,8 +8,16 @@ struct ResultView: View {
     var onClose: () -> Void
 
     @Environment(GameStore.self) private var game
+    @Environment(ReminderStore.self) private var reminder
     @State private var confetti = 0
     @State private var levelUp = false
+    @State private var reminderBusy = false
+    @State private var reminderNotice: String?
+
+    /// 권유 시각 = 지금 시각. "이 시간에" 공부한 아이는 내일도 이 시간이 편하다 (야간은 8~20시로 당긴다)
+    private var offerHour: Int {
+        ReminderPlanner.clampHour(Calendar.current.component(.hour, from: Date()))
+    }
 
     private var result: SessionResult { done.result }
     private var commit: CommitResult { done.commit }
@@ -29,6 +37,50 @@ struct ResultView: View {
         if accuracy >= 95 { return "완벽해요! 🎯" }
         if accuracy >= 70 { return "잘했어요!" }
         return "좋은 시도예요!"
+    }
+
+    @ViewBuilder
+    private var reminderOffer: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if let reminderNotice {
+                Label(reminderNotice, systemImage: "bell")
+                    .font(.suite(.bold, 14)).foregroundStyle(Color.gg.text)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                HStack(spacing: 8) {
+                    Image(systemName: "bell.badge").font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(Color.gg.accent)
+                    Text("내일도 이 시간에 알려드릴까요?")
+                        .font(.suite(.extrabold, 15)).foregroundStyle(Color.gg.text)
+                }
+                Text("매일 \(ReminderPlanner.hourLabel(offerHour))에 오늘의 구구단을 알려드려요. 밤에는 보내지 않아요.")
+                    .font(.suite(.medium, 13)).foregroundStyle(Color.gg.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 8) {
+                    GGButton(variant: .surface, size: .md, action: { reminder.declineOffer() }) {
+                        Text("괜찮아요")
+                    }
+                    GGButton(variant: .primary, size: .md, action: acceptReminder) {
+                        Text(reminderBusy ? "설정 중…" : "알림 받기")
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .ggCard(padding: 16)
+    }
+
+    private func acceptReminder() {
+        guard !reminderBusy else { return }
+        reminderBusy = true
+        Task {
+            let hour = offerHour
+            let granted = await reminder.enable(hour: hour, state: game.state)
+            reminderBusy = false
+            reminderNotice = granted
+                ? "매일 \(ReminderPlanner.hourLabel(hour))에 알려드릴게요. 프로필 > 설정에서 바꿀 수 있어요."
+                : "알림이 꺼져 있어요. 설정 앱에서 구구 어드벤처 알림을 켤 수 있어요."
+        }
     }
 
     var body: some View {
@@ -54,6 +106,11 @@ struct ResultView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
                             .background(Color.gg.success.opacity(0.15), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+
+                    // 첫 실행이 아니라 한 판을 끝낸 뒤에 묻는다 — iOS 는 권한을 한 번만 물을 수 있다
+                    if (reminder.shouldOfferAfterSession && !result.partial) || reminderNotice != nil {
+                        reminderOffer
                     }
 
                     Spacer(minLength: 8)

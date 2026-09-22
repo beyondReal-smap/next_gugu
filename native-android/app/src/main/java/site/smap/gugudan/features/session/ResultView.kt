@@ -27,7 +27,12 @@ import kotlinx.coroutines.delay
 import site.smap.gugudan.core.ModeKind
 import site.smap.gugudan.core.Modes
 import site.smap.gugudan.designsystem.*
+import site.smap.gugudan.core.ReminderPlanner
+import site.smap.gugudan.features.reminder.rememberEnableReminder
 import site.smap.gugudan.store.LocalGame
+import site.smap.gugudan.store.LocalReminder
+import androidx.compose.material.icons.filled.NotificationsActive
+import java.time.LocalTime
 
 // 세션 결과 화면 (iOS ResultView.swift 이식)
 
@@ -54,6 +59,19 @@ fun ResultView(engine: SessionEngine, done: SessionDone, onClose: () -> Unit) {
 
     var confetti by remember { mutableStateOf(0) }
     var levelUp by remember { mutableStateOf(false) }
+
+    // 학습 알림 권유 — 첫 실행이 아니라 한 판을 끝낸 뒤에 묻는다 (iOS 와 같은 흐름)
+    val reminder = LocalReminder.current
+    // 권유 시각 = 지금 시각. "이 시간에" 공부한 아이는 내일도 이 시간이 편하다 (야간은 8~20시로 당긴다)
+    val offerHour = remember { ReminderPlanner.clampHour(LocalTime.now().hour) }
+    var reminderNotice by remember { mutableStateOf<String?>(null) }
+    val enableReminder = rememberEnableReminder { granted ->
+        reminderNotice = if (granted) {
+            "매일 ${ReminderPlanner.hourLabel(offerHour)}에 알려드릴게요. 프로필 > 설정에서 바꿀 수 있어요."
+        } else {
+            "알림이 꺼져 있어요. 휴대폰 설정에서 구구 어드벤처 알림을 켤 수 있어요."
+        }
+    }
 
     LaunchedEffect(Unit) {
         if (accuracy >= 80 || commit.isNewBest) confetti += 1
@@ -129,6 +147,40 @@ fun ResultView(engine: SessionEngine, done: SessionDone, onClose: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
                         .background(gg.success.copy(alpha = 0.15f)).padding(vertical = 12.dp),
                 )
+            }
+
+            if ((reminder.shouldOfferAfterSession && !result.partial) || reminderNotice != null) {
+                Column(
+                    Modifier.fillMaxWidth().ggCard(16.dp).padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    val notice = reminderNotice
+                    if (notice != null) {
+                        Text(notice, style = suite(FontWeight.Bold, 14), color = gg.text)
+                    } else {
+                        Row(verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(Icons.Filled.NotificationsActive, null, tint = gg.accent,
+                                modifier = Modifier.size(18.dp))
+                            Text("내일도 이 시간에 알려드릴까요?",
+                                style = suite(FontWeight.ExtraBold, 15), color = gg.text)
+                        }
+                        Text(
+                            "매일 ${ReminderPlanner.hourLabel(offerHour)}에 오늘의 구구단을 알려드려요. 밤에는 보내지 않아요.",
+                            style = suite(FontWeight.Medium, 13), color = gg.textMuted,
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            GGButton(variant = GGButtonVariant.SURFACE, size = GGButtonSize.MD,
+                                modifier = Modifier.weight(1f), onClick = { reminder.declineOffer() }) {
+                                Text("괜찮아요")
+                            }
+                            GGButton(variant = GGButtonVariant.PRIMARY, size = GGButtonSize.MD,
+                                modifier = Modifier.weight(1f), onClick = { enableReminder(offerHour) }) {
+                                Text("알림 받기")
+                            }
+                        }
+                    }
+                }
             }
 
             Spacer(Modifier.weight(1f, fill = false))

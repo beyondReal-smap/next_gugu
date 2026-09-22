@@ -51,6 +51,7 @@ import site.smap.gugudan.features.session.SessionScreen
 import site.smap.gugudan.services.Haptics
 import site.smap.gugudan.services.LearningIdentityStore
 import site.smap.gugudan.services.LearningOutboxStore
+import site.smap.gugudan.services.LocalNotifications
 import site.smap.gugudan.services.Persistence
 import site.smap.gugudan.services.Sound
 import site.smap.gugudan.store.*
@@ -81,6 +82,9 @@ class MainActivity : ComponentActivity() {
             LearningIdentityStore(persistence), LearningOutboxStore(persistence), lifecycleScope,
         )
 
+        reminder = ReminderStore(this, persistence).also { LocalNotifications.ensureChannel(this) }
+        gameStore = game
+
         setContent {
             CompositionLocalProvider(
                 LocalGame provides game,
@@ -91,6 +95,7 @@ class MainActivity : ComponentActivity() {
                 LocalRouter provides router,
                 LocalAuth provides auth,
                 LocalSync provides sync,
+                LocalReminder provides reminder,
             ) {
                 GuguTheme(theme.theme) {
                     // 첫 실행 시 조용히 익명 계정을 만든다 — 화면을 막지 않고 실패해도 앱은 그대로 동작
@@ -113,11 +118,23 @@ class MainActivity : ComponentActivity() {
                             sync.enableGuardianSync(auth, premium.lastPurchaseToken)
                         }
                     }
+                    // 학습 알림 재예약 — 학습해서 오늘 진척이 바뀔 때.
+                    // 오늘 목표를 채웠다면 이때 오늘 알림이 빠진다. (앱 복귀는 onResume 에서)
+                    LaunchedEffect(game.state.dailyCorrect) { reminder.reschedule(game.state) }
                     RootScreen()
                 }
             }
         }
     }
+
+    // 앱으로 돌아올 때마다 다시 계획한다 — 날짜가 바뀌었거나 시스템 알림 설정이 바뀌었을 수 있다
+    override fun onResume() {
+        super.onResume()
+        if (::reminder.isInitialized) reminder.reschedule(gameStore.state)
+    }
+
+    private lateinit var reminder: ReminderStore
+    private lateinit var gameStore: GameStore
 
     private fun getSystemProperty(key: String): String? = try {
         val cls = Class.forName("android.os.SystemProperties")
