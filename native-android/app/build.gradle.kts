@@ -40,7 +40,7 @@ android {
         applicationId = "site.smap.gugudan"
         minSdk = 28          // SceneView(Filament) 요구 — 기기 커버리지 ~97%
         targetSdk = 36
-        versionCode = 16     // vc16: 익명 계정·학습 원장 동기화, 프로필 정리, 구매 복원 노출
+        versionCode = 17     // vc17: vc16 재업로드 + 앱 내 계정 삭제(5.1.1(v)/Play 데이터 삭제)
         versionName = "2.2.0"
 
         buildConfigField("String", "SUPABASE_HOST", "\"${supabaseProp("SUPABASE_HOST")}\"")
