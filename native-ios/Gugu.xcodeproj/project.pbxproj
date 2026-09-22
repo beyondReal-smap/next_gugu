@@ -203,7 +203,7 @@
 		F43EF84A222A734E1BC65CC5 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		F8EC7710F589EFBAFA446F71 /* LearningOutbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningOutbox.swift; sourceTree = "<group>"; };
 		FBA2B910E508458F78410A72 /* SessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionView.swift; sourceTree = "<group>"; };
-		"TEMP_2E975E1E-2841-47EB-960A-1CD247C546B7" /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		"TEMP_72D46A0D-DF9A-4247-8D59-F72160CC98F2" /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -506,10 +506,10 @@
 			path = Paywall;
 			sourceTree = "<group>";
 		};
-		"TEMP_2231BDB7-150F-41A4-A781-02BCC367B865" /* native-ios */ = {
+		"TEMP_9F9919BE-020E-4442-A09C-88F82842ADB3" /* native-ios */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_2E975E1E-2841-47EB-960A-1CD247C546B7" /* Config.xcconfig */,
+				"TEMP_72D46A0D-DF9A-4247-8D59-F72160CC98F2" /* Config.xcconfig */,
 			);
 			path = "native-ios";
 			sourceTree = "<group>";
@@ -770,7 +770,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 19;
+				CURRENT_PROJECT_VERSION = 20;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = ZVXXRV5MTP;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -798,7 +798,7 @@
 		};
 		577D8F43D99D0D1A04D76A2E /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_2E975E1E-2841-47EB-960A-1CD247C546B7" /* Config.xcconfig */;
+			baseConfigurationReference = "TEMP_72D46A0D-DF9A-4247-8D59-F72160CC98F2" /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
@@ -866,7 +866,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 19;
+				CURRENT_PROJECT_VERSION = 20;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = ZVXXRV5MTP;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -901,7 +901,7 @@
 		};
 		A38781D2F7BDC5E1814C9883 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_2E975E1E-2841-47EB-960A-1CD247C546B7" /* Config.xcconfig */;
+			baseConfigurationReference = "TEMP_72D46A0D-DF9A-4247-8D59-F72160CC98F2" /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
