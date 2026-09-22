@@ -8,6 +8,7 @@ struct ProfileView: View {
     @Environment(PremiumStore.self) private var premium
     @Environment(AuthStore.self) private var auth
     @Environment(SyncStore.self) private var sync
+    @Environment(ReminderStore.self) private var reminder
     @Environment(\.openURL) private var openURL
 
     @State private var email = ""
@@ -257,9 +258,73 @@ struct ProfileView: View {
                     action: soundOn ? "켜짐" : "꺼짐") {
                     soundOn.toggle(); Sound.shared.setEnabled(soundOn)
                 }
+                divider
+                row(icon: reminder.settings.enabled ? "bell.fill" : "bell.slash", label: "학습 알림",
+                    action: reminder.settings.enabled ? "켜짐" : "꺼짐", onTap: toggleReminder)
+                if reminder.settings.enabled {
+                    divider
+                    reminderHourRow
+                }
             }
             .ggCard(padding: 0)
+
+            // 앱에서는 켰지만 시스템 설정에서 꺼진 경우 — 앱이 대신 켤 수 없어 설정으로 안내한다
+            if reminder.deniedBySystem {
+                HStack(spacing: 8) {
+                    Text("설정 앱에서 구구 어드벤처 알림이 꺼져 있어요.")
+                        .font(.suite(.medium, 12)).foregroundStyle(Color.gg.warning)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 4)
+                    Button("설정 열기") { open(UIApplication.openNotificationSettingsURLString) }
+                        .font(.suite(.bold, 12)).foregroundStyle(Color.gg.accent)
+                        .frame(minHeight: 44)
+                }
+            }
         }
+    }
+
+    /// 알림 시각 — 야간 발송을 막기 위해 8~20시 안에서만 고른다
+    private var reminderHourRow: some View {
+        let hour = reminder.settings.hour
+        return HStack(spacing: 12) {
+            Image(systemName: "clock").foregroundStyle(Color.gg.textMuted).frame(width: 24)
+            Text("알림 시각").font(.suite(.bold, 15)).foregroundStyle(Color.gg.text)
+            Spacer()
+            Button { changeReminderHour(by: -1) } label: {
+                Image(systemName: "minus").font(.system(size: 13, weight: .bold)).frame(width: 36, height: 36)
+                    .background(Color.gg.surface2, in: Circle())
+            }
+            .buttonStyle(.plain)
+            .disabled(hour <= ReminderPlanner.allowedHours.lowerBound)
+            .accessibilityLabel("한 시간 앞당기기")
+            Text(ReminderPlanner.hourLabel(hour))
+                .font(.suite(.bold, 14)).foregroundStyle(Color.gg.accent).monospacedDigit()
+                .frame(minWidth: 64)
+            Button { changeReminderHour(by: 1) } label: {
+                Image(systemName: "plus").font(.system(size: 13, weight: .bold)).frame(width: 36, height: 36)
+                    .background(Color.gg.surface2, in: Circle())
+            }
+            .buttonStyle(.plain)
+            .disabled(hour >= ReminderPlanner.allowedHours.upperBound)
+            .accessibilityLabel("한 시간 늦추기")
+        }
+        .foregroundStyle(Color.gg.text)
+        .padding(.horizontal, 20).padding(.vertical, 10)
+    }
+
+    private func toggleReminder() {
+        Task {
+            if reminder.settings.enabled {
+                await reminder.disable()
+            } else {
+                await reminder.enable(hour: reminder.settings.hour, state: game.state)
+            }
+        }
+    }
+
+    private func changeReminderHour(by delta: Int) {
+        Haptics.impact(.light)
+        Task { await reminder.setHour(reminder.settings.hour + delta, state: game.state) }
     }
 
     private var resetSection: some View {

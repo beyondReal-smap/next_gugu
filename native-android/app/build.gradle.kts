@@ -113,6 +113,8 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     implementation("androidx.datastore:datastore-preferences:1.1.4")
+    // 학습 알림 예약 — 재부팅 후에도 예약이 유지되고 절전(Doze)을 존중한다
+    implementation("androidx.work:work-runtime-ktx:2.10.1")
     implementation("com.android.billingclient:billing-ktx:8.0.0")
     implementation("io.github.sceneview:sceneview:4.24.0")
 

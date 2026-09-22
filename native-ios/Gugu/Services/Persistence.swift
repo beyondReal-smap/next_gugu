@@ -15,6 +15,8 @@ enum Persistence {
     /// 서버 동기화 — 학습 신원 / 오프라인 아웃박스
     static let learningIdentityKey = "gugu.learning.identity.v1"
     static let learningOutboxKey = "gugu.learning.outbox.v1"
+    /// 학습 알림 설정 (켜짐·시각·권유 여부)
+    static let reminderKey = "gugu.reminder.v1"
 
     private static let defaults = UserDefaults.standard
 

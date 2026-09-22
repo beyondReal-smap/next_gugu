@@ -3,6 +3,8 @@
 
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="com.android.vending.BILLING" />
+    <!-- 학습 알림 (Android 13+ 런타임 권한). 결과 화면에서 맥락을 설명한 뒤에만 요청한다 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:label="@string/app_name"

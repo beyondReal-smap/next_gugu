@@ -17,6 +17,7 @@
 		1B588FF0B8D4789DFB8B859E /* LaneRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = BADFACD8454A08B58D84DA33 /* LaneRunner.swift */; };
 		1BC663EE8660A46728C56751 /* ShopView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E3F269356E5721ADA94BE6 /* ShopView.swift */; };
 		24BB8F7C8AB1130F7DB1FE19 /* RunnerArt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59C370F53667D0733BA7FF3C /* RunnerArt.swift */; };
+		273950A0F5AB4F5ECCA22E67 /* ReminderPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56BD78C3A0D5F186748699EB /* ReminderPlanner.swift */; };
 		2C7D181E62B931F755CACB0F /* Runner.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA3A8F90A39CF19F3B5DE53 /* Runner.swift */; };
 		3208193C1A7C2F0F92CD407E /* RunnerEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1292FA1F6728D2CDCA3C610A /* RunnerEngine.swift */; };
 		32182963F88C08A9650E5320 /* LaneRunnerEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9363813D7690534618381779 /* LaneRunnerEngine.swift */; };
@@ -44,11 +45,13 @@
 		750929AC8FB210B5D658B40D /* LearningRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1727653094B74B7A7E9FD91C /* LearningRecord.swift */; };
 		773037F723D74A74CA31125D /* PremiumConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FA7C1AD6535EEF1030922DD /* PremiumConfig.swift */; };
 		7F831F760CC70945C723AABF /* GameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F6900C60C1949DFBC691D00 /* GameStore.swift */; };
+		86014C9977D88CEBF3756786 /* ReminderStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8300AA354A3349D15C39DF1D /* ReminderStore.swift */; };
 		86BD94849F1E26BA813C3A5D /* BattleEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62986D1D5FFBFDAF6CDB32CE /* BattleEngine.swift */; };
 		8ADE566C5D3D02558A57ED39 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E87981D42E8C57F66573E700 /* Theme.swift */; };
 		90E2EBDEFBB8E4636C61CBF8 /* SupabaseConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85FFB85099529C87A980E63B /* SupabaseConfig.swift */; };
 		932CFAC16D0A069C503E390F /* SUITE-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 80C37D1A10C87D796CE8F5DF /* SUITE-Bold.ttf */; };
 		933577C7B52EB0418C396767 /* WorldView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CACF1D96A975DD41AC23F26D /* WorldView.swift */; };
+		95FEE9F1171C733509B4EB78 /* LocalNotifications.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63BFBB6DBA2820EC0D0BCF22 /* LocalNotifications.swift */; };
 		984E5F761C9F2B8A0FB5AED9 /* Keypad.swift in Sources */ = {isa = PBXBuildFile; fileRef = F087FC7FD1E87A4B0090EFDA /* Keypad.swift */; };
 		9CD20CDAD602CB8139287518 /* OxPad.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32B471537FC1FDBCDB84055D /* OxPad.swift */; };
 		9CE9F35AE62BCBF51C16D4C7 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B2EF810BB2EA8A11DBF9928 /* OnboardingView.swift */; };
@@ -60,6 +63,7 @@
 		A65A19E94505A8D914F9FD77 /* SUITE-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6D2D03AD4517EE32753DB6A6 /* SUITE-Light.ttf */; };
 		A65D92C661C4B4D76D0197BE /* SessionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBA2B910E508458F78410A72 /* SessionView.swift */; };
 		A8474F843A6FC3B875BD2930 /* AdventureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 856292FDA24576EAE6C99663 /* AdventureView.swift */; };
+		AA1BAD902A4ED25B1C27A079 /* ReminderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 591806E4B41529A9704E165B /* ReminderTests.swift */; };
 		ACF9FF6237BD042A804795FA /* Joystick.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EAAB2623DB4F3425AA12416 /* Joystick.swift */; };
 		B72F0385D6BBF213E6164F35 /* SupabaseAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935BAE9D2D9DBEE2262CA223 /* SupabaseAuth.swift */; };
 		BC0879C41B2E3291EB12D7B2 /* WorldRuntime.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0E5D736799158A2556E561E /* WorldRuntime.swift */; };
@@ -125,11 +129,14 @@
 		452E253920D347E780D4E7E9 /* PremiumStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PremiumStore.swift; sourceTree = "<group>"; };
 		47E37004F5940F268BCD9FA9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4FEC852A541A45BDA59174B9 /* CoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreTests.swift; sourceTree = "<group>"; };
+		56BD78C3A0D5F186748699EB /* ReminderPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderPlanner.swift; sourceTree = "<group>"; };
+		591806E4B41529A9704E165B /* ReminderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderTests.swift; sourceTree = "<group>"; };
 		59C370F53667D0733BA7FF3C /* RunnerArt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerArt.swift; sourceTree = "<group>"; };
 		5A3269C285B51CA372F69AD3 /* OrchardScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrchardScene.swift; sourceTree = "<group>"; };
 		5AA268FEBF7460D2BDB05D14 /* Gugu.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Gugu.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		62986D1D5FFBFDAF6CDB32CE /* BattleEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BattleEngine.swift; sourceTree = "<group>"; };
 		63626B79CF08EC6712D00453 /* WorldEntities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorldEntities.swift; sourceTree = "<group>"; };
+		63BFBB6DBA2820EC0D0BCF22 /* LocalNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalNotifications.swift; sourceTree = "<group>"; };
 		652BE1622F7E5E42487F01AB /* Sparkline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sparkline.swift; sourceTree = "<group>"; };
 		6B73192666D6DCA69CE17BF0 /* ResultView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultView.swift; sourceTree = "<group>"; };
 		6D2D03AD4517EE32753DB6A6 /* SUITE-Light.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SUITE-Light.ttf"; sourceTree = "<group>"; };
@@ -138,6 +145,7 @@
 		7E6BA13C2A711529D9DD85B1 /* RunnerScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerScene.swift; sourceTree = "<group>"; };
 		8088946EA96004A54EFFD549 /* ThemeStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeStore.swift; sourceTree = "<group>"; };
 		80C37D1A10C87D796CE8F5DF /* SUITE-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "SUITE-Bold.ttf"; sourceTree = "<group>"; };
+		8300AA354A3349D15C39DF1D /* ReminderStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderStore.swift; sourceTree = "<group>"; };
 		840B4BC72DC129CF52A49EA2 /* RegionMap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegionMap.swift; sourceTree = "<group>"; };
 		856292FDA24576EAE6C99663 /* AdventureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdventureView.swift; sourceTree = "<group>"; };
 		85FFB85099529C87A980E63B /* SupabaseConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseConfig.swift; sourceTree = "<group>"; };
@@ -195,7 +203,7 @@
 		F43EF84A222A734E1BC65CC5 /* SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionStore.swift; sourceTree = "<group>"; };
 		F8EC7710F589EFBAFA446F71 /* LearningOutbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningOutbox.swift; sourceTree = "<group>"; };
 		FBA2B910E508458F78410A72 /* SessionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionView.swift; sourceTree = "<group>"; };
-		"TEMP_36F1A6F7-42BE-4FDC-9B44-13F7E198473F" /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		"TEMP_2E975E1E-2841-47EB-960A-1CD247C546B7" /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -260,6 +268,7 @@
 			children = (
 				4FEC852A541A45BDA59174B9 /* CoreTests.swift */,
 				CFEDDB4AFBEAFEFC63A52443 /* LearningTests.swift */,
+				591806E4B41529A9704E165B /* ReminderTests.swift */,
 				7BD777AA94FD98D910E96C99 /* SmokeTests.swift */,
 			);
 			path = GuguTests;
@@ -315,6 +324,7 @@
 				88EEDB2B1AD487259D3CDFC0 /* AuthStore.swift */,
 				8F6900C60C1949DFBC691D00 /* GameStore.swift */,
 				452E253920D347E780D4E7E9 /* PremiumStore.swift */,
+				8300AA354A3349D15C39DF1D /* ReminderStore.swift */,
 				8FCF40BDADFA3308973DCFEE /* Router.swift */,
 				F43EF84A222A734E1BC65CC5 /* SessionStore.swift */,
 				3355BC3BAE71DD6758C8B40E /* SyncStore.swift */,
@@ -352,6 +362,7 @@
 				C056E1BEC45EFDEDD556AF89 /* Modes.swift */,
 				8FA7C1AD6535EEF1030922DD /* PremiumConfig.swift */,
 				A3D1F975B40D6CFE4E128434 /* Problems.swift */,
+				56BD78C3A0D5F186748699EB /* ReminderPlanner.swift */,
 				AAA3A8F90A39CF19F3B5DE53 /* Runner.swift */,
 			);
 			path = Core;
@@ -463,6 +474,7 @@
 				B2B414A5C244F3C1BD05C33A /* Keychain.swift */,
 				B5757D107849E0D1B06C98CB /* LearningApi.swift */,
 				AEC78DEBCD38B5AA8F6A898E /* LearningStores.swift */,
+				63BFBB6DBA2820EC0D0BCF22 /* LocalNotifications.swift */,
 				C96B353E5DA80D0FC86CA08C /* Persistence.swift */,
 				CF2CDA4DD8C239074D2D7015 /* PurchaseRegistry.swift */,
 				A534DAC93CD84B74B22AA819 /* Sound.swift */,
@@ -494,10 +506,10 @@
 			path = Paywall;
 			sourceTree = "<group>";
 		};
-		"TEMP_69759F4D-BFA9-48D2-8BD4-FCDBB8D99B34" /* native-ios */ = {
+		"TEMP_2231BDB7-150F-41A4-A781-02BCC367B865" /* native-ios */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_36F1A6F7-42BE-4FDC-9B44-13F7E198473F" /* Config.xcconfig */,
+				"TEMP_2E975E1E-2841-47EB-960A-1CD247C546B7" /* Config.xcconfig */,
 			);
 			path = "native-ios";
 			sourceTree = "<group>";
@@ -605,6 +617,7 @@
 			files = (
 				CE1C3DFCA0AE368F3FF88342 /* CoreTests.swift in Sources */,
 				0B107F9E1566239D0A00BC0E /* LearningTests.swift in Sources */,
+				AA1BAD902A4ED25B1C27A079 /* ReminderTests.swift in Sources */,
 				C933F1369277AFB1003EE82C /* SmokeTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -648,6 +661,7 @@
 				750929AC8FB210B5D658B40D /* LearningRecord.swift in Sources */,
 				4406A8CED6421347A2880A61 /* LearningStores.swift in Sources */,
 				66EB8A4D09EE8526E410841B /* Level.swift in Sources */,
+				95FEE9F1171C733509B4EB78 /* LocalNotifications.swift in Sources */,
 				5AC08CCDCC0C96C7F0263226 /* Models.swift in Sources */,
 				EEB8422AB616866DE01EF75A /* Modes.swift in Sources */,
 				9CE9F35AE62BCBF51C16D4C7 /* OnboardingView.swift in Sources */,
@@ -663,6 +677,8 @@
 				5C5450721CD3A96FEA55D096 /* Progress.swift in Sources */,
 				010240A6D87C1E8AA691F7B6 /* PurchaseRegistry.swift in Sources */,
 				F992C08BBE4258F6E7A865F4 /* RegionMap.swift in Sources */,
+				273950A0F5AB4F5ECCA22E67 /* ReminderPlanner.swift in Sources */,
+				86014C9977D88CEBF3756786 /* ReminderStore.swift in Sources */,
 				0102CBF9A356D218C5C012AA /* ResultView.swift in Sources */,
 				DA861F11D1E751261D4ECF51 /* RootView.swift in Sources */,
 				089EF46A7C1B28E6218A80A8 /* Router.swift in Sources */,
@@ -782,7 +798,7 @@
 		};
 		577D8F43D99D0D1A04D76A2E /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_36F1A6F7-42BE-4FDC-9B44-13F7E198473F" /* Config.xcconfig */;
+			baseConfigurationReference = "TEMP_2E975E1E-2841-47EB-960A-1CD247C546B7" /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
@@ -885,7 +901,7 @@
 		};
 		A38781D2F7BDC5E1814C9883 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_36F1A6F7-42BE-4FDC-9B44-13F7E198473F" /* Config.xcconfig */;
+			baseConfigurationReference = "TEMP_2E975E1E-2841-47EB-960A-1CD247C546B7" /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
