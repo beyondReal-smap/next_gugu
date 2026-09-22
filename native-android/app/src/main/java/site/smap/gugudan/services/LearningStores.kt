@@ -44,6 +44,9 @@ class LearningIdentityStore(private val persistence: Persistence) {
         return stored.copy(version = 1)
     }
 
+    /** 계정 삭제 후 기기의 귀속 정보를 버린다 — 다음 읽기에서 새 installId 가 발급된다 */
+    fun clear() = persistence.remove(Persistence.LEARNING_IDENTITY_KEY)
+
     fun write(identity: LearningIdentity) {
         persistence.putString(
             Persistence.LEARNING_IDENTITY_KEY,
@@ -87,6 +90,9 @@ class LearningOutboxStore(private val persistence: Persistence) {
         }
         return stored.copy(version = 1, events = events, serverCursor = maxOf(0, stored.serverCursor))
     }
+
+    /** 계정 삭제 후 올릴 곳이 없어진 큐를 버린다 */
+    fun clear() = persistence.remove(Persistence.LEARNING_OUTBOX_KEY)
 
     fun write(state: LearningOutboxState) {
         persistence.putString(

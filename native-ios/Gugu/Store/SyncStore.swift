@@ -118,6 +118,19 @@ final class SyncStore {
         }
     }
 
+    /// 계정 삭제 직후 기기에 남은 귀속과 큐를 버린다.
+    /// 서버 계정이 사라졌으므로 learnerId 와 올리지 못한 이벤트는 모두 의미가 없다.
+    func resetAfterAccountDeletion() {
+        flushTask?.cancel()
+        flushTask = nil
+        LearningIdentityStore.clear()
+        LearningOutboxStore.clear()
+        pendingCount = 0
+        lastServerCursor = 0
+        blockedUserId = nil
+        state = .idle
+    }
+
     /// 보호자 검증이 켜졌을 수 있는 시점(로그인/승격 직후)에 차단을 푼다
     func clearGuardianBlock() {
         blockedUserId = nil

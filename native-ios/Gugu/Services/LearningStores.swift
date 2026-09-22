@@ -29,6 +29,11 @@ enum LearningIdentityStore {
         return identity
     }
 
+    /// 계정 삭제 후 기기의 귀속 정보를 버린다 — 다음 실행에서 새 installId 가 발급된다
+    static func clear() {
+        Persistence.remove(key)
+    }
+
     static func write(_ identity: LearningIdentity) {
         Persistence.save(identity, key: key)
     }
@@ -76,6 +81,11 @@ enum LearningOutboxStore {
         }
         if state.serverCursor < 0 { state.serverCursor = 0 }
         return state
+    }
+
+    /// 계정 삭제 후 올릴 곳이 없어진 큐를 버린다
+    static func clear() {
+        Persistence.remove(key)
     }
 
     static func write(_ state: LearningOutboxState) {

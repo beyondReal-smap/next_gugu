@@ -135,6 +135,16 @@ enum LearningApi {
         return try await send(path: "/v1/learning/state\(query)", method: "GET", accessToken: accessToken, body: nil)
     }
 
+    /// 계정과 서버에 보관된 학습 기록을 삭제한다 (App Store 5.1.1(v)).
+    /// 구매 영수증은 환불·감사 대응을 위해 서버에 남고 계정 연결만 해제된다.
+    static func deleteAccount(accessToken: String) async throws {
+        let _: OkResponse = try await send(
+            path: "/account", method: "DELETE", accessToken: accessToken, body: nil
+        )
+    }
+
+    private struct OkResponse: Decodable { var ok: Bool }
+
     // MARK: - 내부
 
     private static func send<T: Decodable>(

@@ -451,9 +451,34 @@ async def verify_guardian(user: AuthUser = Depends(require_user)):
 async def delete_account(user: AuthUser = Depends(require_user)):
     """계정 삭제 (App Store 5.1.1(v)).
 
-    구매-계정 연결만 해제하고 영수증 기록은 보존(환불/감사 대비) 후 Supabase 사용자 삭제.
+    순서가 중요하다 — 학습 데이터를 먼저 지우고 인증 사용자를 지운다.
+    auth.users 를 참조하는 FK 가 없어서, 사용자를 먼저 지우면 학습 데이터가 고아로
+    남아 어떤 계정의 것인지도 알 수 없게 된다(2026-09-22 발견). 개인정보처리방침은
+    계정과 학습 기록을 함께 지운다고 고지하므로 반드시 둘 다 지워야 한다.
+
+    구매 영수증은 환불·감사 대응을 위해 보존하고 계정 연결만 해제한다.
     """
+    try:
+        purged = await supabase_admin.call_rpc(
+            "gugu_purge_owner_data", {"p_owner_user_id": user.id}
+        )
+    except supabase_admin.SupabaseDataError as exc:
+        # 학습 데이터를 못 지웠는데 계정만 지우면 고아 데이터가 남는다 → 중단한다
+        log.exception("계정 삭제 중단: 학습 데이터 정리 실패 user=%s", mask_identifier(user.id))
+        raise HTTPException(
+            503,
+            detail=error_detail(
+                "ACCOUNT_DELETE_FAILED",
+                "계정을 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+            ),
+        ) from exc
+
     unlinked = unlink_user_purchases(user.id)
     await supabase_admin.delete_user(user.id)
-    log.info("계정 삭제 user=%s (구매 연결 해제 %d건)", mask_identifier(user.id), unlinked)
+    log.info(
+        "계정 삭제 user=%s 학습데이터=%s 구매연결해제=%d건",
+        mask_identifier(user.id),
+        purged,
+        unlinked,
+    )
     return {"ok": True}

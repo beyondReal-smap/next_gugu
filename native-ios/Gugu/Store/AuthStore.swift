@@ -155,6 +155,24 @@ final class AuthStore {
         }
     }
 
+    /// 계정과 서버에 보관된 학습 기록을 삭제한다 (App Store 5.1.1(v)).
+    ///
+    /// 성공하면 기기 세션을 버리고 새 익명 계정으로 다시 시작해, 사용자가 앱을
+    /// 그대로 계속 쓸 수 있게 한다. 기기에 남은 귀속·큐 정리는 SyncStore 가 맡는다.
+    func deleteAccount() async -> Bool {
+        guard let token = await accessToken() else { return false }
+        do {
+            try await LearningApi.deleteAccount(accessToken: token)
+        } catch {
+            print("[Auth] 계정 삭제 실패:", error.localizedDescription)
+            return false
+        }
+        signOutLocally()
+        promotion = .none
+        await start()
+        return true
+    }
+
     /// 기기에서 계정 연결을 끊는다 (서버 계정은 남는다 — 삭제는 DELETE /api/account 담당)
     func signOutLocally() {
         inflight?.cancel()

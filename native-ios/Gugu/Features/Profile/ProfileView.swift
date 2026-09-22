@@ -17,6 +17,9 @@ struct ProfileView: View {
     @State private var confirmReset = false
     @State private var restoring = false
     @State private var restoreNotice: String?
+    @State private var confirmDeleteAccount = false
+    @State private var deletingAccount = false
+    @State private var deleteNotice: String?
 
     private let scoredModes: [GameMode] = [.challenge, .survival]
 
@@ -383,9 +386,74 @@ struct ProfileView: View {
                         .font(.suite(.bold, 12)).foregroundStyle(Color.gg.warning)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+
+                deleteAccountSection
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .ggCard()
+        }
+    }
+
+    /// 계정 삭제 (App Store 5.1.1(v)) — 계정 생성을 지원하는 앱은 앱 안에서 삭제도 제공해야 한다.
+    /// 되돌릴 수 없으므로 「기록 초기화」와 같은 2단 확인을 둔다.
+    @ViewBuilder
+    private var deleteAccountSection: some View {
+        Divider().overlay(Color.gg.border)
+
+        if let deleteNotice {
+            Text(deleteNotice)
+                .font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+
+        if confirmDeleteAccount {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("계정과 서버에 보관된 학습 기록을 지웁니다. 되돌릴 수 없어요.")
+                    .font(.suite(.bold, 13)).foregroundStyle(Color.gg.text)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("기기에 있는 기록과 이용권은 그대로예요. 이용권은 「구매 복원」으로 다시 쓸 수 있어요.")
+                    .font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 8) {
+                    GGButton(variant: .surface, size: .md,
+                             action: { confirmDeleteAccount = false }) { Text("취소") }
+                    GGButton(variant: .danger, size: .md, action: deleteAccount) {
+                        Text(deletingAccount ? "삭제 중…" : "삭제 확인")
+                    }
+                }
+            }
+        } else {
+            Button {
+                Haptics.impact(.light)
+                deleteNotice = nil
+                confirmDeleteAccount = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "person.crop.circle.badge.xmark")
+                        .font(.system(size: 14, weight: .bold))
+                    Text("계정 삭제").font(.suite(.bold, 13))
+                    Spacer(minLength: 0)
+                }
+                .foregroundStyle(Color.gg.danger)
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func deleteAccount() {
+        guard !deletingAccount else { return }
+        deletingAccount = true
+        deleteNotice = nil
+        Task {
+            let ok = await auth.deleteAccount()
+            if ok { sync.resetAfterAccountDeletion() }
+            deletingAccount = false
+            confirmDeleteAccount = false
+            deleteNotice = ok
+                ? "계정과 서버에 보관된 학습 기록을 지웠어요."
+                : "계정을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요."
         }
     }
 

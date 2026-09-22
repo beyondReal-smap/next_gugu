@@ -9,6 +9,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.serialization.json.Json
 import site.smap.gugudan.services.AuthSession
+import site.smap.gugudan.services.LearningApi
 import site.smap.gugudan.services.Persistence
 import site.smap.gugudan.services.SupabaseAuth
 import site.smap.gugudan.services.SupabaseAuthException
@@ -173,6 +174,26 @@ class AuthStore(
             Log.w(TAG, "토큰 강제 갱신 실패: ${e.message}")
             false
         }
+    }
+
+    /**
+     * 계정과 서버에 보관된 학습 기록을 삭제한다 (App Store 5.1.1(v) / Play 데이터 삭제 요건).
+     *
+     * 성공하면 기기 세션을 버리고 새 익명 계정으로 다시 시작해, 사용자가 앱을 그대로
+     * 계속 쓸 수 있게 한다. 기기에 남은 귀속·큐 정리는 SyncStore 가 맡는다.
+     */
+    suspend fun deleteAccount(): Boolean {
+        val token = accessToken() ?: return false
+        try {
+            LearningApi.deleteAccount(token)
+        } catch (e: Exception) {
+            Log.w(TAG, "계정 삭제 실패: ${e.message}")
+            return false
+        }
+        signOutLocally()
+        promotion = Promotion.None
+        start()
+        return true
     }
 
     /** 기기에서 계정 연결을 끊는다 (서버 계정은 남는다 — 삭제는 DELETE /api/account 담당) */

@@ -137,6 +137,21 @@ class SyncStore(
         }
     }
 
+    /**
+     * 계정 삭제 직후 기기에 남은 귀속과 큐를 버린다.
+     * 서버 계정이 사라졌으므로 learnerId 와 올리지 못한 이벤트는 모두 의미가 없다.
+     */
+    fun resetAfterAccountDeletion() {
+        flushJob?.cancel()
+        flushJob = null
+        identityStore.clear()
+        outboxStore.clear()
+        pendingCount = 0
+        lastServerCursor = 0
+        blockedUserId = null
+        state = State.Idle
+    }
+
     /** 보호자 검증이 켜졌을 수 있는 시점(로그인/승격 직후)에 차단을 푼다 */
     fun clearGuardianBlock() {
         blockedUserId = null

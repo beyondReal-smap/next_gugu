@@ -127,6 +127,14 @@ object LearningApi {
             .getOrElse { throw LearningApiException.Malformed() }
     }
 
+    /**
+     * 계정과 서버에 보관된 학습 기록을 삭제한다 (App Store 5.1.1(v) / Play 데이터 삭제 요건).
+     * 구매 영수증은 환불·감사 대응을 위해 서버에 남고 계정 연결만 해제된다.
+     */
+    suspend fun deleteAccount(accessToken: String) {
+        send("/account", "DELETE", accessToken, null)
+    }
+
     private suspend fun send(
         path: String,
         method: String,

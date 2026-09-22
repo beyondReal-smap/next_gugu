@@ -3,6 +3,7 @@ package site.smap.gugudan.features.profile
 import android.content.Intent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
@@ -85,6 +87,9 @@ fun ProfileScreen() {
     var confirmReset by remember { mutableStateOf(false) }
     var restoring by remember { mutableStateOf(false) }
     var restoreNotice by remember { mutableStateOf<String?>(null) }
+    var confirmDeleteAccount by remember { mutableStateOf(false) }
+    var deletingAccount by remember { mutableStateOf(false) }
+    var deleteNotice by remember { mutableStateOf<String?>(null) }
 
     val state = game.state
     val level = game.levelInfo
@@ -330,6 +335,74 @@ fun ProfileScreen() {
 
                 (promotion as? AuthStore.Promotion.Failed)?.let {
                     Text(it.message, style = suite(FontWeight.Bold, 12), color = gg.warning)
+                }
+
+                // 계정 삭제 (App Store 5.1.1(v) / Play 데이터 삭제 요건).
+                // 되돌릴 수 없으므로 「기록 초기화」와 같은 2단 확인을 둔다.
+                Divider()
+
+                deleteNotice?.let {
+                    Text(it, style = suite(FontWeight.Medium, 12), color = gg.textMuted)
+                }
+
+                if (confirmDeleteAccount) {
+                    Text(
+                        "계정과 서버에 보관된 학습 기록을 지웁니다. 되돌릴 수 없어요.",
+                        style = suite(FontWeight.Bold, 13), color = gg.text,
+                    )
+                    Text(
+                        "기기에 있는 기록과 이용권은 그대로예요. 이용권은 「구매 복원」으로 다시 쓸 수 있어요.",
+                        style = suite(FontWeight.Medium, 12), color = gg.textMuted,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        GGButton(
+                            onClick = { confirmDeleteAccount = false },
+                            variant = GGButtonVariant.SURFACE,
+                            modifier = Modifier.weight(1f),
+                        ) { Text("취소", style = suite(FontWeight.Bold, 14), color = gg.text) }
+                        GGButton(
+                            onClick = {
+                                if (!deletingAccount) {
+                                    deletingAccount = true
+                                    deleteNotice = null
+                                    scope.launch {
+                                        val ok = auth.deleteAccount()
+                                        if (ok) sync.resetAfterAccountDeletion()
+                                        deletingAccount = false
+                                        confirmDeleteAccount = false
+                                        deleteNotice = if (ok) {
+                                            "계정과 서버에 보관된 학습 기록을 지웠어요."
+                                        } else {
+                                            "계정을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요."
+                                        }
+                                    }
+                                }
+                            },
+                            variant = GGButtonVariant.DANGER,
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(
+                                if (deletingAccount) "삭제 중…" else "삭제 확인",
+                                style = suite(FontWeight.Bold, 14), color = gg.accentFg,
+                            )
+                        }
+                    }
+                } else {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 44.dp)
+                            .clickable {
+                                deleteNotice = null
+                                confirmDeleteAccount = true
+                            },
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(Icons.Filled.PersonRemove, null, tint = gg.danger,
+                             modifier = Modifier.size(18.dp))
+                        Text("계정 삭제", style = suite(FontWeight.Bold, 13), color = gg.danger)
+                    }
                 }
             }
         }
