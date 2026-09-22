@@ -23,6 +23,9 @@ final class BattleEngine {
     let npc: NpcDef
     private let game: GameStore
     private let adventure: AdventureStore
+    /// 전투 결과를 밖으로 넘긴다 (학습 원장 적재).
+    /// 엔진이 SyncStore/AuthStore 를 직접 알면 의존이 역류하므로 뷰 경계에서 잇는다.
+    private let onCommit: (SessionResult) -> Void
 
     private let isBoss: Bool
     private let style: BattleStyle
@@ -72,10 +75,12 @@ final class BattleEngine {
     var maxComboReached: Int { maxCombo }
     var npcMaxHp: Int { npc.hp }
 
-    init(npc: NpcDef, game: GameStore, adventure: AdventureStore) {
+    init(npc: NpcDef, game: GameStore, adventure: AdventureStore,
+         onCommit: @escaping (SessionResult) -> Void = { _ in }) {
         self.npc = npc
         self.game = game
         self.adventure = adventure
+        self.onCommit = onCommit
         self.isBoss = npc.kind == .boss
         self.style = npc.battle
         self.counterLimit = Battle.counterLimitMs(npc.table)
@@ -133,7 +138,7 @@ final class BattleEngine {
         guard phase == .play, !lock, !done else { return }
         lock = true
         timedOut = true
-        resolve(false, ms: counterLimit)
+        resolve(false, ms: counterLimit, given: .noAnswer)
     }
 
     // MARK: - 코어
@@ -141,11 +146,12 @@ final class BattleEngine {
     private func submit(_ value: String) {
         guard let parsed = Int(value) else { lock = false; return }
         let ms = Int((now() - qStart).rounded())
-        resolve(parsed == problem.a * problem.b, ms: ms)
+        resolve(parsed == problem.a * problem.b, ms: ms, given: .number(parsed))
     }
 
-    private func resolve(_ correct: Bool, ms: Int) {
-        answers.append(AnswerRecord(a: problem.a, b: problem.b, correct: correct, ms: ms))
+    /// given 은 아이가 실제로 제출한 답 — 시간 초과처럼 제출이 없으면 .noAnswer
+    private func resolve(_ correct: Bool, ms: Int, given: GivenAnswer) {
+        answers.append(AnswerRecord(a: problem.a, b: problem.b, correct: correct, ms: ms, given: given))
         floatId += 1
 
         if correct {
@@ -222,6 +228,7 @@ final class BattleEngine {
                                             durationMs: Int((now() - battleStart).rounded()),
                                             rematch: rematch)
         let commit = game.commitSession(result)
+        onCommit(result)
         let advUnlocked = adventure.recordBattle(npcId: npc.id, won: won)
         end = BattleEnd(won: won, commit: commit, advUnlocked: advUnlocked)
         phase = .end

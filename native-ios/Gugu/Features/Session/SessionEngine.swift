@@ -19,6 +19,9 @@ final class SessionEngine {
     let table: Int?
     private let def: ModeDef
     private let game: GameStore
+    /// 세션 결과를 밖으로 넘긴다 (학습 원장 적재).
+    /// 엔진이 SyncStore/AuthStore 를 직접 알면 의존이 역류하므로 뷰 경계에서 잇는다.
+    private let onCommit: (SessionResult) -> Void
 
     // 표시 상태
     var problem: Problem
@@ -45,9 +48,11 @@ final class SessionEngine {
 
     private func now() -> Double { CACurrentMediaTime() * 1000 }
 
-    init(mode: GameMode, table: Int?, game: GameStore) {
+    init(mode: GameMode, table: Int?, game: GameStore,
+         onCommit: @escaping (SessionResult) -> Void = { _ in }) {
         self.mode = mode
         self.table = table
+        self.onCommit = onCommit
         self.def = Modes.def(mode)
         self.game = game
         self.wrongPool = game.state.wrongPool
@@ -108,7 +113,7 @@ final class SessionEngine {
         guard !lock, done == nil, let st = statement else { return }
         Sound.shared.tap()
         lock = true
-        resolve(choice == st.isTrue)
+        resolve(choice == st.isTrue, given: .boolean(choice))
     }
 
     func expire() {
@@ -119,13 +124,15 @@ final class SessionEngine {
 
     private func submit(_ value: String) {
         guard let parsed = Int(value) else { lock = false; return }
-        resolve(parsed == expected(problem))
+        resolve(parsed == expected(problem), given: .number(parsed))
     }
 
-    private func resolve(_ correct: Bool) {
+    /// given 은 아이가 실제로 제출한 답 — 학습 원장에 그대로 남는다.
+    /// 여기서 빠뜨리면 원장의 submittedAnswer 가 전부 꾸며진 값이 된다.
+    private func resolve(_ correct: Bool, given: GivenAnswer) {
         let prob = problem
         let ms = Int((now() - qStart).rounded())
-        answers.append(AnswerRecord(a: prob.a, b: prob.b, correct: correct, ms: ms))
+        answers.append(AnswerRecord(a: prob.a, b: prob.b, correct: correct, ms: ms, given: given))
 
         if correct {
             combo += 1
@@ -179,6 +186,7 @@ final class SessionEngine {
             maxCombo: maxCombo, durationMs: Int((now() - sessionStart).rounded())
         )
         let commit = game.commitSession(result)
+        onCommit(result)
         Sound.shared.complete()
         if commit.leveledUp {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { Sound.shared.levelUp() }

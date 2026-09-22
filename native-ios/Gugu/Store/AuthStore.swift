@@ -27,6 +27,85 @@ final class AuthStore {
 
     var userId: String? { session?.userId }
     var isAnonymous: Bool { session?.isAnonymous ?? false }
+    /// 이메일이 붙은 영구 계정인지
+    var isPermanent: Bool { session != nil && !isAnonymous }
+
+    // MARK: - 이메일 승격 (익명 -> 영구 계정)
+
+    enum Promotion: Equatable {
+        case none
+        case sending
+        /// 확인 코드를 보낸 주소 — 이 화면에서 코드를 입력받는다
+        case codeSent(email: String)
+        case verifying(email: String)
+        case done(email: String)
+        case failed(String)
+    }
+
+    private(set) var promotion: Promotion = .none
+
+    /// 이메일로 확인 코드를 보낸다. 성공해도 아직 승격은 끝나지 않는다.
+    func startEmailPromotion(email: String) async {
+        let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard trimmed.contains("@"), trimmed.count >= 5 else {
+            promotion = .failed("이메일 주소를 확인해 주세요")
+            return
+        }
+        guard let token = await accessToken() else {
+            promotion = .failed("계정 세션이 없어 연결할 수 없습니다")
+            return
+        }
+        promotion = .sending
+        do {
+            try await SupabaseAuth.requestEmailPromotion(accessToken: token, email: trimmed)
+            promotion = .codeSent(email: trimmed)
+        } catch let error as SupabaseAuthError {
+            promotion = .failed(Self.promotionMessage(for: error))
+        } catch {
+            promotion = .failed(error.localizedDescription)
+        }
+    }
+
+    /// 메일로 받은 코드로 승격을 끝낸다
+    func confirmEmailPromotion(code: String) async {
+        guard case let .codeSent(email) = promotion else { return }
+        let trimmed = code.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            promotion = .failed("확인 코드를 입력해 주세요")
+            return
+        }
+        promotion = .verifying(email: email)
+        do {
+            let fresh = try await SupabaseAuth.verifyEmailChange(email: email, token: trimmed)
+            session = fresh
+            store(fresh)
+            state = .ready
+            promotion = .done(email: email)
+        } catch let error as SupabaseAuthError {
+            promotion = .failed(Self.promotionMessage(for: error))
+        } catch {
+            promotion = .failed(error.localizedDescription)
+        }
+    }
+
+    func resetPromotion() { promotion = .none }
+
+    /// 서버 오류 코드를 사용자 문구로 — 발송 제한이 가장 흔하다
+    private static func promotionMessage(for error: SupabaseAuthError) -> String {
+        guard case let .http(_, code, message) = error else { return error.localizedDescription }
+        switch code {
+        case "over_email_send_rate_limit":
+            return "확인 메일을 방금 보냈어요. 잠시 뒤 다시 시도해 주세요."
+        case "email_address_invalid":
+            return "이 이메일 주소는 쓸 수 없어요. 다른 주소를 넣어 주세요."
+        case "email_exists", "user_already_exists":
+            return "이미 연결된 이메일이에요."
+        case "otp_expired":
+            return "확인 코드가 만료됐어요. 다시 보내 주세요."
+        default:
+            return message.isEmpty ? error.localizedDescription : message
+        }
+    }
 
     init() {
         session = Self.loadStored()
@@ -56,6 +135,42 @@ final class AuthStore {
         guard SupabaseConfig.isConfigured else { return nil }
         if let session, !session.isExpired { return session.accessToken }
         return try? await ensureSession().accessToken
+    }
+
+    /// 토큰을 강제로 새로 받는다.
+    /// app_metadata(보호자 권한)는 JWT 에 박혀 나가므로, 서버가 값을 바꾼 뒤에는
+    /// 갱신하지 않으면 계속 예전 권한으로 거부된다.
+    @discardableResult
+    func forceRefresh() async -> Bool {
+        guard SupabaseConfig.isConfigured, let current = session else { return false }
+        do {
+            let fresh = try await SupabaseAuth.refresh(refreshToken: current.refreshToken)
+            session = fresh
+            store(fresh)
+            state = .ready
+            return true
+        } catch {
+            print("[AuthStore] 토큰 강제 갱신 실패:", error.localizedDescription)
+            return false
+        }
+    }
+
+    /// 계정과 서버에 보관된 학습 기록을 삭제한다 (App Store 5.1.1(v)).
+    ///
+    /// 성공하면 기기 세션을 버리고 새 익명 계정으로 다시 시작해, 사용자가 앱을
+    /// 그대로 계속 쓸 수 있게 한다. 기기에 남은 귀속·큐 정리는 SyncStore 가 맡는다.
+    func deleteAccount() async -> Bool {
+        guard let token = await accessToken() else { return false }
+        do {
+            try await LearningApi.deleteAccount(accessToken: token)
+        } catch {
+            print("[Auth] 계정 삭제 실패:", error.localizedDescription)
+            return false
+        }
+        signOutLocally()
+        promotion = .none
+        await start()
+        return true
     }
 
     /// 기기에서 계정 연결을 끊는다 (서버 계정은 남는다 — 삭제는 DELETE /api/account 담당)

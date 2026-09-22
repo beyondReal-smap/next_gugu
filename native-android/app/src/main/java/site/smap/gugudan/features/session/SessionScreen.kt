@@ -32,7 +32,9 @@ import site.smap.gugudan.core.GameMode
 import site.smap.gugudan.core.ModeKind
 import site.smap.gugudan.designsystem.*
 import site.smap.gugudan.features.home.GaugeBar
+import site.smap.gugudan.store.LocalAuth
 import site.smap.gugudan.store.LocalGame
+import site.smap.gugudan.store.LocalSync
 
 // 세션 화면 (iOS SessionView.swift 이식) — 6개 모드 공용
 
@@ -40,7 +42,16 @@ import site.smap.gugudan.store.LocalGame
 fun SessionScreen(mode: GameMode, table: Int?, onExit: () -> Unit) {
     val game = LocalGame.current
     val gg = LocalGG.current
-    val engine = remember(mode, table) { SessionEngine(mode, table, game).also { it.start() } }
+    val sync = LocalSync.current
+    val auth = LocalAuth.current
+    val engine = remember(mode, table) {
+        // 학습 원장에 적재하고 바로 올려 본다.
+        // 보호자 검증 전이면 flush 가 요청 없이 큐에 남긴다.
+        SessionEngine(mode, table, game) { result ->
+            sync.record(result)
+            sync.flush(auth)
+        }.also { it.start() }
+    }
 
     DisposableEffect(engine) { onDispose { engine.teardown() } }
 

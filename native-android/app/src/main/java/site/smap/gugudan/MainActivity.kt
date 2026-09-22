@@ -49,6 +49,8 @@ import site.smap.gugudan.features.lanerunner.LaneRunnerScreen
 import site.smap.gugudan.features.runner.RunnerScreen
 import site.smap.gugudan.features.session.SessionScreen
 import site.smap.gugudan.services.Haptics
+import site.smap.gugudan.services.LearningIdentityStore
+import site.smap.gugudan.services.LearningOutboxStore
 import site.smap.gugudan.services.Persistence
 import site.smap.gugudan.services.Sound
 import site.smap.gugudan.store.*
@@ -75,6 +77,9 @@ class MainActivity : ComponentActivity() {
         val theme = ThemeStore(persistence)
         val router = Router()
         val auth = AuthStore(persistence, lifecycleScope)
+        val sync = SyncStore(
+            LearningIdentityStore(persistence), LearningOutboxStore(persistence), lifecycleScope,
+        )
 
         setContent {
             CompositionLocalProvider(
@@ -85,10 +90,29 @@ class MainActivity : ComponentActivity() {
                 LocalTheme provides theme,
                 LocalRouter provides router,
                 LocalAuth provides auth,
+                LocalSync provides sync,
             ) {
                 GuguTheme(theme.theme) {
                     // 첫 실행 시 조용히 익명 계정을 만든다 — 화면을 막지 않고 실패해도 앱은 그대로 동작
-                    LaunchedEffect(Unit) { auth.start() }
+                    LaunchedEffect(Unit) {
+                        auth.start()
+                        // 이용권을 가진 영구 계정이면 보호자 권한을 켜고 쌓인 기록을 올린다.
+                        // 검증 전이라면 요청을 보내지 않고 큐에 쌓아 둔다.
+                        if (premium.isPremium) sync.enableGuardianSync(auth, premium.lastPurchaseToken)
+                        else sync.flush(auth)
+                    }
+                    // 구매/복원 직후에도 권한을 켠다
+                    LaunchedEffect(premium.isPremium) {
+                        if (premium.isPremium) sync.enableGuardianSync(auth, premium.lastPurchaseToken)
+                    }
+                    // 이메일 승격이 끝난 직후에도 시도한다.
+                    // 구매가 이미 있던 사용자는 isPremium 이 처음부터 true 라 위 트리거가 발동하지 않고,
+                    // 시작 시점에는 아직 익명이라 enableGuardianSync 가 반환된다 — 그래서 이 트리거가 필요하다.
+                    LaunchedEffect(auth.isPermanent) {
+                        if (auth.isPermanent && premium.isPremium) {
+                            sync.enableGuardianSync(auth, premium.lastPurchaseToken)
+                        }
+                    }
                     RootScreen()
                 }
             }

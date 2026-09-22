@@ -31,6 +31,9 @@ class SessionEngine(
     val mode: GameMode,
     val table: Int?,
     private val game: GameStore,
+    // 세션 결과를 밖으로 넘긴다 (학습 원장 적재).
+    // 엔진이 SyncStore/AuthStore 를 직접 알면 의존이 역류하므로 화면 경계에서 잇는다.
+    private val onCommit: (SessionResult) -> Unit = {},
 ) {
     private val def: ModeDef = Modes.def(mode)
     private val handler = Handler(Looper.getMainLooper())
@@ -121,7 +124,7 @@ class SessionEngine(
         if (lock || done != null) return
         Sound.tap()
         lock = true
-        resolve(choice == st.isTrue)
+        resolve(choice == st.isTrue, GivenAnswer.Boolean(choice))
     }
 
     fun expire() = finish()
@@ -130,12 +133,14 @@ class SessionEngine(
 
     private fun submit(value: String) {
         val parsed = value.toIntOrNull() ?: run { lock = false; return }
-        resolve(parsed == expected(problem))
+        resolve(parsed == expected(problem), GivenAnswer.Number(parsed))
     }
 
-    private fun resolve(correct: Boolean) {
+    /** given 은 아이가 실제로 제출한 답 — 학습 원장에 그대로 남는다.
+     *  여기서 빠뜨리면 원장의 submittedAnswer 가 전부 꾸며진 값이 된다. */
+    private fun resolve(correct: Boolean, given: GivenAnswer) {
         val ms = (now() - qStart).toInt()
-        answers.add(AnswerRecord(problem.a, problem.b, correct, ms))
+        answers.add(AnswerRecord(problem.a, problem.b, correct, ms, given))
 
         if (correct) {
             combo += 1
@@ -179,6 +184,7 @@ class SessionEngine(
         if (done != null) return
         val result = SessionResult(mode, table, answers.toList(), maxCombo, (now() - sessionStartClock).toInt())
         val commit = game.commitSession(result)
+        onCommit(result)
         Sound.complete()
         if (commit.leveledUp) handler.postDelayed({ Sound.levelUp() }, 600)
         done = SessionDone(result, commit, wrongList.size)

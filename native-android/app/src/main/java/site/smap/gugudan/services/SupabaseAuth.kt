@@ -8,7 +8,9 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 import site.smap.gugudan.BuildConfig
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -64,17 +66,49 @@ object SupabaseAuth {
     suspend fun refresh(refreshToken: String): AuthSession =
         post("/auth/v1/token?grant_type=refresh_token", """{"refresh_token":"$refreshToken"}""")
 
-    private suspend fun post(path: String, body: String): AuthSession = withContext(Dispatchers.IO) {
+    /**
+     * 익명 계정에 이메일을 붙인다 — 확인 코드가 그 주소로 발송된다.
+     * 이 호출만으로는 승격되지 않고, verifyEmailChange 까지 끝나야 영구 계정이 된다.
+     */
+    suspend fun requestEmailPromotion(accessToken: String, email: String) {
+        send(
+            "/auth/v1/user", "PUT",
+            buildJsonObject { put("email", email) }.toString(),
+            accessToken = accessToken,
+        )
+    }
+
+    /** 메일로 받은 6자리 코드로 이메일 확인을 끝내고 새 세션을 받는다 */
+    suspend fun verifyEmailChange(email: String, token: String): AuthSession {
+        val body = buildJsonObject {
+            put("type", "email_change")
+            put("email", email)
+            put("token", token)
+        }.toString()
+        return parse(json.parseToJsonElement(send("/auth/v1/verify", "POST", body)).jsonObject)
+    }
+
+    private suspend fun post(path: String, body: String): AuthSession =
+        parse(json.parseToJsonElement(send(path, "POST", body)).jsonObject)
+
+    /** GoTrue 공통 호출 — apikey 는 항상, Authorization 은 사용자 토큰이 있을 때만 붙인다 */
+    private suspend fun send(
+        path: String,
+        method: String,
+        body: String,
+        accessToken: String? = null,
+    ): String = withContext(Dispatchers.IO) {
         val base = SupabaseConfig.baseUrl
             ?: throw IllegalStateException("Supabase 설정이 빌드에 없습니다")
 
         val conn = (URL(base + path).openConnection() as HttpURLConnection).apply {
-            requestMethod = "POST"
+            requestMethod = method
             connectTimeout = 20_000
             readTimeout = 20_000
             doOutput = true
             setRequestProperty("apikey", SupabaseConfig.anonKey)
             setRequestProperty("Content-Type", "application/json")
+            accessToken?.let { setRequestProperty("Authorization", "Bearer $it") }
         }
         try {
             conn.outputStream.use { it.write(body.toByteArray()) }
@@ -92,7 +126,7 @@ object SupabaseAuth {
                         ?: text.take(200),
                 )
             }
-            parse(json.parseToJsonElement(text).jsonObject)
+            text
         } finally {
             conn.disconnect()
         }

@@ -10,6 +10,7 @@ struct RootView: View {
     @State private var theme = ThemeStore()
     @State private var router = Router()
     @State private var auth = AuthStore()
+    @State private var sync = SyncStore()
 
     var body: some View {
         content
@@ -20,10 +21,32 @@ struct RootView: View {
             .environment(theme)
             .environment(router)
             .environment(auth)
+            .environment(sync)
             .preferredColorScheme(theme.colorScheme)
             .tint(.gg.accent)
             // 첫 실행 시 조용히 익명 계정을 만든다 — 화면을 막지 않고 실패해도 앱은 그대로 동작
-            .task { await auth.start() }
+            .task {
+                await auth.start()
+                // 이용권을 가진 영구 계정이면 보호자 권한을 켜고 쌓인 기록을 올린다.
+                // 검증 전이라면 요청을 보내지 않고 큐에 쌓아 둔다.
+                if premium.isPremium {
+                    await sync.enableGuardianSync(auth: auth)
+                } else {
+                    sync.flush(auth: auth)
+                }
+            }
+            // 구매/복원 직후에도 권한을 켠다
+            .onChange(of: premium.isPremium) { _, isPremium in
+                guard isPremium else { return }
+                Task { await sync.enableGuardianSync(auth: auth) }
+            }
+            // 이메일 승격이 끝난 직후에도 시도한다.
+            // 구매가 이미 있던 사용자는 isPremium 이 처음부터 true 라 위 onChange 가 발동하지 않고,
+            // 시작 시점에는 아직 익명이라 enableGuardianSync 가 반환된다 — 그래서 이 트리거가 필요하다.
+            .onChange(of: auth.isPermanent) { _, isPermanent in
+                guard isPermanent, premium.isPremium else { return }
+                Task { await sync.enableGuardianSync(auth: auth) }
+            }
     }
 
     @ViewBuilder

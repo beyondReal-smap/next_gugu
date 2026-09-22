@@ -256,8 +256,8 @@ private fun GroupHeader(icon: ImageVector, title: String, desc: String, tint: Co
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(icon, null, tint = tint, modifier = Modifier.size(14.dp))
-        Text(title, style = suite(FontWeight.ExtraBold, 14), color = gg.text)
-        Text(desc, style = suite(FontWeight.Medium, 11), color = gg.textMuted, maxLines = 1)
+        Text(title, style = suite(FontWeight.Bold, 13), color = gg.textMuted)
+        Text(desc, style = suite(FontWeight.Medium, 11), color = gg.textMuted.copy(alpha = 0.75f), maxLines = 1)
     }
 }
 
@@ -344,20 +344,15 @@ private fun ModeRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                Modifier.size(36.dp).clip(RoundedCornerShape(12.dp)).background(tint.copy(alpha = 0.15f)),
+                Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(tint.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(icon, null, tint = tint, modifier = Modifier.size(20.dp))
+                Icon(icon, null, tint = tint, modifier = Modifier.size(22.dp))
             }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(name, style = suite(FontWeight.ExtraBold, 14), color = gg.text)
-                    Text(tagline, style = suite(FontWeight.Medium, 12), color = gg.textMuted, maxLines = 1)
-                }
-                Text(meta, style = suite(FontWeight.Bold, 11), color = gg.textMuted)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(name, style = suite(FontWeight.ExtraBold, 16), color = gg.text)
+                Text(tagline, style = suite(FontWeight.Medium, 13), color = gg.textMuted, maxLines = 1)
+                Text(meta, style = suite(FontWeight.Bold, 12), color = gg.textMuted.copy(alpha = 0.8f))
             }
             if (locked) {
                 Icon(Icons.Filled.Lock, null, tint = gg.accent, modifier = Modifier.size(14.dp))

@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import site.smap.gugudan.core.SessionResult
 import site.smap.gugudan.core.adventure.Battle
 import site.smap.gugudan.core.adventure.BattleStyle
 import site.smap.gugudan.core.adventure.NpcDef
@@ -34,7 +35,9 @@ import site.smap.gugudan.features.home.GaugeBar
 import site.smap.gugudan.features.session.AnswerFeedback
 import site.smap.gugudan.features.session.Keypad
 import site.smap.gugudan.store.LocalAdventure
+import site.smap.gugudan.store.LocalAuth
 import site.smap.gugudan.store.LocalGame
+import site.smap.gugudan.store.LocalSync
 
 // 배틀 화면 (iOS BattleView.swift 이식) — 3종 방식 + 보스 분노 + 인트로/결과 오버레이
 
@@ -43,7 +46,16 @@ fun BattleScreen(npc: NpcDef, onWorld: () -> Unit, onRetry: () -> Unit, onFlee: 
     val gg = LocalGG.current
     val game = LocalGame.current
     val adventure = LocalAdventure.current
-    val engine = remember { BattleEngine(npc, game, adventure).also { it.start() } }
+    val sync = LocalSync.current
+    val auth = LocalAuth.current
+    val engine = remember {
+        // 학습 원장에 적재하고 바로 올려 본다.
+        // 보호자 검증 전이면 flush 가 요청 없이 큐에 남긴다.
+        BattleEngine(npc, game, adventure) { result ->
+            sync.record(result)
+            sync.flush(auth)
+        }.also { it.start() }
+    }
     var confetti by remember { mutableStateOf(0) }
     var levelUp by remember { mutableStateOf(false) }
 

@@ -34,7 +34,11 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import site.smap.gugudan.core.PremiumConfig
 import site.smap.gugudan.designsystem.*
+import site.smap.gugudan.store.LocalAuth
 import site.smap.gugudan.store.LocalPremium
+import site.smap.gugudan.store.LocalSync
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import site.smap.gugudan.store.PurchaseResult
 
 // 페이월 (iOS PaywallView 이식) — Play Billing 단일 인앱 상품
@@ -45,6 +49,9 @@ private data class Benefit(val icon: ImageVector, val title: String, val desc: S
 fun PaywallScreen(onDismiss: () -> Unit) {
     val gg = LocalGG.current
     val premium = LocalPremium.current
+    val auth = LocalAuth.current
+    val sync = LocalSync.current
+    val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
     var busy by remember { mutableStateOf(false) }
@@ -176,6 +183,9 @@ fun PaywallScreen(onDismiss: () -> Unit) {
             FooterLink("구매 복원", linkStyle) {
                 premium.restore { ok ->
                     notice = if (ok) "구매가 복원되었어요! 🎉" else "복원할 구매 내역이 없어요."
+                    // 이미 보유한 상품은 새 구매 플로우가 뜨지 않으므로, 복원 경로에서도
+                    // 서버 구매 등록과 보호자 권한을 시도한다.
+                    if (ok) scope.launch { sync.enableGuardianSync(auth, premium.lastPurchaseToken) }
                 }
             }
             FooterLink("이용약관", linkStyle) { open(PremiumConfig.Legal.TERMS) }

@@ -8,8 +8,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import site.smap.gugudan.core.AnswerRecord
 import site.smap.gugudan.core.CommitResult
+import site.smap.gugudan.core.GivenAnswer
 import site.smap.gugudan.core.Problem
 import site.smap.gugudan.core.Problems
+import site.smap.gugudan.core.SessionResult
 import site.smap.gugudan.core.adventure.AdvProgress
 import site.smap.gugudan.core.adventure.Battle
 import site.smap.gugudan.core.adventure.BattleStyle
@@ -33,6 +35,9 @@ class BattleEngine(
     val npc: NpcDef,
     private val game: GameStore,
     private val adventure: AdventureStore,
+    // 전투 결과를 밖으로 넘긴다 (학습 원장 적재).
+    // 엔진이 SyncStore/AuthStore 를 직접 알면 의존이 역류하므로 화면 경계에서 잇는다.
+    private val onCommit: (SessionResult) -> Unit = {},
 ) {
     val isBoss = npc.kind == NpcKind.BOSS
     val style: BattleStyle = npc.battle
@@ -95,7 +100,7 @@ class BattleEngine(
                 if (done) return
                 if (phase == BattlePhase.PLAY && !lock) {
                     lock = true
-                    resolve(mode == "win", 900)
+                    resolve(mode == "win", 900, GivenAnswer.NoAnswer)
                 }
                 handler.postDelayed(this, 1200)
             }
@@ -135,18 +140,20 @@ class BattleEngine(
         if (phase != BattlePhase.PLAY || lock || done) return
         lock = true
         timedOut = true
-        resolve(false, counterLimit)
+        resolve(false, counterLimit, GivenAnswer.NoAnswer)
     }
 
     // MARK: 코어
 
     private fun submit(value: String) {
         val parsed = value.toIntOrNull() ?: run { lock = false; return }
-        resolve(parsed == problem.a * problem.b, (now() - qStartClock).toInt())
+        resolve(parsed == problem.a * problem.b, (now() - qStartClock).toInt(),
+                GivenAnswer.Number(parsed))
     }
 
-    private fun resolve(correct: Boolean, ms: Int) {
-        answers.add(AnswerRecord(problem.a, problem.b, correct, ms))
+    /** given 은 아이가 실제로 제출한 답 — 시간 초과처럼 제출이 없으면 NoAnswer */
+    private fun resolve(correct: Boolean, ms: Int, given: GivenAnswer) {
+        answers.add(AnswerRecord(problem.a, problem.b, correct, ms, given))
         floatId += 1
 
         if (correct) {
@@ -219,6 +226,7 @@ class BattleEngine(
             npc, answers.toList(), maxCombo, (now() - battleStart).toInt(), rematch = rematch,
         )
         val commit = game.commitSession(result)
+        onCommit(result)
         val advUnlocked = adventure.recordBattle(npc.id, won)
         end = BattleEnd(won, commit, advUnlocked)
         phase = BattlePhase.END
