@@ -40,8 +40,8 @@ android {
         applicationId = "site.smap.gugudan"
         minSdk = 28          // SceneView(Filament) 요구 — 기기 커버리지 ~97%
         targetSdk = 36
-        versionCode = 18     // vc18: vc17 + 로컬 학습 알림
-        versionName = "2.2.0"
+        versionCode = 19     // vc19: 2.3.0 — 선생님 목소리 읽어주기 + 미니게임 3문제 체험
+        versionName = "2.3.0"
 
         buildConfigField("String", "SUPABASE_HOST", "\"${supabaseProp("SUPABASE_HOST")}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${supabaseProp("SUPABASE_ANON_KEY")}\"")
