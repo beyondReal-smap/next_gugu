@@ -1,26 +1,18 @@
 import SwiftUI
 
-// 프로필 탭 (Profile.tsx 이식) — 레벨/통계/업적/이용권/설정
+// 프로필 탭 (Profile.tsx 이식) — 레벨/주간 리포트/통계/업적.
+// 설정·계정·이용권은 톱니바퀴 → SettingsView 시트로 옮겼다 (한 화면에 기능이 너무 많이 섞여 있었다).
 
 struct ProfileView: View {
     @Environment(GameStore.self) private var game
-    @Environment(ThemeStore.self) private var theme
     @Environment(PremiumStore.self) private var premium
     @Environment(AuthStore.self) private var auth
-    @Environment(SyncStore.self) private var sync
-    @Environment(ReminderStore.self) private var reminder
-    @Environment(\.openURL) private var openURL
+    @Environment(SessionStore.self) private var session
+    /// 창 전체의 테마 — 앱 테마가 '기기 설정'이면 곧 기기 테마다 (설정 시트에 넘긴다)
+    @Environment(\.colorScheme) private var colorScheme
 
-    @State private var email = ""
-    @State private var code = ""
-
-    @State private var soundOn = Sound.shared.enabled
-    @State private var confirmReset = false
-    @State private var restoring = false
-    @State private var restoreNotice: String?
-    @State private var confirmDeleteAccount = false
-    @State private var deletingAccount = false
-    @State private var deleteNotice: String?
+    @State private var showSettings = false
+    @State private var selectedAchievement: AchievementDef?
 
     private let scoredModes: [GameMode] = [.challenge, .survival]
 
@@ -28,7 +20,15 @@ struct ProfileView: View {
     private var accuracy: Int { accuracyTotal > 0 ? Int((Double(game.state.totalCorrect) / Double(accuracyTotal) * 100).rounded()) : 0 }
     private var unlocked: Set<String> { Set(game.state.unlockedAchievements) }
     private var weakProblems: [String] {
-        game.state.wrongPool.sorted { $0.value > $1.value }.prefix(6).map { $0.key }
+        game.state.wrongPool.sorted { $0.value != $1.value ? $0.value > $1.value : $0.key < $1.key }
+            .prefix(6).map { $0.key }
+    }
+    private var report: WeeklyReport {
+        WeeklyReport.build(game.state.dayLog, today: Commit.todayStr())
+    }
+    /// 이메일을 아직 안 붙인 익명 계정 — 기기를 잃으면 기록도 잃는다
+    private var needsAccountLink: Bool {
+        auth.state != .disabled && !auth.isPermanent
     }
 
     var body: some View {
@@ -37,25 +37,45 @@ struct ProfileView: View {
                 header
                 levelHeader
                 statsRow
+                WeeklyReportCard(
+                    report: report,
+                    onReview: game.state.wrongPool.isEmpty ? nil : { session.startReview() }
+                )
                 bestRecords
                 if game.state.recentAccuracy.count >= 2 { accuracyTrend }
                 if !weakProblems.isEmpty { weakSection }
                 achievements
-                accountSection
-                premiumSection
-                settings
-                resetSection
+                if needsAccountLink { accountNudge }
+                if !premium.isPremium { premiumNudge }
             }
             .padding(.horizontal, 20)
             .padding(.top, 12)
             .padding(.bottom, 32)
+            .readableWidth()
         }
         .background(Color.gg.bg.ignoresSafeArea())
         .scrollIndicators(.hidden)
+        .statusBarBackdrop()
+        .sheet(isPresented: $showSettings) { SettingsView(deviceScheme: colorScheme) }
+        .sheet(item: $selectedAchievement) { AchievementDetailSheet(def: $0) }
     }
 
     private var header: some View {
-        Text("프로필").font(.suite(.extrabold, 24)).foregroundStyle(Color.gg.text)
+        HStack {
+            Text("프로필").font(.suite(.extrabold, 24)).foregroundStyle(Color.gg.text)
+                .accessibilityAddTraits(.isHeader)
+            Spacer()
+            Button {
+                Haptics.impact(.light)
+                showSettings = true
+            } label: {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 20, weight: .semibold)).foregroundStyle(Color.gg.textMuted)
+                    .frame(width: 44, height: 44)
+                    .background(Color.gg.surface2, in: Circle())
+            }
+            .accessibilityLabel("설정")
+        }
     }
 
     private var levelHeader: some View {
@@ -75,11 +95,13 @@ struct ProfileView: View {
                     }
                 }
                 .frame(height: 8)
-                Text("\(game.levelInfo.totalXp) XP").font(.suite(.bold, 12)).foregroundStyle(Color.gg.textMuted).monospacedDigit()
+                Text("\(game.levelInfo.totalXp) XP · 다음 레벨까지 \(game.levelInfo.xpForNextLevel - game.levelInfo.currentLevelXp) XP")
+                    .font(.suite(.bold, 12)).foregroundStyle(Color.gg.textMuted).monospacedDigit()
             }
         }
         .padding(20)
         .ggCard(padding: 0)
+        .accessibilityElement(children: .combine)
     }
 
     private var statsRow: some View {
@@ -98,6 +120,7 @@ struct ProfileView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
         .ggCard(padding: 0)
+        .accessibilityElement(children: .combine)
     }
 
     private var bestRecords: some View {
@@ -118,6 +141,7 @@ struct ProfileView: View {
                     }
                     .padding(.horizontal, 16).padding(.vertical, 12)
                     .ggCard(padding: 0)
+                    .accessibilityElement(children: .combine)
                 }
             }
         }
@@ -150,14 +174,32 @@ struct ProfileView: View {
                           lowerBound: 0, upperBound: 100, baseline: 50, markLast: true)
                     .frame(height: 64)
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("최근 정확도 \(game.state.recentAccuracy.map { "\($0)%" }.joined(separator: ", "))")
         }
         .padding(20)
         .ggCard(padding: 0)
     }
 
     private var weakSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("집중 공략 문제").font(.suite(.bold, 14)).foregroundStyle(Color.gg.textMuted)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("집중 공략 문제").font(.suite(.bold, 14)).foregroundStyle(Color.gg.textMuted)
+                Spacer()
+                Button {
+                    Haptics.impact(.light)
+                    session.startReview()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "play.fill").font(.system(size: 10, weight: .bold))
+                        Text("복습 시작").font(.suite(.extrabold, 13))
+                    }
+                    .foregroundStyle(Color.gg.accentFg)
+                    .padding(.horizontal, 12).frame(height: 32)
+                    .background(Color.gg.accent, in: Capsule())
+                }
+                .buttonStyle(PressScaleStyle())
+            }
             FlowRow(spacing: 8) {
                 ForEach(weakProblems, id: \.self) { key in
                     Text(key.replacingOccurrences(of: "x", with: " × "))
@@ -165,6 +207,7 @@ struct ProfileView: View {
                         .padding(.horizontal, 12).padding(.vertical, 6)
                         .background(Color.gg.danger.opacity(0.1), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.gg.danger.opacity(0.2), lineWidth: 1))
+                        .accessibilityLabel(key.replacingOccurrences(of: "x", with: " 곱하기 "))
                 }
             }
         }
@@ -172,385 +215,103 @@ struct ProfileView: View {
 
     private var achievements: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("업적 (\(unlocked.count)/\(Achievements.all.count))").font(.suite(.bold, 14)).foregroundStyle(Color.gg.textMuted)
+            HStack(alignment: .firstTextBaseline) {
+                Text("업적 (\(unlocked.count)/\(Achievements.all.count))").font(.suite(.bold, 14)).foregroundStyle(Color.gg.textMuted)
+                Spacer()
+                Text("눌러서 목표 보기").font(.suite(.medium, 11)).foregroundStyle(Color.gg.textMuted.opacity(0.8))
+            }
             // 3열 — 4열에서는 "오백 문제 돌파" 같은 이름이 한 줄로 잘렸다.
             // 정사각 비율을 버리고 라벨 2줄을 항상 확보해 타일 높이를 맞춘다.
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
                 ForEach(Achievements.all) { a in
                     let on = unlocked.contains(a.id)
-                    VStack(spacing: 8) {
-                        Image(systemName: IconMap.sf(a.icon)).font(.system(size: 22, weight: .semibold))
-                        Text(a.name)
-                            .font(.suite(.bold, 11))
-                            .multilineTextAlignment(.center)
-                            .lineLimit(2, reservesSpace: true)
-                            .minimumScaleFactor(0.85)
+                    let fraction = Achievements.progress(a, game.state).fraction
+                    Button {
+                        Haptics.impact(.light)
+                        selectedAchievement = a
+                    } label: {
+                        VStack(spacing: 8) {
+                            Image(systemName: IconMap.sf(a.icon)).font(.system(size: 22, weight: .semibold))
+                            Text(a.name)
+                                .font(.suite(.bold, 11))
+                                .multilineTextAlignment(.center)
+                                .lineLimit(2, reservesSpace: true)
+                                .minimumScaleFactor(0.85)
+                            // 잠긴 업적은 얼마나 왔는지 가는 막대로 보여 준다
+                            ZStack(alignment: .leading) {
+                                Capsule().fill(Color.gg.surface2)
+                                Capsule().fill(Color.gg.accent.opacity(0.7))
+                                    .frame(width: 44 * fraction)
+                            }
+                            .frame(width: 44, height: 3)
+                            .opacity(on ? 0 : 1)
+                        }
+                        .foregroundStyle(on ? Color.gg.accent : Color.gg.textMuted)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .padding(.horizontal, 8)
+                        .background(on ? Color.gg.accent.opacity(0.1) : Color.gg.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(on ? Color.gg.accent.opacity(0.3) : Color.gg.border, lineWidth: 1))
+                        .opacity(on ? 1 : 0.7)
                     }
-                    .foregroundStyle(on ? Color.gg.accent : Color.gg.textMuted)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .padding(.horizontal, 8)
-                    .background(on ? Color.gg.accent.opacity(0.1) : Color.gg.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(on ? Color.gg.accent.opacity(0.3) : Color.gg.border, lineWidth: 1))
-                    .opacity(on ? 1 : 0.55)
+                    .buttonStyle(PressScaleStyle())
+                    .accessibilityLabel("\(a.name), \(on ? "달성" : "진행 중")")
                 }
             }
         }
     }
 
-    private var premiumSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("이용권").font(.suite(.bold, 14)).foregroundStyle(Color.gg.textMuted)
-            VStack(spacing: 0) {
-                if premium.isPremium {
-                    HStack(spacing: 12) {
-                        Image(systemName: "sparkles").foregroundStyle(Color.gg.accent)
-                        Text("평생 이용권").font(.suite(.bold, 15)).foregroundStyle(Color.gg.text)
-                        Spacer()
-                        Text("이용 중").font(.suite(.extrabold, 12)).foregroundStyle(Color.gg.accent)
-                            .padding(.horizontal, 10).padding(.vertical, 4)
-                            .background(Color.gg.accent.opacity(0.12), in: Capsule())
-                    }
-                    .padding(.horizontal, 20).padding(.vertical, 16)
-                } else {
-                    row(icon: "sparkles", label: "평생 이용권 · 커피 한 잔 값", action: premium.price) { premium.openPaywall() }
-                }
-                divider
-                row(icon: "arrow.clockwise", label: "구매 복원",
-                    action: restoring ? "확인 중…" : "", onTap: restorePurchase)
-                divider
-                row(icon: "doc.text", label: "이용약관", action: "") { open(PremiumConfig.Legal.terms) }
-                divider
-                row(icon: "checkmark.shield", label: "개인정보처리방침", action: "") { open(PremiumConfig.Legal.privacy) }
-            }
-            .ggCard(padding: 0)
-
-            if let restoreNotice {
-                Text(restoreNotice)
-                    .font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-
-    /// 이미 보유한 상품은 새 구매 플로우가 뜨지 않으므로, 복원 경로에서도
-    /// 서버 구매 등록과 보호자 권한을 함께 시도한다 (PaywallView.onRestore 와 동일).
-    private func restorePurchase() {
-        guard !restoring else { return }
-        restoring = true
-        restoreNotice = nil
-        Task {
-            let ok = await premium.restore()
-            restoring = false
-            restoreNotice = ok ? "구매를 확인했어요. 기록 보관을 켜는 중이에요." : "복원할 구매 내역이 없어요."
-            if ok { await sync.enableGuardianSync(auth: auth) }
-        }
-    }
-
-    private var settings: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("설정").font(.suite(.bold, 14)).foregroundStyle(Color.gg.textMuted)
-            VStack(spacing: 0) {
-                row(icon: theme.theme == .dark ? "moon.fill" : "sun.max.fill", label: "다크 모드",
-                    action: theme.theme == .dark ? "켜짐" : "꺼짐") { theme.toggle() }
-                divider
-                row(icon: soundOn ? "speaker.wave.2.fill" : "speaker.slash.fill", label: "효과음",
-                    action: soundOn ? "켜짐" : "꺼짐") {
-                    soundOn.toggle(); Sound.shared.setEnabled(soundOn)
-                }
-                divider
-                row(icon: reminder.settings.enabled ? "bell.fill" : "bell.slash", label: "학습 알림",
-                    action: reminder.settings.enabled ? "켜짐" : "꺼짐", onTap: toggleReminder)
-                if reminder.settings.enabled {
-                    divider
-                    reminderHourRow
-                }
-            }
-            .ggCard(padding: 0)
-
-            // 앱에서는 켰지만 시스템 설정에서 꺼진 경우 — 앱이 대신 켤 수 없어 설정으로 안내한다
-            if reminder.deniedBySystem {
-                HStack(spacing: 8) {
-                    Text("설정 앱에서 구구 어드벤처 알림이 꺼져 있어요.")
-                        .font(.suite(.medium, 12)).foregroundStyle(Color.gg.warning)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Spacer(minLength: 4)
-                    Button("설정 열기") { open(UIApplication.openNotificationSettingsURLString) }
-                        .font(.suite(.bold, 12)).foregroundStyle(Color.gg.accent)
-                        .frame(minHeight: 44)
-                }
-            }
-        }
-    }
-
-    /// 알림 시각 — 야간 발송을 막기 위해 8~20시 안에서만 고른다
-    private var reminderHourRow: some View {
-        let hour = reminder.settings.hour
-        return HStack(spacing: 12) {
-            Image(systemName: "clock").foregroundStyle(Color.gg.textMuted).frame(width: 24)
-            Text("알림 시각").font(.suite(.bold, 15)).foregroundStyle(Color.gg.text)
-            Spacer()
-            Button { changeReminderHour(by: -1) } label: {
-                Image(systemName: "minus").font(.system(size: 13, weight: .bold)).frame(width: 36, height: 36)
-                    .background(Color.gg.surface2, in: Circle())
-            }
-            .buttonStyle(.plain)
-            .disabled(hour <= ReminderPlanner.allowedHours.lowerBound)
-            .accessibilityLabel("한 시간 앞당기기")
-            Text(ReminderPlanner.hourLabel(hour))
-                .font(.suite(.bold, 14)).foregroundStyle(Color.gg.accent).monospacedDigit()
-                .frame(minWidth: 64)
-            Button { changeReminderHour(by: 1) } label: {
-                Image(systemName: "plus").font(.system(size: 13, weight: .bold)).frame(width: 36, height: 36)
-                    .background(Color.gg.surface2, in: Circle())
-            }
-            .buttonStyle(.plain)
-            .disabled(hour >= ReminderPlanner.allowedHours.upperBound)
-            .accessibilityLabel("한 시간 늦추기")
-        }
-        .foregroundStyle(Color.gg.text)
-        .padding(.horizontal, 20).padding(.vertical, 10)
-    }
-
-    private func toggleReminder() {
-        Task {
-            if reminder.settings.enabled {
-                await reminder.disable()
-            } else {
-                await reminder.enable(hour: reminder.settings.hour, state: game.state)
-            }
-        }
-    }
-
-    private func changeReminderHour(by delta: Int) {
-        Haptics.impact(.light)
-        Task { await reminder.setHour(reminder.settings.hour + delta, state: game.state) }
-    }
-
-    private var resetSection: some View {
-        Group {
-            if !confirmReset {
-                GGButton(variant: .ghost, size: .md, action: { confirmReset = true }) {
-                    Image(systemName: "arrow.counterclockwise")
-                    Text("기록 초기화").foregroundStyle(Color.gg.danger)
-                }
-            } else {
-                HStack(spacing: 8) {
-                    GGButton(variant: .surface, size: .md, action: { confirmReset = false }) { Text("취소") }
-                    GGButton(variant: .danger, size: .md, action: { game.resetProgress(); confirmReset = false }) { Text("초기화 확인") }
-                }
-            }
-        }
-        .padding(.top, 4)
-    }
-
-    // MARK: 계정 — 익명 계정에 이메일을 붙여 기기를 바꿔도 기록이 남게 한다
-    @ViewBuilder
-    private var accountSection: some View {
-        if auth.state != .disabled {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 8) {
-                    Image(systemName: "person.badge.shield.checkmark")
-                        .font(.system(size: 14, weight: .bold)).foregroundStyle(Color.gg.accent)
+    /// 계정 연결 권유 — 전체 흐름은 설정에 있고, 여기서는 존재를 알린다
+    private var accountNudge: some View {
+        Button {
+            Haptics.impact(.light)
+            showSettings = true
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "person.badge.shield.checkmark")
+                    .font(.system(size: 18, weight: .bold)).foregroundStyle(Color.gg.accent)
+                    .frame(width: 40, height: 40)
+                    .background(Color.gg.accent.opacity(0.15), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                VStack(alignment: .leading, spacing: 2) {
                     Text("기록 지키기").font(.suite(.extrabold, 15)).foregroundStyle(Color.gg.text)
-                }
-
-                switch auth.promotion {
-                case let .done(email):
-                    accountRow(icon: "checkmark.seal.fill", tint: .gg.success,
-                               title: "\(email) 에 연결됐어요",
-                               desc: "기기를 바꿔도 이 주소로 기록을 찾을 수 있어요.")
-                case let .codeSent(email), let .verifying(email):
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("\(email) 로 6자리 확인 코드를 보냈어요.")
-                            .font(.suite(.medium, 13)).foregroundStyle(Color.gg.textMuted)
-                            .fixedSize(horizontal: false, vertical: true)
-                        TextField("확인 코드", text: $code)
-                            .textFieldStyle(.plain)
-                            .keyboardType(.numberPad)
-                            .textContentType(.oneTimeCode)
-                            .font(.suiteNum(.extrabold, 20))
-                            .padding(.horizontal, 14).frame(height: 48)
-                            .background(Color.gg.surface2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        GGButton(variant: .primary, size: .md, action: {
-                            Task { await auth.confirmEmailPromotion(code: code) }
-                        }) {
-                            Text(auth.promotion == .verifying(email: email) ? "확인 중…" : "연결 완료하기")
-                        }
-                        Button("주소 다시 입력") { auth.resetPromotion(); code = "" }
-                            .font(.suite(.bold, 12)).foregroundStyle(Color.gg.textMuted)
-                            .frame(minHeight: 44)
-                    }
-                default:
-                    if auth.isPermanent {
-                        accountRow(icon: "checkmark.seal.fill", tint: .gg.success,
-                                   title: "계정이 연결돼 있어요",
-                                   desc: "기기를 바꿔도 기록을 찾을 수 있어요.")
-                    } else {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("보호자 이메일을 넣으면 기기를 바꿔도 기록이 남아요. 비밀번호는 필요 없어요.")
-                                .font(.suite(.medium, 13)).foregroundStyle(Color.gg.textMuted)
-                                .fixedSize(horizontal: false, vertical: true)
-                            TextField("보호자 이메일", text: $email)
-                                .textFieldStyle(.plain)
-                                .keyboardType(.emailAddress)
-                                .textInputAutocapitalization(.never)
-                                .autocorrectionDisabled()
-                                .font(.suite(.medium, 15))
-                                .padding(.horizontal, 14).frame(height: 48)
-                                .background(Color.gg.surface2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                            GGButton(variant: .primary, size: .md, action: {
-                                Task { await auth.startEmailPromotion(email: email) }
-                            }) {
-                                Text(auth.promotion == .sending ? "보내는 중…" : "확인 코드 받기")
-                            }
-                        }
-                    }
-                }
-
-                // 귀속 후보가 여럿이면 어느 기록에 이어 붙일지 고르게 한다
-                if case let .needsLearnerChoice(candidates) = sync.state, !candidates.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("이어서 쓸 기록을 골라 주세요")
-                            .font(.suite(.extrabold, 13)).foregroundStyle(Color.gg.text)
-                        ForEach(candidates) { candidate in
-                            Button {
-                                Task { await sync.chooseLearner(candidate, auth: auth) }
-                            } label: {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "clock.arrow.circlepath")
-                                        .font(.system(size: 14, weight: .bold))
-                                        .foregroundStyle(Color.gg.accent)
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(candidate.displayName)
-                                            .font(.suite(.extrabold, 13)).foregroundStyle(Color.gg.text)
-                                        Text("마지막 학습 \(candidate.updatedAt.prefix(10))")
-                                            .font(.suite(.medium, 11)).foregroundStyle(Color.gg.textMuted)
-                                    }
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: 12, weight: .bold))
-                                        .foregroundStyle(Color.gg.textMuted)
-                                }
-                                .padding(.horizontal, 12).frame(minHeight: 48)
-                                .background(Color.gg.surface2, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                            }
-                        }
-                    }
-                }
-
-                // 보호자 검증 전이면 왜 보관이 꺼져 있는지 알려 준다
-                if case let .waitingForGuardian(message) = sync.state {
-                    Text(message)
+                    Text("보호자 이메일을 연결하면 기기를 바꿔도 기록이 남아요")
                         .font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-
-                if case let .failed(message) = auth.promotion {
-                    Text(message)
-                        .font(.suite(.bold, 12)).foregroundStyle(Color.gg.warning)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                deleteAccountSection
+                Spacer(minLength: 4)
+                Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundStyle(Color.gg.textMuted)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .ggCard()
+            .padding(16)
+            .ggCard(padding: 0)
         }
+        .buttonStyle(PressScaleStyle())
     }
 
-    /// 계정 삭제 (App Store 5.1.1(v)) — 계정 생성을 지원하는 앱은 앱 안에서 삭제도 제공해야 한다.
-    /// 되돌릴 수 없으므로 「기록 초기화」와 같은 2단 확인을 둔다.
-    @ViewBuilder
-    private var deleteAccountSection: some View {
-        Divider().overlay(Color.gg.border)
-
-        if let deleteNotice {
-            Text(deleteNotice)
-                .font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-
-        if confirmDeleteAccount {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("계정과 서버에 보관된 학습 기록을 지웁니다. 되돌릴 수 없어요.")
-                    .font(.suite(.bold, 13)).foregroundStyle(Color.gg.text)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("기기에 있는 기록과 이용권은 그대로예요. 이용권은 「구매 복원」으로 다시 쓸 수 있어요.")
-                    .font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
-                    .fixedSize(horizontal: false, vertical: true)
-                HStack(spacing: 8) {
-                    GGButton(variant: .surface, size: .md,
-                             action: { confirmDeleteAccount = false }) { Text("취소") }
-                    GGButton(variant: .danger, size: .md, action: deleteAccount) {
-                        Text(deletingAccount ? "삭제 중…" : "삭제 확인")
-                    }
-                }
-            }
-        } else {
-            Button {
-                Haptics.impact(.light)
-                deleteNotice = nil
-                confirmDeleteAccount = true
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "person.crop.circle.badge.xmark")
-                        .font(.system(size: 14, weight: .bold))
-                    Text("계정 삭제").font(.suite(.bold, 13))
-                    Spacer(minLength: 0)
-                }
-                .foregroundStyle(Color.gg.danger)
-                .frame(minHeight: 44)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private func deleteAccount() {
-        guard !deletingAccount else { return }
-        deletingAccount = true
-        deleteNotice = nil
-        Task {
-            let ok = await auth.deleteAccount()
-            if ok { sync.resetAfterAccountDeletion() }
-            deletingAccount = false
-            confirmDeleteAccount = false
-            deleteNotice = ok
-                ? "계정과 서버에 보관된 학습 기록을 지웠어요."
-                : "계정을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요."
-        }
-    }
-
-    private func accountRow(icon: String, tint: Color, title: String, desc: String) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: icon).font(.system(size: 16, weight: .bold)).foregroundStyle(tint)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.suite(.extrabold, 14)).foregroundStyle(Color.gg.text)
-                Text(desc).font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-    }
-
-    private var divider: some View { Rectangle().fill(Color.gg.border).frame(height: 1) }
-
-    private func row(icon: String, label: String, action: String, onTap: @escaping () -> Void) -> some View {
-        Button { Haptics.impact(.light); onTap() } label: {
+    private var premiumNudge: some View {
+        Button {
+            Haptics.impact(.light)
+            premium.openPaywall()
+        } label: {
             HStack(spacing: 12) {
-                Image(systemName: icon).foregroundStyle(Color.gg.textMuted).frame(width: 24)
-                Text(label).font(.suite(.bold, 15)).foregroundStyle(Color.gg.text)
-                Spacer()
-                Text(action).font(.suite(.bold, 14)).foregroundStyle(Color.gg.accent)
+                Image(systemName: "sparkles")
+                    .font(.system(size: 18, weight: .bold)).foregroundStyle(.white)
+                    .frame(width: 40, height: 40)
+                    .background(Color.white.opacity(0.2), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("평생 이용권").font(.suite(.extrabold, 15)).foregroundStyle(.white)
+                    Text("모든 모드와 3D 어드벤처 · 한 번 구매로 계속")
+                        .font(.suite(.medium, 12)).foregroundStyle(.white.opacity(0.85))
+                }
+                Spacer(minLength: 4)
+                Text(premium.price).font(.suite(.extrabold, 14)).foregroundStyle(.white)
             }
-            .padding(.horizontal, 20).padding(.vertical, 16)
-            .contentShape(Rectangle())
+            .padding(16)
+            .background(
+                LinearGradient(colors: [Color.gg.indigo, Color.gg.violet], startPoint: .topLeading, endPoint: .bottomTrailing),
+                in: RoundedRectangle(cornerRadius: 20, style: .continuous)
+            )
         }
-        .buttonStyle(.plain)
-    }
-
-    private func open(_ url: String) {
-        if let u = URL(string: url) { openURL(u) }
+        .buttonStyle(PressScaleStyle())
     }
 }
 

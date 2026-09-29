@@ -57,12 +57,30 @@ import site.smap.gugudan.services.Sound
 import site.smap.gugudan.store.*
 import androidx.lifecycle.lifecycleScope
 import androidx.compose.runtime.LaunchedEffect
+import android.graphics.Color as AndroidColor
+import androidx.activity.SystemBarStyle
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import site.smap.gugudan.designsystem.resolvedDark
+import site.smap.gugudan.features.settings.SettingsScreen
+import site.smap.gugudan.services.Speech
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        Haptics.init(applicationContext)
 
         // DEBUG 테스트 훅 — adb 인스트루먼트 없이 시스템 프로퍼티로 주입
         // 예) adb shell setprop debug.gugu.premium 1
@@ -70,12 +88,15 @@ class MainActivity : ComponentActivity() {
             BuildConfig.DEBUG && getSystemProperty("debug.gugu.$name") == "1"
 
         val persistence = Persistence(applicationContext)
+        Haptics.init(applicationContext, persistence)
         Sound.init(persistence)
+        Speech.init(applicationContext)
         val game = GameStore(persistence)
         val adventure = AdventureStore(persistence, devClearR2 = devFlag("clear_r2"))
         val session = SessionStore()
         val premium = PremiumStore(this, persistence, devForcePremium = devFlag("premium"))
         val theme = ThemeStore(persistence)
+        val prefs = PrefsStore(persistence)
         val router = Router()
         val auth = AuthStore(persistence, lifecycleScope)
         val sync = SyncStore(
@@ -92,11 +113,24 @@ class MainActivity : ComponentActivity() {
                 LocalSession provides session,
                 LocalPremium provides premium,
                 LocalTheme provides theme,
+                LocalPrefs provides prefs,
                 LocalRouter provides router,
                 LocalAuth provides auth,
                 LocalSync provides sync,
                 LocalReminder provides reminder,
             ) {
+                // 상태바·내비게이션바 아이콘 색을 앱 테마에 맞춘다.
+                // 기본값(auto)은 기기 설정을 따라, 기기가 라이트인데 앱이 다크면 검은 아이콘이 검은 배경에 묻혔다.
+                val dark = resolvedDark(theme.theme)
+                DisposableEffect(dark) {
+                    val style = if (dark) {
+                        SystemBarStyle.dark(AndroidColor.TRANSPARENT)
+                    } else {
+                        SystemBarStyle.light(AndroidColor.TRANSPARENT, AndroidColor.TRANSPARENT)
+                    }
+                    enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+                    onDispose {}
+                }
                 GuguTheme(theme.theme) {
                     // 첫 실행 시 조용히 익명 계정을 만든다 — 화면을 막지 않고 실패해도 앱은 그대로 동작
                     LaunchedEffect(Unit) {
@@ -144,7 +178,8 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// 앱 셸 (iOS RootView 이식) — 온보딩 게이트 + 탭 + 오버레이(세션/어드벤처/페이월)
+// 앱 셸 (iOS RootView 이식) — 온보딩 게이트 + 탭 + 오버레이(세션/어드벤처/게임/설정/페이월).
+// 시스템 뒤로가기는 가장 위에 떠 있는 화면이 먼저 받는다 (각 화면이 자기 BackHandler 를 가진다).
 @Composable
 fun RootScreen() {
     val gg = LocalGG.current
@@ -168,7 +203,7 @@ fun RootScreen() {
             ) {
                 session.active?.let { active ->
                     SessionScreen(
-                        mode = active.mode, table = active.table,
+                        mode = active.mode, table = active.table, review = active.review,
                         onExit = { session.end() },
                     )
                 }
@@ -210,7 +245,16 @@ fun RootScreen() {
                 BasketScreen(onExit = { router.basketOpen = false })
             }
 
-            // 페이월 오버레이 (최상위)
+            // 설정 오버레이 (프로필 톱니바퀴)
+            AnimatedVisibility(
+                visible = router.settingsOpen,
+                enter = slideInVertically(initialOffsetY = { it / 4 }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it / 4 }) + fadeOut(),
+            ) {
+                SettingsScreen(onClose = { router.settingsOpen = false })
+            }
+
+            // 페이월 오버레이 (최상위 — 설정에서 열어도 그 위에 뜬다)
             AnimatedVisibility(
                 visible = premium.paywallOpen,
                 enter = slideInVertically(initialOffsetY = { it / 4 }) + fadeIn(),
@@ -226,23 +270,33 @@ fun RootScreen() {
 private fun MainTabs() {
     val router = LocalRouter.current
     val gg = LocalGG.current
+    // 탭별 저장 상태(스크롤 위치 등)를 탭을 오가도 보존한다 — 예전에는 탭을 바꿀 때마다 맨 위로 돌아갔다
+    val tabState = rememberSaveableStateHolder()
+
+    // 홈이 아닌 탭에서 뒤로가기 → 홈으로 (안드로이드 관례). 홈에서는 앱을 나간다.
+    BackHandler(enabled = router.tab != AppTab.HOME) { router.tab = AppTab.HOME }
 
     Column(Modifier.fillMaxSize()) {
         Box(Modifier.weight(1f)) {
-            when (router.tab) {
-                AppTab.HOME -> HomeScreen()
-                AppTab.LEARN -> LearnScreen()
-                AppTab.PROFILE -> ProfileScreen()
+            tabState.SaveableStateProvider(router.tab) {
+                when (router.tab) {
+                    AppTab.HOME -> HomeScreen()
+                    AppTab.LEARN -> LearnScreen()
+                    AppTab.PROFILE -> ProfileScreen()
+                }
             }
         }
         // 하단 탭 바
-        Row(
-            Modifier.fillMaxWidth().background(gg.surface).navigationBarsPadding(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-        ) {
-            TabItem(Icons.Filled.Home, "홈", router.tab == AppTab.HOME) { router.tab = AppTab.HOME }
-            TabItem(Icons.Filled.School, "학습", router.tab == AppTab.LEARN) { router.tab = AppTab.LEARN }
-            TabItem(Icons.Filled.Person, "프로필", router.tab == AppTab.PROFILE) { router.tab = AppTab.PROFILE }
+        Column(Modifier.fillMaxWidth().background(gg.surface)) {
+            Box(Modifier.fillMaxWidth().height(1.dp).background(gg.border))
+            Row(
+                Modifier.fillMaxWidth().navigationBarsPadding(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+            ) {
+                TabItem(Icons.Filled.Home, "홈", router.tab == AppTab.HOME) { router.tab = AppTab.HOME }
+                TabItem(Icons.Filled.School, "학습", router.tab == AppTab.LEARN) { router.tab = AppTab.LEARN }
+                TabItem(Icons.Filled.Person, "프로필", router.tab == AppTab.PROFILE) { router.tab = AppTab.PROFILE }
+            }
         }
     }
 }
@@ -251,14 +305,27 @@ private fun MainTabs() {
 private fun RowScope.TabItem(icon: ImageVector, label: String, active: Boolean, onClick: () -> Unit) {
     val gg = LocalGG.current
     val tint = if (active) gg.accent else gg.textMuted
-    PressableCard(modifier = Modifier.weight(1f), onClick = onClick) {
+    // 선택된 탭은 아이콘 뒤에 알약 모양 표시를 깐다 (Material 3 내비게이션 바 관례)
+    val pill by animateColorAsState(if (active) gg.accent.copy(alpha = 0.16f) else Color.Transparent, label = "tabPill")
+    PressableCard(
+        modifier = Modifier.weight(1f).semantics {
+            role = Role.Tab
+            selected = active
+        },
+        onClick = onClick,
+    ) {
         Column(
-            Modifier.fillMaxWidth().padding(vertical = 10.dp),
+            Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
-            Icon(icon, contentDescription = label, tint = tint, modifier = Modifier.size(22.dp))
-            Text(label, style = suite(FontWeight.Bold, 11), color = tint)
+            Box(
+                Modifier.width(56.dp).height(28.dp).clip(CircleShape).background(pill),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
+            }
+            Text(label, style = suite(if (active) FontWeight.ExtraBold else FontWeight.Bold, 11), color = tint)
         }
     }
 }

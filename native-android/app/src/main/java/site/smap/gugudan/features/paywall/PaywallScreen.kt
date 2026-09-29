@@ -1,5 +1,6 @@
 package site.smap.gugudan.features.paywall
 
+import androidx.activity.compose.BackHandler
 import android.app.Activity
 import android.content.Intent
 import androidx.compose.foundation.background
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Coffee
+import androidx.compose.material.icons.filled.DirectionsRun
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -47,6 +49,7 @@ private data class Benefit(val icon: ImageVector, val title: String, val desc: S
 
 @Composable
 fun PaywallScreen(onDismiss: () -> Unit) {
+    BackHandler(onBack = onDismiss)
     val gg = LocalGG.current
     val premium = LocalPremium.current
     val auth = LocalAuth.current
@@ -60,6 +63,8 @@ fun PaywallScreen(onDismiss: () -> Unit) {
     val benefits = listOf(
         Benefit(Icons.Filled.Map, "3D 어드벤처 전 지역", "8개 지역 탐험 · 주민/보스 구구단 대결"),
         Benefit(Icons.Filled.Bolt, "게임 모드 전부 해제", "60초 챌린지 · 서바이벌 · 빈칸 추리 · OX 퀴즈"),
+        Benefit(Icons.Filled.DirectionsRun, "움직이며 놀기 무제한",
+            "구구 점프 · 레인 · 바구니 (무료는 ${PremiumConfig.MINIGAME_TRIAL_QUESTIONS}문제 체험)"),
         Benefit(Icons.Filled.AllInclusive, "한 번 결제, 평생 소장", "추가 결제 없음 · 업데이트 콘텐츠도 전부 포함"),
     )
 

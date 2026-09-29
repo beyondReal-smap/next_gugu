@@ -51,7 +51,8 @@ fun OnboardingScreen() {
     )
 
     Column(
-        Modifier.fillMaxSize().background(gg.bg).systemBarsPadding().padding(24.dp),
+        // 태블릿에서 카드·버튼이 화면 끝까지 늘어나지 않게
+        Modifier.fillMaxSize().background(gg.bg).systemBarsPadding().readableWidth(560.dp).padding(24.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Column {

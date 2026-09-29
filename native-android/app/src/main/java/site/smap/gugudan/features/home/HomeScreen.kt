@@ -30,6 +30,17 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.TrackChanges
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.outlined.LocalFireDepartment
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import site.smap.gugudan.core.Commit
+import site.smap.gugudan.features.settings.DAILY_GOAL_OPTIONS
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -49,6 +60,7 @@ import site.smap.gugudan.core.Modes
 import site.smap.gugudan.core.adventure.AdvProgress
 import site.smap.gugudan.core.adventure.World
 import site.smap.gugudan.designsystem.*
+import site.smap.gugudan.features.paywall.MinigameTrial
 import site.smap.gugudan.store.*
 
 // 홈 (iOS HomeView 이식)
@@ -81,10 +93,14 @@ fun HomeScreen() {
     val goalPct = if (state.dailyGoal > 0) state.dailyCorrect.toDouble() / state.dailyGoal else 0.0
     val weakCount = state.wrongPool.size
 
+    var showGoalSheet by remember { mutableStateOf(false) }
+
     Column(
         Modifier.fillMaxSize().background(gg.bg)
-            .verticalScroll(rememberScrollState())
+            // 상태바 영역은 스크롤 밖에 둔다 — 스크롤한 내용이 시계·배터리 밑으로 비치지 않게
             .statusBarsPadding()
+            .verticalScroll(rememberScrollState())
+            .readableWidth()
             .padding(horizontal = 20.dp)
             .padding(top = 12.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -95,13 +111,29 @@ fun HomeScreen() {
                 Text("안녕하세요 👋", style = suite(FontWeight.Bold, 14), color = gg.textMuted)
                 Text("오늘도 구구단 한 판!", style = suite(FontWeight.ExtraBold, 20), color = gg.text)
             }
-            Pill(bg = gg.danger.copy(alpha = 0.12f), fg = gg.danger) {
-                Icon(Icons.Filled.LocalFireDepartment, null, Modifier.size(14.dp))
-                Text("${state.streak}일")
+            // 끊긴 연속 기록은 0으로 — 불이 꺼진 모습으로 오늘 다시 시작하게 한다
+            val streak = Commit.activeStreak(state)
+            val streakTint = if (streak > 0) gg.danger else gg.textMuted
+            Box(Modifier.clearAndSetSemantics {
+                contentDescription = if (streak > 0) "${streak}일 연속 학습 중" else "연속 학습 기록 없음, 오늘 시작해요"
+            }) {
+                Pill(bg = streakTint.copy(alpha = 0.12f), fg = streakTint) {
+                    Icon(
+                        if (streak > 0) Icons.Filled.LocalFireDepartment else Icons.Outlined.LocalFireDepartment,
+                        null, Modifier.size(14.dp),
+                    )
+                    Text("${streak}일")
+                }
             }
         }
 
-        // 데일리 골
+        // 데일리 골 — 누르면 목표를 바꾼다
+        PressableCard(
+            modifier = Modifier.clearAndSetSemantics {
+                contentDescription = "오늘의 목표, 정답 ${state.dailyGoal}개 중 ${state.dailyCorrect}개. 눌러서 하루 목표 바꾸기"
+            },
+            onClick = { showGoalSheet = true },
+        ) {
         Row(
             Modifier.fillMaxWidth().ggCard().padding(20.dp),
             horizontalArrangement = Arrangement.spacedBy(20.dp),
@@ -123,7 +155,10 @@ fun HomeScreen() {
                     else "정답 ${maxOf(0, state.dailyGoal - state.dailyCorrect)}개 더 풀면 달성!",
                     style = suite(FontWeight.Medium, 14), color = gg.textMuted,
                 )
+                Text("목표 바꾸기", style = suite(FontWeight.Bold, 12), color = gg.accent,
+                    modifier = Modifier.padding(top = 2.dp))
             }
+        }
         }
 
         // 레벨/XP
@@ -154,7 +189,7 @@ fun HomeScreen() {
 
         // 취약 문제 복습
         if (weakCount > 0) {
-            PressableCard(onClick = { session.start(GameMode.PRACTICE, null) }) {
+            PressableCard(onClick = { session.startReview() }) {
                 Row(
                     Modifier.fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
@@ -169,7 +204,7 @@ fun HomeScreen() {
                     }
                     Column(Modifier.weight(1f)) {
                         Text("취약 문제 복습", style = suite(FontWeight.Bold, 15), color = gg.text)
-                        Text("헷갈렸던 문제 ${weakCount}개가 우선 출제돼요", style = suite(FontWeight.Normal, 13), color = gg.textMuted)
+                        Text("헷갈렸던 문제 ${weakCount}개를 모아 다시 풀어요", style = suite(FontWeight.Normal, 13), color = gg.textMuted)
                     }
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = gg.textMuted)
                 }
@@ -211,17 +246,17 @@ fun HomeScreen() {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             GroupHeader(Icons.Filled.DirectionsRun, "직접 움직이며 놀기", "달리고, 피하고, 정답을 받아요", GGColors.emerald)
             GameCard(
-                title = "구구 바구니", badge = "새 모드", desc = "좌우로 움직여 정답 열매를 쏙 받아요!",
+                title = "구구 바구니", badge = MinigameTrial.badge(premium.isPremium) ?: "새 모드", desc = "좌우로 움직여 정답 열매를 쏙 받아요!",
                 icon = Icons.Filled.ShoppingBasket, iconBg = Color(0xFF794124), iconFg = Color(0xFFFFE7A3),
                 tint = gg.warning, onClick = { router.basketOpen = true },
             )
             GameCard(
-                title = "구구 점프", badge = null, desc = "정답을 맞히면 폴짝! 장애물을 넘어 달려요.",
+                title = "구구 점프", badge = MinigameTrial.badge(premium.isPremium), desc = "정답을 맞히면 폴짝! 장애물을 넘어 달려요.",
                 icon = Icons.Filled.DirectionsRun, iconBg = Color(0xFF153F35), iconFg = Color(0xFFDBEF9E),
                 tint = GGColors.emerald, onClick = { router.runnerOpen = true },
             )
             GameCard(
-                title = "구구 레인", badge = "새 모드", desc = "길을 바꿔 피하고, 정답 길로 쏙!",
+                title = "구구 레인", badge = MinigameTrial.badge(premium.isPremium) ?: "새 모드", desc = "길을 바꿔 피하고, 정답 길로 쏙!",
                 icon = Icons.Filled.ViewStream, iconBg = Color(0xFF153F35), iconFg = Color(0xFFDBEF9E),
                 tint = GGColors.emerald, onClick = { router.laneOpen = true },
             )
@@ -234,16 +269,43 @@ fun HomeScreen() {
                 onClick = { if (premium.isPremium) adventure.openAdventure() else premium.openPaywall() },
             )
         }
+    }
 
-        // 단 선택 학습 링크
-        PressableCard(onClick = { router.tab = AppTab.LEARN }) {
-            Row(
-                Modifier.fillMaxWidth().ggCard(16.dp).padding(horizontal = 20.dp, vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text("단 선택해서 학습하기", style = suite(FontWeight.Bold, 15), color = gg.text, modifier = Modifier.weight(1f))
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = gg.textMuted)
+    if (showGoalSheet) DailyGoalSheet(onDismiss = { showGoalSheet = false })
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DailyGoalSheet(onDismiss: () -> Unit) {
+    val gg = LocalGG.current
+    val game = LocalGame.current
+    val reminder = LocalReminder.current
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val goal = game.state.dailyGoal
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = gg.bg) {
+        Column(
+            Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 24.dp).padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp),
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("하루 목표", style = suite(FontWeight.ExtraBold, 22), color = gg.text)
+                Text("하루에 맞힐 정답 수를 골라요. 목표를 채우면 그날 학습 알림은 쉬어요.",
+                    style = suite(FontWeight.Medium, 14), color = gg.textMuted)
             }
+            ChoiceChips(DAILY_GOAL_OPTIONS, goal, { "${it}개" }) {
+                game.setDailyGoal(it)
+                reminder.reschedule(game.state)
+            }
+            Text(
+                when {
+                    goal < 15 -> "가볍게 — 한 판(10문제)이면 거의 채워요"
+                    goal < 25 -> "보통 — 두 판쯤이면 채워요"
+                    goal < 40 -> "열심히 — 세 판쯤이면 채워요"
+                    else -> "도전 — 다섯 판쯤이면 채워요"
+                },
+                style = suite(FontWeight.Bold, 13), color = gg.accent,
+            )
+            GGButton(variant = GGButtonVariant.PRIMARY, size = GGButtonSize.LG, onClick = onDismiss) { Text("좋아요") }
         }
     }
 }

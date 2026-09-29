@@ -13,6 +13,12 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Replay
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.text.style.TextDecoration
+import site.smap.gugudan.core.GivenAnswer
+import site.smap.gugudan.core.KoreanReading
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -82,11 +88,12 @@ fun ResultView(engine: SessionEngine, done: SessionDone, onClose: () -> Unit) {
         Column(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState())
                 .statusBarsPadding().navigationBarsPadding()
+                .readableWidth(560.dp)
                 .padding(horizontal = 24.dp).padding(top = 24.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("${def.name} 완료", style = suite(FontWeight.Bold, 14), color = gg.textMuted)
+                Text("${engine.modeName} 완료", style = suite(FontWeight.Bold, 14), color = gg.textMuted)
                 Text(headline, style = suite(FontWeight.ExtraBold, 28), color = gg.text)
             }
 
@@ -127,7 +134,11 @@ fun ResultView(engine: SessionEngine, done: SessionDone, onClose: () -> Unit) {
             // 마스터리 (단 집중)
             commit.table?.let { table ->
                 Row(
-                    Modifier.fillMaxWidth().ggCard(16.dp).padding(horizontal = 20.dp, vertical = 16.dp),
+                    Modifier.fillMaxWidth().ggCard(16.dp).padding(horizontal = 20.dp, vertical = 16.dp)
+                        .clearAndSetSemantics {
+                            contentDescription = "${table}단 마스터리 별 ${commit.newStars}개" +
+                                if (commit.improvedStars) ", 새 기록" else ""
+                        },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
@@ -137,6 +148,41 @@ fun ResultView(engine: SessionEngine, done: SessionDone, onClose: () -> Unit) {
                         }
                     }
                     StarsView(commit.newStars, size = 24.dp)
+                }
+            }
+
+            // 틀린 문제 (같은 식은 한 번만, 처음 틀린 순서대로) — 아이가 쓴 답과 정답을 나란히 보여 준다
+            val missed = result.answers.filter { !it.correct }.distinctBy { it.a to it.b }
+            if (missed.isNotEmpty()) {
+                Column(
+                    Modifier.fillMaxWidth().ggCard(16.dp).padding(horizontal = 20.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Filled.Replay, null, tint = gg.danger, modifier = Modifier.size(16.dp))
+                        Text("다시 볼 문제", style = suite(FontWeight.Bold, 14), color = gg.text)
+                        Text("${missed.size}", style = suite(FontWeight.ExtraBold, 13), color = gg.danger)
+                    }
+                    missed.forEach { a ->
+                        val mine = when (val g = a.given) {
+                            is GivenAnswer.Number -> "내 답 ${g.value}"
+                            is GivenAnswer.Boolean -> "내 선택 ${if (g.value) "O" else "X"}"
+                            else -> null
+                        }
+                        Row(
+                            Modifier.fillMaxWidth().clearAndSetSemantics {
+                                contentDescription = "${a.a} 곱하기 ${KoreanReading.withTopic(a.b)} ${a.a * a.b}. ${mine ?: ""}"
+                            },
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text("${a.a} × ${a.b} = ${a.a * a.b}", style = suite(FontWeight.ExtraBold, 18),
+                                color = gg.text, modifier = Modifier.weight(1f))
+                            if (mine != null) {
+                                Text(mine, style = suite(FontWeight.Bold, 13).copy(
+                                    textDecoration = TextDecoration.LineThrough), color = gg.danger)
+                            }
+                        }
+                    }
                 }
             }
 

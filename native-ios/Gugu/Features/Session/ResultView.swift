@@ -88,10 +88,11 @@ struct ResultView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("\(def.name) 완료").font(.suite(.bold, 14)).foregroundStyle(Color.gg.textMuted)
+                        Text("\(engine.modeName) 완료").font(.suite(.bold, 14)).foregroundStyle(Color.gg.textMuted)
                         Text(headline).font(.suite(.extrabold, 28)).foregroundStyle(Color.gg.text)
                     }
                     .padding(.top, 24)
+                    .accessibilityElement(children: .combine)
 
                     if def.scored, let score = commit.score {
                         scoreHero(score)
@@ -99,6 +100,9 @@ struct ResultView: View {
                     statGrid
                     if let table = commit.table {
                         masteryRow(table)
+                    }
+                    if !missedFacts.isEmpty {
+                        missedList
                     }
                     if commit.goalReached {
                         Text("🎉 오늘의 목표를 달성했어요!")
@@ -177,6 +181,52 @@ struct ResultView: View {
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color.gg.border, lineWidth: 1))
     }
 
+    /// 틀린 문제 (같은 식은 한 번만, 처음 틀린 순서대로) — 아이가 쓴 답과 정답을 나란히 보여 준다
+    private var missedFacts: [AnswerRecord] {
+        var seen = Set<String>()
+        return result.answers.filter { a in
+            guard !a.correct else { return false }
+            return seen.insert(Problems.key(a.a, a.b)).inserted
+        }
+    }
+
+    private var missedList: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: "arrow.uturn.backward.circle.fill")
+                    .font(.system(size: 14, weight: .bold)).foregroundStyle(Color.gg.danger)
+                Text("다시 볼 문제").font(.suite(.bold, 14)).foregroundStyle(Color.gg.text)
+                Text("\(missedFacts.count)").font(.suite(.extrabold, 13)).foregroundStyle(Color.gg.danger).monospacedDigit()
+            }
+            ForEach(Array(missedFacts.enumerated()), id: \.offset) { _, a in
+                HStack(alignment: .firstTextBaseline) {
+                    Text("\(a.a) × \(a.b) = \(a.a * a.b)")
+                        .font(.suite(.extrabold, 18)).foregroundStyle(Color.gg.text).monospacedDigit()
+                    Spacer(minLength: 8)
+                    if let mine = givenLabel(a) {
+                        Text(mine)
+                            .font(.suite(.bold, 13)).foregroundStyle(Color.gg.danger).monospacedDigit()
+                            .strikethrough(true, color: Color.gg.danger.opacity(0.6))
+                    }
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(a.a) 곱하기 \(KoreanReading.withTopic(a.b)) \(a.a * a.b). \(givenLabel(a) ?? "")")
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 20).padding(.vertical, 16)
+        .ggCard(padding: 0)
+    }
+
+    /// 아이가 낸 답 — 빈칸 추리는 빈칸에 쓴 수, OX 는 고른 쪽
+    private func givenLabel(_ a: AnswerRecord) -> String? {
+        switch a.given {
+        case let .number(n): return "내 답 \(n)"
+        case let .boolean(b): return "내 선택 \(b ? "O" : "X")"
+        case .text, .none: return nil
+        }
+    }
+
     private func masteryRow(_ table: Int) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
@@ -189,7 +239,9 @@ struct ResultView: View {
             StarsView(count: commit.newStars, size: 24)
         }
         .padding(.horizontal, 20).padding(.vertical, 16)
-        .ggCard()
+        .ggCard(padding: 0)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(table)단 마스터리 별 \(commit.newStars)개\(commit.improvedStars ? ", 새 기록" : "")")
     }
 
     private var actions: some View {

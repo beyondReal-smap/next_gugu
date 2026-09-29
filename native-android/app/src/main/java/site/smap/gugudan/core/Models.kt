@@ -29,8 +29,10 @@ enum class GameMode {
     @SerialName("adventure") ADVENTURE,
 }
 
+/** 화면 테마 — SYSTEM 은 기기 설정(라이트/다크)을 따른다 */
 @Serializable
 enum class Theme {
+    @SerialName("system") SYSTEM,
     @SerialName("light") LIGHT,
     @SerialName("dark") DARK,
 }

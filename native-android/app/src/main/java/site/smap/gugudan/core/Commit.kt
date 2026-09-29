@@ -49,6 +49,16 @@ object Commit {
     }
 
     /**
+     * 화면에 보여 줄 연속 학습 일수 — 마지막 학습이 오늘이나 어제면 이어지는 중, 그보다 오래되면 이미 끊긴 것(0).
+     * 저장된 streak 은 소급해 깎지 않으므로(applyVisit) 보여 줄 때 판정한다.
+     * 끊긴 값을 그대로 보여 주면 "한 판 했더니 4일이 1일로 줄었다"처럼 보인다.
+     */
+    fun activeStreak(s: GameState, now: LocalDate = LocalDate.now()): Int {
+        val alive = s.lastPlayedDate == todayStr(now) || s.lastPlayedDate == todayStr(now.minusDays(1))
+        return if (alive) s.streak else 0
+    }
+
+    /**
      * 앱 진입 시 데일리 골 날짜만 갱신.
      * 스트릭은 학습 자격(세션 완료 또는 일일 정답 하한)이 있을 때만 qualifyStreak 로 올린다.
      * 기존 lastPlayedDate/streak 값은 소급해서 깎지 않는다.
@@ -133,7 +143,9 @@ object Commit {
         var isNewBest = false
         val def = Modes.def(result.mode)
 
-        if (!partial) {
+        // 한 문제도 풀지 않고 끝난 판(60초 챌린지 무응답 등)은 완료로 치지 않는다 —
+        // 정확도 추이에 0%가 찍히고 아무것도 안 해도 스트릭이 오르던 문제를 막는다
+        if (!partial && result.answers.isNotEmpty()) {
             // 최근 추이 (cap 20) — 한 판을 끝냈을 때만
             s = s.copy(
                 recentAccuracy = (s.recentAccuracy + Math.round(accuracy * 100).toInt()).takeLast(20),

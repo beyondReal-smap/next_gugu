@@ -1,5 +1,6 @@
 package site.smap.gugudan.features.basket
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -55,8 +56,10 @@ import site.smap.gugudan.core.Basket
 import site.smap.gugudan.core.BasketOutcome
 import site.smap.gugudan.core.RunnerPhase
 import site.smap.gugudan.designsystem.*
+import site.smap.gugudan.features.paywall.*
 import site.smap.gugudan.services.Haptics
 import site.smap.gugudan.services.Persistence
+import site.smap.gugudan.store.LocalPremium
 
 // 구구 바구니 화면 (BasketScreen.tsx / iOS BasketView 이식)
 // 무대를 좌우로 끌거나 방향 버튼을 눌러 바구니를 옮겨 정답 열매를 받는다.
@@ -75,12 +78,19 @@ fun BasketScreen(onExit: () -> Unit) {
     val gg = LocalGG.current
     val context = LocalContext.current
     val engine = remember { BasketEngine(Persistence(context.applicationContext)) }
+    // 시스템 뒤로가기 — 달리는 중이면 일시정지(실수로 판을 날리지 않게), 멈춰 있거나 끝났으면 홈으로
+    BackHandler {
+        if (engine.game.phase == RunnerPhase.RUNNING) engine.pause() else onExit()
+    }
     val game = engine.game
 
     val ready = game.phase == RunnerPhase.READY
     val over = game.phase == RunnerPhase.OVER
     val paused = game.phase == RunnerPhase.PAUSED
     val playing = !ready && !over
+    val premium = LocalPremium.current
+    // 무료 체험 판이 끝났다 — 다시 하기 대신 결제 화면으로 안내한다(구매하면 바로 일반 종료 화면으로 바뀐다)
+    val trialEnded = over && game.trialLeft != null && !premium.isPremium
 
     LaunchedEffect(game.phase) {
         if (game.phase != RunnerPhase.RUNNING) return@LaunchedEffect
@@ -179,16 +189,27 @@ fun BasketScreen(onExit: () -> Unit) {
                         MoveButton(-1, !paused, Modifier.weight(1f), engine)
                         MoveButton(1, !paused, Modifier.weight(1f), engine)
                     }
-                    Text(
-                        "화면을 좌우로 끌거나 방향 버튼을 꾹 눌러요",
-                        style = suite(FontWeight.Medium, 11), color = gg.textMuted,
-                        textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
-                    )
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        game.trialLeft?.let { TrialProgressPill(it) }
+                        Text(
+                            "화면을 좌우로 끌거나 방향 버튼을 꾹 눌러요",
+                            style = suite(FontWeight.Medium, 11), color = gg.textMuted,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                 }
                 Spacer(Modifier.height(8.dp))
             } else {
                 Column(Modifier.fillMaxWidth().ggCard(20.dp).padding(16.dp)) {
-                    SetupPanel(engine, over)
+                    if (trialEnded) {
+                        TrialEndPanel(game.score, onUnlock = { premium.openPaywall() }, onExit = onExit)
+                    } else {
+                        SetupPanel(engine, over)
+                    }
                 }
                 Spacer(Modifier.height(8.dp))
             }
@@ -321,6 +342,7 @@ private fun MoveButton(direction: Int, enabled: Boolean, modifier: Modifier, eng
 @Composable
 private fun SetupPanel(engine: BasketEngine, over: Boolean) {
     val gg = LocalGG.current
+    val premium = LocalPremium.current
     val game = engine.game
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -368,7 +390,9 @@ private fun SetupPanel(engine: BasketEngine, over: Boolean) {
             }
         }
 
-        GGButton(variant = GGButtonVariant.PRIMARY, size = GGButtonSize.LG, onClick = { engine.start() }) {
+        if (!premium.isPremium) TrialNotice()
+
+        GGButton(variant = GGButtonVariant.PRIMARY, size = GGButtonSize.LG, onClick = { engine.start(MinigameTrial.limit(premium.isPremium)) }) {
             Icon(
                 if (over) Icons.Filled.RotateLeft else Icons.Filled.PlayArrow, null,
                 modifier = Modifier.size(18.dp),

@@ -71,8 +71,9 @@ class RunnerEngine(private val persistence: Persistence) {
 
     // MARK: 조작
 
-    fun start() {
-        game = Runner.create(table)
+    /** trial: 무료 체험 문제 수 (null = 제한 없음) */
+    fun start(trial: Int?) {
+        game = Runner.create(table, trial = trial)
         Sound.tap()
     }
 

@@ -43,6 +43,8 @@ data class LaneRunnerState(
     val lives: Int = LaneRunner.MAX_LIVES,
     val distance: Double = 0.0,
     val hitMs: Double = 0.0,
+    /** 무료 체험에서 남은 문제(정답 게이트) 수(지금 문제 포함). null 이면 제한 없음, 0 이면 체험을 다 해서 끝난 판 */
+    val trialLeft: Int? = null,
 )
 
 object LaneRunner {
@@ -87,8 +89,9 @@ object LaneRunner {
 
     fun speed(score: Int): Double = (SPAWN_X - JUDGE_X) / travelMs(score)
 
-    fun create(table: Int?, phase: RunnerPhase = RunnerPhase.RUNNING): LaneRunnerState =
-        LaneRunnerState(phase = phase, table = table)
+    /** trial: 무료 체험 문제 수 (null = 제한 없음) */
+    fun create(table: Int?, phase: RunnerPhase = RunnerPhase.RUNNING, trial: Int? = null): LaneRunnerState =
+        LaneRunnerState(phase = phase, table = table, trialLeft = trial)
 
     fun setLane(state: LaneRunnerState, lane: Int): LaneRunnerState {
         if (state.phase != RunnerPhase.RUNNING || lane !in LANES || lane == state.lane) return state
@@ -140,8 +143,14 @@ object LaneRunner {
     }
 
     /** 판정이 끝난 게이트는 화면 밖으로 나갈 때까지 보여 주고, 장애물은 바로 이어서 내보낸다. */
-    private fun startDodge(state: LaneRunnerState): LaneRunnerState =
-        state.copy(segment = LaneSegment.DODGE, spawned = 0, spawnInMs = 0.0, lastFree = LANES)
+    private fun startDodge(state: LaneRunnerState): LaneRunnerState {
+        state.trialLeft?.let { left ->
+            // 무료 체험의 마지막 게이트를 지났으면 다음 장애물을 내지 않고 끝낸다
+            if (left <= 1) return state.copy(trialLeft = left - 1, phase = RunnerPhase.OVER)
+        }
+        return state.copy(segment = LaneSegment.DODGE, spawned = 0, spawnInMs = 0.0, lastFree = LANES,
+            trialLeft = state.trialLeft?.minus(1))
+    }
 
     fun advance(state: LaneRunnerState, dt: Double, random: () -> Double = { Random.nextDouble() }): LaneRunnerState {
         if (state.phase != RunnerPhase.RUNNING || !dt.isFinite() || dt <= 0) return state

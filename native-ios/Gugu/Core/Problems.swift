@@ -68,6 +68,40 @@ enum Problems {
         return best
     }
 
+    /// "7x8" → Problem(7, 8). 형식이 깨졌거나 출제 범위 밖이면 nil
+    static func parseKey(_ key: String) -> Problem? {
+        let parts = key.split(separator: "x", omittingEmptySubsequences: false)
+        guard parts.count == 2, let a = Int(parts[0]), let b = Int(parts[1]) else { return nil }
+        guard (minTable...maxTable).contains(a), (minB...maxB).contains(b) else { return nil }
+        return Problem(a: a, b: b)
+    }
+
+    /// 취약 문제 복습 출제 큐 — 오답 가중치가 큰 문제부터 최대 count 개를 고르고(동률은 무작위),
+    /// 고른 뒤 순서를 섞어 가중치 큰 문제가 늘 맨 앞에 몰리지 않게 한다.
+    /// 가중치 0 이하·형식이 깨진 키는 건너뛴다.
+    static func reviewQueue(
+        _ wrongPool: [String: Int],
+        count: Int,
+        random: () -> Double = { Double.random(in: 0..<1) }
+    ) -> [Problem] {
+        let ranked = wrongPool
+            .sorted { $0.key < $1.key }   // 딕셔너리 순회 순서에 기대지 않는다 (주입 난수 재현성)
+            .compactMap { entry -> (p: Problem, w: Int, tie: Double)? in
+                guard entry.value > 0, let p = parseKey(entry.key) else { return nil }
+                return (p, entry.value, random())
+            }
+            .sorted { $0.w != $1.w ? $0.w > $1.w : $0.tie < $1.tie }
+        var picked = ranked.prefix(max(0, count)).map(\.p)
+        // Fisher–Yates
+        if picked.count > 1 {
+            for i in stride(from: picked.count - 1, to: 0, by: -1) {
+                let j = min(i, Int(random() * Double(i + 1)))
+                picked.swapAt(i, j)
+            }
+        }
+        return picked
+    }
+
     /// 오답 풀 갱신
     static func updateWrongPool(_ pool: [String: Int], a: Int, b: Int, correct: Bool) -> [String: Int] {
         let k = key(a, b)
@@ -90,15 +124,20 @@ struct Statement {
 }
 
 extension Problems {
+    /// 흔히 헷갈리는 "한 끗 차이" 오답 후보 (순서 유지, 중복 가능) — 음성 파일 목록도 이 규칙을 따른다
+    static func statementCandidates(_ p: Problem) -> [Int] {
+        let answer = p.a * p.b
+        return [p.a * (p.b + 1), p.a * (p.b - 1), (p.a + 1) * p.b, (p.a - 1) * p.b]
+            .filter { $0 > 0 && $0 != answer }
+    }
+
     static func makeStatement(
         _ p: Problem,
         random: () -> Double = { Double.random(in: 0..<1) }
     ) -> Statement {
         let answer = p.a * p.b
         if random() < 0.5 { return Statement(shown: answer, isTrue: true) }
-        // 흔히 헷갈리는 "한 끗 차이" 오답 후보
-        let candidates = [p.a * (p.b + 1), p.a * (p.b - 1), (p.a + 1) * p.b, (p.a - 1) * p.b]
-            .filter { $0 > 0 && $0 != answer }
+        let candidates = statementCandidates(p)
         let idx = Int(random() * Double(candidates.count))
         let shown = candidates[min(idx, candidates.count - 1)]
         return Statement(shown: shown, isTrue: false)

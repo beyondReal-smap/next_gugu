@@ -37,7 +37,10 @@ struct RegionMap: View {
                 Spacer()
                 Button { onExit() } label: {
                     Image(systemName: "xmark").font(.system(size: 20, weight: .bold)).foregroundStyle(Color.gg.textMuted)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
+                .accessibilityLabel("어드벤처 닫기")
             }
             Text("지역을 탐험하고 주민들과 구구단 대결을 펼쳐요")
                 .font(.suite(.regular, 14)).foregroundStyle(Color.gg.textMuted)

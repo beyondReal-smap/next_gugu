@@ -15,6 +15,9 @@ object PremiumConfig {
 
     fun isPremiumMode(mode: GameMode): Boolean = mode in premiumModes
 
+    /** 움직이며 놀기(점프·레인·바구니) 무료 체험 문제 수 — 이만큼 풀면 게임을 멈추고 결제 화면으로 안내한다 */
+    const val MINIGAME_TRIAL_QUESTIONS = 3
+
     /** 법적 고지 링크 */
     object Legal {
         const val TERMS = "https://gugu.smap.site/terms"

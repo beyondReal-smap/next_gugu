@@ -78,6 +78,10 @@ android {
         compose = true
         buildConfig = true
     }
+    // 낭독 음성(assets/voice/*.m4a)은 압축하지 않는다 — openFd 로 바로 재생하려면 비압축이어야 한다
+    androidResources {
+        noCompress += "m4a"
+    }
 }
 
 // 업로드 대상은 기본 internal 트랙. 트랙/상태는 CLI 로 덮어쓸 수 있다

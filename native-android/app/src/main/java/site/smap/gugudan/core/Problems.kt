@@ -65,6 +65,43 @@ object Problems {
         return byTable.entries.sortedBy { it.key }.maxByOrNull { it.value }?.key
     }
 
+    /** "7x8" → Problem(7, 8). 형식이 깨졌거나 출제 범위 밖이면 null */
+    fun parseKey(key: String): Problem? {
+        val parts = key.split('x')
+        if (parts.size != 2) return null
+        val a = parts[0].toIntOrNull() ?: return null
+        val b = parts[1].toIntOrNull() ?: return null
+        if (a !in MIN_TABLE..MAX_TABLE || b !in MIN_B..MAX_B) return null
+        return Problem(a, b)
+    }
+
+    /**
+     * 취약 문제 복습 출제 큐 — 오답 가중치가 큰 문제부터 최대 count 개를 고르고(동률은 무작위),
+     * 고른 뒤 순서를 섞어 가중치 큰 문제가 늘 맨 앞에 몰리지 않게 한다.
+     * 가중치 0 이하·형식이 깨진 키는 건너뛴다.
+     */
+    fun reviewQueue(
+        wrongPool: Map<String, Int>,
+        count: Int,
+        random: () -> Double = { Random.nextDouble() },
+    ): List<Problem> {
+        data class Ranked(val p: Problem, val w: Int, val tie: Double)
+        val ranked = wrongPool.entries
+            .sortedBy { it.key }   // 맵 순회 순서에 기대지 않는다 (주입 난수 재현성)
+            .mapNotNull { e ->
+                val p = parseKey(e.key)
+                if (e.value <= 0 || p == null) null else Ranked(p, e.value, random())
+            }
+            .sortedWith(compareByDescending<Ranked> { it.w }.thenBy { it.tie })
+        val picked = ranked.take(maxOf(0, count)).map { it.p }.toMutableList()
+        // Fisher–Yates
+        for (i in picked.size - 1 downTo 1) {
+            val j = minOf(i, (random() * (i + 1)).toInt())
+            val t = picked[i]; picked[i] = picked[j]; picked[j] = t
+        }
+        return picked
+    }
+
     /** 오답 풀 갱신 */
     fun updateWrongPool(pool: Map<String, Int>, a: Int, b: Int, correct: Boolean): Map<String, Int> {
         val k = key(a, b)
@@ -77,12 +114,17 @@ object Problems {
         }
     }
 
+    /** 흔히 헷갈리는 "한 끗 차이" 오답 후보 (순서 유지, 중복 가능) — 음성 파일 목록도 이 규칙을 따른다 */
+    fun statementCandidates(p: Problem): List<Int> {
+        val answer = p.a * p.b
+        return listOf(p.a * (p.b + 1), p.a * (p.b - 1), (p.a + 1) * p.b, (p.a - 1) * p.b)
+            .filter { it > 0 && it != answer }
+    }
+
     fun makeStatement(p: Problem, random: () -> Double = { Random.nextDouble() }): Statement {
         val answer = p.a * p.b
         if (random() < 0.5) return Statement(answer, true)
-        // 흔히 헷갈리는 "한 끗 차이" 오답 후보
-        val candidates = listOf(p.a * (p.b + 1), p.a * (p.b - 1), (p.a + 1) * p.b, (p.a - 1) * p.b)
-            .filter { it > 0 && it != answer }
+        val candidates = statementCandidates(p)
         val idx = (random() * candidates.size).toInt()
         return Statement(candidates[minOf(idx, candidates.size - 1)], false)
     }

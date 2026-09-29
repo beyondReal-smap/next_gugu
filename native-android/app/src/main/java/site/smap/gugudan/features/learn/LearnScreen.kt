@@ -20,6 +20,13 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
+import site.smap.gugudan.core.Hints
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +40,7 @@ import site.smap.gugudan.core.PremiumConfig
 import site.smap.gugudan.core.Problems
 import site.smap.gugudan.designsystem.*
 import site.smap.gugudan.features.home.modeIcon
+import site.smap.gugudan.features.paywall.MinigameTrial
 import site.smap.gugudan.store.LocalGame
 import site.smap.gugudan.store.LocalRouter
 import site.smap.gugudan.store.LocalPremium
@@ -49,14 +57,20 @@ fun LearnScreen() {
     val premium = LocalPremium.current
 
     var mode by remember { mutableStateOf(GameMode.PRACTICE) }
+    /** 표 보기 시트로 연 단 */
+    var sheetTable by remember { mutableStateOf<Int?>(null) }
     val def = Modes.def(mode)
     val totalStars = Achievements.totalStars(game.state)
     val tables = (Problems.MIN_TABLE..Problems.MAX_TABLE).toList()
+    // 로드맵상 다음에 익힐 단 — 모두 별 3개면 null
+    val recommended = Hints.nextRoadmapTable(game.state.tableMastery)
 
     Column(
         Modifier.fillMaxSize().background(gg.bg)
-            .verticalScroll(rememberScrollState())
+            // 상태바 영역은 스크롤 밖에 둔다 — 스크롤한 내용이 시계·배터리 밑으로 비치지 않게
             .statusBarsPadding()
+            .verticalScroll(rememberScrollState())
+            .readableWidth()
             .padding(horizontal = 20.dp).padding(top = 12.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -115,14 +129,7 @@ fun LearnScreen() {
 
         Text(def.detail, style = suite(FontWeight.Medium, 14), color = gg.textMuted)
 
-        // 구구 점프 진입 (웹 Learn 의 러너 링크 대응)
-        GameLink("구구 점프", "정답을 골라 장애물 넘기", Icons.Filled.DirectionsRun) { router.runnerOpen = true }
-        GameLink("구구 레인", "길을 바꿔 피하고 정답 길로", Icons.Filled.ViewStream) { router.laneOpen = true }
-        GameLink(
-            "구구 바구니", "정답 열매를 바구니로 쏙", Icons.Filled.ShoppingBasket,
-            iconBg = Color(0xFF794124), iconFg = Color(0xFFFFE7A3), tint = LocalGG.current.warning,
-        ) { router.basketOpen = true }
-
+        // 모드를 고르면 바로 단을 고르게 — 미니게임 링크가 이 사이에 끼어 흐름이 끊기던 것을 하단으로 옮겼다
         if (def.supportsTable) {
             // 전체 랜덤
             PressableCard(onClick = { session.start(mode, null) }) {
@@ -142,24 +149,22 @@ fun LearnScreen() {
                 }
             }
 
-            Text("단 선택", style = suite(FontWeight.Bold, 14), color = gg.textMuted)
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("단 선택", style = suite(FontWeight.Bold, 14), color = gg.textMuted,
+                    modifier = Modifier.semantics { heading() })
+                Text(
+                    "추천 순서 ${Hints.ROADMAP_TABLES.joinToString(" → ")}단 · 책 버튼을 누르면 표를 볼 수 있어요",
+                    style = suite(FontWeight.Medium, 11), color = gg.textMuted.copy(alpha = 0.85f),
+                )
+            }
             tables.chunked(2).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     row.forEach { t ->
-                        val stars = game.state.tableMastery[t]?.stars ?: 0
-                        PressableCard(modifier = Modifier.weight(1f), onClick = { session.start(mode, t) }) {
-                            Column(
-                                Modifier.fillMaxWidth().ggCard(16.dp).padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                Row(verticalAlignment = Alignment.Bottom) {
-                                    Text("$t", style = suite(FontWeight.ExtraBold, 30), color = gg.text)
-                                    Text("단", style = suite(FontWeight.Bold, 18), color = gg.textMuted,
-                                        modifier = Modifier.padding(bottom = 4.dp))
-                                }
-                                StarsView(stars, size = 16.dp)
-                            }
-                        }
+                        TableCard(
+                            t, mode, recommended = t == recommended, modifier = Modifier.weight(1f),
+                            onStart = { session.start(mode, t) },
+                            onOpenTable = { sheetTable = t },
+                        )
                     }
                 }
             }
@@ -188,6 +193,85 @@ fun LearnScreen() {
                 }
             }
         }
+
+        // 달리기·받기 미니게임 (웹 Learn 의 게임 링크 대응)
+        Spacer(Modifier.height(4.dp))
+        Text("움직이며 연습하기", style = suite(FontWeight.Bold, 14), color = gg.textMuted,
+            modifier = Modifier.semantics { heading() })
+        GameLink("구구 점프", "정답을 골라 장애물 넘기", Icons.Filled.DirectionsRun) { router.runnerOpen = true }
+        GameLink("구구 레인", "길을 바꿔 피하고 정답 길로", Icons.Filled.ViewStream) { router.laneOpen = true }
+        GameLink(
+            "구구 바구니", "정답 열매를 바구니로 쏙", Icons.Filled.ShoppingBasket,
+            iconBg = Color(0xFF794124), iconFg = Color(0xFFFFE7A3), tint = LocalGG.current.warning,
+        ) { router.basketOpen = true }
+    }
+
+    sheetTable?.let { t ->
+        TableSheet(
+            table = t,
+            onDismiss = { sheetTable = null },
+            // 시트를 먼저 닫아야 세션 화면이 시트 창 밑에 깔리지 않는다
+            onPractice = { sheetTable = null; session.start(GameMode.PRACTICE, t) },
+        )
+    }
+}
+
+@Composable
+private fun TableCard(
+    table: Int,
+    mode: GameMode,
+    recommended: Boolean,
+    modifier: Modifier,
+    onStart: () -> Unit,
+    onOpenTable: () -> Unit,
+) {
+    val gg = LocalGG.current
+    val game = LocalGame.current
+    val stars = game.state.tableMastery[table]?.stars ?: 0
+    Box(modifier) {
+        PressableCard(
+            modifier = Modifier.clearAndSetSemantics {
+                contentDescription = "${table}단 ${Modes.def(mode).name} 시작, 별 ${stars}개" + if (recommended) ", 추천" else ""
+                onClick { onStart(); true }
+            },
+            onClick = onStart,
+        ) {
+            Column(
+                Modifier.fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(if (recommended) gg.accent.copy(alpha = 0.08f) else gg.surface)
+                    .border(if (recommended) 1.5.dp else 1.dp,
+                        if (recommended) gg.accent.copy(alpha = 0.6f) else gg.border, RoundedCornerShape(24.dp))
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text("$table", style = suite(FontWeight.ExtraBold, 30), color = gg.text)
+                    Text("단", style = suite(FontWeight.Bold, 18), color = gg.textMuted,
+                        modifier = Modifier.padding(bottom = 4.dp))
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    StarsView(stars, size = 16.dp)
+                    if (recommended) {
+                        Text("추천", style = suite(FontWeight.ExtraBold, 10), color = gg.accentFg,
+                            modifier = Modifier.clip(CircleShape).background(gg.accent)
+                                .padding(horizontal = 7.dp, vertical = 2.dp))
+                    }
+                }
+            }
+        }
+        // 표 보기
+        PressableCard(
+            modifier = Modifier.align(Alignment.TopEnd).padding(6.dp),
+            onClick = onOpenTable,
+        ) {
+            Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                Box(Modifier.size(34.dp).clip(CircleShape).background(gg.accent.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center) {
+                    Icon(Icons.AutoMirrored.Filled.MenuBook, "${table}단 표 보기", tint = gg.accent, modifier = Modifier.size(18.dp))
+                }
+            }
+        }
     }
 }
 
@@ -202,6 +286,8 @@ private fun GameLink(
     onClick: () -> Unit,
 ) {
     val gg = LocalGG.current
+    // 무료 사용자에게 체험이라는 것을 미리 알린다
+    val trialBadge = MinigameTrial.badge(LocalPremium.current.isPremium)
     PressableCard(onClick = onClick) {
         Row(
             Modifier.fillMaxWidth()
@@ -219,7 +305,16 @@ private fun GameLink(
                 Icon(icon, null, tint = iconFg, modifier = Modifier.size(20.dp))
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(title, style = suite(FontWeight.ExtraBold, 14), color = gg.text)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(title, style = suite(FontWeight.ExtraBold, 14), color = gg.text)
+                    trialBadge?.let {
+                        Text(
+                            it, style = suite(FontWeight.ExtraBold, 10), color = tint,
+                            modifier = Modifier.clip(CircleShape).background(tint.copy(alpha = 0.12f))
+                                .padding(horizontal = 7.dp, vertical = 2.dp),
+                        )
+                    }
+                }
                 Text(desc, style = suite(FontWeight.Medium, 12), color = gg.textMuted)
             }
             Icon(

@@ -1,6 +1,13 @@
 package site.smap.gugudan.features.adventure.world
 
 import android.os.Build
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.CircularProgressIndicator
+import site.smap.gugudan.core.KoreanReading
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import com.google.android.filament.IndirectLight
 import com.google.android.filament.Skybox
 import io.github.sceneview.SceneView
+import io.github.sceneview.SurfaceType
 import io.github.sceneview.createEnvironment
 import io.github.sceneview.math.Position
 import io.github.sceneview.node.Node
@@ -93,12 +101,16 @@ fun WorldScene(
         }
     }
 
-    // 지역별 하늘색 Skybox — Filament가 배경 전체를 채워 지형 plane 밖이 검게 나오던 문제 해결.
-    // Skybox.color는 linear 색공간이라 sRGB → linear 변환 후 전달한다.
-    val skyEnvironment = remember(region.table) {
+    // 하늘색 (linear) — Skybox·IndirectLight·화면 지우기 색이 모두 linear 색공간을 쓴다
+    val skyLinear = remember(region.table) {
         val c = hexColor(region.theme.sky)
         fun lin(x: Float) = if (x <= 0.04045f) x / 12.92f else ((x + 0.055f) / 1.055f).pow(2.4f)
-        val r = lin(c.red); val g = lin(c.green); val b = lin(c.blue)
+        floatArrayOf(lin(c.red), lin(c.green), lin(c.blue))
+    }
+
+    // 지역별 하늘색 Skybox — Filament가 배경 전체를 채워 지형 plane 밖이 검게 나오던 문제 해결.
+    val skyEnvironment = remember(region.table) {
+        val r = skyLinear[0]; val g = skyLinear[1]; val b = skyLinear[2]
         createEnvironment(
             engine = engine,
             // 하늘색 균일 앰비언트(간접광) — 커스텀 Skybox로 교체하며 사라진 기본 IBL 보완.
@@ -110,11 +122,19 @@ fun WorldScene(
         )
     }
 
+    // 3D 월드는 처음 그려지기까지 몇 초가 걸리고 그동안 표면이 검게 보인다 —
+    // 첫 프레임 몇 장이 그려질 때까지 지역 하늘색 로딩 화면으로 덮는다
+    var ready by remember(region.table) { mutableStateOf(false) }
+    val renderedFrames = remember(region.table) { intArrayOf(0) }
+
     Box(Modifier.fillMaxSize().background(hexColor(region.theme.sky))) {
         // SceneView(4.x) — childNodes 파라미터 폐기 → content 람다(SceneScope)에서 노드 선언.
         // 월드는 명령형 트리(WorldFactory)라 컨테이너 노드 1개에 조립해 씬에 부착한다.
         SceneView(
             modifier = Modifier.fillMaxSize(),
+            // SurfaceView 는 첫 프레임이 올라오기 전까지 검은 구멍으로 보여 입장 때 1~2초 검은 화면이 났다.
+            // TextureView 는 그 전까지 투명해 뒤의 하늘색 배경이 보인다 (조작부 z-순서 문제도 없다).
+            surfaceType = SurfaceType.TextureSurface,
             engine = engine,
             materialLoader = materialLoader,
             environment = skyEnvironment,
@@ -123,6 +143,8 @@ fun WorldScene(
             onFrame = { frameTimeNanos ->
                 runtime.step(frameTimeNanos)
                 onPosSaved(runtime.posX, runtime.posZ)
+                // 첫 몇 프레임은 셰이더 준비로 아직 검게 나온다 — 렌더링이 흐르기 시작한 뒤(약 0.5초 분량) 걷어낸다
+                if (!ready && ++renderedFrames[0] >= 30) ready = true
             },
         ) {
             // apply는 Node.() -> Unit 리시버 람다 — this가 컨테이너 노드.
@@ -170,6 +192,23 @@ fun WorldScene(
             Joystick { x, z -> runtime.moveX = x; runtime.moveZ = z }
             Box(Modifier.weight(1f))
             CompassChip(region, defeatedIds, portalTo != null, runtime)
+        }
+
+        // 로딩 화면 — 첫 프레임이 그려지면 걷어낸다
+        AnimatedVisibility(visible = !ready, enter = fadeIn(), exit = fadeOut()) {
+            Column(
+                Modifier.fillMaxSize().background(hexColor(region.theme.sky))
+                    // 로딩 중에는 아래 조이스틱이 가려져 있다 — 보이지 않는 조이스틱이 눌리지 않게 터치를 막는다
+                    .pointerInput(Unit) {
+                        awaitPointerEventScope { while (true) awaitPointerEvent().changes.forEach { it.consume() } }
+                    },
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                CircularProgressIndicator(color = Color.White, strokeWidth = 3.dp, modifier = Modifier.size(36.dp))
+                Spacer(Modifier.height(14.dp))
+                Text("${KoreanReading.toward(region.name)} 가는 중…", style = suite(FontWeight.ExtraBold, 16), color = Color.White)
+            }
         }
     }
 }

@@ -67,6 +67,14 @@ class BattleEngine(
     var playerHit by mutableStateOf(0); private set
     var end by mutableStateOf<BattleEnd?>(null); private set
     var qStartClock = 0L; private set
+    /** 도망 확인 시트가 떠 있는 동안 시간을 멈춘 시각 (반격전 타이머 표시도 여기서 멈춘다) */
+    var pausedAt by mutableStateOf<Long?>(null); private set
+    /** 오답일 때 아이가 낸 수 — "35가 아니라 36이에요" 설명에 쓴다 */
+    var lastGiven by mutableStateOf<Int?>(null); private set
+    /** 이번 대결에서 푼 문제 수 — 0이면 도망칠 때 확인 없이 닫는다 */
+    var answeredCount by mutableStateOf(0); private set
+    /** 반격전 예약을 무효화하는 세대 번호 (일시정지·다음 문제) */
+    private var counterToken = 0
 
     private var lock = false
     private var done = false
@@ -113,10 +121,44 @@ class BattleEngine(
         handler.removeCallbacksAndMessages(null)
     }
 
+    // MARK: 일시정지 / 도망
+
+    /** 도망칠지 묻는 동안 대결을 멈춘다 — 상대의 레이스 진행과 반격 카운트다운이 서고, 응답 시간에서도 빠진다 */
+    fun pause() {
+        if (phase != BattlePhase.PLAY || done || pausedAt != null) return
+        pausedAt = now()
+        counterToken += 1   // 반격 예약 무효화
+    }
+
+    fun resume() {
+        val at = pausedAt ?: return
+        val paused = now() - at
+        qStartClock += paused
+        battleStart += paused
+        pausedAt = null
+        // 멈추기 전에 남아 있던 반격 시간만큼 다시 건다 (답을 내고 넘어가는 중이면 goNext 가 새로 건다)
+        if (!lock) scheduleCounterIfNeeded(counterLimit - (now() - qStartClock))
+    }
+
+    /** 표시용 시각 — 일시정지 중에는 멈춘 시각에서 고정된다 */
+    fun displayClock(at: Long = now()): Long = minOf(at, pausedAt ?: at)
+
+    /** 도망 — 푼 문제만 부분 커밋한다(XP·오답 풀·오늘 정답). 승패와 격파 기록은 남기지 않는다. */
+    fun abandon() {
+        if (done) return
+        teardown()
+        if (answers.isEmpty()) return
+        val result = Battle.toSessionResult(
+            npc, answers.toList(), maxCombo, (displayClock() - battleStart).toInt(), partial = true, rematch = rematch,
+        )
+        game.commitSession(result)
+        onCommit(result)
+    }
+
     // MARK: 입력
 
     fun handleInput(n: Int) {
-        if (phase != BattlePhase.PLAY || lock || done || input.length >= 3) return
+        if (phase != BattlePhase.PLAY || lock || done || pausedAt != null || input.length >= 3) return
         Sound.tap()
         input += n.toString()
         val ans = problem.a * problem.b
@@ -127,17 +169,17 @@ class BattleEngine(
         }
     }
     fun handleDelete() {
-        if (phase != BattlePhase.PLAY || lock || done) return
+        if (phase != BattlePhase.PLAY || lock || done || pausedAt != null) return
         Sound.tap()
         if (input.isNotEmpty()) input = input.dropLast(1)
     }
     fun handleManualSubmit() {
-        if (phase != BattlePhase.PLAY || lock || done || input.isEmpty()) return
+        if (phase != BattlePhase.PLAY || lock || done || pausedAt != null || input.isEmpty()) return
         Sound.tap(); lock = true
         submit(input)
     }
     private fun timeout() {
-        if (phase != BattlePhase.PLAY || lock || done) return
+        if (phase != BattlePhase.PLAY || lock || done || pausedAt != null) return
         lock = true
         timedOut = true
         resolve(false, counterLimit, GivenAnswer.NoAnswer)
@@ -154,6 +196,8 @@ class BattleEngine(
     /** given 은 아이가 실제로 제출한 답 — 시간 초과처럼 제출이 없으면 NoAnswer */
     private fun resolve(correct: Boolean, ms: Int, given: GivenAnswer) {
         answers.add(AnswerRecord(problem.a, problem.b, correct, ms, given))
+        answeredCount = answers.size
+        lastGiven = (given as? GivenAnswer.Number)?.value
         floatId += 1
 
         if (correct) {
@@ -212,10 +256,12 @@ class BattleEngine(
         input = ""
         feedback = null
         timedOut = false
+        lastGiven = null
         qIdx += 1
-        qStartClock = now()
+        // 확인 시트가 떠 있는 동안 넘어온 문제는 재개 시각부터 잰다 (resume 이 멈춘 시간만큼 민다)
+        qStartClock = pausedAt ?: now()
         lock = false
-        scheduleCounterIfNeeded()
+        if (pausedAt == null) scheduleCounterIfNeeded()
     }
 
     private fun finish(won: Boolean) {
@@ -223,7 +269,7 @@ class BattleEngine(
         done = true
         handler.removeCallbacksAndMessages(null)
         val result = Battle.toSessionResult(
-            npc, answers.toList(), maxCombo, (now() - battleStart).toInt(), rematch = rematch,
+            npc, answers.toList(), maxCombo, (displayClock() - battleStart).toInt(), rematch = rematch,
         )
         val commit = game.commitSession(result)
         onCommit(result)
@@ -244,6 +290,7 @@ class BattleEngine(
         val tick = object : Runnable {
             override fun run() {
                 if (done || decided) return
+                if (pausedAt != null) { handler.postDelayed(this, interval); return }
                 npcScore += 1
                 if (npcScore >= Battle.RACE_TARGET) {
                     decided = true
@@ -256,11 +303,15 @@ class BattleEngine(
         handler.postDelayed(tick, interval)
     }
 
-    private fun scheduleCounterIfNeeded() {
+    private fun scheduleCounterIfNeeded(afterMs: Long = counterLimit.toLong()) {
         if (style != BattleStyle.COUNTER) return
+        counterToken += 1
+        val token = counterToken
         val idx = qIdx
         handler.postDelayed({
-            if (!done && phase == BattlePhase.PLAY && qIdx == idx && !lock) timeout()
-        }, counterLimit.toLong())
+            if (!done && phase == BattlePhase.PLAY && qIdx == idx && !lock && token == counterToken && pausedAt == null) {
+                timeout()
+            }
+        }, maxOf(0L, afterMs))
     }
 }

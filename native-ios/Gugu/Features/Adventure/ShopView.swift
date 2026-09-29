@@ -46,8 +46,10 @@ struct ShopView: View {
             .animation(.spring(response: 0.3, dampingFraction: 0.6), value: shards)
             Button { dismiss() } label: {
                 Image(systemName: "xmark").font(.system(size: 18, weight: .bold)).foregroundStyle(Color.gg.textMuted)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
-            .padding(.leading, 6)
+            .accessibilityLabel("상점 닫기")
         }
     }
 

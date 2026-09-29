@@ -13,7 +13,10 @@ struct WorldHud: View {
                 Image(systemName: "arrow.left").font(.system(size: 18, weight: .bold)).foregroundStyle(.white)
                     .frame(width: 40, height: 40)
                     .background(.black.opacity(0.35), in: Circle())
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
+            .accessibilityLabel("지역 지도로 돌아가기")
             HStack(spacing: 0) {
                 Text(region.name).font(.suite(.extrabold, 14))
                 Text(" · \(region.table)단").font(.suite(.extrabold, 14))

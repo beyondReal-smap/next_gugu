@@ -46,6 +46,8 @@ struct LaneRunnerState {
     var lives: Int
     var distance: Double
     var hitMs: Double
+    /// 무료 체험에서 남은 문제(정답 게이트) 수(지금 문제 포함). nil 이면 제한 없음, 0 이면 체험을 다 해서 끝난 판
+    var trialLeft: Int? = nil
 }
 
 enum LaneRunner {
@@ -95,13 +97,15 @@ enum LaneRunner {
         (spawnX - judgeX) / travelMs(score: score)
     }
 
-    static func create(table: Int?, phase: RunnerPhase = .running) -> LaneRunnerState {
+    /// trial: 무료 체험 문제 수 (nil = 제한 없음)
+    static func create(table: Int?, phase: RunnerPhase = .running, trial: Int? = nil) -> LaneRunnerState {
         LaneRunnerState(
             phase: phase, segment: .dodge, table: table,
             lane: 1, laneFrom: 1, laneAnimMs: 0,
             obstacles: [], nextId: 0, spawnInMs: 800, spawned: 0, lastFree: lanes,
             question: nil, gate: nil, recentKeys: [], outcome: nil, given: nil,
-            score: 0, dodged: 0, combo: 0, maxCombo: 0, lives: maxLives, distance: 0, hitMs: 0
+            score: 0, dodged: 0, combo: 0, maxCombo: 0, lives: maxLives, distance: 0, hitMs: 0,
+            trialLeft: trial
         )
     }
 
@@ -166,6 +170,14 @@ enum LaneRunner {
     /// 판정이 끝난 게이트는 화면 밖으로 나갈 때까지 보여 주고, 장애물은 바로 이어서 내보낸다.
     private static func startDodge(_ state: LaneRunnerState) -> LaneRunnerState {
         var next = state
+        if let left = state.trialLeft {
+            next.trialLeft = left - 1
+            // 무료 체험의 마지막 게이트를 지났으면 다음 장애물을 내지 않고 끝낸다
+            if left <= 1 {
+                next.phase = .over
+                return next
+            }
+        }
         next.segment = .dodge
         next.spawned = 0
         next.spawnInMs = 0

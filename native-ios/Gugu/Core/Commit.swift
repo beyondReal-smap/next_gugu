@@ -79,6 +79,15 @@ enum Commit {
         return s
     }
 
+    /// 화면에 보여 줄 연속 학습 일수 — 마지막 학습이 오늘이나 어제면 이어지는 중, 그보다 오래되면 이미 끊긴 것(0).
+    /// 저장된 streak 은 소급해 깎지 않으므로(applyVisit) 보여 줄 때 판정한다.
+    /// 끊긴 값을 그대로 보여 주면 "한 판 했더니 4일이 1일로 줄었다"처럼 보인다.
+    static func activeStreak(_ s: GameState, now: Date = Date()) -> Int {
+        let today = todayStr(now)
+        guard s.lastPlayedDate == today || s.lastPlayedDate == shift(-1, from: now) else { return 0 }
+        return s.streak
+    }
+
     /// 오늘 스트릭 자격 부여. 이미 오늘 자격이면 그대로.
     private static func qualifyStreak(_ s: GameState, now: Date) -> GameState {
         let today = todayStr(now)
@@ -149,7 +158,9 @@ enum Commit {
         var isNewBest = false
         let def = Modes.def(result.mode)
 
-        if !partial {
+        // 한 문제도 풀지 않고 끝난 판(60초 챌린지 무응답 등)은 완료로 치지 않는다 —
+        // 정확도 추이에 0%가 찍히고 아무것도 안 해도 스트릭이 오르던 문제를 막는다
+        if !partial && !result.answers.isEmpty {
             // 최근 추이 (cap 20) — 한 판을 끝냈을 때만
             s.recentAccuracy = Array((s.recentAccuracy + [Int((accuracy * 100).rounded())]).suffix(20))
             s.recentAvgMs = Array((s.recentAvgMs + [avgMs]).suffix(20))
