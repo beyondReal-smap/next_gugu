@@ -50,3 +50,8 @@ store-assets/*.apk
 
 # 에이전트 작업용 스크래치 (빌드 로그·스크린샷)
 .claude/scratch/
+
+# 음성 팩 생성 캐시·샘플 (tools/voice) — 결과물은 앱 리소스로 커밋한다
+tools/voice/.cache/
+tools/voice/samples/
+tools/voice/__pycache__/

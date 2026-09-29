@@ -48,8 +48,9 @@ final class LaneRunnerEngine {
 
     // MARK: - 조작
 
-    func start() {
-        game = LaneRunner.create(table: table)
+    /// trial: 무료 체험 문제 수 (nil = 제한 없음)
+    func start(trial: Int?) {
+        game = LaneRunner.create(table: table, trial: trial)
         Sound.shared.tap()
         startLoop()
     }

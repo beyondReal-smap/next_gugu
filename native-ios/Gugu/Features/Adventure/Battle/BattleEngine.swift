@@ -52,6 +52,12 @@ final class BattleEngine {
     var playerHit: Int = 0
     var end: BattleEnd?
     var qStartClock: Double = 0   // 반격전 타이머 표시용
+    /// 도망 확인 시트가 떠 있는 동안 시간을 멈춘 시각 (반격전 타이머 표시도 여기서 멈춘다)
+    private(set) var pausedAt: Double?
+    /// 오답일 때 아이가 낸 수 — "35가 아니라 36이에요" 설명에 쓴다
+    private(set) var lastGiven: Int?
+    /// 이번 대결에서 푼 문제 수 — 0이면 도망칠 때 확인 없이 닫는다
+    var answeredCount: Int { answers.count }
 
     // 내부
     private var lock = false
@@ -109,10 +115,45 @@ final class BattleEngine {
         counterWork?.cancel()
     }
 
+    // MARK: - 일시정지 / 도망
+
+    /// 도망칠지 묻는 동안 대결을 멈춘다 — 상대의 레이스 진행과 반격 카운트다운이 서고, 응답 시간에서도 빠진다
+    func pause() {
+        guard phase == .play, !done, pausedAt == nil else { return }
+        pausedAt = now()
+        counterWork?.cancel()
+    }
+
+    func resume() {
+        guard let pausedAt else { return }
+        let paused = now() - pausedAt
+        qStart += paused
+        battleStart += paused
+        qStartClock = qStart
+        self.pausedAt = nil
+        // 멈추기 전에 남아 있던 반격 시간만큼 다시 건다 (답을 내고 넘어가는 중이면 goNext 가 새로 건다)
+        if !lock { scheduleCounterIfNeeded(after: Double(counterLimit) - (now() - qStart)) }
+    }
+
+    /// 표시용 시각 — 일시정지 중에는 멈춘 시각에서 고정된다
+    func displayClock(_ time: Double) -> Double { min(time, pausedAt ?? time) }
+
+    /// 도망 — 푼 문제만 부분 커밋한다(XP·오답 풀·오늘 정답). 승패와 격파 기록은 남기지 않는다.
+    func abandon() {
+        guard !done else { return }
+        teardown()
+        guard !answers.isEmpty else { return }
+        let result = Battle.toSessionResult(npc, answers: answers, maxCombo: maxCombo,
+                                            durationMs: Int((displayClock(now()) - battleStart).rounded()),
+                                            partial: true, rematch: rematch)
+        game.commitSession(result)
+        onCommit(result)
+    }
+
     // MARK: - 입력
 
     func handleInput(_ n: Int) {
-        guard phase == .play, !lock, !done else { return }
+        guard phase == .play, !lock, !done, pausedAt == nil else { return }
         if input.count >= 3 { return }
         Sound.shared.tap()
         input += String(n)
@@ -124,18 +165,18 @@ final class BattleEngine {
         }
     }
     func handleDelete() {
-        guard phase == .play, !lock, !done else { return }
+        guard phase == .play, !lock, !done, pausedAt == nil else { return }
         Sound.shared.tap()
         if !input.isEmpty { input.removeLast() }
     }
     func handleManualSubmit() {
-        guard phase == .play, !lock, !done, !input.isEmpty else { return }
+        guard phase == .play, !lock, !done, pausedAt == nil, !input.isEmpty else { return }
         Sound.shared.tap()
         lock = true
         submit(input)
     }
     func timeout() {
-        guard phase == .play, !lock, !done else { return }
+        guard phase == .play, !lock, !done, pausedAt == nil else { return }
         lock = true
         timedOut = true
         resolve(false, ms: counterLimit, given: .noAnswer)
@@ -152,6 +193,7 @@ final class BattleEngine {
     /// given 은 아이가 실제로 제출한 답 — 시간 초과처럼 제출이 없으면 .noAnswer
     private func resolve(_ correct: Bool, ms: Int, given: GivenAnswer) {
         answers.append(AnswerRecord(a: problem.a, b: problem.b, correct: correct, ms: ms, given: given))
+        if case let .number(n) = given { lastGiven = n } else { lastGiven = nil }
         floatId += 1
 
         if correct {
@@ -212,11 +254,13 @@ final class BattleEngine {
         input = ""
         feedback = nil
         timedOut = false
+        lastGiven = nil
         qIdx += 1
-        qStart = now()
+        // 확인 시트가 떠 있는 동안 넘어온 문제는 재개 시각부터 잰다 (resume 이 멈춘 시간만큼 민다)
+        qStart = pausedAt ?? now()
         qStartClock = qStart
         lock = false
-        scheduleCounterIfNeeded()
+        if pausedAt == nil { scheduleCounterIfNeeded() }
     }
 
     private func finish(won: Bool) {
@@ -225,7 +269,7 @@ final class BattleEngine {
         raceTimer?.invalidate()
         counterWork?.cancel()
         let result = Battle.toSessionResult(npc, answers: answers, maxCombo: maxCombo,
-                                            durationMs: Int((now() - battleStart).rounded()),
+                                            durationMs: Int((displayClock(now()) - battleStart).rounded()),
                                             rematch: rematch)
         let commit = game.commitSession(result)
         onCommit(result)
@@ -244,7 +288,7 @@ final class BattleEngine {
         guard style == .speed else { return }
         let interval = Double(Battle.racePaceMs(npc.table)) / 1000
         raceTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
-            guard let self, !self.done, !self.decided else { return }
+            guard let self, !self.done, !self.decided, self.pausedAt == nil else { return }
             self.npcScore += 1
             if self.npcScore >= Battle.raceTarget {
                 self.decided = true
@@ -253,15 +297,17 @@ final class BattleEngine {
         }
     }
 
-    private func scheduleCounterIfNeeded() {
+    private func scheduleCounterIfNeeded(after ms: Double? = nil) {
         guard style == .counter else { return }
         counterWork?.cancel()
         let idx = qIdx
         let work = DispatchWorkItem { [weak self] in
-            guard let self, !self.done, self.phase == .play, self.qIdx == idx, !self.lock else { return }
+            guard let self, !self.done, self.phase == .play, self.qIdx == idx, !self.lock,
+                  self.pausedAt == nil else { return }
             self.timeout()
         }
         counterWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + Double(counterLimit) / 1000, execute: work)
+        let delay = max(0, ms ?? Double(counterLimit)) / 1000
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
     }
 }

@@ -27,6 +27,8 @@ data class BasketState(
     val lives: Int = Basket.MAX_LIVES,
     val combo: Int = 0,
     val maxCombo: Int = 0,
+    /** 무료 체험에서 남은 문제 수(지금 문제 포함). null 이면 제한 없음, 0 이면 체험을 다 해서 끝난 판 */
+    val trialLeft: Int? = null,
 )
 
 object Basket {
@@ -42,13 +44,16 @@ object Basket {
     const val CATCH_RADIUS = 40.0
     const val MAX_LIVES = 3
 
+    /** trial: 무료 체험 문제 수 (null = 제한 없음) */
     fun create(
         table: Int?,
         phase: RunnerPhase = RunnerPhase.RUNNING,
+        trial: Int? = null,
         random: () -> Double = { Random.nextDouble() },
     ): BasketState = BasketState(
         phase = phase,
         table = table,
+        trialLeft = trial,
         // READY 상태의 문제는 화면 예시용 — 시작 시 새로 뽑는다
         question = if (phase == RunnerPhase.READY) RunnerQuestion(2, 3, listOf(4, 6, 8))
         else Runner.question(table, emptyList(), random),
@@ -74,12 +79,16 @@ object Basket {
             val feedbackMs = max(0.0, state.feedbackMs - dt)
             if (feedbackMs > 0) return state.copy(feedbackMs = feedbackMs)
             if (state.lives == 0) return state.copy(feedbackMs = 0.0, phase = RunnerPhase.OVER)
+            state.trialLeft?.let { left ->
+                // 무료 체험의 마지막 문제였으면 다음 열매를 내지 않고 끝낸다
+                if (left <= 1) return state.copy(feedbackMs = 0.0, trialLeft = left - 1, phase = RunnerPhase.OVER)
+            }
             val recentKeys = (state.recentKeys + Problems.key(state.question.a, state.question.b)).takeLast(4)
             return state.copy(
                 recentKeys = recentKeys,
                 question = Runner.question(state.table, recentKeys, random),
                 round = state.round + 1, elapsedMs = 0.0, feedbackMs = 0.0,
-                outcome = null, caughtIndex = null,
+                outcome = null, caughtIndex = null, trialLeft = state.trialLeft?.minus(1),
             )
         }
 

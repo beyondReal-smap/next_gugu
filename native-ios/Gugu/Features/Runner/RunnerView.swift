@@ -7,6 +7,8 @@ struct RunnerView: View {
     var onExit: () -> Void
 
     @State private var engine = RunnerEngine()
+    @State private var paywallOpen = false
+    @Environment(PremiumStore.self) private var premium
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -15,6 +17,8 @@ struct RunnerView: View {
     private var over: Bool { game.phase == .over }
     private var paused: Bool { game.phase == .paused }
     private var active: Bool { game.phase == .running }
+    /// 무료 체험 판이 끝났다 — 다시 하기 대신 결제 화면으로 안내한다(구매하면 바로 일반 종료 화면으로 바뀐다)
+    private var trialEnded: Bool { over && game.trialLeft != nil && !premium.isPremium }
 
     // 무대 위 안내 문구 — 웹과 동일 카피
     private var feedback: String {
@@ -45,6 +49,8 @@ struct RunnerView: View {
             if phase != .active { engine.pause() }
         }
         .onDisappear { engine.teardown() }
+        // 미니게임은 루트의 fullScreenCover 라 루트의 결제 시트가 위에 뜨지 못한다 — 여기서 직접 띄운다
+        .sheet(isPresented: $paywallOpen) { PaywallView() }
     }
 
     // MARK: - 헤더
@@ -175,7 +181,9 @@ struct RunnerView: View {
     @ViewBuilder
     private var controls: some View {
         VStack(spacing: 0) {
-            if ready || over {
+            if trialEnded {
+                TrialEndPanel(correct: game.score, onUnlock: { paywallOpen = true }, onExit: onExit)
+            } else if ready || over {
                 setupPanel
             } else if paused {
                 pausePanel
@@ -233,7 +241,9 @@ struct RunnerView: View {
                 }
             }
 
-            GGButton(variant: .primary, size: .lg, action: { engine.start() }) {
+            if !premium.isPremium { TrialNotice() }
+
+            GGButton(variant: .primary, size: .lg, action: { engine.start(trial: MinigameTrial.limit(isPremium: premium.isPremium)) }) {
                 Image(systemName: over ? "arrow.counterclockwise" : "play.fill")
                 Text(over ? "다시 달리기" : "달리기 시작")
             }
@@ -283,12 +293,17 @@ struct RunnerView: View {
 
     private var playPanel: some View {
         VStack(spacing: 12) {
+            // 한 줄 고정 — 상태 문구가 길어져도(예: "정답을 기억해요") 줄이 늘어 아래 식이 밀리지 않게 한다
             HStack {
                 Text("\(engine.table == nil ? "전체 구구단" : "\(engine.table!)단") · \(game.round + 1)번째 장애물")
                     .font(.suite(.bold, 12)).foregroundStyle(Color.gg.textMuted)
-                Spacer()
+                    .lineLimit(1).minimumScaleFactor(0.8)
+                if let left = game.trialLeft { TrialProgressPill(left: left) }
+                Spacer(minLength: 8)
                 Text(timeLabel)
                     .font(.suiteNum(.bold, 12)).foregroundStyle(Color.gg.textMuted)
+                    .lineLimit(1)
+                    .layoutPriority(1)   // 상태 문구를 먼저 온전히 둔다
             }
 
             // 남은 시간 게이지 — 25% 아래로 떨어지면 주의색
@@ -312,7 +327,7 @@ struct RunnerView: View {
                         .foregroundStyle(game.outcome == .correct ? Color.gg.success : Color.gg.textMuted)
                 }
                 .font(.suiteNum(.extrabold, 40))
-                .accessibilityLabel("\(game.question.a) 곱하기 \(game.question.b)는?")
+                .accessibilityLabel("\(game.question.a) 곱하기 \(KoreanReading.withTopic(game.question.b))?")
 
                 Text(feedback)
                     .font(.suite(.bold, 13))

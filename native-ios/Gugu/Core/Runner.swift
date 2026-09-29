@@ -29,6 +29,8 @@ struct RunnerState {
     var outcome: RunnerOutcome?
     var given: Int?
     var hitMs: Double
+    /// 무료 체험에서 남은 문제 수(지금 문제 포함). nil 이면 제한 없음, 0 이면 체험을 다 해서 끝난 판
+    var trialLeft: Int? = nil
 }
 
 enum Runner {
@@ -71,7 +73,9 @@ enum Runner {
         return RunnerQuestion(a: problem.a, b: problem.b, choices: shuffled([answer] + picked, random: random))
     }
 
-    static func create(table: Int?, phase: RunnerPhase = .running, random: () -> Double = { Double.random(in: 0..<1) }) -> RunnerState {
+    /// trial: 무료 체험 문제 수 (nil = 제한 없음)
+    static func create(table: Int?, phase: RunnerPhase = .running, trial: Int? = nil,
+                       random: () -> Double = { Double.random(in: 0..<1) }) -> RunnerState {
         RunnerState(
             phase: phase,
             table: table,
@@ -80,7 +84,8 @@ enum Runner {
                 ? RunnerQuestion(a: 2, b: 3, choices: [4, 6, 8])
                 : question(table: table, recentKeys: [], random: random),
             recentKeys: [], round: 0, score: 0, lives: maxLives, combo: 0, maxCombo: 0,
-            distance: 0, obstacleX: obstacleStart, outcome: nil, given: nil, hitMs: 0
+            distance: 0, obstacleX: obstacleStart, outcome: nil, given: nil, hitMs: 0,
+            trialLeft: trial
         )
     }
 
@@ -106,6 +111,15 @@ enum Runner {
 
     private static func nextObstacle(_ state: RunnerState, random: () -> Double) -> RunnerState {
         var next = state
+        if let left = state.trialLeft {
+            next.trialLeft = left - 1
+            // 무료 체험의 마지막 문제였으면 다음 장애물을 내지 않고 끝낸다 — 새 문제를 보다가 끊기지 않게
+            if left <= 1 {
+                next.phase = .over
+                next.hitMs = 0
+                return next
+            }
+        }
         next.recentKeys = Array((state.recentKeys + [Problems.key(state.question.a, state.question.b)]).suffix(3))
         next.question = question(table: state.table, recentKeys: next.recentKeys, random: random)
         next.round = state.round + 1

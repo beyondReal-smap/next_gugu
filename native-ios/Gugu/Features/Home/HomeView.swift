@@ -8,6 +8,7 @@ struct HomeView: View {
     @Environment(AdventureStore.self) private var adventure
     @Environment(PremiumStore.self) private var premium
     @Environment(Router.self) private var router
+    @State private var showGoalSheet = false
 
     // 놀이 방식별 묶음 (웹 /play 구성과 동일) — 세션 모드는 전체 랜덤으로 바로 시작한다
     private let learnModes: [GameMode] = [.missing, .truefalse]
@@ -31,15 +32,16 @@ struct HomeView: View {
                 recordGroup
                 playGroup
                 adventureGroup
-                learnLink
-                    .padding(.top, 4)
             }
             .padding(.horizontal, 20)
             .padding(.top, 12)
             .padding(.bottom, 24)
+            .readableWidth()
         }
         .background(Color.gg.bg.ignoresSafeArea())
         .scrollIndicators(.hidden)
+        .statusBarBackdrop()
+        .sheet(isPresented: $showGoalSheet) { DailyGoalSheet() }
     }
 
     // MARK: 헤더
@@ -50,15 +52,33 @@ struct HomeView: View {
                 Text("오늘도 구구단 한 판!").font(.suite(.extrabold, 20)).foregroundStyle(Color.gg.text)
             }
             Spacer()
-            Pill(bg: Color.gg.danger.opacity(0.12), fg: .gg.danger) {
-                Image(systemName: "flame.fill")
-                Text("\(game.state.streak)일").monospacedDigit()
+            // 끊긴 연속 기록은 0으로 — 불이 꺼진 모습으로 오늘 다시 시작하게 한다
+            let streak = Commit.activeStreak(game.state)
+            Pill(bg: (streak > 0 ? Color.gg.danger : Color.gg.textMuted).opacity(0.12),
+                 fg: streak > 0 ? .gg.danger : .gg.textMuted) {
+                Image(systemName: streak > 0 ? "flame.fill" : "flame")
+                Text("\(streak)일").monospacedDigit()
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(streak > 0 ? "\(streak)일 연속 학습 중" : "연속 학습 기록 없음, 오늘 시작해요")
         }
     }
 
-    // MARK: 데일리 골
+    // MARK: 데일리 골 — 누르면 목표를 바꾼다
     private var dailyGoalCard: some View {
+        Button {
+            Haptics.impact(.light)
+            showGoalSheet = true
+        } label: {
+            dailyGoalContent
+        }
+        .buttonStyle(PressScaleStyle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("오늘의 목표, 정답 \(game.state.dailyGoal)개 중 \(game.state.dailyCorrect)개")
+        .accessibilityHint("눌러서 하루 목표 바꾸기")
+    }
+
+    private var dailyGoalContent: some View {
         HStack(spacing: 20) {
             ProgressRing(value: goalPct, size: 104, stroke: 11) {
                 VStack(spacing: 0) {
@@ -75,6 +95,9 @@ struct HomeView: View {
                 }
                 Text(goalPct >= 1 ? "목표 달성! 멋져요 🎉" : "정답 \(max(0, game.state.dailyGoal - game.state.dailyCorrect))개 더 풀면 달성!")
                     .font(.suite(.medium, 14)).foregroundStyle(Color.gg.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("목표 바꾸기").font(.suite(.bold, 12)).foregroundStyle(Color.gg.accent)
+                    .padding(.top, 2)
             }
             Spacer()
         }
@@ -169,19 +192,19 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 8) {
             groupHeader("figure.run", "직접 움직이며 놀기", "달리고, 피하고, 정답을 받아요", .gg.emerald)
             gameCard(
-                title: "구구 바구니", badge: "새 모드",
+                title: "구구 바구니", badge: MinigameTrial.badge(isPremium: premium.isPremium) ?? "새 모드",
                 desc: "좌우로 움직여 정답 열매를 쏙 받아요!",
                 icon: "basket.fill", iconBg: Color(hex: "#794124"), iconFg: Color(hex: "#ffe7a3"),
                 tint: Color.gg.warning
             ) { router.basketOpen = true }
             gameCard(
-                title: "구구 점프", badge: nil,
+                title: "구구 점프", badge: MinigameTrial.badge(isPremium: premium.isPremium),
                 desc: "정답을 고르면 폴짝! 장애물을 넘어요.",
                 icon: "figure.run", iconBg: Color(hex: "#153f35"), iconFg: Color(hex: "#dbef9e"),
                 tint: Color.gg.emerald
             ) { router.runnerOpen = true }
             gameCard(
-                title: "구구 레인", badge: "새 모드",
+                title: "구구 레인", badge: MinigameTrial.badge(isPremium: premium.isPremium) ?? "새 모드",
                 desc: "길을 바꿔 피하고, 정답 길로 쏙!",
                 icon: "rectangle.split.1x2.fill", iconBg: Color(hex: "#153f35"), iconFg: Color(hex: "#dbef9e"),
                 tint: Color.gg.emerald
@@ -364,7 +387,10 @@ struct HomeView: View {
 
     // MARK: 취약 문제 복습
     private var weakReview: some View {
-        Button { session.start(.practice, table: nil) } label: {
+        Button {
+            Haptics.impact(.light)
+            session.startReview()
+        } label: {
             HStack(spacing: 12) {
                 Image(systemName: "book.closed.fill")
                     .foregroundStyle(Color.gg.danger)
@@ -372,7 +398,7 @@ struct HomeView: View {
                     .background(Color.gg.danger.opacity(0.15), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("취약 문제 복습").font(.suite(.bold, 15)).foregroundStyle(Color.gg.text)
-                    Text("헷갈렸던 문제 \(weakCount)개가 우선 출제돼요").font(.suite(.regular, 13)).foregroundStyle(Color.gg.textMuted)
+                    Text("헷갈렸던 문제 \(weakCount)개를 모아 다시 풀어요").font(.suite(.regular, 13)).foregroundStyle(Color.gg.textMuted)
                 }
                 Spacer()
                 Image(systemName: "chevron.right").foregroundStyle(Color.gg.textMuted)
@@ -380,19 +406,6 @@ struct HomeView: View {
             .padding(.horizontal, 20).padding(.vertical, 16)
             .background(Color.gg.danger.opacity(0.1), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color.gg.danger.opacity(0.25), lineWidth: 1))
-        }
-        .buttonStyle(PressScaleStyle())
-    }
-
-    private var learnLink: some View {
-        Button { router.tab = .learn } label: {
-            HStack {
-                Text("단 선택해서 학습하기").font(.suite(.bold, 15)).foregroundStyle(Color.gg.text)
-                Spacer()
-                Image(systemName: "chevron.right").foregroundStyle(Color.gg.textMuted)
-            }
-            .padding(.horizontal, 20).padding(.vertical, 16)
-            .ggCard(padding: 0)
         }
         .buttonStyle(PressScaleStyle())
     }

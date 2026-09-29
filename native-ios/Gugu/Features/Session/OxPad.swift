@@ -13,7 +13,10 @@ struct OxPad: View {
     }
 
     private func choice(isTrue: Bool, color: Color, icon: String, label: String) -> some View {
-        Button { onAnswer(isTrue) } label: {
+        Button {
+            Haptics.impact(.light)
+            onAnswer(isTrue)
+        } label: {
             VStack(spacing: 6) {
                 Image(systemName: icon).font(.system(size: 44, weight: .heavy)).foregroundStyle(color)
                 Text(label).font(.suite(.extrabold, 14)).foregroundStyle(color)
@@ -22,5 +25,8 @@ struct OxPad: View {
             .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .buttonStyle(PressScaleStyle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(isTrue ? "맞아요, 맞는 식" : "아니에요, 틀린 식")
+        .accessibilityAddTraits(.isButton)
     }
 }

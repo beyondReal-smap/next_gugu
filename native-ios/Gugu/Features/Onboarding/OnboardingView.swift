@@ -84,6 +84,8 @@ struct OnboardingView: View {
         .padding(.horizontal, 24)
         .padding(.vertical, 24)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        // 태블릿에서 카드·버튼이 화면 끝까지 늘어나지 않게
+        .readableWidth(560)
         .background(Color.gg.bg.ignoresSafeArea())
         .onAppear {
             withAnimation(.easeOut(duration: 0.5)) { appear = true }

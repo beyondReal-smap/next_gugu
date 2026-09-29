@@ -12,6 +12,7 @@ struct RootView: View {
     @State private var auth = AuthStore()
     @State private var sync = SyncStore()
     @State private var reminder = ReminderStore()
+    @State private var prefs = PrefsStore()
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -25,6 +26,7 @@ struct RootView: View {
             .environment(auth)
             .environment(sync)
             .environment(reminder)
+            .environment(prefs)
             .preferredColorScheme(theme.colorScheme)
             .tint(.gg.accent)
             // 첫 실행 시 조용히 익명 계정을 만든다 — 화면을 막지 않고 실패해도 앱은 그대로 동작
@@ -74,7 +76,7 @@ struct RootView: View {
                     get: { session.active },
                     set: { session.active = $0 }
                 )) { active in
-                    SessionView(mode: active.mode, table: active.table) {
+                    SessionView(mode: active.mode, table: active.table, review: active.review) {
                         session.end()
                     }
                     .id(active.id)

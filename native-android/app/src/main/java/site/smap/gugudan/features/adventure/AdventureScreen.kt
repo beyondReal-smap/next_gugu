@@ -1,5 +1,6 @@
 package site.smap.gugudan.features.adventure
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -81,6 +82,15 @@ fun AdventureScreen(onExit: () -> Unit) {
         }
         encounter = null
         stage = Stage.WorldStage(region.table)
+    }
+
+    // 시스템 뒤로가기 — 월드에서는 지역 지도로, 지도에서는 어드벤처를 닫는다.
+    // 배틀은 BattleScreen 이 자기 BackHandler(도망 확인)로 먼저 받는다.
+    BackHandler(enabled = stage !is Stage.BattleStage) {
+        when (stage) {
+            is Stage.WorldStage -> { encounter = null; stage = Stage.MapStage }
+            else -> onExit()
+        }
     }
 
     when (val s = stage) {

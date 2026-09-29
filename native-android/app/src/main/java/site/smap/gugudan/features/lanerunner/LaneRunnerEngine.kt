@@ -71,8 +71,9 @@ class LaneRunnerEngine(private val persistence: Persistence) {
 
     // MARK: 조작
 
-    fun start() {
-        game = LaneRunner.create(table)
+    /** trial: 무료 체험 문제 수 (null = 제한 없음) */
+    fun start(trial: Int?) {
+        game = LaneRunner.create(table, trial = trial)
         Sound.tap()
     }
 

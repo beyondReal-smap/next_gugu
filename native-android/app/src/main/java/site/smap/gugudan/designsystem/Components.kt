@@ -14,6 +14,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -202,5 +207,43 @@ object ModeStyle {
         GameMode.MISSING -> GGColors.violet
         GameMode.TRUEFALSE -> GGColors.emerald
         GameMode.ADVENTURE -> GGColors.indigo
+    }
+}
+
+/** 태블릿에서 한 줄이 지나치게 길어지지 않게 콘텐츠 폭을 제한하고 가운데 둔다 (iOS readableWidth) */
+fun Modifier.readableWidth(max: Dp = 640.dp): Modifier =
+    this.fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally).widthIn(max = max).fillMaxWidth()
+
+/** 값 고르기 칩 — 선택된 칩만 강조한다 (iOS ChoiceChips) */
+@Composable
+fun <T> ChoiceChips(
+    options: List<T>,
+    selected: T,
+    label: (T) -> String,
+    modifier: Modifier = Modifier,
+    onSelect: (T) -> Unit,
+) {
+    val gg = LocalGG.current
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        options.forEach { option ->
+            val on = option == selected
+            PressableCard(
+                modifier = Modifier.weight(1f).semantics { this.selected = on },
+                onClick = { Haptics.selection(); onSelect(option) },
+            ) {
+                Box(
+                    Modifier.fillMaxWidth().height(48.dp)   // 최소 터치 영역 48dp
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (on) gg.accent else gg.surface2),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        label(option),
+                        style = suite(if (on) FontWeight.ExtraBold else FontWeight.Bold, 14),
+                        color = if (on) gg.accentFg else gg.text,
+                    )
+                }
+            }
+        }
     }
 }

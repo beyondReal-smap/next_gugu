@@ -1,6 +1,5 @@
 package site.smap.gugudan.features.adventure.battle
 
-import android.os.SystemClock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -38,6 +37,15 @@ import site.smap.gugudan.store.LocalAdventure
 import site.smap.gugudan.store.LocalAuth
 import site.smap.gugudan.store.LocalGame
 import site.smap.gugudan.store.LocalSync
+import androidx.activity.compose.BackHandler
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.unit.Density
+import site.smap.gugudan.core.GameMode
+import site.smap.gugudan.core.KoreanReading
 
 // 배틀 화면 (iOS BattleView.swift 이식) — 3종 방식 + 보스 분노 + 인트로/결과 오버레이
 
@@ -58,8 +66,29 @@ fun BattleScreen(npc: NpcDef, onWorld: () -> Unit, onRetry: () -> Unit, onFlee: 
     }
     var confetti by remember { mutableStateOf(0) }
     var levelUp by remember { mutableStateOf(false) }
+    var confirmFlee by remember { mutableStateOf(false) }
 
     DisposableEffect(engine) { onDispose { engine.teardown() } }
+
+    // 닫기 — 푼 문제가 있으면 대결을 멈추고 한 번 묻는다. 없으면 잃을 것이 없으니 바로 월드로.
+    fun requestFlee() {
+        if (engine.phase != BattlePhase.PLAY || engine.answeredCount == 0) {
+            engine.abandon()
+            onFlee()
+            return
+        }
+        engine.pause()
+        confirmFlee = true
+    }
+    // 시스템 뒤로가기 — 결과 화면에서는 월드로, 대결 중에는 닫기 버튼과 같다
+    BackHandler(enabled = !confirmFlee) {
+        if (engine.phase == BattlePhase.END) onWorld() else requestFlee()
+    }
+    // 확인 중에 마지막 답으로 결판이 나면 확인도 끝난 것이다 — 남겨 두면 시트는 사라졌는데
+    // 위 BackHandler 가 꺼진 채라 결과 화면에서 뒤로가기가 앱 밖으로 새어 나간다
+    LaunchedEffect(engine.phase) {
+        if (engine.phase != BattlePhase.PLAY) confirmFlee = false
+    }
 
     LaunchedEffect(engine.end) {
         engine.end?.let { end ->
@@ -68,8 +97,14 @@ fun BattleScreen(npc: NpcDef, onWorld: () -> Unit, onRetry: () -> Unit, onFlee: 
         }
     }
 
+    // 게임 화면은 키패드·식 배치가 고정이라 아주 큰 글꼴에서는 더 키우지 않는다
+    val density = LocalDensity.current
+    CompositionLocalProvider(LocalDensity provides Density(density.density, minOf(density.fontScale, 1.3f))) {
     Box(Modifier.fillMaxSize().background(gg.bg)) {
-        BattleBody(engine, onFlee)
+        // 확인 시트가 떠 있는 동안 뒤 화면을 스크린리더에서 비운다 — 초점이 시트 밖으로 새지 않게(모달)
+        Box(if (confirmFlee && engine.phase == BattlePhase.PLAY) Modifier.clearAndSetSemantics {} else Modifier) {
+            BattleBody(engine, ::requestFlee)
+        }
         when (engine.phase) {
             BattlePhase.INTRO -> IntroOverlay(engine)
             BattlePhase.END -> engine.end?.let { ResultOverlay(engine, it, onWorld, onRetry) }
@@ -81,6 +116,26 @@ fun BattleScreen(npc: NpcDef, onWorld: () -> Unit, onRetry: () -> Unit, onFlee: 
                 Modifier.statusBarsPadding().padding(horizontal = 20.dp).padding(top = 12.dp))
         }
         LevelUpOverlay(levelUp, engine.end?.commit?.newLevel ?: 0) { levelUp = false }
+
+        // 결판이 나면(확인 중 마지막 답이 처리된 경우) 시트는 의미가 없으니 띄우지 않는다
+        ConfirmSheet(
+            visible = confirmFlee && engine.phase == BattlePhase.PLAY,
+            title = "대결을 그만할까요?",
+            message = "푼 문제는 기록되지만 승패는 남지 않아요.",
+            cancelLabel = "계속 싸우기",
+            confirmLabel = "그만하기",
+            icon = Icons.AutoMirrored.Filled.DirectionsWalk,
+            tint = gg.danger,
+            onCancel = {
+                confirmFlee = false
+                engine.resume()
+            },
+            onConfirm = {
+                engine.abandon()
+                onFlee()
+            },
+        )
+    }
     }
 }
 
@@ -91,12 +146,15 @@ private fun BattleBody(engine: BattleEngine, onFlee: () -> Unit) {
 
     Column(
         Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()
-            .padding(horizontal = 20.dp).padding(top = 12.dp, bottom = 16.dp),
+            .readableWidth(560.dp)
+            .padding(horizontal = 20.dp).padding(top = 8.dp, bottom = 16.dp),
     ) {
         // 상단 바
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.height(44.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             PressableCard(onClick = onFlee) {
-                Icon(Icons.Filled.Close, "도망가기", tint = gg.textMuted, modifier = Modifier.size(22.dp))
+                Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Filled.Close, "대결 그만하기", tint = gg.textMuted, modifier = Modifier.size(22.dp))
+                }
             }
             Text(
                 "${if (engine.isBoss) "보스 대결" else Battle.styleName(engine.style)} · ${engine.npc.table}단",
@@ -138,7 +196,7 @@ private fun BattleBody(engine: BattleEngine, onFlee: () -> Unit) {
             Spacer(Modifier.height(8.dp))
             Box(Modifier.fillMaxWidth().height(18.dp), contentAlignment = Alignment.Center) {
                 if (engine.phase == BattlePhase.PLAY && engine.feedback == null) {
-                    CounterTimer(engine.qStartClock, engine.counterLimit)
+                    CounterTimer(engine)
                 }
             }
         }
@@ -150,21 +208,29 @@ private fun BattleBody(engine: BattleEngine, onFlee: () -> Unit) {
             val answer = p.a * p.b
             val showAnswer = engine.feedback == AnswerFeedback.WRONG
             val big = suite(FontWeight.ExtraBold, 48)
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            val inputColor = when {
+                engine.feedback == AnswerFeedback.CORRECT -> gg.success
+                engine.input.isEmpty() -> gg.border
+                else -> gg.accent
+            }
+            val explanation = battleExplanation(engine)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.clearAndSetSemantics {
+                    contentDescription = KoreanReading.question(p, GameMode.PRACTICE, null)
+                    stateDescription = if (showAnswer) explanation else if (engine.input.isEmpty()) "" else "입력 ${engine.input}"
+                },
+            ) {
                 Text("${p.a}", style = big, color = gg.text)
                 Text("×", style = big, color = gg.textMuted)
                 Text("${p.b}", style = big, color = gg.text)
                 Text("=", style = big, color = gg.textMuted)
                 Text(if (showAnswer) "$answer" else engine.input.ifEmpty { "?" }, style = big,
-                    color = if (showAnswer) gg.success else if (engine.input.isEmpty()) gg.border else gg.accent)
+                    color = if (showAnswer) gg.success else inputColor)
             }
             if (showAnswer) {
                 Text(
-                    when {
-                        engine.timedOut -> "시간 초과! 정답은 $answer — ${engine.npc.name}의 반격!"
-                        engine.style == BattleStyle.SPEED -> "정답은 $answer 이에요"
-                        else -> "정답은 $answer — ${engine.npc.name}의 반격!"
-                    },
+                    explanation,
                     style = suite(FontWeight.Bold, 13), color = gg.textMuted, textAlign = TextAlign.Center,
                     modifier = Modifier.align(Alignment.Center).offset(y = 48.dp).padding(horizontal = 16.dp),
                 )
@@ -265,23 +331,38 @@ private fun FloatText(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun CounterTimer(startClock: Long, limitMs: Int) {
+private fun CounterTimer(engine: BattleEngine) {
     val gg = LocalGG.current
-    var left by remember(startClock) { mutableStateOf(limitMs.toLong()) }
-    LaunchedEffect(startClock) {
-        while (left > 0) {
-            left = maxOf(0, limitMs - (SystemClock.elapsedRealtime() - startClock))
+    val limitMs = engine.counterLimit
+    var left by remember(engine.qIdx) { mutableStateOf(limitMs.toLong()) }
+    LaunchedEffect(engine.qIdx) {
+        while (true) {
+            // 일시정지 중에는 멈춘 시각 기준 — 재개하면 엔진이 qStartClock 을 민다
+            left = maxOf(0L, limitMs - (engine.displayClock() - engine.qStartClock))
             delay(100)
         }
     }
     val urgent = left <= 2000
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        Modifier.clearAndSetSemantics { contentDescription = "반격까지 ${(left + 999) / 1000}초" },
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Box(Modifier.weight(1f)) {
             GaugeBar(left.toDouble() / limitMs, height = 8.dp, color = if (urgent) gg.danger else gg.accent)
         }
         Text("%.1fs".format(left / 1000.0), style = suite(FontWeight.ExtraBold, 11),
             color = if (urgent) gg.danger else gg.textMuted)
     }
+}
+
+/** 오답 설명 — 아이가 낸 답과 정답을 함께. 반격이 있는 방식이면 반격 알림을 붙인다 */
+private fun battleExplanation(engine: BattleEngine): String {
+    val answer = engine.problem.a * engine.problem.b
+    if (engine.timedOut) return "시간 초과! 정답은 $answer — ${engine.npc.name}의 반격!"
+    val fact = engine.lastGiven?.let { KoreanReading.notButIs(it, answer) }
+        ?: "정답은 ${KoreanReading.withCopula(answer)}"
+    return if (engine.style == BattleStyle.SPEED) fact else "$fact — ${engine.npc.name}의 반격!"
 }
 
 // MARK: 인트로 / 결과 오버레이

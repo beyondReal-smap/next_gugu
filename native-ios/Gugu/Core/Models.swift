@@ -6,8 +6,9 @@ enum GameMode: String, Codable, CaseIterable, Hashable {
     case practice, timeAttack, challenge, survival, missing, truefalse, adventure
 }
 
-enum Theme: String, Codable {
-    case light, dark
+/// 화면 테마 — system 은 기기 설정(라이트/다크)을 따른다
+enum Theme: String, Codable, CaseIterable {
+    case system, light, dark
 }
 
 struct Problem: Equatable {

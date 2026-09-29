@@ -8,6 +8,8 @@ struct BasketView: View {
     var onExit: () -> Void
 
     @State private var engine = BasketEngine()
+    @State private var paywallOpen = false
+    @Environment(PremiumStore.self) private var premium
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -16,6 +18,8 @@ struct BasketView: View {
     private var over: Bool { game.phase == .over }
     private var paused: Bool { game.phase == .paused }
     private var playing: Bool { !ready && !over }
+    /// 무료 체험 판이 끝났다 — 다시 하기 대신 결제 화면으로 안내한다(구매하면 바로 일반 종료 화면으로 바뀐다)
+    private var trialEnded: Bool { over && game.trialLeft != nil && !premium.isPremium }
 
     private var feedback: String {
         let question = game.question
@@ -48,6 +52,8 @@ struct BasketView: View {
             if phase != .active { engine.pause() }
         }
         .onDisappear { engine.teardown() }
+        // 미니게임은 루트의 fullScreenCover 라 루트의 결제 시트가 위에 뜨지 못한다 — 여기서 직접 띄운다
+        .sheet(isPresented: $paywallOpen) { PaywallView() }
     }
 
     // MARK: - 헤더
@@ -178,7 +184,7 @@ struct BasketView: View {
                     .foregroundStyle(game.outcome == .correct ? Color.gg.success : Color.gg.textMuted)
             }
             .font(.suiteNum(.extrabold, 30))
-            .accessibilityLabel("\(game.question.a) 곱하기 \(game.question.b)는?")
+            .accessibilityLabel("\(game.question.a) 곱하기 \(KoreanReading.withTopic(game.question.b))?")
             Text(feedback)
                 .font(.suite(.bold, 12))
                 .foregroundStyle(game.outcome == .wrong || game.outcome == .missed ? Color.gg.warning : Color.gg.textMuted)
@@ -200,11 +206,20 @@ struct BasketView: View {
                     moveButton(direction: -1)
                     moveButton(direction: 1)
                 }
-                Text("화면을 좌우로 끌거나 방향 버튼을 꾹 눌러요")
-                    .font(.suite(.medium, 11)).foregroundStyle(Color.gg.textMuted)
+                HStack(spacing: 8) {
+                    if let left = game.trialLeft { TrialProgressPill(left: left) }
+                    Text("화면을 좌우로 끌거나 방향 버튼을 꾹 눌러요")
+                        .font(.suite(.medium, 11)).foregroundStyle(Color.gg.textMuted)
+                }
             }
         } else {
-            setupPanel
+            Group {
+                if trialEnded {
+                    TrialEndPanel(correct: game.score, onUnlock: { paywallOpen = true }, onExit: onExit)
+                } else {
+                    setupPanel
+                }
+            }
                 .padding(16)
                 .background(Color.gg.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -271,7 +286,9 @@ struct BasketView: View {
                 }
             }
 
-            GGButton(variant: .primary, size: .lg, action: { engine.start() }) {
+            if !premium.isPremium { TrialNotice() }
+
+            GGButton(variant: .primary, size: .lg, action: { engine.start(trial: MinigameTrial.limit(isPremium: premium.isPremium)) }) {
                 Image(systemName: over ? "arrow.counterclockwise" : "play.fill")
                 Text(over ? "다시 받기" : "열매 받기 시작")
             }

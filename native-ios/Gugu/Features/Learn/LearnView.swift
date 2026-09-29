@@ -9,6 +9,16 @@ struct LearnView: View {
     @Environment(Router.self) private var router
 
     @State private var mode: GameMode = .practice
+    /// 표 보기 시트로 연 단
+    @State private var sheetTable: TableChoice?
+    /// 표 시트에서 "연습"을 누른 단 — 시트가 완전히 닫힌 뒤 세션을 띄운다
+    /// (닫히는 도중에 전체화면을 띄우면 표시가 무시될 수 있다)
+    @State private var pendingPractice: Int?
+
+    private struct TableChoice: Identifiable {
+        let table: Int
+        var id: Int { table }
+    }
 
     private let tables = Array(Problems.minTable...Problems.maxTable)
     private var def: ModeDef { Modes.def(mode) }
@@ -20,15 +30,29 @@ struct LearnView: View {
                 header
                 modeCards
                 Text(def.detail).font(.suite(.medium, 14)).foregroundStyle(Color.gg.textMuted)
-                gameLinks
+                // 모드를 고르면 바로 단을 고르게 — 미니게임 링크가 이 사이에 끼어 흐름이 끊기던 것을 하단으로 옮겼다
                 if def.supportsTable { tableSection } else { challengeCard }
+                gameLinks
+                    .padding(.top, 12)
             }
             .padding(.horizontal, 20)
             .padding(.top, 12)
             .padding(.bottom, 24)
+            .readableWidth()
         }
         .background(Color.gg.bg.ignoresSafeArea())
         .scrollIndicators(.hidden)
+        .statusBarBackdrop()
+        .sheet(item: $sheetTable, onDismiss: {
+            guard let t = pendingPractice else { return }
+            pendingPractice = nil
+            session.start(.practice, table: t)
+        }) { choice in
+            TableSheet(table: choice.table) {
+                pendingPractice = choice.table
+                sheetTable = nil
+            }
+        }
     }
 
     private var header: some View {
@@ -44,7 +68,9 @@ struct LearnView: View {
 
     // 달리기·받기 미니게임 진입 (웹 Learn 의 게임 링크 대응)
     private var gameLinks: some View {
-        VStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("움직이며 연습하기").font(.suite(.bold, 14)).foregroundStyle(Color.gg.textMuted)
+                .accessibilityAddTraits(.isHeader)
             gameLink("구구 점프", "정답을 골라 장애물 넘기", "figure.run") { router.runnerOpen = true }
             gameLink("구구 레인", "길을 바꿔 피하고 정답 길로", "rectangle.split.1x2.fill") { router.laneOpen = true }
             gameLink("구구 바구니", "정답 열매를 바구니로 쏙", "basket.fill",
@@ -67,7 +93,16 @@ struct LearnView: View {
                     Image(systemName: icon).font(.system(size: 18, weight: .bold)).foregroundStyle(fg)
                 }
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(title).font(.suite(.extrabold, 14)).foregroundStyle(Color.gg.text)
+                    HStack(spacing: 6) {
+                        Text(title).font(.suite(.extrabold, 14)).foregroundStyle(Color.gg.text)
+                        // 무료 사용자에게 체험이라는 것을 미리 알린다
+                        if let badge = MinigameTrial.badge(isPremium: premium.isPremium) {
+                            Text(badge)
+                                .font(.suite(.extrabold, 10)).foregroundStyle(tint)
+                                .padding(.horizontal, 7).padding(.vertical, 2)
+                                .background(tint.opacity(0.12), in: Capsule())
+                        }
+                    }
                     Text(desc).font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
                 }
                 Spacer(minLength: 4)
@@ -140,25 +175,64 @@ struct LearnView: View {
             }
             .buttonStyle(PressScaleStyle())
 
-            Text("단 선택").font(.suite(.bold, 14)).foregroundStyle(Color.gg.textMuted)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("단 선택").font(.suite(.bold, 14)).foregroundStyle(Color.gg.textMuted)
+                    .accessibilityAddTraits(.isHeader)
+                Text("추천 순서 \(Hints.roadmapTables.map(String.init).joined(separator: " → "))단 · 책 버튼을 누르면 표를 볼 수 있어요")
+                    .font(.suite(.medium, 11)).foregroundStyle(Color.gg.textMuted.opacity(0.85))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                 ForEach(tables, id: \.self) { t in
-                    let stars = game.state.tableMastery[t]?.stars ?? 0
-                    Button { session.start(mode, table: t) } label: {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack(alignment: .firstTextBaseline, spacing: 2) {
-                                Text("\(t)").font(.suite(.extrabold, 30)).foregroundStyle(Color.gg.text).monospacedDigit()
-                                Text("단").font(.suite(.bold, 18)).foregroundStyle(Color.gg.textMuted)
-                            }
-                            StarsView(count: stars, size: 16)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(16)
-                        .ggCard(padding: 0)
-                    }
-                    .buttonStyle(PressScaleStyle())
+                    tableCard(t, recommended: t == recommendedTable)
                 }
             }
+        }
+    }
+
+    /// 로드맵상 다음에 익힐 단 — 모두 별 3개면 nil
+    private var recommendedTable: Int? { Hints.nextRoadmapTable(game.state.tableMastery) }
+
+    private func tableCard(_ t: Int, recommended: Bool) -> some View {
+        let stars = game.state.tableMastery[t]?.stars ?? 0
+        return Button { session.start(mode, table: t) } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text("\(t)").font(.suite(.extrabold, 30)).foregroundStyle(Color.gg.text).monospacedDigit()
+                    Text("단").font(.suite(.bold, 18)).foregroundStyle(Color.gg.textMuted)
+                }
+                HStack(spacing: 6) {
+                    StarsView(count: stars, size: 16)
+                    if recommended {
+                        Text("추천").font(.suite(.extrabold, 10)).foregroundStyle(Color.gg.accentFg)
+                            .padding(.horizontal, 7).padding(.vertical, 2)
+                            .background(Color.gg.accent, in: Capsule())
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(16)
+            .background(recommended ? Color.gg.accent.opacity(0.08) : Color.gg.surface,
+                        in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .strokeBorder(recommended ? Color.gg.accent.opacity(0.6) : Color.gg.border, lineWidth: recommended ? 1.5 : 1))
+        }
+        .buttonStyle(PressScaleStyle())
+        .accessibilityLabel("\(t)단 \(Modes.def(mode).name) 시작, 별 \(stars)개\(recommended ? ", 추천" : "")")
+        .overlay(alignment: .topTrailing) {
+            Button {
+                Haptics.impact(.light)
+                sheetTable = TableChoice(table: t)
+            } label: {
+                Image(systemName: "book.pages.fill")
+                    .font(.system(size: 15, weight: .bold)).foregroundStyle(Color.gg.accent)
+                    .frame(width: 34, height: 34)
+                    .background(Color.gg.accent.opacity(0.12), in: Circle())
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .padding(6)
+            .accessibilityLabel("\(t)단 표 보기")
         }
     }
 

@@ -55,9 +55,10 @@ final class BasketEngine {
 
     // MARK: - 조작
 
-    func start() {
+    /// trial: 무료 체험 문제 수 (nil = 제한 없음)
+    func start(trial: Int?) {
         direction = 0
-        game = Basket.create(table: table)
+        game = Basket.create(table: table, trial: trial)
         Sound.shared.tap()
         startLoop()
     }

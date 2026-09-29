@@ -17,6 +17,9 @@ enum PremiumConfig {
 
     static func isPremiumMode(_ mode: GameMode) -> Bool { premiumModes.contains(mode) }
 
+    /// 움직이며 놀기(점프·레인·바구니) 무료 체험 문제 수 — 이만큼 풀면 게임을 멈추고 결제 화면으로 안내한다
+    static let minigameTrialQuestions = 3
+
     /// 법적 고지 링크 (페이월·프로필에서 사용, Apple 심사 필수)
     enum Legal {
         static let terms = "https://gugu.smap.site/terms"

@@ -21,6 +21,8 @@ struct BasketState {
     var lives: Int
     var combo: Int
     var maxCombo: Int
+    /// 무료 체험에서 남은 문제 수(지금 문제 포함). nil 이면 제한 없음, 0 이면 체험을 다 해서 끝난 판
+    var trialLeft: Int? = nil
 }
 
 enum Basket {
@@ -35,7 +37,9 @@ enum Basket {
     static let catchRadius: Double = 40
     static let maxLives = 3
 
-    static func create(table: Int?, phase: RunnerPhase = .running, random: () -> Double = { Double.random(in: 0..<1) }) -> BasketState {
+    /// trial: 무료 체험 문제 수 (nil = 제한 없음)
+    static func create(table: Int?, phase: RunnerPhase = .running, trial: Int? = nil,
+                       random: () -> Double = { Double.random(in: 0..<1) }) -> BasketState {
         BasketState(
             phase: phase, table: table,
             // ready 상태의 문제는 화면 예시용 — 시작 시 새로 뽑는다
@@ -43,7 +47,8 @@ enum Basket {
                 ? RunnerQuestion(a: 2, b: 3, choices: [4, 6, 8])
                 : Runner.question(table: table, recentKeys: [], random: random),
             recentKeys: [], x: width / 2, round: 0, elapsedMs: 0, feedbackMs: 0,
-            outcome: nil, caughtIndex: nil, score: 0, lives: maxLives, combo: 0, maxCombo: 0
+            outcome: nil, caughtIndex: nil, score: 0, lives: maxLives, combo: 0, maxCombo: 0,
+            trialLeft: trial
         )
     }
 
@@ -75,6 +80,14 @@ enum Basket {
             if state.lives == 0 {
                 next.phase = .over
                 return next
+            }
+            if let left = state.trialLeft {
+                next.trialLeft = left - 1
+                // 무료 체험의 마지막 문제였으면 다음 열매를 내지 않고 끝낸다
+                if left <= 1 {
+                    next.phase = .over
+                    return next
+                }
             }
             next.recentKeys = Array((state.recentKeys + [Problems.key(state.question.a, state.question.b)]).suffix(4))
             next.question = Runner.question(table: state.table, recentKeys: next.recentKeys, random: random)

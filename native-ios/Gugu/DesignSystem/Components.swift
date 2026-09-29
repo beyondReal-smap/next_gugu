@@ -150,3 +150,33 @@ enum ModeStyle {
         }
     }
 }
+
+// MARK: - ChoiceChips
+
+/// 값 고르기 칩 — 선택된 칩만 강조한다
+struct ChoiceChips<T: Hashable>: View {
+    let options: [T]
+    let selected: T
+    let label: (T) -> String
+    var onSelect: (T) -> Void
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(options, id: \.self) { option in
+                let on = option == selected
+                Button {
+                    Haptics.selection()
+                    onSelect(option)
+                } label: {
+                    Text(label(option))
+                        .font(.suite(on ? .extrabold : .bold, 14))
+                        .foregroundStyle(on ? Color.gg.accentFg : Color.gg.text)
+                        .frame(maxWidth: .infinity).frame(height: 44)   // 최소 터치 영역 44pt
+                        .background(on ? Color.gg.accent : Color.gg.surface2,
+                                    in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                .buttonStyle(PressScaleStyle())
+                .accessibilityAddTraits(on ? .isSelected : [])
+            }
+        }
+    }
+}

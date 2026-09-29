@@ -1,5 +1,6 @@
 package site.smap.gugudan.features.runner
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -51,6 +52,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -58,8 +60,10 @@ import site.smap.gugudan.core.Runner
 import site.smap.gugudan.core.RunnerOutcome
 import site.smap.gugudan.core.RunnerPhase
 import site.smap.gugudan.designsystem.*
+import site.smap.gugudan.features.paywall.*
 import site.smap.gugudan.services.Haptics
 import site.smap.gugudan.services.Persistence
+import site.smap.gugudan.store.LocalPremium
 
 // 구구 점프 화면 (RunnerScreen.tsx / iOS RunnerView 이식)
 // 보기 3개 중 정답을 고르면 자동으로 점프한다. 틀리거나 시간이 지나면 하트가 하나 줄어든다.
@@ -80,12 +84,19 @@ fun RunnerScreen(onExit: () -> Unit) {
     val gg = LocalGG.current
     val context = LocalContext.current
     val engine = remember { RunnerEngine(Persistence(context.applicationContext)) }
+    // 시스템 뒤로가기 — 달리는 중이면 일시정지(실수로 판을 날리지 않게), 멈춰 있거나 끝났으면 홈으로
+    BackHandler {
+        if (engine.game.phase == RunnerPhase.RUNNING) engine.pause() else onExit()
+    }
     val game = engine.game
 
     val ready = game.phase == RunnerPhase.READY
     val over = game.phase == RunnerPhase.OVER
     val paused = game.phase == RunnerPhase.PAUSED
     val active = game.phase == RunnerPhase.RUNNING
+    val premium = LocalPremium.current
+    // 무료 체험 판이 끝났다 — 다시 하기 대신 결제 화면으로 안내한다(구매하면 바로 일반 종료 화면으로 바뀐다)
+    val trialEnded = over && game.trialLeft != null && !premium.isPremium
 
     // 프레임 루프 — RUNNING 일 때만 돌고, 화면을 벗어나면 자동 정지
     LaunchedEffect(game.phase) {
@@ -195,6 +206,7 @@ fun RunnerScreen(onExit: () -> Unit) {
             // 하단 조작부
             Column(Modifier.fillMaxWidth().ggCard(20.dp).padding(16.dp)) {
                 when {
+                    trialEnded -> TrialEndPanel(game.score, onUnlock = { premium.openPaywall() }, onExit = onExit)
                     ready || over -> SetupPanel(engine, over)
                     paused -> PausePanel(engine, onExit)
                     else -> PlayPanel(engine, active)
@@ -269,6 +281,7 @@ private fun Scoreboard(engine: RunnerEngine, onTogglePause: () -> Unit, enabled:
 @Composable
 private fun SetupPanel(engine: RunnerEngine, over: Boolean) {
     val gg = LocalGG.current
+    val premium = LocalPremium.current
     val game = engine.game
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -329,9 +342,11 @@ private fun SetupPanel(engine: RunnerEngine, over: Boolean) {
             }
         }
 
+        if (!premium.isPremium) TrialNotice()
+
         GGButton(
             variant = GGButtonVariant.PRIMARY, size = GGButtonSize.LG,
-            onClick = { engine.start() },
+            onClick = { engine.start(MinigameTrial.limit(premium.isPremium)) },
         ) {
             Icon(
                 if (over) Icons.Filled.RotateLeft else Icons.Filled.PlayArrow, null,
@@ -401,12 +416,23 @@ private fun PlayPanel(engine: RunnerEngine, active: Boolean) {
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(
-                "${if (engine.table == null) "전체 구구단" else "${engine.table}단"} · ${game.round + 1}번째 장애물",
-                style = suite(FontWeight.Bold, 12), color = gg.textMuted,
-            )
-            Text(timeLabel, style = suite(FontWeight.Bold, 12), color = gg.textMuted)
+        // 한 줄 고정 — 상태 문구가 길어져도(예: "정답을 기억해요") 줄이 늘어 아래 식이 밀리지 않게 한다.
+        // 상태 문구를 먼저 온전히 두고, 왼쪽 문구는 남는 폭 안에서 말줄임된다
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "${if (engine.table == null) "전체 구구단" else "${engine.table}단"} · ${game.round + 1}번째 장애물",
+                    style = suite(FontWeight.Bold, 12), color = gg.textMuted,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                game.trialLeft?.let { left ->
+                    Spacer(Modifier.width(8.dp))
+                    TrialProgressPill(left)
+                }
+            }
+            Text(timeLabel, style = suite(FontWeight.Bold, 12), color = gg.textMuted,
+                maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 8.dp))
         }
 
         // 남은 시간 게이지 — 25% 아래로 떨어지면 주의색

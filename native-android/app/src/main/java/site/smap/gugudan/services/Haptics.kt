@@ -6,12 +6,19 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 
-// 햅틱 (iOS Haptics.swift 대응) — 전역 탭 피드백은 GGButton 등 공통 컴포넌트가 호출
+// 햅틱 (iOS Haptics.swift 대응) — 전역 탭 피드백은 GGButton 등 공통 컴포넌트가 호출.
+// 설정의 「진동」을 끄면 모든 호출이 조용히 무시된다 (PrefsStore 가 enabled 를 바꾼다).
 
 object Haptics {
+    const val ENABLED_KEY = "gugu.haptics"
+
     private var vibrator: Vibrator? = null
 
-    fun init(context: Context) {
+    /** 진동 사용 여부 — 저장값이 없으면 켜짐 */
+    var enabled = true
+
+    fun init(context: Context, persistence: Persistence) {
+        enabled = persistence.getString(ENABLED_KEY) != "0"
         vibrator = if (Build.VERSION.SDK_INT >= 31) {
             (context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager).defaultVibrator
         } else {
@@ -21,9 +28,11 @@ object Haptics {
     }
 
     private fun oneShot(ms: Long, amplitude: Int) {
+        if (!enabled) return
         vibrator?.vibrate(VibrationEffect.createOneShot(ms, amplitude))
     }
     private fun waveform(timings: LongArray, amplitudes: IntArray) {
+        if (!enabled) return
         vibrator?.vibrate(VibrationEffect.createWaveform(timings, amplitudes, -1))
     }
 

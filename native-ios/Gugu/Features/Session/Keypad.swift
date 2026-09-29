@@ -20,10 +20,14 @@ struct Keypad: View {
             key(action: onDelete) {
                 Image(systemName: "delete.left").font(.system(size: 22)).foregroundStyle(Color.gg.textMuted)
             }
+            .accessibilityLabel("지우기")
             key { onInput(0) } content: {
                 Text("0").font(.suite(.bold, 24)).foregroundStyle(Color.gg.text).monospacedDigit()
             }
-            Button(action: onSubmit) {
+            Button {
+                Haptics.impact(.medium)
+                onSubmit()
+            } label: {
                 Text("확인").font(.suite(.bold, 18)).foregroundStyle(Color.gg.accentFg)
                     .frame(maxWidth: .infinity).frame(height: 64)
                     .background(Color.gg.accent, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -31,12 +35,17 @@ struct Keypad: View {
             .buttonStyle(KeyStyle())
             .opacity(canSubmit ? 1 : 0.4)
             .allowsHitTesting(canSubmit)
+            .accessibilityHint(canSubmit ? "" : "숫자를 먼저 눌러 주세요")
         }
     }
 
     @ViewBuilder
     private func key<C: View>(action: @escaping () -> Void, @ViewBuilder content: () -> C) -> some View {
-        Button(action: action) {
+        Button {
+            // 키 하나하나 손끝으로 눌림을 느끼게 — 가벼운 탭 진동
+            Haptics.impact(.light)
+            action()
+        } label: {
             content()
                 .frame(maxWidth: .infinity).frame(height: 64)
                 .background(Color.gg.surface2, in: RoundedRectangle(cornerRadius: 16, style: .continuous))

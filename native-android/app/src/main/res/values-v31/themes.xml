@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ 시스템 스플래시 — 지정하지 않으면 흰 배경으로 떠서 다크 앱이 켜질 때 번쩍였다 -->
+    <style name="Theme.Gugu" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#080B16</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <item name="android:windowSplashScreenBackground">#080B16</item>
+    </style>
+</resources>

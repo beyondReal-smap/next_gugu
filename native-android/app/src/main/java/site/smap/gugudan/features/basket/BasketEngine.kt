@@ -80,9 +80,10 @@ class BasketEngine(private val persistence: Persistence) {
 
     // MARK: 조작
 
-    fun start() {
+    /** trial: 무료 체험 문제 수 (null = 제한 없음) */
+    fun start(trial: Int?) {
         direction = 0
-        game = Basket.create(table)
+        game = Basket.create(table, trial = trial)
         Sound.tap()
     }
 

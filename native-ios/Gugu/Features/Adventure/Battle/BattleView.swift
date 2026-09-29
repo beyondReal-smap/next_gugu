@@ -15,6 +15,7 @@ struct BattleView: View {
     @State private var engine: BattleEngine?
     @State private var confetti = 0
     @State private var levelUp = false
+    @State private var confirmFlee = false
 
     var body: some View {
         ZStack {
@@ -23,6 +24,26 @@ struct BattleView: View {
                 battle(engine)
                 if engine.phase == .intro { intro(engine) }
                 if engine.phase == .end, let end = engine.end { result(engine, end) }
+                // 결판이 나면(확인 중 마지막 답이 처리된 경우) 시트는 의미가 없으니 띄우지 않는다
+                if confirmFlee && engine.phase == .play {
+                    ConfirmSheet(
+                        icon: "figure.walk.departure",
+                        tint: .gg.danger,
+                        title: "대결을 그만할까요?",
+                        message: "푼 문제는 기록되지만 승패는 남지 않아요.",
+                        cancelLabel: "계속 싸우기",
+                        confirmLabel: "그만하기",
+                        onCancel: {
+                            withAnimation(.easeOut(duration: 0.2)) { confirmFlee = false }
+                            engine.resume()
+                        },
+                        onConfirm: {
+                            engine.abandon()
+                            onFlee()
+                        }
+                    )
+                    .transition(.opacity)
+                }
             }
             ConfettiView(trigger: confetti)
             if let e = engine?.end {
@@ -63,9 +84,15 @@ struct BattleView: View {
         VStack(spacing: 0) {
             topBar(engine)
             npcPanel(engine)
-            if engine.battleStyle == .counter && engine.phase == .play && engine.feedback == nil {
-                CounterTimer(startClock: engine.qStartClock, limitMs: engine.counterLimit)
-                    .padding(.top, 8)
+            // 반격전 카운트다운 — 정답/오답 표시 중에는 숨기되 자리는 항상 비워 둬 문제가 밀리지 않게 한다
+            if engine.battleStyle == .counter {
+                ZStack {
+                    if engine.phase == .play && engine.feedback == nil {
+                        CounterTimer(engine: engine)
+                    }
+                }
+                .frame(height: 16)
+                .padding(.top, 8)
             }
             problemArea(engine)
             playerPanel(engine)
@@ -79,13 +106,29 @@ struct BattleView: View {
         .padding(.horizontal, 20)
         .padding(.top, 12)
         .padding(.bottom, 16)
+        .readableWidth(560)
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+    }
+
+    /// 닫기 — 푼 문제가 있으면 대결을 멈추고 한 번 묻는다. 없으면 잃을 것이 없으니 바로 월드로.
+    private func requestFlee(_ engine: BattleEngine) {
+        guard engine.phase == .play, engine.answeredCount > 0 else {
+            engine.abandon()
+            onFlee()
+            return
+        }
+        engine.pause()
+        withAnimation(.easeOut(duration: 0.2)) { confirmFlee = true }
     }
 
     private func topBar(_ engine: BattleEngine) -> some View {
         HStack(spacing: 12) {
-            Button { onFlee() } label: {
+            Button { requestFlee(engine) } label: {
                 Image(systemName: "xmark").font(.system(size: 20, weight: .bold)).foregroundStyle(Color.gg.textMuted)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
+            .accessibilityLabel("대결 그만하기")
             Text("\(engine.isBossBattle ? "보스 대결" : Battle.styleName(engine.battleStyle)) · \(npc.table)단")
                 .font(.suite(.bold, 14)).foregroundStyle(Color.gg.textMuted)
             Spacer()
@@ -97,7 +140,8 @@ struct BattleView: View {
             }
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: engine.combo)
-        .padding(.bottom, 12)
+        .frame(height: 44)
+        .padding(.bottom, 4)
     }
 
     private func npcPanel(_ engine: BattleEngine) -> some View {
@@ -154,26 +198,41 @@ struct BattleView: View {
     private func problemArea(_ engine: BattleEngine) -> some View {
         let answer = engine.problem.a * engine.problem.b
         let showAnswer = engine.feedback == .wrong
-        return VStack(spacing: 12) {
-            Spacer()
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Text("\(engine.problem.a)").foregroundStyle(Color.gg.text)
-                Text("×").foregroundStyle(Color.gg.textMuted)
-                Text("\(engine.problem.b)").foregroundStyle(Color.gg.text)
-                Text("=").foregroundStyle(Color.gg.textMuted)
-                Text(showAnswer ? "\(answer)" : (engine.input.isEmpty ? "?" : engine.input))
-                    .foregroundStyle(showAnswer ? Color.gg.success : (engine.input.isEmpty ? Color.gg.border : Color.gg.accent))
-            }
-            .font(.suiteNum(.extrabold, 52)).monospacedDigit()
-            if showAnswer {
-                Text(engine.timedOut ? "시간 초과! 정답은 \(answer) — \(npc.name)의 반격!"
-                     : engine.battleStyle == .speed ? "정답은 \(answer) 이에요"
-                     : "정답은 \(answer) — \(npc.name)의 반격!")
-                    .font(.suite(.bold, 13)).foregroundStyle(Color.gg.textMuted).multilineTextAlignment(.center)
-            }
-            Spacer()
+        let slot = engine.input.isEmpty ? "?" : engine.input
+        let inputColor: Color = engine.feedback == .correct ? .gg.success : (engine.input.isEmpty ? .gg.border : .gg.accent)
+        // 한 덩어리 Text — 큰 글자에서도 모든 조각이 같은 비율로 줄어든다
+        let equation = Text("\(engine.problem.a)").foregroundStyle(Color.gg.text)
+            + Text(" × ").foregroundStyle(Color.gg.textMuted)
+            + Text("\(engine.problem.b)").foregroundStyle(Color.gg.text)
+            + Text(" = ").foregroundStyle(Color.gg.textMuted)
+            + Text(showAnswer ? "\(answer)" : slot).foregroundStyle(showAnswer ? Color.gg.success : inputColor)
+        // 문제는 영역 한가운데 고정 — 설명은 레이아웃을 밀지 않는 오버레이로 단다
+        return GeometryReader { geo in
+            equation
+                .font(.suiteNum(.extrabold, 52)).monospacedDigit()
+                .minimumScaleFactor(0.6)
+                .lineLimit(1)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(KoreanReading.question(engine.problem, mode: .practice, statement: nil))
+                .accessibilityValue(showAnswer ? battleExplanation(engine) : (engine.input.isEmpty ? "" : "입력 \(engine.input)"))
+                .pinnedBelow(width: geo.size.width) {
+                    if showAnswer {
+                        Text(battleExplanation(engine))
+                            .font(.suite(.bold, 13)).foregroundStyle(Color.gg.textMuted)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                .frame(width: geo.size.width, height: geo.size.height)
+                .animation(.easeOut(duration: 0.15), value: engine.feedback)
         }
-        .frame(maxWidth: .infinity)
+    }
+
+    private func battleExplanation(_ engine: BattleEngine) -> String {
+        let answer = engine.problem.a * engine.problem.b
+        if engine.timedOut { return "시간 초과! 정답은 \(answer) — \(npc.name)의 반격!" }
+        let fact = engine.lastGiven.map { KoreanReading.notButIs(given: $0, answer: answer) }
+            ?? "정답은 \(KoreanReading.withCopula(answer))"
+        return engine.battleStyle == .speed ? fact : "\(fact) — \(npc.name)의 반격!"
     }
 
     private func statBar(value: Double, label: String, color: Color) -> some View {
@@ -355,18 +414,19 @@ struct FloatText: View {
 // MARK: - 반격전 카운트다운
 
 struct CounterTimer: View {
-    let startClock: Double
-    let limitMs: Int
+    let engine: BattleEngine
     var body: some View {
         TimelineView(.periodic(from: .now, by: 0.1)) { _ in
-            let left = max(0, Double(limitMs) - (CACurrentMediaTime() * 1000 - startClock))
+            let limitMs = engine.counterLimit
+            let now = engine.displayClock(CACurrentMediaTime() * 1000)
+            let left = max(0, Double(limitMs) - (now - engine.qStartClock))
             let urgent = left <= 2000
             HStack(spacing: 8) {
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule().fill(Color.gg.surface2)
                         Capsule().fill(urgent ? Color.gg.danger : Color.gg.accent)
-                            .frame(width: geo.size.width * (left / Double(limitMs)))
+                            .frame(width: geo.size.width * min(1, left / Double(limitMs)))
                     }
                 }
                 .frame(height: 8)
@@ -374,6 +434,8 @@ struct CounterTimer: View {
                     .font(.suite(.extrabold, 11)).foregroundStyle(urgent ? Color.gg.danger : Color.gg.textMuted)
                     .monospacedDigit().frame(width: 44, alignment: .trailing)
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("반격까지 \(Int(ceil(left / 1000)))초")
         }
     }
 }

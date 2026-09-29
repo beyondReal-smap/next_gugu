@@ -31,6 +31,8 @@ data class RunnerState(
     val outcome: RunnerOutcome? = null,
     val given: Int? = null,
     val hitMs: Double = 0.0,
+    /** 무료 체험에서 남은 문제 수(지금 문제 포함). null 이면 제한 없음, 0 이면 체험을 다 해서 끝난 판 */
+    val trialLeft: Int? = null,
 )
 
 object Runner {
@@ -78,13 +80,16 @@ object Runner {
         return RunnerQuestion(problem.a, problem.b, shuffled(listOf(answer) + picked, random))
     }
 
+    /** trial: 무료 체험 문제 수 (null = 제한 없음) */
     fun create(
         table: Int?,
         phase: RunnerPhase = RunnerPhase.RUNNING,
+        trial: Int? = null,
         random: () -> Double = { Random.nextDouble() },
     ): RunnerState = RunnerState(
         phase = phase,
         table = table,
+        trialLeft = trial,
         // READY 상태의 문제는 화면 예시용 — 시작 시 새로 뽑는다
         question = if (phase == RunnerPhase.READY) RunnerQuestion(2, 3, listOf(4, 6, 8))
         else question(table, emptyList(), random),
@@ -108,6 +113,10 @@ object Runner {
     }
 
     private fun nextObstacle(state: RunnerState, random: () -> Double): RunnerState {
+        state.trialLeft?.let { left ->
+            // 무료 체험의 마지막 문제였으면 다음 장애물을 내지 않고 끝낸다 — 새 문제를 보다가 끊기지 않게
+            if (left <= 1) return state.copy(trialLeft = left - 1, phase = RunnerPhase.OVER, hitMs = 0.0)
+        }
         val recentKeys = (state.recentKeys + Problems.key(state.question.a, state.question.b)).takeLast(3)
         return state.copy(
             recentKeys = recentKeys,
@@ -117,6 +126,7 @@ object Runner {
             outcome = null,
             given = null,
             hitMs = 0.0,
+            trialLeft = state.trialLeft?.minus(1),
         )
     }
 

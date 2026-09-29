@@ -125,31 +125,44 @@ class AdventureStore(private val persistence: Persistence, devClearR2: Boolean =
     fun resetAdventure() { progress = AdvProgress.defaultProgress; persist() }
 }
 
-/** 활성 세션 (SessionStore.swift 이식) */
-data class ActiveSession(val mode: GameMode, val table: Int?, val token: Int = 0)
+/** 활성 세션 (SessionStore.swift 이식). review = 취약 문제 복습 (오답 풀에서 가중치 큰 문제부터 출제) */
+data class ActiveSession(val mode: GameMode, val table: Int?, val review: Boolean = false, val token: Int = 0)
 
 class SessionStore {
     var active: ActiveSession? by mutableStateOf(null)
         private set
 
     fun start(mode: GameMode, table: Int?) { active = ActiveSession(mode, table) }
+    /** 취약 문제 복습 — 학습(practice) 규칙으로 헷갈렸던 문제를 모아 푼다 */
+    fun startReview() { active = ActiveSession(GameMode.PRACTICE, null, review = true) }
     fun end() { active = null }
 }
 
-/** 테마 (ThemeStore.swift 이식) — 기본 dark, 수동 토글 */
+/** 테마 (ThemeStore.swift 이식) — 기기 설정/라이트/다크 선택. 저장값이 없는 첫 실행은 웹과 같은 다크 */
 class ThemeStore(private val persistence: Persistence) {
     var theme: Theme by mutableStateOf(
         when (persistence.getString(Persistence.THEME_KEY)) {
+            "system" -> Theme.SYSTEM
             "light" -> Theme.LIGHT
-            "dark" -> Theme.DARK
             else -> Theme.DARK
         }
     )
         private set
 
-    fun toggle() {
-        theme = if (theme == Theme.DARK) Theme.LIGHT else Theme.DARK
-        persistence.putString(Persistence.THEME_KEY, if (theme == Theme.DARK) "dark" else "light")
+    fun set(t: Theme) {
+        theme = t
+        persistence.putString(
+            Persistence.THEME_KEY,
+            when (t) { Theme.SYSTEM -> "system"; Theme.LIGHT -> "light"; Theme.DARK -> "dark" },
+        )
+    }
+
+    companion object {
+        fun label(t: Theme): String = when (t) {
+            Theme.SYSTEM -> "기기 설정"
+            Theme.LIGHT -> "라이트"
+            Theme.DARK -> "다크"
+        }
     }
 }
 
@@ -166,6 +179,9 @@ class Router {
 
     /** 구구 바구니 전체화면 오버레이 */
     var basketOpen: Boolean by mutableStateOf(false)
+
+    /** 설정 화면 (프로필 톱니바퀴) */
+    var settingsOpen: Boolean by mutableStateOf(false)
 }
 
 // CompositionLocal 제공 (루트에서 주입)
@@ -178,3 +194,4 @@ val LocalRouter = staticCompositionLocalOf<Router> { error("Router 미제공") }
 val LocalAuth = staticCompositionLocalOf<AuthStore> { error("AuthStore 미제공") }
 val LocalSync = staticCompositionLocalOf<SyncStore> { error("SyncStore 미제공") }
 val LocalReminder = staticCompositionLocalOf<ReminderStore> { error("ReminderStore 미제공") }
+val LocalPrefs = staticCompositionLocalOf<PrefsStore> { error("PrefsStore 미제공") }

@@ -1,5 +1,6 @@
 package site.smap.gugudan.designsystem
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -85,8 +86,16 @@ fun hexColor(hex: String): Color {
     )
 }
 
+/** 테마 설정을 실제 다크 여부로 — SYSTEM 은 기기 설정을 따른다 */
+@Composable
+fun resolvedDark(theme: AppTheme): Boolean = when (theme) {
+    AppTheme.SYSTEM -> isSystemInDarkTheme()
+    AppTheme.DARK -> true
+    AppTheme.LIGHT -> false
+}
+
 @Composable
 fun GuguTheme(theme: AppTheme, content: @Composable () -> Unit) {
-    val colors = if (theme == AppTheme.DARK) DarkColors else LightColors
+    val colors = if (resolvedDark(theme)) DarkColors else LightColors
     CompositionLocalProvider(LocalGG provides colors, content = content)
 }

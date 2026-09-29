@@ -18,6 +18,7 @@ struct PaywallView: View {
     private let benefits: [Benefit] = [
         Benefit(icon: "map.fill", title: "3D 어드벤처 전 지역", desc: "8개 지역 탐험 · 주민/보스 구구단 대결"),
         Benefit(icon: "bolt.fill", title: "게임 모드 전부 해제", desc: "60초 챌린지 · 서바이벌 · 빈칸 추리 · OX 퀴즈"),
+        Benefit(icon: "figure.run", title: "움직이며 놀기 무제한", desc: "구구 점프 · 레인 · 바구니 (무료는 \(PremiumConfig.minigameTrialQuestions)문제 체험)"),
         Benefit(icon: "infinity", title: "한 번 결제, 평생 소장", desc: "추가 결제 없음 · 업데이트 콘텐츠도 전부 포함"),
     ]
 
@@ -28,7 +29,10 @@ struct PaywallView: View {
                     Spacer()
                     Button { dismiss() } label: {
                         Image(systemName: "xmark").font(.system(size: 20, weight: .bold)).foregroundStyle(Color.gg.textMuted)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
+                    .accessibilityLabel("닫기")
                 }
                 .padding(.bottom, 8)
 
