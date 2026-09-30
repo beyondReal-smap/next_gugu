@@ -62,24 +62,33 @@ export function enableMetaPixel(): void {
   window.fbq?.('track', 'PageView');
 }
 
+export interface MetaEventOptions {
+  /** 서버(CAPI) 이벤트와 중복제거용 ID */
+  eventID?: string;
+}
+
 /** 표준 이벤트 (PageView, ViewContent, Lead, Purchase 등). */
 export function trackMetaEvent(
   eventName: string,
   params?: Record<string, unknown>,
+  options?: MetaEventOptions,
 ): void {
   if (typeof window === 'undefined') return;
   if (typeof window.fbq !== 'function') return;
-  if (params) window.fbq('track', eventName, params);
+  if (options) window.fbq('track', eventName, params ?? {}, options);
+  else if (params) window.fbq('track', eventName, params);
   else window.fbq('track', eventName);
 }
 
-/** 커스텀 이벤트 (play_start, app_store_click 등). */
+/** 커스텀 이벤트 (play_start, install_click, app_store_click 등). */
 export function trackMetaCustom(
   eventName: string,
   params?: Record<string, unknown>,
+  options?: MetaEventOptions,
 ): void {
   if (typeof window === 'undefined') return;
   if (typeof window.fbq !== 'function') return;
-  if (params) window.fbq('trackCustom', eventName, params);
+  if (options) window.fbq('trackCustom', eventName, params ?? {}, options);
+  else if (params) window.fbq('trackCustom', eventName, params);
   else window.fbq('trackCustom', eventName);
 }

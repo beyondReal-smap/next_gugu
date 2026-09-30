@@ -94,7 +94,7 @@ export function Landing() {
               72개 곱셈식이 저절로 손에 익어요. 매일 1분, 게임 한 판이면 충분해요.
             </p>
             <div className="mt-8">
-              <StoreButtons platform={platform} />
+              <StoreButtons platform={platform} placement="hero" />
             </div>
             <p className="mt-4 text-sm text-indigo-200">
               설치 전에 먼저 보고 싶다면{' '}
@@ -152,7 +152,7 @@ export function Landing() {
             <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">오늘부터 모험을 시작해요</h2>
             <p className="mt-2 text-indigo-100">무료로 설치하고 2단부터 9단까지 정복해 보세요.</p>
           </div>
-          <StoreButtons platform={platform} />
+          <StoreButtons platform={platform} placement="bottom_cta" />
         </div>
       </section>
 

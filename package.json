@@ -10,7 +10,9 @@
     "cap:build": "next build && cp -r out/* public/",
     "cap:sync": "npm run cap:build && npx cap sync",
     "static": "yarn ai:build && next build",
-    "mobile": "yarn static && cap sync"
+    "mobile": "yarn static && cap sync",
+    "install-click:server": "node scripts/install-click-server.mjs",
+    "install-click:report": "node scripts/install-click-report.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^6.1.2",
