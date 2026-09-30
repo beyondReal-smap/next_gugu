@@ -49,7 +49,7 @@ export function InstallPrompt({ reason, onClose }: { reason: InstallReason; onCl
         </div>
         <h2 id="install-title" className="mt-5 text-2xl font-extrabold tracking-tight">{title}</h2>
         <p className="mt-2 text-sm leading-relaxed text-indigo-100">{body}</p>
-        <StoreButtons platform={platform} className="mt-6" />
+        <StoreButtons platform={platform} placement={`install_prompt_${reason}`} className="mt-6" />
       </div>
     </div>
   );
