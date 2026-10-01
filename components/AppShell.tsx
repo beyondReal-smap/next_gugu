@@ -41,7 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <main ref={mainRef} className="app-scroll pb-24"><TrialBanner />{children}</main>
+      <main ref={mainRef} className="app-scroll pb-[calc(6rem+env(safe-area-inset-bottom))]"><TrialBanner />{children}</main>
       <TabBar />
 
       <AnimatePresence>
@@ -51,7 +51,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 24 }}
             transition={{ type: 'spring', stiffness: 320, damping: 30 }}
-            className="fixed inset-0 z-50 mx-auto max-w-md bg-bg"
+            className="fixed inset-x-0 top-0 z-50 mx-auto h-dvh max-w-md bg-bg"
           >
             {/* key: 모드/단이 바뀌면 세션을 새로 마운트해 내부 ref 초기화 보장 */}
             <SessionScreen key={`${active.mode}-${active.table ?? 'all'}`} mode={active.mode} table={active.table} onExit={end} />

@@ -3,6 +3,7 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import { isNativeShell } from '@/lib/native/platform';
 import { consumePlay, remainingPlays } from '@/lib/webTrial';
 import { InstallPrompt, InstallReason } from '@/features/webTrial/InstallPrompt';
+import { usePremium } from './PremiumProvider';
 
 interface WebTrialContextValue {
   /** 웹 체험판으로 동작 중인지 (네이티브 앱이면 false — 제한 없음) */
@@ -20,28 +21,30 @@ const WebTrialContext = createContext<WebTrialContextValue | null>(null);
 // 게임 시작 지점(SessionProvider·AdventureProvider·Runner)이 이 Provider 하나만 거치게 해
 // 제한 로직이 호출부(홈·학습·결과 화면 등)로 흩어지지 않게 한다.
 export function WebTrialProvider({ children }: { children: React.ReactNode }) {
-  const [limited, setLimited] = useState(false);
+  const { accountPremium } = usePremium();
+  const [isWeb, setIsWeb] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [prompt, setPrompt] = useState<InstallReason | null>(null);
+  const limited = isWeb && !accountPremium;
 
   useEffect(() => {
     if (isNativeShell()) return;
-    setLimited(true);
+    setIsWeb(true);
     setRemaining(remainingPlays());
   }, []);
 
   const tryPlay = useCallback(() => {
-    if (isNativeShell()) return true;
+    if (isNativeShell() || accountPremium) return true;
     const ok = consumePlay();
     setRemaining(remainingPlays());
     if (!ok) setPrompt('limit');
     return ok;
-  }, []);
+  }, [accountPremium]);
 
   const requireApp = useCallback((reason: InstallReason) => setPrompt(reason), []);
 
   return (
-    <WebTrialContext.Provider value={{ limited, remaining, tryPlay, requireApp }}>
+    <WebTrialContext.Provider value={{ limited, remaining: limited ? remaining : null, tryPlay, requireApp }}>
       {children}
       {prompt && <InstallPrompt reason={prompt} onClose={() => setPrompt(null)} />}
     </WebTrialContext.Provider>

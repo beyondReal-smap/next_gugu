@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { MotionConfig, motion } from 'framer-motion';
-import { ArrowUpRight, BookOpen, Check, ChevronRight, Flame, Footprints, Map as MapIcon, Play, RotateCcw, Rows3, Swords, Target, Trophy, type LucideIcon } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Check, ChevronRight, Flame, Footprints, Map as MapIcon, Play, RotateCcw, Rows3, ShoppingBasket, Swords, Target, Trophy, type LucideIcon } from 'lucide-react';
 import { GameMode } from '@/lib/types';
 import { MODES } from '@/lib/modes';
 import { MODE_ICONS, MODE_TINT } from '@/components/modeIcons';
@@ -30,7 +30,7 @@ interface ModeGroupDef {
 const MODE_GROUPS: [ModeGroupDef, ModeGroupDef, ModeGroupDef, ModeGroupDef] = [
   { id: 'modes-learn', title: '차근차근 배우기', desc: '시간 제한 없이 원리부터 익혀요', icon: BookOpen, tint: 'text-accent' },
   { id: 'modes-record', title: '기록 도전', desc: '속도와 집중력으로 최고 기록 경신', icon: Trophy, tint: 'text-amber-500' },
-  { id: 'modes-run', title: '달리기 게임', desc: '공룡과 함께 달리며 정답 찾기', icon: Footprints, tint: 'text-emerald-600 dark:text-emerald-400' },
+  { id: 'modes-run', title: '직접 움직이며 놀기', desc: '달리고, 피하고, 정답을 받아요', icon: Footprints, tint: 'text-emerald-600 dark:text-emerald-400' },
   { id: 'modes-adventure', title: '모험', desc: '3D 월드를 탐험하며 대결', icon: MapIcon, tint: 'text-indigo-500' },
 ];
 
@@ -45,9 +45,9 @@ function ModeGroup({ group, children }: { group: ModeGroupDef; children: React.R
   const Icon = group.icon;
   return (
     <section id={group.id} aria-labelledby={`${group.id}-title`} className="scroll-mt-6 pt-5">
-      <div className="mb-3 flex items-baseline gap-2">
+      <div className="mb-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <h3 id={`${group.id}-title`} className="flex items-center gap-1.5 text-sm font-extrabold text-text"><Icon aria-hidden="true" className={`h-4 w-4 ${group.tint}`} /> {group.title}</h3>
-        <p className="min-w-0 truncate text-xs text-text-muted">{group.desc}</p>
+        <p className="min-w-0 text-xs text-text-muted">{group.desc}</p>
       </div>
       {children}
     </section>
@@ -209,7 +209,7 @@ export function Home() {
           {/* 모바일에서 원하는 묶음으로 바로 이동 */}
           <nav aria-label="플레이 모드 묶음" className="-mx-5 mb-2 flex gap-2 overflow-x-auto px-5 pb-1 sm:mx-0 sm:px-0">
             {MODE_GROUPS.map((g) => (
-              <a key={g.id} href={`#${g.id}`} className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 text-xs font-extrabold text-text transition-colors hover:bg-surface-2">
+              <a key={g.id} href={`#${g.id}`} className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 text-xs font-extrabold text-text transition-colors hover:bg-surface-2">
                 <g.icon aria-hidden="true" className={`h-3.5 w-3.5 ${g.tint}`} /> {g.title}
               </a>
             ))}
@@ -232,6 +232,11 @@ export function Home() {
 
           <ModeGroup group={MODE_GROUPS[2]}>
             <div className="grid gap-3 sm:grid-cols-2">
+              <Link href="/basket" className="group flex min-h-24 items-center gap-4 rounded-2xl border border-orange-500/30 bg-orange-500/5 px-5 py-4 transition-colors hover:bg-orange-500/10 sm:col-span-2">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#794124] text-[#ffe7a3]"><ShoppingBasket aria-hidden="true" className="h-6 w-6" /></span>
+                <span className="min-w-0 flex-1"><span className="flex flex-wrap items-center gap-2 text-base font-extrabold text-text">구구 바구니 <span className="rounded-full bg-orange-500/15 px-2 py-0.5 text-[10px] text-orange-800 dark:text-orange-200">새 모드</span></span><span className="mt-1 block text-sm text-text-muted">좌우로 움직여 정답 열매를 쏙 받아요!</span></span>
+                <ArrowUpRight aria-hidden="true" className="h-5 w-5 shrink-0 text-orange-700 dark:text-orange-300" />
+              </Link>
               <Link href="/runner" className="group flex min-h-24 items-center gap-4 rounded-2xl border border-emerald-600/25 bg-emerald-500/5 px-5 py-4 transition-colors hover:bg-emerald-500/10">
                 <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#153f35] text-[#dbef9e]"><Footprints aria-hidden="true" className="h-6 w-6" /></span>
                 <span className="min-w-0 flex-1"><span className="block text-base font-extrabold text-text">구구 점프</span><span className="mt-1 block text-sm text-text-muted">정답을 고르면 폴짝! 장애물을 넘어요.</span></span>
