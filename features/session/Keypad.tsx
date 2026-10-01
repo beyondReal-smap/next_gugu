@@ -18,7 +18,7 @@ export function Keypad({ onInput, onDelete, onSubmit, canSubmit }: KeypadProps) 
       whileTap={{ scale: 0.94 }}
       onClick={onClick}
       aria-label={label}
-      className={`flex h-16 touch-manipulation items-center justify-center rounded-2xl bg-surface-2 text-2xl font-bold text-text
+      className={`session-key flex touch-manipulation items-center justify-center rounded-2xl bg-surface-2 text-2xl font-bold text-text
         transition-colors hover:bg-border active:bg-border ${className}`}
     >
       {children}
@@ -26,7 +26,7 @@ export function Keypad({ onInput, onDelete, onSubmit, canSubmit }: KeypadProps) 
   );
 
   return (
-    <div className="grid grid-cols-3 gap-2.5 touch-manipulation">
+    <div className="grid shrink-0 grid-cols-3 gap-2 touch-manipulation sm:gap-2.5">
       {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => (
         <Key key={n} label={`숫자 ${n}`} onClick={press(() => onInput(n))}><span className="num">{n}</span></Key>
       ))}
@@ -37,7 +37,7 @@ export function Keypad({ onInput, onDelete, onSubmit, canSubmit }: KeypadProps) 
         onClick={press(onSubmit)}
         disabled={!canSubmit}
         aria-label="확인"
-        className="flex h-16 touch-manipulation items-center justify-center rounded-2xl bg-accent text-lg font-bold text-accent-fg
+        className="session-key flex touch-manipulation items-center justify-center rounded-2xl bg-accent text-lg font-bold text-accent-fg
           transition-[filter] hover:brightness-110 disabled:opacity-40 disabled:pointer-events-none"
       >
         확인

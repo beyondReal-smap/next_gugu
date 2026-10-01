@@ -469,16 +469,16 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
   const showAnswer = feedback === 'wrong';
 
   return (
-    <div className="relative flex h-full flex-col px-5 pt-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
+    <div className="relative flex h-full flex-col overflow-y-auto overscroll-contain px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-5">
       {/* 상단 바 — 모드별 진행 위젯 */}
-      <div className="mb-4 flex items-center gap-3">
+      <div className="mb-2 flex shrink-0 items-center gap-3">
         <button
           onClick={() => {
             if (answersRef.current.length === 0) onExit();
             else setLeaving(true);
           }}
           aria-label="세션 종료"
-          className="shrink-0 text-text-muted hover:text-text"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-text-muted hover:bg-surface-2 hover:text-text"
         >
           <X className="h-6 w-6" />
         </button>
@@ -511,7 +511,7 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
       </div>
 
       {/* 점수(무제한 모드) + 콤보 배지 */}
-      <div className="relative mb-2 flex h-7 items-center justify-center">
+      <div className="relative mb-2 flex h-7 shrink-0 items-center justify-center">
         {def.kind !== 'fixed' && (
           <div className="absolute left-0 flex items-center gap-1 rounded-full bg-surface-2 px-2.5 py-1 text-sm font-extrabold text-text">
             <Check className="h-4 w-4 text-success" strokeWidth={3} />
@@ -544,7 +544,7 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
       </div>
 
       {/* 문제 */}
-      <div className="flex flex-1 flex-col items-center justify-center" aria-live="polite" aria-atomic="true">
+      <div className="flex min-h-36 flex-1 shrink-0 flex-col items-center justify-center py-4" aria-live="polite" aria-atomic="true">
         {planReason && (
           <span className="mb-3 inline-flex rounded-full bg-accent/10 px-3 py-1 text-xs font-extrabold text-accent">
             {selectionReasonLabel(planReason)}
@@ -555,7 +555,7 @@ export function SessionScreen({ mode, table, onExit }: SessionScreenProps) {
           initial={{ scale: 0.9, opacity: 0, y: 8 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 300, damping: 22 }}
-          className={`num flex items-baseline gap-3 text-6xl font-extrabold ${feedback === 'wrong' ? 'animate-shake' : feedback === 'correct' ? 'animate-pop' : ''}`}
+          className={`session-equation num flex max-w-full items-baseline gap-2 font-extrabold ${feedback === 'wrong' ? 'animate-shake' : feedback === 'correct' ? 'animate-pop' : ''}`}
         >
           {mode === 'truefalse' && statement ? (
             <>

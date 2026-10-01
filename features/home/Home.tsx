@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { MotionConfig, motion } from 'framer-motion';
-import { ArrowUpRight, BookOpen, Check, ChevronRight, Flame, Footprints, Map as MapIcon, Play, RotateCcw, Rows3, Swords, Target } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Check, ChevronRight, Flame, Footprints, Map as MapIcon, Play, RotateCcw, Rows3, ShoppingBasket, Swords, Target, Trophy, type LucideIcon } from 'lucide-react';
 import { GameMode } from '@/lib/types';
 import { MODES } from '@/lib/modes';
 import { MODE_ICONS, MODE_TINT } from '@/components/modeIcons';
@@ -15,8 +15,81 @@ import { ProgressRing } from '@/components/ui/ProgressRing';
 import { levelTitle } from '@/lib/level';
 import Link from 'next/link';
 
-// 홈에서 바로 시작하는 모드 (전체 랜덤)
-const QUICK_MODES: GameMode[] = ['challenge', 'survival', 'missing', 'truefalse'];
+// 홈의 플레이 모드 묶음 — 놀이 방식별로 모읍니다. 세션 모드는 전체 랜덤으로 바로 시작합니다.
+const LEARN_MODES: GameMode[] = ['missing', 'truefalse'];
+const RECORD_MODES: GameMode[] = ['timeAttack', 'challenge', 'survival'];
+
+interface ModeGroupDef {
+  id: string;
+  title: string;
+  desc: string;
+  icon: LucideIcon;
+  tint: string;
+}
+
+const MODE_GROUPS: [ModeGroupDef, ModeGroupDef, ModeGroupDef, ModeGroupDef] = [
+  { id: 'modes-learn', title: '차근차근 배우기', desc: '시간 제한 없이 원리부터 익혀요', icon: BookOpen, tint: 'text-accent' },
+  { id: 'modes-record', title: '기록 도전', desc: '속도와 집중력으로 최고 기록 경신', icon: Trophy, tint: 'text-amber-500' },
+  { id: 'modes-run', title: '직접 움직이며 놀기', desc: '달리고, 피하고, 정답을 받아요', icon: Footprints, tint: 'text-emerald-600 dark:text-emerald-400' },
+  { id: 'modes-adventure', title: '모험', desc: '3D 월드를 탐험하며 대결', icon: MapIcon, tint: 'text-indigo-500' },
+];
+
+function modeMeta(id: GameMode): string {
+  const m = MODES[id];
+  if (m.kind === 'timed' && m.timeLimitMs) return `${m.timeLimitMs / 1000}초 제한`;
+  if (m.kind === 'lives' && m.lives) return `하트 ${m.lives}개`;
+  return `${m.total}문제`;
+}
+
+function ModeGroup({ group, children }: { group: ModeGroupDef; children: React.ReactNode }) {
+  const Icon = group.icon;
+  return (
+    <section id={group.id} aria-labelledby={`${group.id}-title`} className="scroll-mt-6 pt-5">
+      <div className="mb-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <h3 id={`${group.id}-title`} className="flex items-center gap-1.5 text-sm font-extrabold text-text"><Icon aria-hidden="true" className={`h-4 w-4 ${group.tint}`} /> {group.title}</h3>
+        <p className="min-w-0 text-xs text-text-muted">{group.desc}</p>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+// 모바일은 한 줄 목록형, sm 이상은 카드형으로 보여 줍니다.
+const MODE_CARD_CLASS = 'group flex min-h-16 min-w-0 items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 text-left transition-colors hover:bg-surface-2 sm:min-h-28 sm:flex-col sm:items-start sm:gap-0 sm:p-4';
+
+function ModeCardBody({ icon: Icon, tint, name, tagline, meta }: { icon: LucideIcon; tint: { text: string; bg: string }; name: string; tagline: string; meta: React.ReactNode }) {
+  return (
+    <>
+      <span className="flex shrink-0 sm:mb-3 sm:w-full sm:items-center sm:justify-between sm:gap-2">
+        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${tint.bg} ${tint.text}`}><Icon aria-hidden="true" className="h-5 w-5" /></span>
+        <ArrowUpRight aria-hidden="true" className="hidden h-4 w-4 shrink-0 text-text-muted transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 sm:block" />
+      </span>
+      <span className="min-w-0 flex-1 sm:flex sm:w-full sm:flex-col">
+        <span className="flex flex-wrap items-baseline gap-x-2 sm:block">
+          <span className="text-sm font-extrabold text-text">{name}</span>
+          <span className="text-xs leading-relaxed text-text-muted sm:mt-1 sm:block">{tagline}</span>
+        </span>
+        <span className="num mt-0.5 block text-[11px] font-bold text-text-muted sm:mt-auto sm:pt-3">{meta}</span>
+      </span>
+      <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-text-muted sm:hidden" />
+    </>
+  );
+}
+
+function SessionModeCard({ id, best = 0, onStart }: { id: GameMode; best?: number; onStart: () => void }) {
+  const m = MODES[id];
+  return (
+    <motion.button type="button" whileTap={{ scale: 0.98 }} onClick={onStart} className={MODE_CARD_CLASS}>
+      <ModeCardBody
+        icon={MODE_ICONS[id]}
+        tint={MODE_TINT[id]}
+        name={m.name}
+        tagline={m.tagline}
+        meta={best > 0 ? <span className="inline-flex items-center gap-1 text-text"><Check aria-hidden="true" className="h-3 w-3" /> 최고 {best}점 · {modeMeta(id)}</span> : `${modeMeta(id)} · 전체 랜덤`}
+      />
+    </motion.button>
+  );
+}
 
 export function Home() {
   const { state, levelInfo } = useGame();
@@ -125,71 +198,75 @@ export function Home() {
           </section>
         )}
 
-        <section aria-labelledby="explore-heading" className="mt-8">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <section aria-labelledby="modes-heading" className="mt-10">
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
             <div>
-              <h2 id="explore-heading" className="text-lg font-extrabold text-text">다르게 즐겨볼까요?</h2>
-              <p className="mt-1 text-xs text-text-muted">탐험도, 기록 도전도. 시작하면 모두 연습이에요.</p>
+              <h2 id="modes-heading" className="text-lg font-extrabold text-text">어떻게 놀아볼까요?</h2>
+              <p className="mt-1 text-xs text-text-muted">배우기부터 달리기까지, 모두 구구단 연습이 돼요.</p>
             </div>
-            <Link href="/learn" className="flex min-h-11 items-center gap-1 text-sm font-bold text-accent">전체 모드 <ChevronRight aria-hidden="true" className="h-4 w-4" /></Link>
+            <Link href="/learn" className="flex min-h-11 items-center gap-1 text-sm font-bold text-accent">단 골라서 하기 <ChevronRight aria-hidden="true" className="h-4 w-4" /></Link>
           </div>
-          <div className="mb-4 grid gap-3 sm:grid-cols-2">
-            <Link href="/runner" className="flex min-h-24 items-center gap-4 rounded-2xl border border-emerald-600/25 bg-emerald-500/5 px-5 py-4 transition-colors hover:bg-emerald-500/10">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#153f35] text-[#dbef9e]"><Footprints aria-hidden="true" className="h-6 w-6" /></span>
-              <span className="min-w-0 flex-1"><span className="block text-base font-extrabold text-text">구구 점프</span><span className="mt-1 block text-sm text-text-muted">정답을 맞히면 폴짝! 장애물을 넘어 달려요.</span></span>
-              <ArrowUpRight aria-hidden="true" className="h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300" />
-            </Link>
-            <Link href="/lane-runner" className="flex min-h-24 items-center gap-4 rounded-2xl border border-emerald-600/25 bg-emerald-500/5 px-5 py-4 transition-colors hover:bg-emerald-500/10">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#153f35] text-[#dbef9e]"><Rows3 aria-hidden="true" className="h-6 w-6" /></span>
-              <span className="min-w-0 flex-1"><span className="flex items-center gap-2 text-base font-extrabold text-text">구구 레인 <span className="rounded-full bg-emerald-600/10 px-2 py-0.5 text-[10px] text-emerald-800 dark:text-emerald-200">새 모드</span></span><span className="mt-1 block text-sm text-text-muted">길을 바꿔 장애물을 피하고 정답 길로!</span></span>
-              <ArrowUpRight aria-hidden="true" className="h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-300" />
-            </Link>
-          </div>
-          <div className="grid gap-4 lg:grid-cols-[1fr_1.25fr]">
-            <button type="button" onClick={() => openAdventure()} className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-border bg-surface p-5 text-left transition-colors hover:bg-surface-2 sm:p-6">
-              <span className="flex w-full items-start justify-between gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"><MapIcon aria-hidden="true" className="h-5 w-5" /></span>
-                <span className="rounded-full bg-surface-2 px-2.5 py-1 text-xs font-bold text-text-muted">어드벤처</span>
+          {/* 모바일에서 원하는 묶음으로 바로 이동 */}
+          <nav aria-label="플레이 모드 묶음" className="-mx-5 mb-2 flex gap-2 overflow-x-auto px-5 pb-1 sm:mx-0 sm:px-0">
+            {MODE_GROUPS.map((g) => (
+              <a key={g.id} href={`#${g.id}`} className="flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 text-xs font-extrabold text-text transition-colors hover:bg-surface-2">
+                <g.icon aria-hidden="true" className={`h-3.5 w-3.5 ${g.tint}`} /> {g.title}
+              </a>
+            ))}
+          </nav>
+
+          <ModeGroup group={MODE_GROUPS[0]}>
+            <div className="grid gap-2.5 sm:grid-cols-3 sm:gap-3">
+              <Link href="/learn" className={MODE_CARD_CLASS}>
+                <ModeCardBody icon={MODE_ICONS.practice} tint={MODE_TINT.practice} name="학습" tagline="원하는 단을 골라 또박또박" meta={`${MODES.practice.total}문제 · 단 선택`} />
+              </Link>
+              {LEARN_MODES.map((id) => <SessionModeCard key={id} id={id} onStart={() => start(id, null)} />)}
+            </div>
+          </ModeGroup>
+
+          <ModeGroup group={MODE_GROUPS[1]}>
+            <div className="grid gap-2.5 sm:grid-cols-3 sm:gap-3">
+              {RECORD_MODES.map((id) => <SessionModeCard key={id} id={id} best={MODES[id].scored ? state.bestScores[id] ?? 0 : 0} onStart={() => start(id, null)} />)}
+            </div>
+          </ModeGroup>
+
+          <ModeGroup group={MODE_GROUPS[2]}>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Link href="/basket" className="group flex min-h-24 items-center gap-4 rounded-2xl border border-orange-500/30 bg-orange-500/5 px-5 py-4 transition-colors hover:bg-orange-500/10 sm:col-span-2">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#794124] text-[#ffe7a3]"><ShoppingBasket aria-hidden="true" className="h-6 w-6" /></span>
+                <span className="min-w-0 flex-1"><span className="flex flex-wrap items-center gap-2 text-base font-extrabold text-text">구구 바구니 <span className="rounded-full bg-orange-500/15 px-2 py-0.5 text-[10px] text-orange-800 dark:text-orange-200">새 모드</span></span><span className="mt-1 block text-sm text-text-muted">좌우로 움직여 정답 열매를 쏙 받아요!</span></span>
+                <ArrowUpRight aria-hidden="true" className="h-5 w-5 shrink-0 text-orange-700 dark:text-orange-300" />
+              </Link>
+              <Link href="/runner" className="group flex min-h-24 items-center gap-4 rounded-2xl border border-emerald-600/25 bg-emerald-500/5 px-5 py-4 transition-colors hover:bg-emerald-500/10">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#153f35] text-[#dbef9e]"><Footprints aria-hidden="true" className="h-6 w-6" /></span>
+                <span className="min-w-0 flex-1"><span className="block text-base font-extrabold text-text">구구 점프</span><span className="mt-1 block text-sm text-text-muted">정답을 고르면 폴짝! 장애물을 넘어요.</span></span>
+                <ArrowUpRight aria-hidden="true" className="h-5 w-5 shrink-0 text-emerald-700 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 dark:text-emerald-300" />
+              </Link>
+              <Link href="/lane-runner" className="group flex min-h-24 items-center gap-4 rounded-2xl border border-emerald-600/25 bg-emerald-500/5 px-5 py-4 transition-colors hover:bg-emerald-500/10">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#153f35] text-[#dbef9e]"><Rows3 aria-hidden="true" className="h-6 w-6" /></span>
+                <span className="min-w-0 flex-1"><span className="flex items-center gap-2 text-base font-extrabold text-text">구구 레인 <span className="rounded-full bg-emerald-600/10 px-2 py-0.5 text-[10px] text-emerald-800 dark:text-emerald-200">새 모드</span></span><span className="mt-1 block text-sm text-text-muted">길을 바꿔 피하고, 정답 길로 쏙!</span></span>
+                <ArrowUpRight aria-hidden="true" className="h-5 w-5 shrink-0 text-emerald-700 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 dark:text-emerald-300" />
+              </Link>
+            </div>
+          </ModeGroup>
+
+          <ModeGroup group={MODE_GROUPS[3]}>
+            <button type="button" onClick={() => openAdventure()} className="group relative flex w-full flex-col gap-4 overflow-hidden rounded-3xl border border-border bg-surface p-5 text-left transition-colors hover:bg-surface-2 sm:flex-row sm:items-center sm:p-6">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-300"><MapIcon aria-hidden="true" className="h-6 w-6" /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-lg font-extrabold leading-snug text-text">구구단 너머, 새로운 모험으로</span>
+                <span className="mt-1 block text-sm text-text-muted">3D 월드의 주민과 구구단으로 대결해요. {nextRegion ? `다음 모험 · ${nextRegion.name}` : '모든 지역 정복! 다시 대결해 볼까요?'}</span>
               </span>
-              <span className="mt-4 block text-xl font-extrabold leading-snug text-text">구구단 너머,<br />새로운 모험으로</span>
-              <span className="mt-2 block text-sm text-text-muted">{nextRegion ? `다음 모험 · ${nextRegion.name}` : '모든 지역 정복! 다시 대결해 볼까요?'}</span>
-              <span className="mt-5 flex w-full items-end justify-between gap-3">
-                <span className="min-w-0 flex-1">
-                  <span className="num block text-xs font-bold text-text-muted">대결 완료 {adv.defeated} / {adv.total}</span>
-                  <span className="mt-2 flex gap-1.5" aria-label={`${REGIONS.filter((r) => clearedBoss(r.table)).length}개 지역 정복, 전체 ${REGIONS.length}개 지역`}>
-                    {REGIONS.map((r) => <span key={r.table} aria-hidden="true" className={`h-1.5 min-w-0 max-w-4 flex-1 rounded-full ${clearedBoss(r.table) ? 'bg-emerald-600 dark:bg-emerald-400' : 'bg-border'}`} />)}
-                  </span>
+              <span className="w-full shrink-0 sm:w-48">
+                <span className="num block text-xs font-bold text-text-muted">대결 완료 {adv.defeated} / {adv.total}</span>
+                <span className="mt-2 flex gap-1.5" aria-label={`${REGIONS.filter((r) => clearedBoss(r.table)).length}개 지역 정복, 전체 ${REGIONS.length}개 지역`}>
+                  {REGIONS.map((r) => <span key={r.table} aria-hidden="true" className={`h-1.5 min-w-0 flex-1 rounded-full ${clearedBoss(r.table) ? 'bg-emerald-600 dark:bg-emerald-400' : 'bg-border'}`} />)}
                 </span>
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-2 text-text transition-transform group-hover:translate-x-0.5"><ArrowUpRight aria-hidden="true" className="h-4 w-4" /></span>
               </span>
+              <ArrowUpRight aria-hidden="true" className="absolute right-5 top-5 h-5 w-5 text-text-muted transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 sm:static" />
             </button>
-
-            <div className="grid grid-cols-2 gap-3">
-              {QUICK_MODES.map((id) => {
-                const m = MODES[id];
-                const Icon = MODE_ICONS[id];
-                const tint = MODE_TINT[id];
-                const best = m.scored ? state.bestScores[id] ?? 0 : 0;
-                return (
-                  <motion.button key={id} type="button" whileTap={{ scale: 0.98 }} onClick={() => start(id, null)} className="group flex min-w-0 flex-col items-start rounded-2xl border border-border bg-surface p-4 text-left transition-colors hover:bg-surface-2">
-                    <span className="mb-3 flex w-full items-center justify-between gap-2">
-                      <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${tint.bg} ${tint.text}`}><Icon aria-hidden="true" className="h-5 w-5" /></span>
-                      <ArrowUpRight aria-hidden="true" className="h-4 w-4 shrink-0 text-text-muted transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                    </span>
-                    <span className="block text-sm font-extrabold text-text">{m.name}</span>
-                    <span className="mt-1 block text-xs leading-relaxed text-text-muted">{m.tagline}</span>
-                    {m.scored && best > 0 && <span className="num mt-2 inline-flex items-center gap-1 text-xs font-bold text-text"><Check aria-hidden="true" className="h-3 w-3" /> 최고 {best}점</span>}
-                  </motion.button>
-                );
-              })}
-            </div>
-          </div>
+          </ModeGroup>
         </section>
-
-        <Link href="/learn" className="my-5 flex min-h-16 items-center justify-between gap-3 rounded-2xl border border-dashed border-border px-5 py-4 text-sm font-bold text-text transition-colors hover:bg-surface">
-          <span className="flex items-center gap-2"><BookOpen aria-hidden="true" className="h-4 w-4 shrink-0 text-accent" /> 단을 골라 차근차근 연습하기</span>
-          <ChevronRight aria-hidden="true" className="h-5 w-5 shrink-0 text-text-muted" />
-        </Link>
       </div>
     </MotionConfig>
   );

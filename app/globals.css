@@ -80,6 +80,16 @@
     -webkit-overflow-scrolling: touch;
   }
 
+  .session-equation {
+    font-size: clamp(1.75rem, 11vw, 3.75rem);
+    line-height: 1.2;
+  }
+
+  .session-key {
+    height: 3.5rem;
+    height: clamp(2.75rem, 9dvh, 4rem);
+  }
+
   /* 모던 카드: 표면색 + 미세 보더 + 절제된 그림자 */
   .card {
     @apply rounded-2xl bg-surface border border-border;
@@ -133,4 +143,23 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* 낮은 가로 화면에서는 조작부와 과수원을 나란히 배치합니다. */
+@media (orientation: landscape) and (max-height: 500px) and (min-width: 560px) {
+  .basket-live {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+    max-width: 56rem;
+    min-height: 0;
+  }
+  .basket-live .basket-stage {
+    grid-column: 1;
+    grid-row: 1 / 4;
+    min-height: 0;
+  }
+  .basket-live .basket-hud { grid-column: 2; grid-row: 1; }
+  .basket-live .basket-question { grid-column: 2; grid-row: 2; align-self: center; }
+  .basket-live .basket-controls { grid-column: 2; grid-row: 3; }
 }

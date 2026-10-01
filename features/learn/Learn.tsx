@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { MotionConfig, motion } from 'framer-motion';
-import { Check, ChevronRight, Footprints, Play, Rows3, Shuffle, Star, Trophy } from 'lucide-react';
+import { Check, ChevronRight, Footprints, Play, Rows3, ShoppingBasket, Shuffle, Star, Trophy } from 'lucide-react';
 import { GameMode } from '@/lib/types';
 import { MODE_LIST, MODES } from '@/lib/modes';
 import { MODE_ICONS, MODE_TINT } from '@/components/modeIcons';
@@ -41,15 +41,15 @@ export function Learn() {
         <div className="grid items-start gap-6 pb-5 lg:grid-cols-[0.85fr_1.3fr] lg:gap-8">
           <section aria-labelledby="mode-heading">
             <h2 id="mode-heading" className="mb-3 flex items-center gap-2 text-sm font-extrabold text-text"><span aria-hidden="true" className="num flex h-6 w-6 items-center justify-center rounded-full bg-surface-2 text-xs text-text-muted">1</span> 모드 선택</h2>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(6rem,1fr))] gap-2.5 lg:grid-cols-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 lg:grid-cols-2">
               {MODE_LIST.map((m) => {
                 const active = m.id === mode;
                 const Icon = MODE_ICONS[m.id];
                 const modeTint = MODE_TINT[m.id];
                 return (
-                  <motion.button key={m.id} type="button" whileTap={{ scale: 0.98 }} onClick={() => setMode(m.id)} aria-pressed={active} aria-controls="learning-options" aria-label={`${m.name}: ${m.tagline}`} className={`relative flex min-w-0 flex-col items-start rounded-2xl border p-3 text-left transition-colors sm:p-4 ${active ? 'border-accent bg-accent/10 ring-1 ring-accent' : 'border-border bg-surface hover:bg-surface-2'}`}>
-                    <span className={`mb-2.5 flex h-9 w-9 items-center justify-center rounded-xl ${active ? 'bg-accent text-accent-fg' : `${modeTint.bg} ${modeTint.text}`}`}><Icon aria-hidden="true" className="h-5 w-5" /></span>
-                    {active && <Check aria-hidden="true" className="absolute right-2.5 top-2.5 h-3.5 w-3.5 text-accent" />}
+                  <motion.button key={m.id} type="button" whileTap={{ scale: 0.98 }} onClick={() => setMode(m.id)} aria-pressed={active} aria-controls="learning-options" aria-label={`${m.name}: ${m.tagline}`} className={`relative flex min-h-14 min-w-0 items-center gap-2 rounded-2xl border p-2.5 text-left transition-colors sm:flex-col sm:items-start sm:gap-0 sm:p-4 ${active ? 'border-accent bg-accent/10 ring-1 ring-accent' : 'border-border bg-surface hover:bg-surface-2'}`}>
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl sm:mb-2.5 sm:h-9 sm:w-9 ${active ? 'bg-accent text-accent-fg' : `${modeTint.bg} ${modeTint.text}`}`}><Icon aria-hidden="true" className="h-4 w-4 sm:h-5 sm:w-5" /></span>
+                    {active && <Check aria-hidden="true" className="absolute right-2.5 top-2.5 hidden h-3.5 w-3.5 text-accent sm:block" />}
                     <span className="block text-sm font-extrabold text-text">{m.name}</span>
                     <span className="mt-1 hidden text-xs leading-relaxed text-text-muted lg:block">{m.tagline}</span>
                   </motion.button>
@@ -57,6 +57,11 @@ export function Learn() {
               })}
             </div>
             <p className="mt-3 text-xs leading-relaxed text-text-muted">속도보다 정확하게, 처음이라면 학습 모드부터.</p>
+            <Link href="/basket" className="mt-4 flex items-center gap-3 rounded-2xl border border-orange-500/30 bg-orange-500/5 p-4 transition-colors hover:bg-orange-500/10">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#794124] text-[#ffe7a3]"><ShoppingBasket aria-hidden="true" className="h-5 w-5" /></span>
+              <span className="min-w-0 flex-1"><span className="block text-sm font-extrabold text-text">구구 바구니 · 새 모드</span><span className="mt-1 block text-xs leading-relaxed text-text-muted">직접 움직여 정답 열매 받기</span></span>
+              <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-text-muted" />
+            </Link>
             <Link href="/runner" className="mt-4 flex items-center gap-3 rounded-2xl border border-emerald-600/25 bg-emerald-500/5 p-4 transition-colors hover:bg-emerald-500/10">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#153f35] text-[#dbef9e]"><Footprints aria-hidden="true" className="h-5 w-5" /></span>
               <span className="min-w-0 flex-1"><span className="block text-sm font-extrabold text-text">구구 점프</span><span className="mt-1 block text-xs leading-relaxed text-text-muted">정답을 골라 장애물 넘기</span></span>
