@@ -1,7 +1,12 @@
 "use client";
 import React from 'react';
 import { APP_STORE_URL, PLAY_STORE_URL, StorePlatform } from './stores';
-import { trackMetaCustom } from '@/src/utils/metaPixel';
+import {
+  buildStoreUrl,
+  captureAttribution,
+  newClickId,
+  trackInstallClick,
+} from '@/src/utils/attribution';
 
 function AppleLogo() {
   return (
@@ -22,18 +27,29 @@ function PlayLogo() {
   );
 }
 
-function StoreButton({ store }: { store: 'ios' | 'android' }) {
+function StoreButton({ store, placement }: { store: 'ios' | 'android'; placement: string }) {
   const ios = store === 'ios';
+  const baseUrl = ios ? APP_STORE_URL : PLAY_STORE_URL;
+  // 프리렌더/첫 렌더는 기본 URL. 마운트 후 저장된 유입 정보를 붙인 URL로 교체(우클릭·길게 누르기 대비).
+  const [href, setHref] = React.useState(baseUrl);
+  React.useEffect(() => {
+    setHref(buildStoreUrl(store, baseUrl, captureAttribution(), { placement }));
+  }, [store, baseUrl, placement]);
+
   return (
     <a
-      href={ios ? APP_STORE_URL : PLAY_STORE_URL}
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
-      onClick={() => {
-        trackMetaCustom('app_store_click', {
-          store: ios ? 'ios' : 'android',
-          content_name: ios ? 'app_store' : 'play_store',
-        });
+      data-store={store}
+      data-placement={placement}
+      onClick={(e) => {
+        // 기본 이동(새 탭)을 막지 않는다. 클릭 ID를 포함한 최종 URL로 href만 갈아끼우고,
+        // 이벤트 전송은 fbq(비차단) + sendBeacon 이라 이동과 경쟁하지 않는다.
+        const clickId = newClickId();
+        const finalUrl = buildStoreUrl(store, baseUrl, captureAttribution(), { placement, clickId });
+        e.currentTarget.href = finalUrl;
+        trackInstallClick({ store, placement, clickId, href: finalUrl });
       }}
       className="inline-flex min-h-14 min-w-[11.5rem] items-center gap-3 rounded-2xl bg-black px-5 py-2.5 text-white shadow-lg shadow-black/20 ring-1 ring-white/15 transition-transform hover:-translate-y-0.5 active:scale-[0.98]"
     >
@@ -47,11 +63,20 @@ function StoreButton({ store }: { store: 'ios' | 'android' }) {
 }
 
 // 방문자 기기에 맞는 스토어를 앞에 둔다. 판별 전(프리렌더)과 데스크톱은 iOS → Android 순.
-export function StoreButtons({ platform, className = '' }: { platform: StorePlatform; className?: string }) {
+export function StoreButtons({
+  platform,
+  placement = 'unknown',
+  className = '',
+}: {
+  platform: StorePlatform;
+  /** 버튼 위치 식별자(hero, bottom_cta, install_prompt_limit 등) — 이벤트/로그 파라미터로 전송 */
+  placement?: string;
+  className?: string;
+}) {
   const order: Array<'ios' | 'android'> = platform === 'android' ? ['android', 'ios'] : ['ios', 'android'];
   return (
     <div className={`flex flex-wrap gap-3 ${className}`}>
-      {order.map((s) => <StoreButton key={s} store={s} />)}
+      {order.map((s) => <StoreButton key={s} store={s} placement={placement} />)}
     </div>
   );
 }
