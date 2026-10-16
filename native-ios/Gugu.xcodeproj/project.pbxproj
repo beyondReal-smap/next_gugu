@@ -378,6 +378,7 @@
 		91CF093DB4C885814B04B451 /* m-4x8.m4a in Resources */ = {isa = PBXBuildFile; fileRef = C1FD912E4B7B7F5CBB622181 /* m-4x8.m4a */; };
 		91F7117F27C42A4FE38B42C9 /* ox-9x7-70.m4a in Resources */ = {isa = PBXBuildFile; fileRef = EB041E89ADB2D7CC673ACAB7 /* ox-9x7-70.m4a */; };
 		92AF71A9B0001F87102970E5 /* ox-2x7-14.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 2A0979D016FE9F39EA9FF4E9 /* ox-2x7-14.m4a */; };
+		92B78EB9E2BEBD300DF23CF8 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 63D1FBE16F04ED1AC60CFC2B /* InfoPlist.strings */; };
 		930403DA5A03013F6A5C52B3 /* ox-9x5-54.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 588C6C35B176467E1B9FF6EE /* ox-9x5-54.m4a */; };
 		932CFAC16D0A069C503E390F /* SUITE-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 80C37D1A10C87D796CE8F5DF /* SUITE-Bold.ttf */; };
 		933577C7B52EB0418C396767 /* WorldView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CACF1D96A975DD41AC23F26D /* WorldView.swift */; };
@@ -813,6 +814,7 @@
 		2FB3AA29CC481D8B2F35402B /* ox-6x9-48.m4a */ = {isa = PBXFileReference; path = "ox-6x9-48.m4a"; sourceTree = "<group>"; };
 		2FECA5AF0899DCA6B6ED339C /* ox-4x1-8.m4a */ = {isa = PBXFileReference; path = "ox-4x1-8.m4a"; sourceTree = "<group>"; };
 		302BBA07C949329661735193 /* ox-8x8-72.m4a */ = {isa = PBXFileReference; path = "ox-8x8-72.m4a"; sourceTree = "<group>"; };
+		3054BFC1AAF521091D5B8CD4 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		30676810E55E1EF54194C35F /* ox-9x1-8.m4a */ = {isa = PBXFileReference; path = "ox-9x1-8.m4a"; sourceTree = "<group>"; };
 		30FD18D47C707283F328BEA5 /* m-7x8.m4a */ = {isa = PBXFileReference; path = "m-7x8.m4a"; sourceTree = "<group>"; };
 		328F1AB3C66AF4A927DBB985 /* c-7x2.m4a */ = {isa = PBXFileReference; path = "c-7x2.m4a"; sourceTree = "<group>"; };
@@ -1349,7 +1351,7 @@
 		FEC0051919AC15F2CE1192B9 /* m-7x5.m4a */ = {isa = PBXFileReference; path = "m-7x5.m4a"; sourceTree = "<group>"; };
 		FF2625DB42B11C784EEB8B41 /* ox-6x3-18.m4a */ = {isa = PBXFileReference; path = "ox-6x3-18.m4a"; sourceTree = "<group>"; };
 		FFD5C0A33D75E63D4AB0BF40 /* ox-6x1-5.m4a */ = {isa = PBXFileReference; path = "ox-6x1-5.m4a"; sourceTree = "<group>"; };
-		"TEMP_3918049C-DB00-4F67-9B0E-F59B2B7BCFC8" /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		"TEMP_48DDCA66-79A3-45A7-BC31-8454725AC407" /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -1539,6 +1541,7 @@
 				DCF0235DDCD42DF241C0F371 /* Services */,
 				52103BCE6C9BD34A99A2B248 /* Store */,
 				1EA54DFE689CD80F5F7378F5 /* Info.plist */,
+				63D1FBE16F04ED1AC60CFC2B /* InfoPlist.strings */,
 				16CE297B03DC7666AA35D554 /* PrivacyInfo.xcprivacy */,
 			);
 			path = Gugu;
@@ -2241,10 +2244,10 @@
 			path = Paywall;
 			sourceTree = "<group>";
 		};
-		"TEMP_CE5317C2-7BDA-4056-8163-91FF53073B4D" /* native-ios */ = {
+		"TEMP_04C523DC-C03B-43B6-B6D6-41DC7AC4637D" /* native-ios */ = {
 			isa = PBXGroup;
 			children = (
-				"TEMP_3918049C-DB00-4F67-9B0E-F59B2B7BCFC8" /* Config.xcconfig */,
+				"TEMP_48DDCA66-79A3-45A7-BC31-8454725AC407" /* Config.xcconfig */,
 			);
 			path = "native-ios";
 			sourceTree = "<group>";
@@ -2309,11 +2312,11 @@
 			};
 			buildConfigurationList = A6FE0FDAC32A34823EBE3475 /* Build configuration list for PBXProject "Gugu" */;
 			compatibilityVersion = "Xcode 14.0";
-			developmentRegion = en;
+			developmentRegion = ko;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				Base,
-				en,
+				ko,
 			);
 			mainGroup = 6DF0DE30FC23DA12EEC791C6;
 			minimizedProjectReferenceProxies = 1;
@@ -2333,6 +2336,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4CA378C37B722E256C47F7C0 /* Assets.xcassets in Resources */,
+				92B78EB9E2BEBD300DF23CF8 /* InfoPlist.strings in Resources */,
 				EEDE8837F81D0AB6D1B74BF5 /* PrivacyInfo.xcprivacy in Resources */,
 				932CFAC16D0A069C503E390F /* SUITE-Bold.ttf in Resources */,
 				C3269D458BCD4F1AC8AE1C6C /* SUITE-ExtraBold.ttf in Resources */,
@@ -3025,6 +3029,17 @@
 		};
 /* End PBXTargetDependency section */
 
+/* Begin PBXVariantGroup section */
+		63D1FBE16F04ED1AC60CFC2B /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3054BFC1AAF521091D5B8CD4 /* ko */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
 /* Begin XCBuildConfiguration section */
 		2EBA6A80DA135B5AE329CF65 /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -3078,7 +3093,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 25;
+				CURRENT_PROJECT_VERSION = 26;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = ZVXXRV5MTP;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -3106,7 +3121,7 @@
 		};
 		577D8F43D99D0D1A04D76A2E /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_3918049C-DB00-4F67-9B0E-F59B2B7BCFC8" /* Config.xcconfig */;
+			baseConfigurationReference = "TEMP_48DDCA66-79A3-45A7-BC31-8454725AC407" /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
@@ -3174,7 +3189,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 25;
+				CURRENT_PROJECT_VERSION = 26;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = ZVXXRV5MTP;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -3209,7 +3224,7 @@
 		};
 		A38781D2F7BDC5E1814C9883 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = "TEMP_3918049C-DB00-4F67-9B0E-F59B2B7BCFC8" /* Config.xcconfig */;
+			baseConfigurationReference = "TEMP_48DDCA66-79A3-45A7-BC31-8454725AC407" /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";

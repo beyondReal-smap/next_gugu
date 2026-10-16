@@ -1,0 +1,2 @@
+/* 앱 표시 이름 — ko.lproj 가 있어야 App Store 가 지원 언어를 한국어로 인식한다 */
+"CFBundleDisplayName" = "구구 어드벤처";
