@@ -47,8 +47,16 @@ enum LearningIdentityStore {
         var identity = read()
         identity.learnerId = learnerId
         identity.claimedUserId = userId
+        identity.restorePending = true
         write(identity)
         return identity
+    }
+
+    /// 서버 기록을 받아와 반영했다 — 다시 복원하지 않는다
+    static func markRestored() {
+        var identity = read()
+        identity.restorePending = false
+        write(identity)
     }
 
     private static func createAndStore() -> LearningIdentity {

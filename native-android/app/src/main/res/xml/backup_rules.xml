@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 6~11 자동 백업(fullBackupContent) — 기기에 묶인 값은 백업·복원 대상에서 뺀다.
+  gugu_device.xml 에는 세션 토큰·학습 신원(installId)·아웃박스가 들어 있다 (Persistence.DEVICE_PREFS_NAME).
+  진행도가 든 gugu.xml 은 기기를 바꿀 때 유일한 복구 수단이라 백업에 그대로 둔다.
+  <include> 는 쓰지 않는다 — 쓰는 순간 나머지 파일이 전부 백업에서 빠진다.
+  .bak 은 SharedPreferences 가 쓰는 도중 잠깐 만드는 임시 사본이다 — 그때 백업이 돌아 복원되면 정본으로 승격되므로 함께 뺀다.
+-->
+<full-backup-content>
+    <exclude domain="sharedpref" path="gugu_device.xml" />
+    <exclude domain="sharedpref" path="gugu_device.xml.bak" />
+</full-backup-content>

@@ -25,8 +25,14 @@ final class SyncStore {
     private(set) var lastServerCursor: Int = 0
 
     private var flushTask: Task<Void, Never>?
+    /// 보호자 권한·귀속 흐름은 한 번에 하나만 — 겹치면 서버가 학습자를 둘 만들어 이후 계속 conflict 가 난다
+    private var guardianTask: Task<Void, Never>?
     /// 권한 거부를 받은 뒤에는 세션이 바뀔 때까지 업로드를 멈춘다
     private var blockedUserId: String?
+    /// 서버 기록을 받아왔을 때 기기 진행도에 반영하는 곳 (RootView 가 GameStore 로 연결한다)
+    var onServerRestore: (@MainActor ([String: LearningFactStats]) -> Void)?
+    /// 서버 기록 복원에 실패했는지 — 업로드 상태(state)와 따로 둬야 뒤이은 flush 가 덮어쓰지 않는다
+    private(set) var restoreFailed = false
 
     init() {
         let stored = LearningOutboxStore.read()
@@ -66,6 +72,11 @@ final class SyncStore {
 
     /// 큐를 업로드한다. 보호자 검증 전이면 아무 요청도 보내지 않는다.
     func flush(auth: AuthStore) {
+        // 재로그인 전에는 올릴 계정이 없다 — 큐를 그대로 두고 같은 계정으로 돌아오면 올린다
+        if auth.needsReauth {
+            print("[Sync] 업로드 보류: 재로그인 대기 (대기 \(pendingCount)건)")
+            return
+        }
         guard flushTask == nil else { return }
         // 같은 계정으로 이미 권한 거부를 받았다면 서버를 다시 부르지 않는다
         if case .waitingForGuardian = state, blockedUserId == auth.userId { return }
@@ -109,25 +120,38 @@ final class SyncStore {
                 blockedUserId = auth.userId
                 state = .waitingForGuardian(denial.message)
             default:
+                guard !Task.isCancelled else { return }
                 state = .failed(error.localizedDescription)
                 print("[Sync] 업로드 실패:", error.localizedDescription)
             }
         } catch {
+            guard !Task.isCancelled else { return }
             state = .failed(error.localizedDescription)
             print("[Sync] 업로드 실패:", error.localizedDescription)
         }
     }
 
-    /// 계정 삭제 직후 기기에 남은 귀속과 큐를 버린다.
-    /// 서버 계정이 사라졌으므로 learnerId 와 올리지 못한 이벤트는 모두 의미가 없다.
-    func resetAfterAccountDeletion() {
+    /// 업로드를 한 번 끝까지 기다린다 (로그아웃 전에 남은 기록을 올려 보기 위해)
+    func flushNow(auth: AuthStore) async {
+        if let flushTask { await flushTask.value }
+        flush(auth: auth)
+        if let flushTask { await flushTask.value }
+    }
+
+    /// 계정이 바뀔 때(삭제·로그아웃·다른 계정 로그인) 기기에 남은 귀속과 큐를 버린다.
+    /// learnerId·installId 는 예전 계정 소유라 새 계정으로 쓰면 서버가 conflict/소유 불일치로 거부하고,
+    /// 올리지 못한 이벤트도 예전 학습자 것이다.
+    func resetForAccountChange() {
         flushTask?.cancel()
         flushTask = nil
+        guardianTask?.cancel()
+        guardianTask = nil
         LearningIdentityStore.clear()
         LearningOutboxStore.clear()
         pendingCount = 0
         lastServerCursor = 0
         blockedUserId = nil
+        restoreFailed = false
         state = .idle
     }
 
@@ -146,7 +170,7 @@ final class SyncStore {
     func ensureLearner(auth: AuthStore) async {
         var identity = LearningIdentityStore.read()
         if identity.learnerId != nil { return }
-        guard auth.isPermanent, let token = await auth.accessToken() else { return }
+        guard auth.isPermanent, let userId = auth.userId, let token = await auth.accessToken() else { return }
 
         let pending = LearningOutboxStore.read().events.count
         do {
@@ -159,12 +183,12 @@ final class SyncStore {
                     state = .failed("서버가 학습자 아이디를 주지 않았습니다")
                     return
                 }
-                try bind(learnerId: learnerId, userId: auth.userId)
+                try bind(learnerId: learnerId, userId: userId, auth: auth)
             case .attachToExisting:
                 if let learnerId = response.learnerId {
-                    try bind(learnerId: learnerId, userId: auth.userId)
+                    try bind(learnerId: learnerId, userId: userId, auth: auth)
                 } else if response.candidates.count == 1 {
-                    try await confirm(auth: auth, token: token,
+                    try await confirm(auth: auth, userId: userId, token: token,
                                       installId: identity.installId,
                                       learnerId: response.candidates[0].learnerId)
                 } else {
@@ -183,27 +207,59 @@ final class SyncStore {
 
     /// 후보 중 하나를 골라 귀속을 확정한다 (conflict 화면에서 호출)
     func chooseLearner(_ candidate: LearningClaimCandidate, auth: AuthStore) async {
-        guard let token = await auth.accessToken() else { return }
+        guard let userId = auth.userId, let token = await auth.accessToken() else { return }
         let identity = LearningIdentityStore.read()
         do {
-            try await confirm(auth: auth, token: token,
+            try await confirm(auth: auth, userId: userId, token: token,
                               installId: identity.installId, learnerId: candidate.learnerId)
+            await restoreIfNeeded(auth: auth)
+            flush(auth: auth)
         } catch {
             print("[Sync] 귀속 확정 실패:", error.localizedDescription)
             state = .failed(errorMessage(error))
         }
     }
 
-    private func confirm(auth: AuthStore, token: String, installId: String, learnerId: String) async throws {
+    private func confirm(auth: AuthStore, userId: String, token: String, installId: String, learnerId: String) async throws {
         let confirmed = try await LearningApi.confirmClaim(
             accessToken: token, installId: installId, learnerId: learnerId
         )
-        try bind(learnerId: confirmed.learnerId, userId: auth.userId)
+        try bind(learnerId: confirmed.learnerId, userId: userId, auth: auth)
     }
 
-    private func bind(learnerId: String, userId: String?) throws {
-        try LearningIdentityStore.bindLearner(userId: userId ?? "", learnerId: learnerId)
+    /// 요청을 보낸 계정 그대로일 때만 묶는다 — 기다리는 사이 다른 계정으로 바뀌었으면
+    /// 예전 계정의 학습자를 새 계정에 붙이게 된다.
+    private func bind(learnerId: String, userId: String, auth: AuthStore) throws {
+        guard auth.userId == userId else {
+            print("[Sync] 귀속 응답 폐기: 요청 중 계정이 바뀜")
+            return
+        }
+        try LearningIdentityStore.bindLearner(userId: userId, learnerId: learnerId)
         state = .idle
+    }
+
+    /// 새로 귀속한 학습자의 서버 기록(문제별 통계)을 한 번 받아와 기기에 반영한다.
+    /// 실패하면 표시를 남겨 다음 기회(앱 시작·구매 복원)에 다시 시도한다.
+    func restoreIfNeeded(auth: AuthStore) async {
+        let identity = LearningIdentityStore.read()
+        guard identity.restorePending, let learnerId = identity.learnerId,
+              let userId = auth.userId, identity.claimedUserId == userId,
+              let token = await auth.accessToken() else { return }
+        do {
+            let response = try await LearningApi.fetchState(accessToken: token, learnerId: learnerId)
+            guard auth.userId == userId else { return }
+            // 스냅샷이 없으면 아직 서버에 올린 기록이 없는 학습자다 — 복원할 것이 없는 정상 상태
+            let facts = response.snapshots.first { $0.learnerId == learnerId }?.state.facts ?? [:]
+            onServerRestore?(facts)
+            LearningIdentityStore.markRestored()
+            restoreFailed = false
+            print("[Sync] 서버 기록 복원: 문제 \(facts.count)개")
+        } catch {
+            // 계정 변경으로 취소된 경우는 실패가 아니다
+            guard !Task.isCancelled else { return }
+            print("[Sync] 서버 기록 복원 실패:", error.localizedDescription)
+            restoreFailed = true
+        }
     }
 
     private func errorMessage(_ error: Error) -> String {
@@ -215,6 +271,21 @@ final class SyncStore {
     /// 순서가 중요하다 — 서버가 app_metadata 를 바꿔도 손에 든 JWT 는 예전 권한이므로,
     /// 토큰을 새로 받은 뒤에야 업로드가 통과한다.
     func enableGuardianSync(auth: AuthStore) async {
+        // 시작·구매·계정 변경 트리거가 겹쳐도 한 번만 돈다
+        if let guardianTask {
+            await guardianTask.value
+            return
+        }
+        let task = Task<Void, Never> { [weak self] in
+            guard let self else { return }
+            await self.runGuardianSync(auth: auth)
+        }
+        guardianTask = task
+        await task.value
+        if guardianTask == task { guardianTask = nil }
+    }
+
+    private func runGuardianSync(auth: AuthStore) async {
         // 이메일이 붙지 않은 익명 계정은 서버가 거부한다 — 요청하지 않는다
         guard auth.isPermanent, let token = await auth.accessToken() else { return }
 
@@ -235,6 +306,7 @@ final class SyncStore {
             clearGuardianBlock()
             // 학습자 귀속이 끝나야 이벤트를 만들 수 있다
             await ensureLearner(auth: auth)
+            await restoreIfNeeded(auth: auth)
             flush(auth: auth)
         } catch let error as LearningApi.ApiError {
             if case let .http(status, code, _) = error, status == 403,

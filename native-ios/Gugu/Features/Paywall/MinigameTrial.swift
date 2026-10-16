@@ -89,7 +89,7 @@ struct TrialEndPanel: View {
                 Image(systemName: "sparkles")
                 Text("평생 이용권 보기")
             }
-            Button(action: onExit) {
+            Button(action: { Haptics.impact(.light); onExit() }) {
                 Text("나가기")
                     .font(.suite(.bold, 14)).foregroundStyle(Color.gg.textMuted)
                     .frame(maxWidth: .infinity, minHeight: 44)

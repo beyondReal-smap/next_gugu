@@ -55,6 +55,12 @@ enum LearningApi {
         var verifiedAt: String
     }
 
+    /// GET /api/premium/status — 서버 구매 원장(purchases) 기준 이 계정의 프리미엄 여부
+    struct PremiumStatusResponse: Decodable {
+        var premium: Bool
+        var products: [String]
+    }
+
     /// 보호자 권한 설정이 거부되는 사유
     enum GuardianDenial: String {
         case anonymous = "ANONYMOUS_NOT_ELIGIBLE"
@@ -111,6 +117,11 @@ enum LearningApi {
     /// 성공 후에는 토큰을 새로 받아야 새 권한이 JWT 에 담긴다.
     static func verifyGuardian(accessToken: String) async throws -> GuardianVerifyResponse {
         try await send(path: "/account/guardian", method: "POST", accessToken: accessToken, body: Data())
+    }
+
+    /// 서버가 아는 이 계정의 프리미엄 여부 — 운영자가 DB 에서 부여·회수한 값도 여기로 온다.
+    static func premiumStatus(accessToken: String) async throws -> PremiumStatusResponse {
+        try await send(path: "/premium/status", method: "GET", accessToken: accessToken, body: nil)
     }
 
     /// 기기 기록의 귀속을 요청한다 — 서버가 학습자를 만들거나 기존 학습자를 알려 준다.

@@ -27,7 +27,11 @@ class LearningIdentityStore(private val persistence: Persistence) {
     fun read(): LearningIdentity {
         val raw = persistence.getString(Persistence.LEARNING_IDENTITY_KEY) ?: return createAndStore()
         val stored = runCatching { json.decodeFromString(LearningIdentity.serializer(), raw) }
-            .onFailure { Log.w(TAG, "저장본 해석 실패 — 재발급") }
+            .onFailure {
+                Log.w(TAG, "저장본 해석 실패 — 재발급")
+                // 원인 예외는 넘기지 않는다 — 예외 메시지에 입력 JSON 조각(식별자)이 담겨 로그로 샌다
+                persistence.quarantine(Persistence.LEARNING_IDENTITY_KEY, raw)
+            }
             .getOrNull() ?: return createAndStore()
 
         if (!LearningContract.isUuid(stored.installId)) {
@@ -44,7 +48,7 @@ class LearningIdentityStore(private val persistence: Persistence) {
         return stored.copy(version = 1)
     }
 
-    /** 계정 삭제 후 기기의 귀속 정보를 버린다 — 다음 읽기에서 새 installId 가 발급된다 */
+    /** 계정이 바뀔 때(삭제·로그아웃·다른 계정 로그인) 기기의 귀속 정보를 버린다 — 다음 읽기에서 새 installId 가 발급된다 */
     fun clear() = persistence.remove(Persistence.LEARNING_IDENTITY_KEY)
 
     fun write(identity: LearningIdentity) {
@@ -57,9 +61,14 @@ class LearningIdentityStore(private val persistence: Persistence) {
     /** 서버가 배정한 학습자를 계정에 묶는다 */
     fun bindLearner(userId: String, learnerId: String): LearningIdentity {
         if (!LearningContract.isUuid(learnerId)) throw LearningValidationException("learnerId")
-        val next = read().copy(learnerId = learnerId, claimedUserId = userId)
+        val next = read().copy(learnerId = learnerId, claimedUserId = userId, restorePending = true)
         write(next)
         return next
+    }
+
+    /** 서버 기록을 받아와 반영했다 — 다시 복원하지 않는다 */
+    fun markRestored() {
+        write(read().copy(restorePending = false))
     }
 
     private fun createAndStore(): LearningIdentity {
@@ -79,7 +88,11 @@ class LearningOutboxStore(private val persistence: Persistence) {
     fun read(): LearningOutboxState {
         val raw = persistence.getString(Persistence.LEARNING_OUTBOX_KEY) ?: return LearningOutboxState()
         val stored = runCatching { json.decodeFromString(LearningOutboxState.serializer(), raw) }
-            .onFailure { Log.w(TAG, "저장본 해석 실패 — 큐를 비운다") }
+            .onFailure {
+                Log.w(TAG, "저장본 해석 실패 — 큐를 비운다")
+                // 원인 예외는 넘기지 않는다 — 예외 메시지에 입력 JSON 조각(학습 기록)이 담겨 로그로 샌다
+                persistence.quarantine(Persistence.LEARNING_OUTBOX_KEY, raw)
+            }
             .getOrNull() ?: return LearningOutboxState()
 
         // 저장본이 계약을 벗어나면 그 이벤트만 버린다 — 큐 전체를 잃지 않게
@@ -91,7 +104,7 @@ class LearningOutboxStore(private val persistence: Persistence) {
         return stored.copy(version = 1, events = events, serverCursor = maxOf(0, stored.serverCursor))
     }
 
-    /** 계정 삭제 후 올릴 곳이 없어진 큐를 버린다 */
+    /** 계정이 바뀔 때 예전 학습자 몫이라 올릴 곳이 없어진 큐를 버린다 */
     fun clear() = persistence.remove(Persistence.LEARNING_OUTBOX_KEY)
 
     fun write(state: LearningOutboxState) {

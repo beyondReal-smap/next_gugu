@@ -61,6 +61,7 @@ struct BasketView: View {
     private var header: some View {
         HStack {
             Button {
+                Haptics.impact(.light)
                 engine.pause()
                 onExit()
             } label: {
@@ -154,6 +155,7 @@ struct BasketView: View {
 
             if playing {
                 Button {
+                    Haptics.impact(.light)
                     engine.togglePause()
                 } label: {
                     Image(systemName: paused ? "play.fill" : "pause.fill")

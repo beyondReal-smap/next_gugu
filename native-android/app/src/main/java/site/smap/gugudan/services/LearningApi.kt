@@ -31,6 +31,13 @@ data class GuardianVerifyResponse(
     val verifiedAt: String = "",
 )
 
+/** GET /api/premium/status — 서버 구매 원장(purchases) 기준 이 계정의 프리미엄 여부 */
+@kotlinx.serialization.Serializable
+data class PremiumStatusResponse(
+    val premium: Boolean = false,
+    val products: List<String> = emptyList(),
+)
+
 /** 보호자 권한 설정이 거부되는 사유 */
 enum class GuardianDenial(val code: String, val message: String) {
     ANONYMOUS("ANONYMOUS_NOT_ELIGIBLE", "이메일을 먼저 연결하면 기록 보관을 켤 수 있어요."),
@@ -81,6 +88,13 @@ object LearningApi {
         }.toString()
         val text = send("/v1/learning/events:batch", "POST", accessToken, body)
         return runCatching { json.decodeFromString(LearningEventBatchResponse.serializer(), text) }
+            .getOrElse { throw LearningApiException.Malformed() }
+    }
+
+    /** 서버가 아는 이 계정의 프리미엄 여부 — 운영자가 DB 에서 부여·회수한 값도 여기로 온다. */
+    suspend fun premiumStatus(accessToken: String): PremiumStatusResponse {
+        val text = send("/premium/status", "GET", accessToken, null)
+        return runCatching { json.decodeFromString(PremiumStatusResponse.serializer(), text) }
             .getOrElse { throw LearningApiException.Malformed() }
     }
 

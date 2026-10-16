@@ -35,7 +35,10 @@ struct RegionMap: View {
             HStack {
                 Text("어드벤처").font(.suite(.extrabold, 24)).foregroundStyle(Color.gg.text)
                 Spacer()
-                Button { onExit() } label: {
+                Button {
+                    Haptics.impact(.light)
+                    onExit()
+                } label: {
                     Image(systemName: "xmark").font(.system(size: 20, weight: .bold)).foregroundStyle(Color.gg.textMuted)
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
@@ -107,7 +110,10 @@ struct RegionMap: View {
         )
         let stats = AdvProgress.regionStats(adventure.progress, region)
         return Button {
-            if unlocked { onSelect(region) }
+            // 잠긴 지역은 눌러도 아무 일이 없다 — Android 도 잠기면 PressableCard 를 비활성화해 진동이 없다
+            guard unlocked else { return }
+            Haptics.impact(.light)
+            onSelect(region)
         } label: {
             HStack(spacing: 14) {
                 swatch(region, unlocked: unlocked)

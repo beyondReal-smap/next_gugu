@@ -126,7 +126,7 @@ private struct SessionPlayView: View {
     // 상단 바 — 모드별 진행 위젯
     private var topBar: some View {
         HStack(spacing: 8) {
-            Button(action: requestExit) {
+            Button(action: { Haptics.impact(.light); requestExit() }) {
                 Image(systemName: "xmark")
                     .font(.system(size: 20, weight: .bold)).foregroundStyle(Color.gg.textMuted)
                     .frame(width: 44, height: 44)

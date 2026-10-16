@@ -82,7 +82,10 @@ class ReminderStore(private val context: Context, private val persistence: Persi
     private fun load(): ReminderSettings {
         val raw = persistence.getString(Persistence.REMINDER_KEY) ?: return ReminderSettings()
         return runCatching { json.decodeFromString(ReminderSettings.serializer(), raw) }
-            .onFailure { Log.w("Reminder", "설정 해석 실패 — 기본값 사용: ${it.message}") }
+            .onFailure {
+                Log.w("Reminder", "설정 해석 실패 — 기본값 사용: ${it.message}")
+                persistence.quarantine(Persistence.REMINDER_KEY, raw)
+            }
             .getOrDefault(ReminderSettings())
     }
 

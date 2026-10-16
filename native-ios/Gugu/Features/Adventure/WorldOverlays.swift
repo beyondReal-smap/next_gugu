@@ -9,7 +9,10 @@ struct WorldHud: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Button { onBack() } label: {
+            Button {
+                Haptics.impact(.light)
+                onBack()
+            } label: {
                 Image(systemName: "arrow.left").font(.system(size: 18, weight: .bold)).foregroundStyle(.white)
                     .frame(width: 40, height: 40)
                     .background(.black.opacity(0.35), in: Circle())

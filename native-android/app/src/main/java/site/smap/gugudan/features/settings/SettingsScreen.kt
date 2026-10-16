@@ -190,6 +190,7 @@ fun SettingsScreen(onClose: () -> Unit) {
                         Text(
                             "설정 열기", style = suite(FontWeight.Bold, 12), color = gg.accent,
                             modifier = Modifier.heightIn(min = 44.dp).wrapContentHeight().clickable {
+                                Haptics.impactLight()
                                 context.startActivity(
                                     Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                                         .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)

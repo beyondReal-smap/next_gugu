@@ -103,7 +103,7 @@ struct WeeklyReportCard: View {
                 Text("자주 틀린 문제").font(.suite(.bold, 12)).foregroundStyle(Color.gg.textMuted)
                 Spacer()
                 if let onReview {
-                    Button("복습하기", action: onReview)
+                    Button("복습하기", action: { Haptics.impact(.light); onReview() })
                         .font(.suite(.extrabold, 12)).foregroundStyle(Color.gg.accent)
                         .frame(minHeight: 32)
                 }

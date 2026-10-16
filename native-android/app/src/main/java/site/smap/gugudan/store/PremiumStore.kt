@@ -20,6 +20,9 @@ import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 import site.smap.gugudan.core.GameMode
 import site.smap.gugudan.core.PremiumConfig
+import site.smap.gugudan.services.DevProps
+import site.smap.gugudan.services.LearningApi
+import site.smap.gugudan.services.LearningApiException
 import site.smap.gugudan.services.Persistence
 
 // 프리미엄 — Google Play Billing 8 (iOS PremiumStore/StoreKit2 대응).
@@ -34,8 +37,19 @@ class PremiumStore(
     private val persistence: Persistence,
     private val devForcePremium: Boolean = false,
 ) {
-    var isPremium: Boolean by mutableStateOf(
-        devForcePremium || persistence.getString(Persistence.PREMIUM_KEY) == "1")
+    /** 스토어(Play) 기준 보유. 로컬 플래그로 캐시해 오프라인으로 시작해도 유지된다. */
+    private var storeOwned = persistence.getString(Persistence.PREMIUM_KEY) == "1"
+    private var storeSource = "local_flag"
+
+    /**
+     * 서버 구매 원장 기준 부여 — 운영자가 DB 에서 유료로 바꾼 계정도 여기로 들어온다.
+     * 스토어 보유와 따로 둔다: Play 재확인(owned=false)이 서버 부여를 지우면 안 되고,
+     * 서버 응답(premium=false)이 실제 Play 구매를 지워도 안 된다.
+     */
+    var serverGranted: Boolean by mutableStateOf(persistence.getString(Persistence.SERVER_PREMIUM_KEY) == "1")
+        private set
+
+    var isPremium: Boolean by mutableStateOf(devForcePremium || storeOwned || serverGranted)
         private set
     var paywallOpen: Boolean by mutableStateOf(false)
     var price: String by mutableStateOf(PremiumConfig.FALLBACK_PRICE)
@@ -45,13 +59,17 @@ class PremiumStore(
 
     private var productDetails: ProductDetails? = null
     private var pendingResult: ((PurchaseResult) -> Unit)? = null
+    /** 상품 조회가 동시에 두 번 나가지 않게 한다 (메인 스레드에서만 다룬다) */
+    private var queryingProduct = false
+    /** DEBUG 전용 — adb shell setprop debug.gugu.fail_first_products 1 이면 첫 상품 조회를 강제로 실패시켜 재조회 경로를 재현한다 */
+    private var failNextProductQuery = DevProps.flag("debug.gugu.fail_first_products")
     private val main = Handler(Looper.getMainLooper())
 
     /** 서버 구매 등록에 쓰는 Play 구매 토큰 (검증된 구매가 있을 때만) */
     var lastPurchaseToken: String? = null
         private set
 
-    /** 프리미엄 판정 근거 — 로컬 플래그인지 Play 보유 확인인지 구분한다 */
+    /** 프리미엄 판정 근거 — 로컬 플래그인지 Play 보유 확인인지 서버 부여인지 구분한다 */
     var premiumSource: String = "none"
         private set
 
@@ -62,7 +80,7 @@ class PremiumStore(
         .build()
 
     init {
-        if (isPremium) premiumSource = "local_flag"
+        premiumSource = if (storeOwned) "local_flag" else if (serverGranted) "server_flag" else "none"
         Log.i(TAG, "시작 판정 isPremium=$isPremium source=$premiumSource")
         if (!devForcePremium) connect()
     }
@@ -78,12 +96,35 @@ class PremiumStore(
                 }
             }
             override fun onBillingServiceDisconnected() {
-                // 다음 구매 시도 시 재연결
+                // 끊긴 채로 두면 구매가 계속 실패한다 — 준비 안 됨으로 돌리고, 페이월 진입·구매 탭 때 ensureStoreReady() 가 재연결한다.
+                // 진행 중이던 조회는 끊긴 연결에서 끝나지 못할 수 있으므로 중복 방지 가드도 풀어, 재연결 뒤 재조회가 막히지 않게 한다
+                main.post { storeReady = false; queryingProduct = false }
             }
         })
     }
 
+    /**
+     * 스토어를 다시 준비시킨다 — 시작 시 오프라인이었거나 연결이 끊긴 뒤에도 페이월에서 복구한다.
+     * 끊겼으면 재연결(연결되면 상품 조회까지 이어진다), 연결됐는데 상품이 없으면 재조회한다. 메인 스레드에서 호출한다.
+     */
+    fun ensureStoreReady() {
+        if (devForcePremium || storeReady) return
+        Log.i(TAG, "스토어 재준비 시도 connectionState=${billing.connectionState}")
+        when (billing.connectionState) {
+            BillingClient.ConnectionState.DISCONNECTED -> connect()
+            BillingClient.ConnectionState.CONNECTED -> queryProduct()
+            else -> Unit   // CONNECTING(진행 중) — 연결이 끝나면 조회가 이어진다 / CLOSED(쓰지 않음)
+        }
+    }
+
     private fun queryProduct() {
+        if (queryingProduct) return
+        if (failNextProductQuery) {
+            failNextProductQuery = false
+            Log.w(TAG, "DEBUG 훅: 첫 상품 조회를 강제로 실패시킴")
+            return
+        }
+        queryingProduct = true
         val params = QueryProductDetailsParams.newBuilder()
             .setProductList(listOf(
                 QueryProductDetailsParams.Product.newBuilder()
@@ -93,6 +134,7 @@ class PremiumStore(
             .build()
         billing.queryProductDetailsAsync(params) { result, productDetailsResult ->
             main.post {
+                queryingProduct = false
                 // PBL 8: 콜백 2번째 인자가 List<ProductDetails> → QueryProductDetailsResult 로 변경.
                 val products = productDetailsResult.productDetailsList
                 if (result.responseCode == BillingClient.BillingResponseCode.OK && products.isNotEmpty()) {
@@ -198,16 +240,59 @@ class PremiumStore(
     // MARK: 상태/게이트
 
     private fun grant(source: String = "play_entitlement") {
-        premiumSource = source
-        isPremium = true
+        storeOwned = true
+        storeSource = source
         persistence.putString(Persistence.PREMIUM_KEY, "1")
-        if (paywallOpen) paywallOpen = false
+        updatePremium()
     }
     private fun revoke() {
         if (devForcePremium) return
-        premiumSource = "none"
-        isPremium = false
+        storeOwned = false
         persistence.remove(Persistence.PREMIUM_KEY)
+        updatePremium()
+    }
+
+    /**
+     * 서버 구매 원장 기준 프리미엄을 확인한다 — 운영자가 DB 에서 부여·회수하면 여기서 반영된다.
+     * 앱 시작·앱으로 돌아올 때·계정이 바뀔 때 부른다(메인 스레드).
+     * 실패(오프라인·서버 장애·토큰 없음)면 마지막 값을 그대로 둔다 — 로컬 우선, 네트워크 없이도 동작해야 한다.
+     */
+    suspend fun refreshServerEntitlement(auth: AuthStore) {
+        if (devForcePremium) return
+        val userId = auth.userId
+        val token = auth.accessToken() ?: return
+        try {
+            val status = LearningApi.premiumStatus(token)
+            // 응답을 기다리는 사이 계정이 바뀌었으면(삭제·로그아웃 후 새 익명 계정) 예전 계정 결과는 버린다
+            if (auth.userId != userId) return
+            applyServerGrant(status.premium)
+            Log.i(TAG, "서버 확인 premium=${status.premium} -> isPremium=$isPremium source=$premiumSource")
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "서버 프리미엄 확인 실패(마지막 값 유지): ${e.message}")
+        }
+    }
+
+    /**
+     * 계정이 바뀔 때(로그인·로그아웃·계정 삭제) 예전 계정의 서버 부여분을 버린다.
+     * 스토어 구매는 Google 계정 기준이라 그대로 둔다. 새 계정 값은 refreshServerEntitlement 가 다시 받는다.
+     */
+    fun clearServerGrant() {
+        applyServerGrant(false)
+    }
+
+    private fun applyServerGrant(granted: Boolean) {
+        serverGranted = granted
+        if (granted) persistence.putString(Persistence.SERVER_PREMIUM_KEY, "1")
+        else persistence.remove(Persistence.SERVER_PREMIUM_KEY)
+        updatePremium()
+    }
+
+    /** 두 근거(스토어 보유 · 서버 부여) 중 하나라도 있으면 프리미엄 */
+    private fun updatePremium() {
+        isPremium = devForcePremium || storeOwned || serverGranted
+        premiumSource = if (storeOwned) storeSource else if (serverGranted) "server" else "none"
     }
 
     fun openPaywall() { paywallOpen = true }

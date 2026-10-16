@@ -58,6 +58,25 @@ data class LearningSnapshot(
     val revision: Int = 0,
     val serverCursor: Int = 0,
     val updatedAt: String = "",
+    /** 서버가 원장에서 다시 계산한 학습 상태 (gugu_rebuild_progress_snapshot) */
+    val state: LearningSnapshotState,
+)
+
+/**
+ * 스냅샷 상태 중 앱이 쓰는 부분 — 문제별 통계. 나머지 합계 필드는 무시한다.
+ * facts 가 없으면 계약이 바뀐 것이므로 디코딩 실패로 드러낸다.
+ */
+@Serializable
+data class LearningSnapshotState(
+    /** "7x8" → 그 문제의 누적 통계 */
+    val facts: Map<String, LearningFactStats>,
+)
+
+@Serializable
+data class LearningFactStats(
+    val attempts: Int,
+    val correct: Int,
+    val wrong: Int,
 )
 
 @Serializable

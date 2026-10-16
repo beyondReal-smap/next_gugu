@@ -74,6 +74,7 @@ struct LaneRunnerView: View {
     private var header: some View {
         HStack {
             Button {
+                Haptics.impact(.light)
                 engine.pause()
                 onExit()
             } label: {
@@ -193,6 +194,7 @@ struct LaneRunnerView: View {
             .accessibilityLabel("남은 하트 \(game.lives)개")
 
             Button {
+                Haptics.impact(.light)
                 engine.togglePause()
             } label: {
                 Image(systemName: paused ? "play.fill" : "pause.fill")
@@ -312,6 +314,7 @@ struct LaneRunnerView: View {
                 Text("이어서 달리기")
             }
             Button {
+                Haptics.impact(.light)
                 engine.pause()
                 onExit()
             } label: {

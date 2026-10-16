@@ -40,6 +40,12 @@ final class GameStore {
         return Level.info(totalXp: state.totalXp).level > prevLevel
     }
 
+    /// 로그인한 계정의 서버 기록으로 약한 문제를 채운다 (기기 값과 문제별 max 병합)
+    func mergeRestoredWrongPool(_ facts: [String: LearningFactStats]) {
+        state.wrongPool = LearningRestore.merge(local: state.wrongPool, server: facts)
+        persist()
+    }
+
     func setDailyGoal(_ goal: Int) {
         state.dailyGoal = max(5, goal)
         persist()
@@ -55,5 +61,7 @@ final class GameStore {
         s.onboarded = true
         state = Commit.applyVisit(s)
         persist()
+        // 사용자가 기록을 지웠다면 손상 저장본의 격리 사본도 남기지 않는다
+        Persistence.clearQuarantine(key: Persistence.progressKey)
     }
 }

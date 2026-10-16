@@ -169,7 +169,10 @@ struct HomeView: View {
     private var learnGroup: some View {
         VStack(alignment: .leading, spacing: 8) {
             groupHeader("book.fill", "차근차근 배우기", "시간 제한 없이 원리부터", .gg.accent)
-            Button { router.tab = .learn } label: {
+            Button {
+                Haptics.impact(.light)
+                router.tab = .learn
+            } label: {
                 modeRowLabel(icon: ModeStyle.icon(.practice), tint: ModeStyle.tint(.practice),
                              name: "학습", tagline: "원하는 단을 골라 또박또박",
                              meta: "\(Modes.def(.practice).total)문제 · 단 선택", locked: false)

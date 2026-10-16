@@ -45,6 +45,7 @@ class RunnerEngine(private val persistence: Persistence) {
             json.decodeFromString(MapSerializer(String.serializer(), Int.serializer()), raw)
         } catch (e: Exception) {
             // 저장본이 깨졌으면 기록만 비우고 게임은 계속할 수 있게 둔다
+            persistence.quarantine(Persistence.RUNNER_BEST_KEY, raw, e)
             return emptyMap()
         }
         val allowed = (listOf("all") + TABLES.map { it.toString() }).toSet()

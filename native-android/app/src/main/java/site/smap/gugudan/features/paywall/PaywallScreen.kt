@@ -36,6 +36,9 @@ import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import site.smap.gugudan.core.PremiumConfig
 import site.smap.gugudan.designsystem.*
+import androidx.compose.material.icons.filled.Verified
+import site.smap.gugudan.features.settings.AccountSettingsCard
+import site.smap.gugudan.store.AuthStore
 import site.smap.gugudan.store.LocalAuth
 import site.smap.gugudan.store.LocalPremium
 import site.smap.gugudan.store.LocalSync
@@ -44,6 +47,8 @@ import kotlinx.coroutines.launch
 import site.smap.gugudan.store.PurchaseResult
 
 // 페이월 (iOS PaywallView 이식) — Play Billing 단일 인앱 상품
+
+private const val STORE_NOT_READY_NOTICE = "스토어 연결 준비 중이에요. 잠시 후 다시 시도해주세요."
 
 private data class Benefit(val icon: ImageVector, val title: String, val desc: String)
 
@@ -59,6 +64,8 @@ fun PaywallScreen(onDismiss: () -> Unit) {
 
     var busy by remember { mutableStateOf(false) }
     var notice by remember { mutableStateOf<String?>(null) }
+    // 결제·복원은 됐지만 아직 이메일 로그인 전 — 닫기 전에 로그인을 권한다
+    var showLinkPrompt by remember { mutableStateOf(false) }
 
     val benefits = listOf(
         Benefit(Icons.Filled.Map, "3D 어드벤처 전 지역", "8개 지역 탐험 · 주민/보스 구구단 대결"),
@@ -70,8 +77,23 @@ fun PaywallScreen(onDismiss: () -> Unit) {
 
     fun open(url: String) = context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
 
-    // 구매 완료 시 자동 닫힘
-    LaunchedEffect(premium.isPremium) { if (premium.isPremium) onDismiss() }
+    // 구매 완료 시 — 이미 이메일 계정이거나 인증이 꺼진 빌드면 바로 닫고, 아니면 로그인을 권한다
+    LaunchedEffect(premium.isPremium) {
+        if (!premium.isPremium) return@LaunchedEffect
+        if (auth.isPermanent || auth.state is AuthStore.State.Disabled) onDismiss() else showLinkPrompt = true
+    }
+
+    // 오프라인으로 시작했거나 연결이 끊겼어도, 페이월을 열 때 스토어를 다시 준비시킨다 (이미 준비됐으면 건너뜀)
+    LaunchedEffect(Unit) { premium.ensureStoreReady() }
+    // 재연결이 끝나면 "준비 중" 안내는 더 이상 맞지 않는다
+    LaunchedEffect(premium.storeReady) {
+        if (premium.storeReady && notice == STORE_NOT_READY_NOTICE) notice = null
+    }
+
+    if (showLinkPrompt) {
+        PaywallLinkPrompt(isPermanent = auth.isPermanent, onDismiss = onDismiss)
+        return
+    }
 
     Column(
         Modifier.fillMaxSize().background(gg.bg)
@@ -154,7 +176,8 @@ fun PaywallScreen(onDismiss: () -> Unit) {
 
         GGButton(variant = GGButtonVariant.PRIMARY, size = GGButtonSize.LG, enabled = !busy, onClick = {
             if (!premium.storeReady) {
-                notice = "스토어 연결 준비 중이에요. 잠시 후 다시 시도해주세요."
+                notice = STORE_NOT_READY_NOTICE
+                premium.ensureStoreReady()   // 안내한 대로 실제로 다시 시도한다
                 return@GGButton
             }
             val activity = context as? Activity ?: return@GGButton
@@ -204,5 +227,51 @@ private fun FooterLink(label: String, style: androidx.compose.ui.text.TextStyle,
     val gg = LocalGG.current
     PressableCard(onClick = onClick) {
         Text(label, style = style, color = gg.textMuted)
+    }
+}
+
+/**
+ * 결제 직후 로그인 권유.
+ * 스토어 구매는 Google 계정에 묶이고 앱 계정은 그 이메일을 알 수 없다 — 익명인 채로 두면
+ * 구매가 서버 계정에 등록되지 않아 기기를 바꿀 때 「구매 복원」 말고는 되살릴 길이 없다.
+ * 강제하지 않는다 — 언제든 "나중에 할게요"로 닫을 수 있다.
+ */
+@Composable
+private fun PaywallLinkPrompt(isPermanent: Boolean, onDismiss: () -> Unit) {
+    val gg = LocalGG.current
+    Column(
+        Modifier.fillMaxSize().background(gg.bg)
+            .verticalScroll(rememberScrollState())
+            .statusBarsPadding().navigationBarsPadding()
+            .padding(horizontal = 20.dp).padding(top = 24.dp, bottom = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Icon(Icons.Filled.Verified, null, tint = gg.success, modifier = Modifier.size(44.dp))
+            Text("평생 이용권이 열렸어요 🎉", style = suite(FontWeight.ExtraBold, 22), color = gg.text, textAlign = TextAlign.Center)
+            Text(
+                "보호자 이메일로 로그인해 두면 앱을 다시 설치하거나 기기를 바꿔도 이용권이 따라와요.",
+                style = suite(FontWeight.Medium, 14), color = gg.textMuted, textAlign = TextAlign.Center,
+            )
+            Text(
+                "로그인하지 않아도 같은 Google 계정에서는 「구매 복원」으로 되살릴 수 있어요.",
+                style = suite(FontWeight.Medium, 12), color = gg.textMuted, textAlign = TextAlign.Center,
+            )
+        }
+
+        AccountSettingsCard(showsAccountManagement = false)
+
+        if (isPermanent) {
+            GGButton(onClick = onDismiss, variant = GGButtonVariant.PRIMARY, size = GGButtonSize.LG,
+                modifier = Modifier.fillMaxWidth()) {
+                Text("시작하기")
+            }
+        } else {
+            GGButton(onClick = onDismiss, variant = GGButtonVariant.SURFACE, size = GGButtonSize.MD,
+                modifier = Modifier.fillMaxWidth()) {
+                Text("나중에 할게요", style = suite(FontWeight.Bold, 14), color = gg.text)
+            }
+        }
     }
 }

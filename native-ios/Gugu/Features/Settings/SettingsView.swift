@@ -52,7 +52,7 @@ struct SettingsView: View {
                     Text("설정").font(.suite(.extrabold, 17)).foregroundStyle(Color.gg.text)
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("완료") { dismiss() }
+                    Button("완료") { Haptics.impact(.light); dismiss() }
                         .font(.suite(.bold, 16))
                 }
             }
@@ -140,7 +140,7 @@ struct SettingsView: View {
                         .font(.suite(.medium, 12)).foregroundStyle(Color.gg.warning)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 4)
-                    Button("설정 열기") { open(UIApplication.openNotificationSettingsURLString) }
+                    Button("설정 열기") { Haptics.impact(.light); open(UIApplication.openNotificationSettingsURLString) }
                         .font(.suite(.bold, 12)).foregroundStyle(Color.gg.accent)
                         .frame(minHeight: 44)
                 }

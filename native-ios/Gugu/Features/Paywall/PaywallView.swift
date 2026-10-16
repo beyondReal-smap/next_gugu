@@ -11,6 +11,8 @@ struct PaywallView: View {
 
     @State private var busy = false
     @State private var notice: String?
+    /// 결제·복원은 됐지만 아직 이메일 로그인 전 — 닫기 전에 로그인을 권한다
+    @State private var showLinkPrompt = false
 
     private struct Benefit: Identifiable {
         let id = UUID(); let icon: String; let title: String; let desc: String
@@ -23,11 +25,60 @@ struct PaywallView: View {
     ]
 
     var body: some View {
+        if showLinkPrompt {
+            linkPrompt
+        } else {
+            offer
+        }
+    }
+
+    /// 결제 직후 로그인 권유.
+    /// 스토어 구매는 Apple 계정에 묶이고 앱 계정은 그 이메일을 알 수 없다 — 익명인 채로 두면
+    /// 구매가 서버 계정에 등록되지 않아 기기를 바꿀 때 「구매 복원」 말고는 되살릴 길이 없다.
+    /// 강제하지 않는다(App Store 5.1.1) — 언제든 "나중에 할게요"로 닫을 수 있다.
+    private var linkPrompt: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                VStack(spacing: 10) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 40, weight: .bold)).foregroundStyle(Color.gg.success)
+                    Text("평생 이용권이 열렸어요 🎉")
+                        .font(.suite(.extrabold, 22)).foregroundStyle(Color.gg.text)
+                        .multilineTextAlignment(.center)
+                    Text("보호자 이메일로 로그인해 두면 앱을 다시 설치하거나 기기를 바꿔도 이용권이 따라와요.")
+                        .font(.suite(.medium, 14)).foregroundStyle(Color.gg.textMuted)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("로그인하지 않아도 같은 Apple 계정에서는 「구매 복원」으로 되살릴 수 있어요.")
+                        .font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(.top, 24)
+
+                AccountSettingsCard(showsAccountManagement: false)
+
+                if auth.isPermanent {
+                    GGButton(variant: .primary, size: .lg, action: { dismiss() }) { Text("시작하기") }
+                } else {
+                    GGButton(variant: .surface, size: .md, action: { dismiss() }) { Text("나중에 할게요") }
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 24)
+        }
+        .background(Color.gg.bg.ignoresSafeArea())
+    }
+
+    private var offer: some View {
         ScrollView {
             VStack(spacing: 0) {
                 HStack {
                     Spacer()
-                    Button { dismiss() } label: {
+                    Button {
+                        Haptics.impact(.light)
+                        dismiss()
+                    } label: {
                         Image(systemName: "xmark").font(.system(size: 20, weight: .bold)).foregroundStyle(Color.gg.textMuted)
                             .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
@@ -58,8 +109,20 @@ struct PaywallView: View {
             .padding(.bottom, 24)
         }
         .background(Color.gg.bg.ignoresSafeArea())
+        // 오프라인으로 시작했거나 조회가 실패했어도, 페이월을 열 때 다시 스토어에 묻는다 (이미 받았으면 건너뜀)
+        .task { await premium.loadProducts() }
+        .onChange(of: premium.storeReady) { _, ready in
+            // 재조회가 성공하면 "준비 중" 안내는 더 이상 맞지 않는다
+            if ready && notice == Self.storeNotReadyNotice { notice = nil }
+        }
         .onChange(of: premium.isPremium) { _, isPrem in
-            if isPrem { dismiss() }
+            guard isPrem else { return }
+            // 이미 이메일 계정이거나 인증이 꺼진 빌드면 권할 것이 없다 — 바로 닫는다
+            if auth.isPermanent || auth.state == .disabled {
+                dismiss()
+            } else {
+                showLinkPrompt = true
+            }
         }
     }
 
@@ -135,9 +198,9 @@ struct PaywallView: View {
 
     private var footerLinks: some View {
         HStack(spacing: 16) {
-            Button("구매 복원", action: onRestore).disabled(busy)
-            Button("이용약관") { open(PremiumConfig.Legal.terms) }
-            Button("개인정보처리방침") { open(PremiumConfig.Legal.privacy) }
+            Button("구매 복원", action: { Haptics.impact(.light); onRestore() }).disabled(busy)
+            Button("이용약관") { Haptics.impact(.light); open(PremiumConfig.Legal.terms) }
+            Button("개인정보처리방침") { Haptics.impact(.light); open(PremiumConfig.Legal.privacy) }
         }
         .font(.suite(.bold, 11))
         .foregroundStyle(Color.gg.textMuted)
@@ -145,9 +208,12 @@ struct PaywallView: View {
         .padding(.top, 16)
     }
 
+    private static let storeNotReadyNotice = "스토어 연결 준비 중이에요. 잠시 후 다시 시도해주세요."
+
     private func onPurchase() {
         guard premium.storeReady else {
-            notice = "스토어 연결 준비 중이에요. 잠시 후 다시 시도해주세요."
+            notice = Self.storeNotReadyNotice
+            Task { await premium.loadProducts() }   // 안내한 대로 실제로 다시 시도한다
             return
         }
         busy = true; notice = nil

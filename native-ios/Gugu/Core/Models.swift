@@ -114,6 +114,40 @@ struct GameState: Codable, Equatable {
     var dayLog: [DayLogEntry]? = nil
 }
 
+extension GameState {
+    /// 구버전 저장본(신규 필드 없던 시절) 호환 — 누락된 키는 선언부의 기본값으로 채운다.
+    /// 합성 디코더는 기본값이 있어도 키가 없으면 실패해서, 필드를 추가할 때마다 구버전 사용자의
+    /// 진행도가 통째로 초기화될 수 있었다.
+    /// 타입이 틀린 값은 일부러 그대로 throw 한다 — 조용히 기본값으로 덮으면 손상을 알아채지 못하므로
+    /// Persistence 가 원본을 격리하게 둔다.
+    /// 주의: 필드를 추가하면 여기에도 한 줄 추가할 것 (빠지면 저장은 되는데 읽히지 않는다 —
+    /// CoreTests.testGameStateRoundTripPreservesEveryField 가 잡는다).
+    /// 합성 CodingKeys 가 private 이라 이 extension 은 선언과 같은 파일에 있어야 한다.
+    init(from decoder: Decoder) throws {
+        self.init()
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        version = try c.decodeIfPresent(Int.self, forKey: .version) ?? version
+        totalXp = try c.decodeIfPresent(Int.self, forKey: .totalXp) ?? totalXp
+        streak = try c.decodeIfPresent(Int.self, forKey: .streak) ?? streak
+        lastPlayedDate = try c.decodeIfPresent(String.self, forKey: .lastPlayedDate) ?? lastPlayedDate
+        dailyGoal = try c.decodeIfPresent(Int.self, forKey: .dailyGoal) ?? dailyGoal
+        dailyDate = try c.decodeIfPresent(String.self, forKey: .dailyDate) ?? dailyDate
+        dailyCorrect = try c.decodeIfPresent(Int.self, forKey: .dailyCorrect) ?? dailyCorrect
+        tableMastery = try c.decodeIfPresent([Int: TableMastery].self, forKey: .tableMastery) ?? tableMastery
+        unlockedAchievements = try c.decodeIfPresent([String].self, forKey: .unlockedAchievements) ?? unlockedAchievements
+        totalCorrect = try c.decodeIfPresent(Int.self, forKey: .totalCorrect) ?? totalCorrect
+        totalWrong = try c.decodeIfPresent(Int.self, forKey: .totalWrong) ?? totalWrong
+        maxCombo = try c.decodeIfPresent(Int.self, forKey: .maxCombo) ?? maxCombo
+        recentAccuracy = try c.decodeIfPresent([Int].self, forKey: .recentAccuracy) ?? recentAccuracy
+        recentAvgMs = try c.decodeIfPresent([Int].self, forKey: .recentAvgMs) ?? recentAvgMs
+        wrongPool = try c.decodeIfPresent([String: Int].self, forKey: .wrongPool) ?? wrongPool
+        bestScores = try c.decodeIfPresent([GameMode: Int].self, forKey: .bestScores) ?? bestScores
+        modesPlayed = try c.decodeIfPresent([GameMode].self, forKey: .modesPlayed) ?? modesPlayed
+        onboarded = try c.decodeIfPresent(Bool.self, forKey: .onboarded) ?? onboarded
+        dayLog = try c.decodeIfPresent([DayLogEntry].self, forKey: .dayLog)
+    }
+}
+
 struct CommitResult {
     var xpEarned: Int
     var leveledUp: Bool

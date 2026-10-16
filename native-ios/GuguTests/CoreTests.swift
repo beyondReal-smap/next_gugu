@@ -435,6 +435,46 @@ final class CoreTests: XCTestCase {
         XCTAssertEqual(decoded, s)
     }
 
+    /// 필드가 일부만 있는 저장본도 디코딩된다 — 나머지는 기본값 (합성 디코더는 여기서 실패해 진행도가 초기화됐다)
+    func testGameStateDecodesPartialPayloadWithDefaults() throws {
+        let decoded = try JSONDecoder().decode(GameState.self, from: Data(#"{"totalXp":7}"#.utf8))
+        XCTAssertEqual(decoded.totalXp, 7)
+        XCTAssertEqual(decoded.dailyGoal, 20)
+        XCTAssertEqual(decoded.streak, 0)
+        XCTAssertFalse(decoded.onboarded)
+        XCTAssertNil(decoded.dayLog)
+    }
+
+    /// 타입이 틀린 값은 기본값으로 덮지 않고 실패시킨다 — 손상은 Persistence 가 원본 격리로 표면화한다
+    func testGameStateRejectsWrongTypedField() {
+        XCTAssertThrowsError(try JSONDecoder().decode(GameState.self, from: Data(#"{"totalXp":"abc"}"#.utf8)))
+    }
+
+    /// 모든 필드를 기본값과 다르게 채워 라운드트립 — 커스텀 디코더에서 필드가 빠지면 여기서 걸린다
+    func testGameStateRoundTripPreservesEveryField() throws {
+        let s = GameState(
+            version: 2, totalXp: 321, streak: 4, lastPlayedDate: "2026-09-28", dailyGoal: 30,
+            dailyDate: "2026-09-29", dailyCorrect: 12,
+            tableMastery: [3: TableMastery(stars: 2, bestAccuracy: 0.9, bestAvgMs: 1500, plays: 3)],
+            unlockedAchievements: ["first_step"], totalCorrect: 100, totalWrong: 7, maxCombo: 9,
+            recentAccuracy: [80, 90], recentAvgMs: [1400, 1300], wrongPool: ["6x7": 2],
+            bestScores: [.challenge: 12], modesPlayed: [.practice, .truefalse], onboarded: true,
+            dayLog: [DayLogEntry(date: "2026-09-29", correct: 5, wrong: 1, msSum: 7000, misses: ["6x7": 1])])
+        let data = try JSONEncoder().encode(s)
+
+        // 픽스처가 모든 필드를 기본값과 다르게 채웠는지 확인 — 필드를 추가하고 픽스처를 안 고치면 여기서 걸린다
+        let filled = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? NSDictionary)
+        let blank = try XCTUnwrap(
+            JSONSerialization.jsonObject(with: JSONEncoder().encode(GameState())) as? NSDictionary)
+        for (key, blankValue) in blank {
+            XCTAssertNotEqual(filled[key] as? NSObject, blankValue as? NSObject,
+                              "필드 \(key) 가 기본값과 같다 — 픽스처를 채워 주세요")
+        }
+        XCTAssertNotNil(filled["dayLog"])
+
+        XCTAssertEqual(try JSONDecoder().decode(GameState.self, from: data), s)
+    }
+
     func testAdventureProgressCodableRoundTrip() throws {
         var p = AdvProgress.defaultProgress
         p.defeatedNpcs = ["r2-n1", "r2-boss"]
@@ -489,6 +529,115 @@ final class CoreTests: XCTestCase {
         let a = World.genStarSpots(table: 2, layout: World.layouts[2]!)
         let b = World.genStarSpots(table: 2, layout: World.layouts[2]!)
         XCTAssertEqual(a, b)
+    }
+
+    // 손상 저장본 격리 (Persistence) — 테스트 키는 고유하게 만들고, 끝나면 저장본·격리 파일을 정리한다
+
+    private func makeQuarantineTestKey() -> String {
+        let key = "gugu.test.quarantine.\(UUID().uuidString)"
+        addTeardownBlock {
+            UserDefaults.standard.removeObject(forKey: key)
+            Persistence.clearQuarantine(key: key)
+        }
+        return key
+    }
+
+    /// 못 읽는 저장본은 nil 로 돌려주되, 덮어쓰기 전에 원본 바이트를 격리 폴더에 그대로 남긴다
+    func testLoadQuarantinesUndecodablePayload() throws {
+        let key = makeQuarantineTestKey()
+        let corrupt = Data("{손상된 저장본".utf8)
+        UserDefaults.standard.set(corrupt, forKey: key)
+
+        XCTAssertNil(Persistence.load(GameState.self, key: key))
+
+        let files = Persistence.quarantinedFiles(key: key)
+        XCTAssertEqual(files.count, 1)
+        XCTAssertEqual(try Data(contentsOf: XCTUnwrap(files.first)), corrupt)
+        // 원본 키는 건드리지 않는다 — 덮어쓰기는 호출부가 (격리 뒤에) 한다
+        XCTAssertEqual(UserDefaults.standard.data(forKey: key), corrupt)
+        // 백업에서 제외돼 있다 — 손상 원문(학습 기록·식별자)이 iCloud/iTunes 백업으로 새 기기에 복원되지 않게
+        let values = try Persistence.quarantineDirectory.resourceValues(forKeys: [.isExcludedFromBackupKey])
+        XCTAssertEqual(values.isExcludedFromBackup, true)
+    }
+
+    /// 키가 없는 것(신규 설치)은 손상이 아니다 — 격리하지 않는다
+    func testLoadDoesNotQuarantineMissingKey() {
+        let key = makeQuarantineTestKey()
+        XCTAssertNil(Persistence.load(GameState.self, key: key))
+        XCTAssertTrue(Persistence.quarantinedFiles(key: key).isEmpty)
+    }
+
+    /// 실패가 반복돼도 키당 3개까지만 남기고, 앞선(원본에 가까운) 것을 보존한다
+    func testQuarantineKeepsFirstThreeOnly() throws {
+        let key = makeQuarantineTestKey()
+        for i in 1...4 {
+            UserDefaults.standard.set(Data("corrupt-\(i)".utf8), forKey: key)
+            XCTAssertNil(Persistence.load(GameState.self, key: key))
+        }
+        let kept = try Persistence.quarantinedFiles(key: key)
+            .map { String(decoding: try Data(contentsOf: $0), as: UTF8.self) }
+            .sorted()
+        XCTAssertEqual(kept, ["corrupt-1", "corrupt-2", "corrupt-3"])
+    }
+
+    /// 보존 기한(30일)이 지난 격리본만 지운다 — 기한 안쪽은 남긴다 (경계: 29일 23시간은 남고 31일은 지워진다)
+    func testPurgeExpiredQuarantineRemovesOnlyOldFiles() throws {
+        let key = makeQuarantineTestKey()
+        for raw in ["expired", "edge", "recent"] {
+            UserDefaults.standard.set(Data(raw.utf8), forKey: key)
+            XCTAssertNil(Persistence.load(GameState.self, key: key))
+        }
+        let now = Date()
+        let hour: TimeInterval = 60 * 60
+        let modified: [String: Date] = [
+            "expired": now.addingTimeInterval(-31 * 24 * hour),
+            "edge": now.addingTimeInterval(-(29 * 24 + 23) * hour),
+            "recent": now.addingTimeInterval(-24 * hour),
+        ]
+        let files = Persistence.quarantinedFiles(key: key)
+        XCTAssertEqual(files.count, 3)
+        for file in files {
+            let raw = try String(contentsOf: file, encoding: .utf8)
+            try FileManager.default.setAttributes([.modificationDate: try XCTUnwrap(modified[raw])],
+                                                  ofItemAtPath: file.path)
+        }
+
+        Persistence.purgeExpiredQuarantine(now: now)
+
+        let kept = try Persistence.quarantinedFiles(key: key)
+            .map { try String(contentsOf: $0, encoding: .utf8) }
+            .sorted()
+        XCTAssertEqual(kept, ["edge", "recent"])
+    }
+
+    /// 방금 격리한 파일은 기본 보존 기한(30일)으로 정리해도 남는다
+    func testPurgeExpiredQuarantineKeepsFreshFiles() {
+        let key = makeQuarantineTestKey()
+        UserDefaults.standard.set(Data("fresh".utf8), forKey: key)
+        XCTAssertNil(Persistence.load(GameState.self, key: key))
+
+        Persistence.purgeExpiredQuarantine()
+
+        XCTAssertEqual(Persistence.quarantinedFiles(key: key).count, 1)
+    }
+
+    /// 의도적 삭제(remove)와 기록 초기화는 격리 사본도 지운다 — 다른 키의 격리본은 그대로
+    func testRemoveAndClearDropQuarantineForThatKeyOnly() {
+        let keyA = makeQuarantineTestKey()
+        let keyB = makeQuarantineTestKey()
+        for key in [keyA, keyB] {
+            UserDefaults.standard.set(Data("corrupt".utf8), forKey: key)
+            _ = Persistence.load(GameState.self, key: key)
+        }
+        XCTAssertEqual(Persistence.quarantinedFiles(key: keyA).count, 1)
+        XCTAssertEqual(Persistence.quarantinedFiles(key: keyB).count, 1)
+
+        Persistence.remove(keyA)
+        XCTAssertTrue(Persistence.quarantinedFiles(key: keyA).isEmpty)
+        XCTAssertEqual(Persistence.quarantinedFiles(key: keyB).count, 1)
+
+        Persistence.clearQuarantine(key: keyB)
+        XCTAssertTrue(Persistence.quarantinedFiles(key: keyB).isEmpty)
     }
 
     // MARK: - LaneRunner (구구 레인)

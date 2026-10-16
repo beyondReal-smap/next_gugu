@@ -1,7 +1,7 @@
 import Foundation
 
-// Supabase GoTrue REST 호출 (익명 로그인 / 토큰 갱신).
-// SDK 를 붙이지 않고 필요한 두 엔드포인트만 직접 호출한다 — 의존성 0.
+// Supabase GoTrue REST 호출 (익명 로그인 / 토큰 갱신 / 이메일 연결·로그인 / 세션 해제).
+// SDK 를 붙이지 않고 필요한 엔드포인트만 직접 호출한다 — 의존성 0.
 
 struct AuthSession: Codable, Equatable {
     var accessToken: String
@@ -10,6 +10,8 @@ struct AuthSession: Codable, Equatable {
     var expiresAt: Double
     var userId: String
     var isAnonymous: Bool
+    /// 계정에 붙은 이메일 (익명이면 nil). 이 필드가 없던 예전 저장본도 그대로 읽힌다.
+    var email: String?
 
     /// 만료 60초 전부터는 갱신 대상으로 본다 (시계 오차·요청 지연 여유)
     var isExpired: Bool { Date().timeIntervalSince1970 >= expiresAt - 60 }
@@ -68,15 +70,40 @@ enum SupabaseAuth {
         return try parse(data)
     }
 
+    /// 이미 있는 이메일 계정으로 로그인 코드를 보낸다 (Magic link or OTP 메일 템플릿).
+    /// create_user=false — 없는 주소면 계정을 만들지 않고 422(otp_disabled)로 거부된다.
+    static func requestLoginCode(email: String) async throws {
+        _ = try await request(
+            path: "/auth/v1/otp", method: "POST",
+            body: ["email": email, "create_user": false], accessToken: nil
+        )
+    }
+
+    /// 메일로 받은 6자리 코드로 그 계정에 로그인한다
+    static func verifyLoginCode(email: String, token: String) async throws -> AuthSession {
+        let data = try await request(
+            path: "/auth/v1/verify", method: "POST",
+            body: ["type": "email", "email": email, "token": token], accessToken: nil
+        )
+        return try parse(data)
+    }
+
+    /// 이 기기의 세션만 서버에서 폐기한다 (다른 기기의 로그인은 그대로)
+    static func signOut(accessToken: String) async throws {
+        _ = try await request(
+            path: "/auth/v1/logout?scope=local", method: "POST", body: [:], accessToken: accessToken
+        )
+    }
+
     // MARK: - 내부
 
-    private static func post(path: String, body: [String: String]) async throws -> AuthSession {
+    private static func post(path: String, body: [String: Any]) async throws -> AuthSession {
         try parse(try await request(path: path, method: "POST", body: body, accessToken: nil))
     }
 
     /// GoTrue 공통 호출 — apikey 는 항상, Authorization 은 사용자 토큰이 있을 때만 붙인다
     private static func request(
-        path: String, method: String, body: [String: String], accessToken: String?
+        path: String, method: String, body: [String: Any], accessToken: String?
     ) async throws -> Data {
         guard let base = SupabaseConfig.url, let anonKey = SupabaseConfig.anonKey else {
             throw SupabaseAuthError.notConfigured
@@ -111,7 +138,8 @@ enum SupabaseAuth {
         return data
     }
 
-    private static func parse(_ data: Data) throws -> AuthSession {
+    /// 토큰 응답을 세션으로 바꾼다 (테스트에서 직접 부른다)
+    static func parse(_ data: Data) throws -> AuthSession {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let accessToken = json["access_token"] as? String,
               let refreshToken = json["refresh_token"] as? String,
@@ -128,7 +156,9 @@ enum SupabaseAuth {
             refreshToken: refreshToken,
             expiresAt: expiresAt,
             userId: userId,
-            isAnonymous: (user["is_anonymous"] as? Bool) ?? true
+            isAnonymous: (user["is_anonymous"] as? Bool) ?? true,
+            // 익명 사용자는 email 을 빈 문자열로 준다
+            email: (user["email"] as? String).flatMap { $0.isEmpty ? nil : $0 }
         )
     }
 }

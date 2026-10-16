@@ -123,7 +123,10 @@ struct BattleView: View {
 
     private func topBar(_ engine: BattleEngine) -> some View {
         HStack(spacing: 12) {
-            Button { requestFlee(engine) } label: {
+            Button {
+                Haptics.impact(.light)
+                requestFlee(engine)
+            } label: {
                 Image(systemName: "xmark").font(.system(size: 20, weight: .bold)).foregroundStyle(Color.gg.textMuted)
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())

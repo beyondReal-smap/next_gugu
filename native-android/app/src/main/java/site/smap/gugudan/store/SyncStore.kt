@@ -4,12 +4,14 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import site.smap.gugudan.core.SessionResult
 import site.smap.gugudan.core.learning.LearningClaimAction
 import site.smap.gugudan.core.learning.LearningClaimCandidate
+import site.smap.gugudan.core.learning.LearningFactStats
 import site.smap.gugudan.core.learning.LearningOutbox
 import site.smap.gugudan.core.learning.LearningRecord
 import site.smap.gugudan.services.LearningApi
@@ -49,9 +51,17 @@ class SyncStore(
         private set
 
     private var flushJob: Job? = null
+    /** 보호자 권한·귀속 흐름은 한 번에 하나만 — 겹치면 서버가 학습자를 둘 만들어 이후 계속 conflict 가 난다 */
+    private var guardianJob: Job? = null
 
     /** 권한 거부를 받은 뒤에는 세션이 바뀔 때까지 업로드를 멈춘다 */
     private var blockedUserId: String? = null
+
+    /** 서버 기록을 받아왔을 때 기기 진행도에 반영하는 곳 (MainActivity 가 GameStore 로 연결한다) */
+    var onServerRestore: ((Map<String, LearningFactStats>) -> Unit)? = null
+    /** 서버 기록 복원에 실패했는지 — 업로드 상태(state)와 따로 둬야 뒤이은 flush 가 덮어쓰지 않는다 */
+    var restoreFailed: Boolean by mutableStateOf(false)
+        private set
 
     companion object {
         private const val TAG = "Sync"
@@ -94,6 +104,11 @@ class SyncStore(
 
     /** 큐를 업로드한다. 보호자 검증 전이면 아무 요청도 보내지 않는다. */
     fun flush(auth: AuthStore) {
+        // 재로그인 전에는 올릴 계정이 없다 — 큐를 그대로 두고 같은 계정으로 돌아오면 올린다
+        if (auth.needsReauth) {
+            Log.i(TAG, "업로드 보류: 재로그인 대기 (대기 ${pendingCount}건)")
+            return
+        }
         if (flushJob?.isActive == true) return
         // 같은 계정으로 이미 권한 거부를 받았다면 서버를 다시 부르지 않는다
         val current = state
@@ -131,24 +146,37 @@ class SyncStore(
             // 검증 전 — 큐를 그대로 두고 더 시도하지 않는다
             blockedUserId = auth.userId
             state = State.WaitingForGuardian(e.denial.message)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             state = State.Failed(e.message ?: e.toString())
             Log.w(TAG, "업로드 실패: ${e.message}")
         }
     }
 
+    /** 업로드를 한 번 끝까지 기다린다 (로그아웃 전에 남은 기록을 올려 보기 위해) */
+    suspend fun flushNow(auth: AuthStore) {
+        flushJob?.join()
+        flush(auth)
+        flushJob?.join()
+    }
+
     /**
-     * 계정 삭제 직후 기기에 남은 귀속과 큐를 버린다.
-     * 서버 계정이 사라졌으므로 learnerId 와 올리지 못한 이벤트는 모두 의미가 없다.
+     * 계정이 바뀔 때(삭제·로그아웃·다른 계정 로그인) 기기에 남은 귀속과 큐를 버린다.
+     * learnerId·installId 는 예전 계정 소유라 새 계정으로 쓰면 서버가 conflict/소유 불일치로 거부하고,
+     * 올리지 못한 이벤트도 예전 학습자 것이다.
      */
-    fun resetAfterAccountDeletion() {
+    fun resetForAccountChange() {
         flushJob?.cancel()
         flushJob = null
+        guardianJob?.cancel()
+        guardianJob = null
         identityStore.clear()
         outboxStore.clear()
         pendingCount = 0
         lastServerCursor = 0
         blockedUserId = null
+        restoreFailed = false
         state = State.Idle
     }
 
@@ -170,6 +198,7 @@ class SyncStore(
         val identity = identityStore.read()
         if (identity.learnerId != null) return
         if (!auth.isPermanent) return
+        val userId = auth.userId ?: return
         val token = auth.accessToken() ?: return
 
         val pending = outboxStore.read().events.size
@@ -182,20 +211,22 @@ class SyncStore(
                         state = State.Failed("서버가 학습자 아이디를 주지 않았습니다")
                         return
                     }
-                    bind(learnerId, auth.userId)
+                    bind(learnerId, userId, auth)
                 }
                 LearningClaimAction.ATTACH_TO_EXISTING -> {
                     val learnerId = response.learnerId
                     when {
-                        learnerId != null -> bind(learnerId, auth.userId)
+                        learnerId != null -> bind(learnerId, userId, auth)
                         response.candidates.size == 1 ->
-                            confirm(auth, token, identity.installId, response.candidates[0].learnerId)
+                            confirm(auth, userId, token, identity.installId, response.candidates[0].learnerId)
                         // 붙일 대상을 특정할 수 없다 — 고르게 한다
                         else -> state = State.NeedsLearnerChoice(response.candidates)
                     }
                 }
                 LearningClaimAction.CONFLICT -> state = State.NeedsLearnerChoice(response.candidates)
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.w(TAG, "귀속 실패: ${e.message}")
             state = State.Failed(e.message ?: e.toString())
@@ -204,23 +235,64 @@ class SyncStore(
 
     /** 후보 중 하나를 골라 귀속을 확정한다 (conflict 화면에서 호출) */
     suspend fun chooseLearner(candidate: LearningClaimCandidate, auth: AuthStore) {
+        val userId = auth.userId ?: return
         val token = auth.accessToken() ?: return
         try {
-            confirm(auth, token, identityStore.read().installId, candidate.learnerId)
+            confirm(auth, userId, token, identityStore.read().installId, candidate.learnerId)
+            restoreIfNeeded(auth)
+            flush(auth)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.w(TAG, "귀속 확정 실패: ${e.message}")
             state = State.Failed(e.message ?: e.toString())
         }
     }
 
-    private suspend fun confirm(auth: AuthStore, token: String, installId: String, learnerId: String) {
+    private suspend fun confirm(auth: AuthStore, userId: String, token: String, installId: String, learnerId: String) {
         val confirmed = LearningApi.confirmClaim(token, installId, learnerId)
-        bind(confirmed.learnerId, auth.userId)
+        bind(confirmed.learnerId, userId, auth)
     }
 
-    private fun bind(learnerId: String, userId: String?) {
-        identityStore.bindLearner(userId ?: "", learnerId)
+    /**
+     * 요청을 보낸 계정 그대로일 때만 묶는다 — 기다리는 사이 다른 계정으로 바뀌었으면
+     * 예전 계정의 학습자를 새 계정에 붙이게 된다.
+     */
+    private fun bind(learnerId: String, userId: String, auth: AuthStore) {
+        if (auth.userId != userId) {
+            Log.w(TAG, "귀속 응답 폐기: 요청 중 계정이 바뀜")
+            return
+        }
+        identityStore.bindLearner(userId, learnerId)
         state = State.Idle
+    }
+
+    /**
+     * 새로 귀속한 학습자의 서버 기록(문제별 통계)을 한 번 받아와 기기에 반영한다.
+     * 실패하면 표시를 남겨 다음 기회(앱 시작·구매 복원)에 다시 시도한다.
+     */
+    suspend fun restoreIfNeeded(auth: AuthStore) {
+        val identity = identityStore.read()
+        if (!identity.restorePending) return
+        val learnerId = identity.learnerId ?: return
+        val userId = auth.userId ?: return
+        if (identity.claimedUserId != userId) return
+        val token = auth.accessToken() ?: return
+        try {
+            val response = LearningApi.fetchState(token, learnerId)
+            if (auth.userId != userId) return
+            // 스냅샷이 없으면 아직 서버에 올린 기록이 없는 학습자다 — 복원할 것이 없는 정상 상태
+            val facts = response.snapshots.firstOrNull { it.learnerId == learnerId }?.state?.facts ?: emptyMap()
+            onServerRestore?.invoke(facts)
+            identityStore.markRestored()
+            restoreFailed = false
+            Log.i(TAG, "서버 기록 복원: 문제 ${facts.size}개")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "서버 기록 복원 실패: ${e.message}")
+            restoreFailed = true
+        }
     }
 
     /**
@@ -230,6 +302,20 @@ class SyncStore(
      * 토큰을 새로 받은 뒤에야 업로드가 통과한다.
      */
     suspend fun enableGuardianSync(auth: AuthStore, purchaseToken: String? = null) {
+        // 시작·구매·계정 변경 트리거가 겹쳐도 한 번만 돈다
+        guardianJob?.let { running ->
+            if (running.isActive) {
+                running.join()
+                return
+            }
+        }
+        val job = scope.launch { runGuardianSync(auth, purchaseToken) }
+        guardianJob = job
+        job.join()
+        if (guardianJob === job) guardianJob = null
+    }
+
+    private suspend fun runGuardianSync(auth: AuthStore, purchaseToken: String?) {
         // 이메일이 붙지 않은 익명 계정은 서버가 거부한다 — 요청하지 않는다
         if (!auth.isPermanent) return
         val token = auth.accessToken() ?: return
@@ -239,6 +325,8 @@ class SyncStore(
             try {
                 val registered = PurchaseRegistry.register(token, purchaseToken)
                 Log.i(TAG, "구매 등록 완료 premium=${registered.premium}")
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 // 이미 등록됐거나 토큰이 만료됐을 수 있다 — guardian 요청은 그대로 시도한다
                 Log.w(TAG, "구매 등록 건너뜀: ${e.message}")
@@ -253,6 +341,7 @@ class SyncStore(
             clearGuardianBlock()
             // 학습자 귀속이 끝나야 이벤트를 만들 수 있다
             ensureLearner(auth)
+            restoreIfNeeded(auth)
             flush(auth)
         } catch (e: LearningApiException.Http) {
             val denial = if (e.status == 403) GuardianDenial.of(e.code) else null
@@ -263,6 +352,8 @@ class SyncStore(
             } else {
                 Log.w(TAG, "보호자 권한 설정 실패: ${e.message}")
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.w(TAG, "보호자 권한 설정 실패: ${e.message}")
         }

@@ -6,6 +6,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -16,8 +18,8 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
-// Supabase GoTrue REST 호출 (익명 로그인 / 토큰 갱신) — iOS SupabaseAuth 이식.
-// SDK 를 붙이지 않고 필요한 두 엔드포인트만 직접 호출한다 — 의존성 0.
+// Supabase GoTrue REST 호출 (익명 로그인 / 토큰 갱신 / 이메일 연결·로그인 / 세션 해제) — iOS SupabaseAuth 이식.
+// SDK 를 붙이지 않고 필요한 엔드포인트만 직접 호출한다 — 의존성 0.
 
 /** Supabase 접속 설정 — BuildConfig(local.properties) 주입값 */
 object SupabaseConfig {
@@ -40,6 +42,8 @@ data class AuthSession(
     val expiresAt: Double,
     val userId: String,
     val isAnonymous: Boolean,
+    /** 계정에 붙은 이메일 (익명이면 null). 이 필드가 없던 예전 저장본도 기본값 null 로 그대로 읽힌다. */
+    val email: String? = null,
 ) {
     /** 만료 60초 전부터는 갱신 대상으로 본다 (시계 오차·요청 지연 여유) */
     val isExpired: Boolean
@@ -88,6 +92,33 @@ object SupabaseAuth {
         return parse(json.parseToJsonElement(send("/auth/v1/verify", "POST", body)).jsonObject)
     }
 
+    /**
+     * 이미 있는 이메일 계정으로 로그인 코드를 보낸다 (Magic link or OTP 메일 템플릿).
+     * create_user=false — 없는 주소면 계정을 만들지 않고 422(otp_disabled)로 거부된다.
+     */
+    suspend fun requestLoginCode(email: String) {
+        val body = buildJsonObject {
+            put("email", email)
+            put("create_user", false)
+        }.toString()
+        send("/auth/v1/otp", "POST", body)
+    }
+
+    /** 메일로 받은 6자리 코드로 그 계정에 로그인한다 */
+    suspend fun verifyLoginCode(email: String, token: String): AuthSession {
+        val body = buildJsonObject {
+            put("type", "email")
+            put("email", email)
+            put("token", token)
+        }.toString()
+        return parse(json.parseToJsonElement(send("/auth/v1/verify", "POST", body)).jsonObject)
+    }
+
+    /** 이 기기의 세션만 서버에서 폐기한다 (다른 기기의 로그인은 그대로) */
+    suspend fun signOut(accessToken: String) {
+        send("/auth/v1/logout?scope=local", "POST", "{}", accessToken = accessToken)
+    }
+
     private suspend fun post(path: String, body: String): AuthSession =
         parse(json.parseToJsonElement(send(path, "POST", body)).jsonObject)
 
@@ -132,7 +163,8 @@ object SupabaseAuth {
         }
     }
 
-    private fun parse(obj: JsonObject): AuthSession {
+    /** 토큰 응답을 세션으로 바꾼다 (테스트에서 직접 부른다) */
+    internal fun parse(obj: JsonObject): AuthSession {
         val accessToken = obj["access_token"]?.jsonPrimitive?.contentOrNullSafe()
         val refreshToken = obj["refresh_token"]?.jsonPrimitive?.contentOrNullSafe()
         val user = obj["user"]?.jsonObject
@@ -152,6 +184,8 @@ object SupabaseAuth {
             expiresAt = expiresAt,
             userId = userId,
             isAnonymous = user["is_anonymous"]?.jsonPrimitive?.booleanOrNull ?: true,
+            // 익명 사용자는 email 을 빈 문자열로 준다
+            email = (user["email"] as? JsonPrimitive)?.contentOrNull?.takeIf { it.isNotEmpty() },
         )
     }
 }

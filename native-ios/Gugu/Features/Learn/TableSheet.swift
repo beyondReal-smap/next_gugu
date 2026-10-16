@@ -51,6 +51,7 @@ struct TableSheet: View {
             .accessibilityLabel("\(table)단, 별 \(stars)개")
             Spacer()
             Button {
+                Haptics.impact(.light)
                 dismiss()
             } label: {
                 Image(systemName: "xmark").font(.system(size: 15, weight: .bold)).foregroundStyle(Color.gg.textMuted)

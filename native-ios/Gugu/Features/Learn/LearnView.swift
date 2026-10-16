@@ -158,7 +158,10 @@ struct LearnView: View {
     private var tableSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             // 전체 랜덤
-            Button { session.start(mode, table: nil) } label: {
+            Button {
+                Haptics.impact(.light)
+                session.start(mode, table: nil)
+            } label: {
                 HStack(spacing: 12) {
                     Image(systemName: "shuffle").font(.system(size: 18, weight: .bold)).foregroundStyle(Color.gg.accent)
                         .frame(width: 40, height: 40)
@@ -195,7 +198,10 @@ struct LearnView: View {
 
     private func tableCard(_ t: Int, recommended: Bool) -> some View {
         let stars = game.state.tableMastery[t]?.stars ?? 0
-        return Button { session.start(mode, table: t) } label: {
+        return Button {
+            Haptics.impact(.light)
+            session.start(mode, table: t)
+        } label: {
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
                     Text("\(t)").font(.suite(.extrabold, 30)).foregroundStyle(Color.gg.text).monospacedDigit()

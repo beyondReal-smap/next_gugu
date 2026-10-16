@@ -26,7 +26,7 @@ struct ProfileView: View {
     private var report: WeeklyReport {
         WeeklyReport.build(game.state.dayLog, today: Commit.todayStr())
     }
-    /// 이메일을 아직 안 붙인 익명 계정 — 기기를 잃으면 기록도 잃는다
+    /// 이메일 로그인이 안 된 계정 — 익명이면 기기를 잃을 때 기록도 잃고, 재로그인 대기면 기록이 올라가지 않는다
     private var needsAccountLink: Bool {
         auth.state != .disabled && !auth.isPermanent
     }
@@ -273,8 +273,11 @@ struct ProfileView: View {
                     .frame(width: 40, height: 40)
                     .background(Color.gg.accent.opacity(0.15), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("기록 지키기").font(.suite(.extrabold, 15)).foregroundStyle(Color.gg.text)
-                    Text("보호자 이메일을 연결하면 기기를 바꿔도 기록이 남아요")
+                    Text(auth.needsReauth ? "다시 로그인이 필요해요" : "기록 지키기")
+                        .font(.suite(.extrabold, 15)).foregroundStyle(Color.gg.text)
+                    Text(auth.needsReauth
+                         ? "보호자 이메일로 확인해 주세요"
+                         : "이메일로 로그인하면 새 기기에서도 이어서 쓸 수 있어요")
                         .font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
                         .fixedSize(horizontal: false, vertical: true)
                 }

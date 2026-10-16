@@ -10,6 +10,8 @@ import site.smap.gugudan.core.adventure.AdvAchievements
 import site.smap.gugudan.core.adventure.AdventureProgress
 import site.smap.gugudan.core.adventure.Shop
 import site.smap.gugudan.core.adventure.World
+import site.smap.gugudan.core.learning.LearningFactStats
+import site.smap.gugudan.core.learning.LearningRestore
 import site.smap.gugudan.services.Persistence
 
 // 상태 스토어 (iOS Store/ @Observable 이식) — Compose mutableStateOf 기반
@@ -41,11 +43,19 @@ class GameStore(private val persistence: Persistence) {
         return Level.info(state.totalXp).level > prev
     }
 
+    /** 로그인한 계정의 서버 기록으로 약한 문제를 채운다 (기기 값과 문제별 max 병합) */
+    fun mergeRestoredWrongPool(facts: Map<String, LearningFactStats>) {
+        state = state.copy(wrongPool = LearningRestore.merge(state.wrongPool, facts))
+        persist()
+    }
+
     fun setDailyGoal(goal: Int) { state = state.copy(dailyGoal = maxOf(5, goal)); persist() }
     fun setOnboarded(v: Boolean) { state = state.copy(onboarded = v); persist() }
     fun resetProgress() {
         state = Commit.applyVisit(Commit.defaultState.copy(onboarded = true))
         persist()
+        // 사용자가 기록을 지웠다면 손상 저장본의 격리 사본도 남기지 않는다
+        persistence.clearQuarantine(Persistence.PROGRESS_KEY)
     }
 }
 
