@@ -25,11 +25,11 @@ enum SupabaseAuthError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .notConfigured:
-            return "Supabase 설정이 빌드에 없습니다"
+            return String(localized: "Supabase 설정이 빌드에 없습니다")
         case let .http(status, code, message):
-            return "Supabase 응답 \(status)\(code.map { " (\($0))" } ?? ""): \(message)"
+            return String(localized: "Supabase 응답 \(status)\(code.map { " (\($0))" } ?? ""): \(message)")
         case .malformedResponse:
-            return "Supabase 응답을 해석하지 못했습니다"
+            return String(localized: "Supabase 응답을 해석하지 못했습니다")
         }
     }
 

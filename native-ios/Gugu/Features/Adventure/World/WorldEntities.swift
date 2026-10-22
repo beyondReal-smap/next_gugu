@@ -151,14 +151,24 @@ enum WorldFX {
     }
 
     /// 3D 텍스트 빌보드 — 항상 카메라를 향하는 라벨
+    /// 이름표 최대 폭(m) — 영어·일본어 이름은 한국어보다 길어 화면 밖으로 나가므로 이보다 넓으면 글자를 줄인다
+    static let billboardMaxWidth: Float = 4.2
+
     static func textBillboard(_ text: String, y: Float, size: CGFloat = 0.5, color: UIColor = .white) -> Entity {
-        let mesh = MeshResource.generateText(
-            text,
-            extrusionDepth: 0.01,
-            font: .systemFont(ofSize: size, weight: .bold),
-            containerFrame: .zero,
-            alignment: .center,
-            lineBreakMode: .byTruncatingTail)
+        func make(_ size: CGFloat) -> MeshResource {
+            MeshResource.generateText(
+                text,
+                extrusionDepth: 0.01,
+                font: .systemFont(ofSize: size, weight: .bold),
+                containerFrame: .zero,
+                alignment: .center,
+                lineBreakMode: .byTruncatingTail)
+        }
+        var mesh = make(size)
+        let width = mesh.bounds.extents.x
+        if width > billboardMaxWidth {
+            mesh = make(size * CGFloat(billboardMaxWidth / width))
+        }
         let label = ModelEntity(mesh: mesh, materials: [UnlitMaterial(color: color)])
         // 텍스트는 좌하단 기준 생성 → x 중앙 정렬 보정
         label.position = [-mesh.bounds.center.x, 0, 0]
@@ -171,7 +181,7 @@ enum WorldFX {
 
     /// NPC 이름 3D 라벨 (빌보드) — 머리 위에 떠서 항상 카메라를 향함
     static func nameLabel(_ def: NpcDef, defeated: Bool) -> Entity {
-        textBillboard("\(defeated ? "✓ " : "")\(def.name) · \(def.table)단",
+        textBillboard((defeated ? "✓ " : "") + String(localized: "\(def.name) · \(def.table)단", comment: "3D 월드 주민 머리 위 이름표 — 이름 · n단"),
                       y: def.kind == .boss ? 2.5 : 2.0)
     }
 

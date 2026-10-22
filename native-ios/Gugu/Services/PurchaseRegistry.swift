@@ -31,13 +31,13 @@ enum PurchaseRegistry {
         var errorDescription: String? {
             switch self {
             case .noPurchase:
-                return "기기에서 확인된 구매를 찾지 못했습니다"
+                return "기기에서 확인된 구매를 찾지 못했습니다"  // i18n:skip
             case .notVerified:
-                return "스토어가 이 구매를 확인하지 못했습니다"
+                return "스토어가 이 구매를 확인하지 못했습니다"  // i18n:skip
             case let .http(status, message):
-                return "구매 등록 응답 \(status): \(message)"
+                return "구매 등록 응답 \(status): \(message)"  // i18n:skip
             case .malformedResponse:
-                return "구매 등록 응답을 해석하지 못했습니다"
+                return "구매 등록 응답을 해석하지 못했습니다"  // i18n:skip
             }
         }
     }

@@ -9,6 +9,9 @@ struct ResultView: View {
 
     @Environment(GameStore.self) private var game
     @Environment(ReminderStore.self) private var reminder
+    @Environment(PushStore.self) private var push
+    @Environment(AuthStore.self) private var auth
+    @Environment(PremiumStore.self) private var premium
     @State private var confetti = 0
     @State private var levelUp = false
     @State private var reminderBusy = false
@@ -33,10 +36,10 @@ struct ResultView: View {
     }
 
     private var headline: String {
-        if def.scored { return commit.isNewBest ? "신기록 달성! 🏆" : "수고했어요!" }
-        if accuracy >= 95 { return "완벽해요! 🎯" }
-        if accuracy >= 70 { return "잘했어요!" }
-        return "좋은 시도예요!"
+        if def.scored { return commit.isNewBest ? String(localized: "신기록 달성! 🏆") : String(localized: "수고했어요!") }
+        if accuracy >= 95 { return String(localized: "완벽해요! 🎯") }
+        if accuracy >= 70 { return String(localized: "잘했어요!") }
+        return String(localized: "좋은 시도예요!")
     }
 
     @ViewBuilder
@@ -56,6 +59,12 @@ struct ResultView: View {
                 Text("매일 \(ReminderPlanner.hourLabel(offerHour))에 오늘의 구구단을 알려드려요. 밤에는 보내지 않아요.")
                     .font(.suite(.medium, 13)).foregroundStyle(Color.gg.textMuted)
                     .fixedSize(horizontal: false, vertical: true)
+                // 허용하면 공지 알림도 켠다 — 원격 푸시를 쓸 수 있는 빌드에서만 알린다
+                if push.isAvailable {
+                    Text(PushCopy.reminderOfferNoticeLine)
+                        .font(.suite(.medium, 13)).foregroundStyle(Color.gg.textMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 HStack(spacing: 8) {
                     GGButton(variant: .surface, size: .md, action: { reminder.declineOffer() }) {
                         Text("괜찮아요")
@@ -76,10 +85,16 @@ struct ResultView: View {
         Task {
             let hour = offerHour
             let granted = await reminder.enable(hour: hour, state: game.state)
+            if granted {
+                // 권한을 방금 받았으므로 시스템 팝업 없이 공지 알림을 켠다 (기존 사용자는 이 동의 전까지 꺼짐).
+                // 토큰·서버 등록은 시간이 걸릴 수 있어 카드를 기다리게 하지 않는다
+                let ctx = PushStore.Context.current(auth: auth, premium: premium, reminder: reminder)
+                Task { _ = await push.setNotice(true, ctx: ctx) }
+            }
             reminderBusy = false
             reminderNotice = granted
-                ? "매일 \(ReminderPlanner.hourLabel(hour))에 알려드릴게요. 프로필 > 설정에서 바꿀 수 있어요."
-                : "알림이 꺼져 있어요. 설정 앱에서 구구 어드벤처 알림을 켤 수 있어요."
+                ? String(localized: "매일 \(ReminderPlanner.hourLabel(hour))에 알려드릴게요. 프로필 > 설정에서 바꿀 수 있어요.")
+                : String(localized: "알림이 꺼져 있어요. 설정 앱에서 구구 어드벤처 알림을 켤 수 있어요.")
         }
     }
 
@@ -160,10 +175,10 @@ struct ResultView: View {
 
     private var statGrid: some View {
         LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-            stat(icon: "checkmark", tint: .gg.success, label: "정확도", value: "\(accuracy)%")
-            stat(icon: "gauge.medium", tint: .gg.accent, label: "평균 속도", value: String(format: "%.1f초", Double(avgMs) / 1000))
-            stat(icon: "sparkles", tint: .gg.warning, label: "획득 XP", value: "+\(commit.xpEarned)")
-            stat(icon: "flame.fill", tint: .gg.danger, label: "최고 콤보", value: "\(result.maxCombo)")
+            stat(icon: "checkmark", tint: .gg.success, label: String(localized: "정확도"), value: "\(accuracy)%")
+            stat(icon: "gauge.medium", tint: .gg.accent, label: String(localized: "평균 속도"), value: Seconds.text(Double(avgMs) / 1000))
+            stat(icon: "sparkles", tint: .gg.warning, label: String(localized: "획득 XP"), value: "+\(commit.xpEarned)")
+            stat(icon: "flame.fill", tint: .gg.danger, label: String(localized: "최고 콤보"), value: "\(result.maxCombo)")
         }
     }
 
@@ -210,7 +225,7 @@ struct ResultView: View {
                     }
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(a.a) 곱하기 \(KoreanReading.withTopic(a.b)) \(a.a * a.b). \(givenLabel(a) ?? "")")
+                .accessibilityLabel("\(SpokenMath.equationLabel(a.a, a.b)). \(givenLabel(a) ?? "")")
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -221,8 +236,8 @@ struct ResultView: View {
     /// 아이가 낸 답 — 빈칸 추리는 빈칸에 쓴 수, OX 는 고른 쪽
     private func givenLabel(_ a: AnswerRecord) -> String? {
         switch a.given {
-        case let .number(n): return "내 답 \(n)"
-        case let .boolean(b): return "내 선택 \(b ? "O" : "X")"
+        case let .number(n): return String(localized: "내 답 \(n)")
+        case let .boolean(b): return String(localized: "내 선택 \(OxPad.mark(b))", comment: "OX 퀴즈에서 아이가 고른 기호")
         case .text, .none: return nil
         }
     }
@@ -241,7 +256,8 @@ struct ResultView: View {
         .padding(.horizontal, 20).padding(.vertical, 16)
         .ggCard(padding: 0)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(table)단 마스터리 별 \(commit.newStars)개\(commit.improvedStars ? ", 새 기록" : "")")
+        .accessibilityLabel(commit.improvedStars ? "\(table)단 마스터리 별 \(commit.newStars)개, 새 기록"
+                                                  : "\(table)단 마스터리 별 \(commit.newStars)개")
     }
 
     private var actions: some View {

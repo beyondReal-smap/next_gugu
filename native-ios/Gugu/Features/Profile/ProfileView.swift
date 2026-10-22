@@ -8,10 +8,11 @@ struct ProfileView: View {
     @Environment(PremiumStore.self) private var premium
     @Environment(AuthStore.self) private var auth
     @Environment(SessionStore.self) private var session
+    /// 설정 시트 표시 — 알림 딥링크(settings/notifications)도 이 값을 연다
+    @Environment(Router.self) private var router
     /// 창 전체의 테마 — 앱 테마가 '기기 설정'이면 곧 기기 테마다 (설정 시트에 넘긴다)
     @Environment(\.colorScheme) private var colorScheme
 
-    @State private var showSettings = false
     @State private var selectedAchievement: AchievementDef?
 
     private let scoredModes: [GameMode] = [.challenge, .survival]
@@ -56,7 +57,10 @@ struct ProfileView: View {
         .background(Color.gg.bg.ignoresSafeArea())
         .scrollIndicators(.hidden)
         .statusBarBackdrop()
-        .sheet(isPresented: $showSettings) { SettingsView(deviceScheme: colorScheme) }
+        .sheet(isPresented: Binding(
+            get: { router.settingsOpen },
+            set: { router.settingsOpen = $0 }
+        )) { SettingsView(deviceScheme: colorScheme) }
         .sheet(item: $selectedAchievement) { AchievementDetailSheet(def: $0) }
     }
 
@@ -67,7 +71,7 @@ struct ProfileView: View {
             Spacer()
             Button {
                 Haptics.impact(.light)
-                showSettings = true
+                router.settingsOpen = true
             } label: {
                 Image(systemName: "gearshape.fill")
                     .font(.system(size: 20, weight: .semibold)).foregroundStyle(Color.gg.textMuted)
@@ -106,9 +110,9 @@ struct ProfileView: View {
 
     private var statsRow: some View {
         HStack(spacing: 12) {
-            miniStat("정답", "\(game.state.totalCorrect)")
-            miniStat("정확도", "\(accuracy)%")
-            miniStat("최고 콤보", "\(game.state.maxCombo)")
+            miniStat(String(localized: "정답"), "\(game.state.totalCorrect)")
+            miniStat(String(localized: "정확도"), "\(accuracy)%")
+            miniStat(String(localized: "최고 콤보"), "\(game.state.maxCombo)")
         }
     }
 
@@ -135,6 +139,8 @@ struct ProfileView: View {
                             .background(ModeStyle.tint(id).opacity(0.15), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                         VStack(alignment: .leading, spacing: 1) {
                             Text(Modes.def(id).name).font(.suite(.bold, 12)).foregroundStyle(Color.gg.textMuted)
+                                // 영어 모드명("60-Second Challenge")은 iPhone 카드 폭에서 잘려 두 줄까지 허용
+                                .lineLimit(2).minimumScaleFactor(0.85)
                             Text(best > 0 ? "\(best)점" : "—").font(.suite(.extrabold, 17)).foregroundStyle(Color.gg.text).monospacedDigit()
                         }
                         Spacer()
@@ -152,7 +158,7 @@ struct ProfileView: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("최근 정확도 추이").font(.suite(.bold, 14)).foregroundStyle(Color.gg.text)
-                    Text("최근 \(game.state.recentAccuracy.count)판 · 점선은 50%")
+                    Text(String(localized: "최근 \(game.state.recentAccuracy.count)판 · 점선은 50%"))
                         .font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
                 }
                 Spacer(minLength: 8)
@@ -207,7 +213,7 @@ struct ProfileView: View {
                         .padding(.horizontal, 12).padding(.vertical, 6)
                         .background(Color.gg.danger.opacity(0.1), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.gg.danger.opacity(0.2), lineWidth: 1))
-                        .accessibilityLabel(key.replacingOccurrences(of: "x", with: " 곱하기 "))
+                        .accessibilityLabel(Problems.parseKey(key).map { SpokenMath.factLabel($0.a, $0.b) } ?? key)
                 }
             }
         }
@@ -255,7 +261,7 @@ struct ProfileView: View {
                         .opacity(on ? 1 : 0.7)
                     }
                     .buttonStyle(PressScaleStyle())
-                    .accessibilityLabel("\(a.name), \(on ? "달성" : "진행 중")")
+                    .accessibilityLabel(on ? "\(a.name), 달성" : "\(a.name), 진행 중")
                 }
             }
         }
@@ -265,7 +271,7 @@ struct ProfileView: View {
     private var accountNudge: some View {
         Button {
             Haptics.impact(.light)
-            showSettings = true
+            router.settingsOpen = true
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: "person.badge.shield.checkmark")
@@ -306,7 +312,9 @@ struct ProfileView: View {
                         .font(.suite(.medium, 12)).foregroundStyle(.white.opacity(0.85))
                 }
                 Spacer(minLength: 4)
-                Text(premium.price).font(.suite(.extrabold, 14)).foregroundStyle(.white)
+                if let price = premium.price {
+                    Text(price).font(.suite(.extrabold, 14)).foregroundStyle(.white)
+                }
             }
             .padding(16)
             .background(

@@ -71,9 +71,9 @@ struct LearnView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("움직이며 연습하기").font(.suite(.bold, 14)).foregroundStyle(Color.gg.textMuted)
                 .accessibilityAddTraits(.isHeader)
-            gameLink("구구 점프", "정답을 골라 장애물 넘기", "figure.run") { router.runnerOpen = true }
-            gameLink("구구 레인", "길을 바꿔 피하고 정답 길로", "rectangle.split.1x2.fill") { router.laneOpen = true }
-            gameLink("구구 바구니", "정답 열매를 바구니로 쏙", "basket.fill",
+            gameLink(String(localized: "구구 점프"), String(localized: "정답을 골라 장애물 넘기"), "figure.run") { router.runnerOpen = true }
+            gameLink(String(localized: "구구 레인"), String(localized: "길을 바꿔 피하고 정답 길로"), "rectangle.split.1x2.fill") { router.laneOpen = true }
+            gameLink(String(localized: "구구 바구니"), String(localized: "정답 열매를 바구니로 쏙"), "basket.fill",
                      bg: Color(hex: "#794124"), fg: Color(hex: "#ffe7a3"), tint: Color.gg.warning) { router.basketOpen = true }
         }
     }
@@ -224,7 +224,8 @@ struct LearnView: View {
                 .strokeBorder(recommended ? Color.gg.accent.opacity(0.6) : Color.gg.border, lineWidth: recommended ? 1.5 : 1))
         }
         .buttonStyle(PressScaleStyle())
-        .accessibilityLabel("\(t)단 \(Modes.def(mode).name) 시작, 별 \(stars)개\(recommended ? ", 추천" : "")")
+        .accessibilityLabel(recommended ? "\(t)단 \(Modes.def(mode).name) 시작, 별 \(stars)개, 추천"
+                                        : "\(t)단 \(Modes.def(mode).name) 시작, 별 \(stars)개")
         .overlay(alignment: .topTrailing) {
             Button {
                 Haptics.impact(.light)

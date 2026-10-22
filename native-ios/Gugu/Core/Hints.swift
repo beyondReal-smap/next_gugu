@@ -34,28 +34,28 @@ enum Hints {
         }
 
         if b == 1 {
-            return CoachHint(title: "1을 곱하면 그대로예요",
-                             scaffold: "어떤 수에 1을 곱하면 그 수 그대로예요",
+            return CoachHint(title: String(localized: "1을 곱하면 그대로예요", comment: "암산 힌트 제목"),
+                             scaffold: String(localized: "어떤 수에 1을 곱하면 그 수 그대로예요", comment: "암산 힌트 풀이"),
                              full: "\(head) = \(a)")
         }
-        if b == 2 && a >= 3 { return steps("순서를 바꿔 두 번 더하기", "\(a) + \(a)") }
+        if b == 2 && a >= 3 { return steps(String(localized: "순서를 바꿔 두 번 더하기", comment: "암산 힌트 제목 — 3 × 2 를 2 × 3 처럼"), "\(a) + \(a)") }
 
         switch a {
-        case 2: return steps("두 번 더하기", "\(b) + \(b)")
-        case 3: return steps("2단에 한 번 더 더하기", "\(2 * b) + \(b)")
-        case 4: return steps("2단을 두 배로", "\(2 * b) + \(2 * b)")
+        case 2: return steps(String(localized: "두 번 더하기", comment: "암산 힌트 제목 — 2단"), "\(b) + \(b)")
+        case 3: return steps(String(localized: "2단에 한 번 더 더하기", comment: "암산 힌트 제목 — 3단"), "\(2 * b) + \(b)")
+        case 4: return steps(String(localized: "2단을 두 배로", comment: "암산 힌트 제목 — 4단"), "\(2 * b) + \(2 * b)")
         case 5:
             let counts = (1...b).map { String(5 * $0) }.joined(separator: ", ")
-            return CoachHint(title: "5씩 뛰어 세기",
-                             scaffold: "5씩 \(b)번 세어 봐요",
+            return CoachHint(title: String(localized: "5씩 뛰어 세기", comment: "암산 힌트 제목 — 5단"),
+                             scaffold: String(localized: "5씩 \(b)번 세어 봐요", comment: "암산 힌트 풀이 — %lld 는 횟수"),
                              full: "\(head) → \(counts)")
-        case 6: return steps("5단에 한 번 더 더하기", "\(5 * b) + \(b)")
-        case 7: return steps("5단과 2단 더하기", "\(5 * b) + \(2 * b)")
-        case 8: return steps("4단을 두 배로", "\(4 * b) + \(4 * b)")
-        case 9: return steps("10단에서 한 번 빼기", "\(10 * b) − \(b)")
+        case 6: return steps(String(localized: "5단에 한 번 더 더하기", comment: "암산 힌트 제목 — 6단"), "\(5 * b) + \(b)")
+        case 7: return steps(String(localized: "5단과 2단 더하기", comment: "암산 힌트 제목 — 7단"), "\(5 * b) + \(2 * b)")
+        case 8: return steps(String(localized: "4단을 두 배로", comment: "암산 힌트 제목 — 8단"), "\(4 * b) + \(4 * b)")
+        case 9: return steps(String(localized: "10단에서 한 번 빼기", comment: "암산 힌트 제목 — 9단"), "\(10 * b) − \(b)")
         default:
-            return CoachHint(title: "\(a)씩 \(b)번 더하기",
-                             scaffold: "\(a)씩 \(b)번 더해 봐요",
+            return CoachHint(title: String(localized: "\(a)씩 \(b)번 더하기", comment: "암산 힌트 제목 — 첫 %lld 를 둘째 %lld 번"),
+                             scaffold: String(localized: "\(a)씩 \(b)번 더해 봐요", comment: "암산 힌트 풀이 — 첫 %lld 를 둘째 %lld 번"),
                              full: "\(head) = \(p)")
         }
     }

@@ -93,7 +93,7 @@ final class SyncStore {
             return
         }
         guard let token = await auth.accessToken() else {
-            state = .failed("계정 세션이 없어 업로드를 건너뜁니다")
+            state = .failed("계정 세션이 없어 업로드를 건너뜁니다")  // i18n:skip
             return
         }
 
@@ -180,7 +180,7 @@ final class SyncStore {
             switch response.action {
             case .createLearner:
                 guard let learnerId = response.learnerId else {
-                    state = .failed("서버가 학습자 아이디를 주지 않았습니다")
+                    state = .failed("서버가 학습자 아이디를 주지 않았습니다")  // i18n:skip
                     return
                 }
                 try bind(learnerId: learnerId, userId: userId, auth: auth)

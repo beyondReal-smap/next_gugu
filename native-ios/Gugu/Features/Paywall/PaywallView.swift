@@ -18,10 +18,10 @@ struct PaywallView: View {
         let id = UUID(); let icon: String; let title: String; let desc: String
     }
     private let benefits: [Benefit] = [
-        Benefit(icon: "map.fill", title: "3D 어드벤처 전 지역", desc: "8개 지역 탐험 · 주민/보스 구구단 대결"),
-        Benefit(icon: "bolt.fill", title: "게임 모드 전부 해제", desc: "60초 챌린지 · 서바이벌 · 빈칸 추리 · OX 퀴즈"),
-        Benefit(icon: "figure.run", title: "움직이며 놀기 무제한", desc: "구구 점프 · 레인 · 바구니 (무료는 \(PremiumConfig.minigameTrialQuestions)문제 체험)"),
-        Benefit(icon: "infinity", title: "한 번 결제, 평생 소장", desc: "추가 결제 없음 · 업데이트 콘텐츠도 전부 포함"),
+        Benefit(icon: "map.fill", title: String(localized: "3D 어드벤처 전 지역"), desc: String(localized: "8개 지역 탐험 · 주민/보스 구구단 대결")),
+        Benefit(icon: "bolt.fill", title: String(localized: "게임 모드 전부 해제"), desc: String(localized: "60초 챌린지 · 서바이벌 · 빈칸 추리 · OX 퀴즈")),
+        Benefit(icon: "figure.run", title: String(localized: "움직이며 놀기 무제한"), desc: String(localized: "구구 점프 · 레인 · 바구니 (무료는 \(PremiumConfig.minigameTrialQuestions)문제 체험)")),
+        Benefit(icon: "infinity", title: String(localized: "한 번 결제, 평생 소장"), desc: String(localized: "추가 결제 없음 · 업데이트 콘텐츠도 전부 포함")),
     ]
 
     var body: some View {
@@ -139,7 +139,13 @@ struct PaywallView: View {
             Text("커피 한 잔 값으로,\n아이의 구구단 실력을")
                 .font(.suite(.extrabold, 24)).foregroundStyle(Color.gg.text)
                 .multilineTextAlignment(.center)
-            Text("딱 한 번 \(premium.price) — 모든 기능을 평생 이용해요")
+            Group {
+                if let price = premium.price {
+                    Text("딱 한 번 \(price) — 모든 기능을 평생 이용해요")
+                } else {
+                    Text("딱 한 번 결제로 모든 기능을 평생 이용해요")
+                }
+            }
                 .font(.suite(.bold, 14)).foregroundStyle(Color.gg.textMuted)
                 .multilineTextAlignment(.center)
         }
@@ -169,7 +175,12 @@ struct PaywallView: View {
     private var priceCard: some View {
         VStack(spacing: 4) {
             HStack(alignment: .lastTextBaseline, spacing: 6) {
-                Text(premium.price).font(.suite(.extrabold, 36)).foregroundStyle(Color.gg.text).monospacedDigit()
+                if let price = premium.price {
+                    Text(price).font(.suite(.extrabold, 36)).foregroundStyle(Color.gg.text).monospacedDigit()
+                } else {
+                    // 스토어 가격을 받기 전 — 금액 자리를 같은 높이로 비워 둔다
+                    ProgressView().frame(height: 44)
+                }
                 Text("· 딱 한 번").font(.suite(.bold, 14)).foregroundStyle(Color.gg.textMuted)
             }
             Text("정기 결제 아니에요 — 한 번 사면 끝!").font(.suite(.bold, 12)).foregroundStyle(Color.gg.textMuted)
@@ -208,7 +219,7 @@ struct PaywallView: View {
         .padding(.top, 16)
     }
 
-    private static let storeNotReadyNotice = "스토어 연결 준비 중이에요. 잠시 후 다시 시도해주세요."
+    private static let storeNotReadyNotice = String(localized: "스토어 연결 준비 중이에요. 잠시 후 다시 시도해주세요.")
 
     private func onPurchase() {
         guard premium.storeReady else {
@@ -223,8 +234,8 @@ struct PaywallView: View {
             switch result {
             case .ok: break // isPremium 변경 → onChange가 닫음
             case .cancelled: break
-            case .pending: notice = "구매가 대기 중이에요 (승인 필요)."
-            case .error: notice = "구매에 실패했어요. 잠시 후 다시 시도해주세요."
+            case .pending: notice = String(localized: "구매가 대기 중이에요 (승인 필요).")
+            case .error: notice = String(localized: "구매에 실패했어요. 잠시 후 다시 시도해주세요.")
             }
         }
     }
@@ -234,7 +245,7 @@ struct PaywallView: View {
         Task {
             let ok = await premium.restore()
             busy = false
-            notice = ok ? "구매가 복원되었어요! 🎉" : "복원할 구매 내역이 없어요."
+            notice = ok ? String(localized: "구매가 복원되었어요! 🎉") : String(localized: "복원할 구매 내역이 없어요.")
             // 이미 보유한 상품은 새 구매 플로우가 뜨지 않으므로, 복원 경로에서도
             // 서버 구매 등록과 보호자 권한을 시도한다.
             if ok { await sync.enableGuardianSync(auth: auth) }

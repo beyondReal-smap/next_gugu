@@ -15,7 +15,7 @@ struct LaneRunnerView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private static let laneNames = ["위", "가운데", "아래"]
+    private static let laneNames = [String(localized: "위"), String(localized: "가운데"), String(localized: "아래")]
     /// 스와이프로 인정하는 세로 이동 거리
     private static let swipeThreshold: CGFloat = 28
 
@@ -35,15 +35,15 @@ struct LaneRunnerView: View {
         switch game.outcome {
         case .correct:
             return LaneRunner.leveledUp(game)
-                ? "정답! 이제 속도 \(LaneRunner.level(score: game.score) + 1)단계로 빨라져요."
-                : "정답! \(answer ?? 0) 길로 통과했어요."
+                ? String(localized: "정답! 이제 속도 \(LaneRunner.level(score: game.score) + 1)단계로 빨라져요.")
+                : String(localized: "정답! \(answer ?? 0) 길로 통과했어요.")
         case .wrong:
-            guard let question = game.question else { return "아쉬워요!" }
-            return "아쉬워요! \(question.a) × \(question.b) = \(question.answer)"
+            guard let question = game.question else { return String(localized: "아쉬워요!") }
+            return String(localized: "아쉬워요! \(question.a) × \(question.b) = \(question.answer)")
         case .hit:
-            return "쿵! 장애물에 부딪혔어요."
+            return String(localized: "쿵! 장애물에 부딪혔어요.")
         case nil:
-            return quiz ? "정답 숫자가 있는 길로 옮겨요!" : "위아래로 길을 옮겨 장애물을 피해요."
+            return quiz ? String(localized: "정답 숫자가 있는 길로 옮겨요!") : String(localized: "위아래로 길을 옮겨 장애물을 피해요.")
         }
     }
 
@@ -169,18 +169,23 @@ struct LaneRunnerView: View {
                 Text("통과한 정답 길").font(.suite(.bold, 11)).foregroundStyle(Color(hex: "#c1d4c2"))
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
                     Text("\(game.score)").font(.suiteNum(.extrabold, 24)).foregroundStyle(Color(hex: "#f3f6e8"))
-                    Text("개").font(.suite(.bold, 11)).foregroundStyle(Color(hex: "#c1d4c2"))
+                    if let unit = SpokenMath.countSuffix {
+                        Text(unit).font(.suite(.bold, 11)).foregroundStyle(Color(hex: "#c1d4c2"))
+                    }
                 }
             }
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
                     Image(systemName: "trophy.fill").font(.system(size: 9, weight: .bold))
                     Text(engine.table == nil ? "전체 최고" : "\(engine.table!)단 최고").font(.suite(.bold, 11))
+                        .lineLimit(1).minimumScaleFactor(0.8)
                 }
                 .foregroundStyle(Color(hex: "#c1d4c2"))
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
                     Text("\(engine.selectedBest)").font(.suiteNum(.extrabold, 24)).foregroundStyle(Color(hex: "#dbef9e"))
-                    Text("개").font(.suite(.bold, 11)).foregroundStyle(Color(hex: "#dbef9e"))
+                    if let unit = SpokenMath.countSuffix {
+                        Text(unit).font(.suite(.bold, 11)).foregroundStyle(Color(hex: "#dbef9e"))
+                    }
                 }
             }
             Spacer()
@@ -332,7 +337,7 @@ struct LaneRunnerView: View {
         VStack(spacing: 12) {
             // 한 줄 고정 — 상태 문구가 길어져도(예: "정답을 기억해요") 줄이 늘어 아래 식이 밀리지 않게 한다
             HStack {
-                Text("\(engine.table == nil ? "전체 구구단" : "\(engine.table!)단") · \(quiz ? "정답 길 찾기" : "장애물 피하기")")
+                Text(verbatim: "\((engine.table.map { String(localized: "\($0)단") } ?? String(localized: "전체 구구단"))) · \(quiz ? String(localized: "정답 길 찾기") : String(localized: "장애물 피하기"))")  // i18n:skip 서식만 — 안쪽 문구는 각각 번역
                     .font(.suite(.bold, 12)).foregroundStyle(Color.gg.textMuted)
                     .lineLimit(1).minimumScaleFactor(0.8)
                 if let left = game.trialLeft { TrialProgressPill(left: left) }
@@ -365,7 +370,7 @@ struct LaneRunnerView: View {
                             .foregroundStyle(game.outcome == .correct ? Color.gg.success : Color.gg.textMuted)
                     }
                     .font(.suiteNum(.extrabold, 38))
-                    .accessibilityLabel("\(question.a) 곱하기 \(KoreanReading.withTopic(question.b))? \(laneSummary)")
+                    .accessibilityLabel("\(SpokenMath.questionLabel(question.a, question.b)) \(laneSummary)")
                 } else {
                     Text("장애물을 피해요!")
                         .font(.suite(.extrabold, 20))
@@ -400,10 +405,10 @@ struct LaneRunnerView: View {
     }
 
     private var statusLabel: String {
-        guard quiz, let gate = game.gate else { return "피한 장애물 \(game.dodged)개" }
-        if reveal { return game.outcome == .correct ? "통과!" : "정답을 기억해요" }
+        guard quiz, let gate = game.gate else { return String(localized: "피한 장애물 \(game.dodged)개") }
+        if reveal { return game.outcome == .correct ? String(localized: "통과!") : String(localized: "정답을 기억해요") }
         let seconds = max(0, gate.x - LaneRunner.judgeX) / LaneRunner.speed(score: game.score) / 1000
-        return String(format: "%.1f초", seconds)
+        return Seconds.text(seconds)
     }
 
     private var laneSummary: String {

@@ -76,7 +76,7 @@ final class AuthStore {
     func requestEmailCode(email: String) async {
         let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard trimmed.contains("@"), trimmed.count >= 5 else {
-            promotion = .failed("이메일 주소를 확인해 주세요")
+            promotion = .failed(String(localized: "이메일 주소를 확인해 주세요"))
             return
         }
         promotion = .sending
@@ -88,7 +88,7 @@ final class AuthStore {
                 return
             }
             guard let token = await accessToken() else {
-                promotion = .failed("계정 세션이 없어 연결할 수 없습니다")
+                promotion = .failed(String(localized: "계정 세션이 없어 연결할 수 없습니다"))
                 return
             }
             do {
@@ -115,7 +115,7 @@ final class AuthStore {
                 try await SupabaseAuth.requestLoginCode(email: email)
             case .link:
                 guard let token = await accessToken() else {
-                    promotion = .codeSent(email: email, purpose: purpose, error: "계정 세션이 없어 다시 보낼 수 없습니다")
+                    promotion = .codeSent(email: email, purpose: purpose, error: String(localized: "계정 세션이 없어 다시 보낼 수 없습니다"))
                     return
                 }
                 try await SupabaseAuth.requestEmailPromotion(accessToken: token, email: email)
@@ -137,7 +137,7 @@ final class AuthStore {
         guard case let .codeSent(email, purpose, _) = promotion else { return }
         let trimmed = code.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            promotion = .codeSent(email: email, purpose: purpose, error: "확인 코드를 입력해 주세요")
+            promotion = .codeSent(email: email, purpose: purpose, error: String(localized: "확인 코드를 입력해 주세요"))
             return
         }
         promotion = .verifying(email: email, purpose: purpose)
@@ -184,19 +184,19 @@ final class AuthStore {
         guard case let .http(_, code, message) = error else { return error.localizedDescription }
         switch code {
         case "over_email_send_rate_limit":
-            return "확인 메일을 방금 보냈어요. 잠시 뒤 다시 시도해 주세요."
+            return String(localized: "확인 메일을 방금 보냈어요. 잠시 뒤 다시 시도해 주세요.")
         case "over_request_rate_limit":
-            return "요청이 많아요. 잠시 뒤 다시 시도해 주세요."
+            return String(localized: "요청이 많아요. 잠시 뒤 다시 시도해 주세요.")
         case "email_address_invalid":
-            return "이 이메일 주소는 쓸 수 없어요. 다른 주소를 넣어 주세요."
+            return String(localized: "이 이메일 주소는 쓸 수 없어요. 다른 주소를 넣어 주세요.")
         case "email_exists", "user_already_exists":
-            return "이미 연결된 이메일이에요."
+            return String(localized: "이미 연결된 이메일이에요.")
         case "otp_expired":
             // 코드를 틀려도 서버는 이 코드로 답한다
-            return "확인 코드가 맞지 않거나 만료됐어요. 다시 확인해 주세요."
+            return String(localized: "확인 코드가 맞지 않거나 만료됐어요. 다시 확인해 주세요.")
         case "otp_disabled":
             // create_user=false 로그인에서 없는 주소일 때
-            return "이 이메일로 만든 계정이 없어요. 주소를 확인해 주세요."
+            return String(localized: "이 이메일로 만든 계정이 없어요. 주소를 확인해 주세요.")
         default:
             return message.isEmpty ? error.localizedDescription : message
         }

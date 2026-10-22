@@ -143,9 +143,10 @@ private struct CompassChip: View {
                         .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(tint(target))
                         .rotationEffect(.radians(angle(target)))
+                    // 영어·일본어 이름은 길어 두 줄까지 허용하고 넘치면 조금 줄인다
                     Text(label(target))
                         .font(.suite(.extrabold, 10)).foregroundStyle(.white)
-                        .lineLimit(1)
+                        .lineLimit(2).multilineTextAlignment(.center).minimumScaleFactor(0.8)
                 }
                 .frame(width: 74)
                 .padding(.vertical, 10)
@@ -176,8 +177,8 @@ private struct CompassChip: View {
     }
     private func label(_ t: Target) -> String {
         switch t {
-        case .npc(let n): return n.kind == .boss ? "보스!" : n.name
-        case .portal: return "포털"
+        case .npc(let n): return n.kind == .boss ? String(localized: "보스!") : n.name
+        case .portal: return String(localized: "포털")
         }
     }
 

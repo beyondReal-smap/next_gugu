@@ -29,9 +29,9 @@ final class ThemeStore {
 
     static func label(_ theme: Theme) -> String {
         switch theme {
-        case .system: return "기기 설정"
-        case .light: return "라이트"
-        case .dark: return "다크"
+        case .system: return String(localized: "기기 설정")
+        case .light: return String(localized: "라이트")
+        case .dark: return String(localized: "다크")
         }
     }
 }

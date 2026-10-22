@@ -20,11 +20,11 @@ enum LearningOutboxError: LocalizedError, Equatable {
     var errorDescription: String? {
         switch self {
         case let .full(limit):
-            return "학습 아웃박스 상한(\(limit)건)을 초과했습니다"
+            return "학습 아웃박스 상한(\(limit)건)을 초과했습니다"  // i18n:skip
         case let .conflictingEvent(eventId):
-            return "같은 아이디의 학습 이벤트 내용이 다릅니다 (\(eventId))"
+            return "같은 아이디의 학습 이벤트 내용이 다릅니다 (\(eventId))"  // i18n:skip
         case let .responseOutOfBatch(eventId):
-            return "서버가 현재 배치에 없는 이벤트를 반환했습니다 (\(eventId))"
+            return "서버가 현재 배치에 없는 이벤트를 반환했습니다 (\(eventId))"  // i18n:skip
         }
     }
 }

@@ -7,8 +7,20 @@ struct OxPad: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            choice(isTrue: true, color: .gg.success, icon: "circle", label: "맞아요")
-            choice(isTrue: false, color: .gg.danger, icon: "xmark", label: "아니에요")
+            // 영어권은 O/X 관습이 없어 ✓/✗ 로 보인다
+            choice(isTrue: true, color: .gg.success, icon: AppLanguage.current == .en ? "checkmark" : "circle",
+                   label: String(localized: "맞아요", comment: "OX 퀴즈 버튼 — 식이 맞다"))
+            choice(isTrue: false, color: .gg.danger, icon: "xmark",
+                   label: String(localized: "아니에요", comment: "OX 퀴즈 버튼 — 식이 틀리다"))
+        }
+    }
+
+    /// 고른 쪽 기호 — 한국어 O/X, 일본어 ○/×, 영어 ✓/✗
+    static func mark(_ isTrue: Bool) -> String {
+        switch AppLanguage.current {
+        case .ko: return isTrue ? "O" : "X"
+        case .ja: return isTrue ? "○" : "×"
+        case .en: return isTrue ? "✓" : "✗"
         }
     }
 
@@ -26,7 +38,7 @@ struct OxPad: View {
         }
         .buttonStyle(PressScaleStyle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(isTrue ? "맞아요, 맞는 식" : "아니에요, 틀린 식")
+        .accessibilityLabel(isTrue ? String(localized: "맞아요, 맞는 식") : String(localized: "아니에요, 틀린 식"))
         .accessibilityAddTraits(.isButton)
     }
 }

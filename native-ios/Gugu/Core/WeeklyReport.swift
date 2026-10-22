@@ -44,18 +44,21 @@ struct WeeklyReport: Equatable {
     /// 보호자에게 건네는 한마디 — 이번 주 기록에서 가장 도움이 될 행동 하나를 고른다
     var parentTip: String {
         if solved == 0 {
-            return "이번 주는 아직 기록이 없어요. 하루 5분, 한 판부터 함께 시작해 보세요."
+            return String(localized: "이번 주는 아직 기록이 없어요. 하루 5분, 한 판부터 함께 시작해 보세요.", comment: "주간 리포트 보호자 팁")
         }
         if let miss = topMisses.first, miss.count >= 2, let p = Problems.parseKey(miss.key) {
-            return "자주 헷갈리는 문제는 \(p.a) × \(KoreanReading.withCopula(p.b)). \(p.a)단 표를 소리 내어 함께 외워 보세요."
+            // 한국어는 식 끝에 받침 맞춘 서술격 조사("7 × 8이에요")를 붙인다 — 다른 언어는 식만
+            let fact = AppLanguage.current == .ko ? "\(p.a) × \(KoreanReading.withCopula(p.b))" : "\(p.a) × \(p.b)"
+            return String(localized: "자주 헷갈리는 문제는 \(fact). \(p.a)단 표를 소리 내어 함께 외워 보세요.",
+                          comment: "주간 리포트 보호자 팁 — %@ 는 식(7 × 8), %lld 는 단")
         }
         if activeDays < 3 {
-            return "짧게라도 매일 하는 습관이 가장 중요해요. 학습 알림을 켜 두면 도움이 돼요."
+            return String(localized: "짧게라도 매일 하는 습관이 가장 중요해요. 학습 알림을 켜 두면 도움이 돼요.", comment: "주간 리포트 보호자 팁")
         }
         if let accuracy, accuracy >= 90 {
-            return "정확도가 아주 좋아요! 60초 챌린지로 속도에도 도전해 보세요."
+            return String(localized: "정확도가 아주 좋아요! 60초 챌린지로 속도에도 도전해 보세요.", comment: "주간 리포트 보호자 팁")
         }
-        return "꾸준히 하고 있어요. 취약 문제 복습으로 헷갈리는 문제를 정리해 보세요."
+        return String(localized: "꾸준히 하고 있어요. 취약 문제 복습으로 헷갈리는 문제를 정리해 보세요.", comment: "주간 리포트 보호자 팁")
     }
 
     /// today 를 마지막 날로 하는 최근 7일 리포트
@@ -119,9 +122,21 @@ struct WeeklyReport: Equatable {
         return String(format: "%04d-%02d-%02d", c.year!, c.month!, c.day!)
     }
 
-    /// 요일 한 글자 — "2026-09-29" → "화"
+    /// 요일 한 글자 — "2026-09-29" → "화" (en "T", ja "火")
     static func weekdayLabel(_ date: String) -> String {
-        let labels = ["일", "월", "화", "수", "목", "금", "토"]
-        return labels[calendar.component(.weekday, from: parse(date)) - 1]
+        weekdaySymbols[calendar.component(.weekday, from: parse(date)) - 1]
     }
+
+    /// 요일 전체 이름 (화면 낭독용) — "화요일" / "Tuesday" / "火曜日"
+    static func weekdayName(_ date: String) -> String {
+        var c = calendar
+        c.locale = AppLanguage.formatLocale
+        return c.standaloneWeekdaySymbols[calendar.component(.weekday, from: parse(date)) - 1]
+    }
+
+    private static let weekdaySymbols: [String] = {
+        var c = calendar
+        c.locale = AppLanguage.formatLocale
+        return c.veryShortStandaloneWeekdaySymbols
+    }()
 }

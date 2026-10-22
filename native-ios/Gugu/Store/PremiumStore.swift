@@ -18,8 +18,9 @@ final class PremiumStore {
     /// (예전에는 결과가 비어도 true 가 돼서 "준비 중" 안내도 재조회도 없이 구매가 실패로 끝났다)
     var storeReady: Bool { product != nil }
 
-    /// 현지 가격 (스토어 연결 전 fallback)
-    var price: String { product?.displayPrice ?? PremiumConfig.fallbackPrice }
+    /// 스토어가 알려 준 현지 가격 — 상품을 받기 전에는 nil.
+    /// 고정 원화 값을 대신 보여 주면 해외 스토어에서 실제와 다른 통화·금액이 보이므로 쓰지 않는다
+    var price: String? { product?.displayPrice }
 
     private var updatesTask: Task<Void, Never>?
     /// 상품 조회가 동시에 두 번 나가지 않게 한다 — 시작 시 조회와 페이월 진입 조회가 겹칠 수 있다

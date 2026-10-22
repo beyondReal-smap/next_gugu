@@ -8,6 +8,7 @@ struct AccountSettingsCard: View {
     @Environment(AuthStore.self) private var auth
     @Environment(SyncStore.self) private var sync
     @Environment(PremiumStore.self) private var premium
+    @Environment(PushStore.self) private var push
 
     /// 로그아웃·계정 삭제까지 보일지 — 결제 직후 로그인 권유(페이월)에서는 로그인만 보여 준다
     var showsAccountManagement = true
@@ -39,8 +40,8 @@ struct AccountSettingsCard: View {
                         signedInSection
                     } else {
                         emailEntry(
-                            intro: "보호자 이메일로 이용권과 기록을 지켜요. 앱을 다시 설치하거나 기기를 바꿔도 같은 이메일로 로그인하면 이어서 쓸 수 있어요. 비밀번호는 필요 없어요.",
-                            hint: "이미 쓰던 이메일이 있으면 그 주소를 넣어 주세요."
+                            intro: String(localized: "보호자 이메일로 이용권과 기록을 지켜요. 앱을 다시 설치하거나 기기를 바꿔도 같은 이메일로 로그인하면 이어서 쓸 수 있어요. 비밀번호는 필요 없어요."),
+                            hint: String(localized: "이미 쓰던 이메일이 있으면 그 주소를 넣어 주세요.")
                         )
                     }
                 }
@@ -89,7 +90,7 @@ struct AccountSettingsCard: View {
                 }
 
                 if sync.restoreFailed {
-                    warningText("학습 기록을 불러오지 못했어요. 다음에 다시 시도할게요.")
+                    warningText(String(localized: "학습 기록을 불러오지 못했어요. 다음에 다시 시도할게요."))
                 }
 
                 if showsAccountManagement { deleteAccountSection }
@@ -146,7 +147,7 @@ struct AccountSettingsCard: View {
                     .font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
                     .fixedSize(horizontal: false, vertical: true)
                 if sync.pendingCount > 0 {
-                    warningText("다른 계정으로 로그인하면 아직 서버에 올리지 못한 학습 기록 \(sync.pendingCount)개는 서버에 남지 않아요.")
+                    warningText(String(localized: "다른 계정으로 로그인하면 아직 서버에 올리지 못한 학습 기록 \(sync.pendingCount)개는 서버에 남지 않아요."))
                 }
             }
             TextField("", text: $code, prompt: Text("확인 코드").foregroundStyle(Color.gg.textMuted))
@@ -166,6 +167,8 @@ struct AccountSettingsCard: View {
                     await auth.confirmEmailCode(code: code, onAccountSwitch: {
                         sync.resetForAccountChange()
                         premium.clearServerGrant()
+                        // 광고 동의는 계정에 묶인다 — 새 계정으로 다시 등록하면서 끈다
+                        push.resetForAccountSwitch()
                     })
                     if case .done = auth.promotion { code = "" }
                 }
@@ -201,27 +204,27 @@ struct AccountSettingsCard: View {
     private var signedInSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             accountRow(icon: "checkmark.seal.fill", tint: .gg.success,
-                       title: auth.email.map { "\($0) 로 로그인돼 있어요" } ?? "계정이 연결돼 있어요",
+                       title: auth.email.map { String(localized: "\($0) 로 로그인돼 있어요") } ?? String(localized: "계정이 연결돼 있어요"),
                        desc: premium.isPremium
-                           ? "다른 기기에서도 이 이메일로 로그인하면 이용권과 학습 기록을 이어서 쓸 수 있어요."
-                           : "다른 기기에서도 이 이메일로 로그인할 수 있어요. 학습 기록 보관은 이용권 사용자에게 켜져요.")
+                           ? String(localized: "다른 기기에서도 이 이메일로 로그인하면 이용권과 학습 기록을 이어서 쓸 수 있어요.")
+                           : String(localized: "다른 기기에서도 이 이메일로 로그인할 수 있어요. 학습 기록 보관은 이용권 사용자에게 켜져요."))
             Text("별·레벨·코인은 이 기기에만 저장돼요.")
                 .font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
                 .fixedSize(horizontal: false, vertical: true)
-            if showsAccountManagement { signOutControl(label: "로그아웃") }
+            if showsAccountManagement { signOutControl(label: String(localized: "로그아웃")) }
         }
     }
 
     private func reauthSection(rememberedEmail: String?) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             accountRow(icon: "exclamationmark.circle.fill", tint: .gg.warning,
-                       title: "다시 로그인해 주세요",
-                       desc: "로그인이 만료됐어요. 그동안 공부한 기록은 기기에 쌓아 두었다가 다시 로그인하면 올려요.")
-            emailEntry(intro: "보호자 이메일로 받은 6자리 코드를 넣으면 다시 로그인돼요.", hint: nil)
+                       title: String(localized: "다시 로그인해 주세요"),
+                       desc: String(localized: "로그인이 만료됐어요. 그동안 공부한 기록은 기기에 쌓아 두었다가 다시 로그인하면 올려요."))
+            emailEntry(intro: String(localized: "보호자 이메일로 받은 6자리 코드를 넣으면 다시 로그인돼요."), hint: nil)
                 .onAppear {
                     if email.isEmpty, let rememberedEmail { email = rememberedEmail }
                 }
-            if showsAccountManagement { signOutControl(label: "이 기기에서 로그아웃") }
+            if showsAccountManagement { signOutControl(label: String(localized: "이 기기에서 로그아웃")) }
         }
     }
 
@@ -236,7 +239,7 @@ struct AccountSettingsCard: View {
                     .font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
                     .fixedSize(horizontal: false, vertical: true)
                 if sync.pendingCount > 0 {
-                    warningText("아직 서버에 올리지 못한 학습 기록 \(sync.pendingCount)개는 로그아웃하면 서버에 남지 않아요.")
+                    warningText(String(localized: "아직 서버에 올리지 못한 학습 기록 \(sync.pendingCount)개는 로그아웃하면 서버에 남지 않아요."))
                 }
                 HStack(spacing: 8) {
                     GGButton(variant: .surface, size: .md, action: { confirmSignOut = false }) { Text("취소") }
@@ -270,9 +273,12 @@ struct AccountSettingsCard: View {
         guard !signingOut else { return }
         signingOut = true
         Task {
+            // 세션을 지우기 전에 지금 계정 토큰으로 푸시 기기 등록을 해제한다 (최대 5초, 실패해도 로그아웃은 계속)
+            await push.unregisterBeforeSignOut(accessToken: { await auth.accessToken() })
             await auth.signOut(onLocalSessionCleared: {
                 sync.resetForAccountChange()
                 premium.clearServerGrant()
+                push.resetForAccountSwitch()
             })
             signingOut = false
             confirmSignOut = false
@@ -343,13 +349,15 @@ struct AccountSettingsCard: View {
             let ok = await auth.deleteAccount(onLocalSessionCleared: {
                 sync.resetForAccountChange()
                 premium.clearServerGrant()
+                // 서버 purge 가 기기 행·동의 이력을 지웠다 — 광고 동의 초기화, 공지 토글은 유지
+                push.resetForAccountDeletion()
             })
             deletingAccount = false
             confirmDeleteAccount = false
             if ok { email = "" }
             deleteNotice = ok
-                ? "계정과 서버에 보관된 학습 기록을 지웠어요."
-                : "계정을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요."
+                ? String(localized: "계정과 서버에 보관된 학습 기록을 지웠어요.")
+                : String(localized: "계정을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요.")
         }
     }
 

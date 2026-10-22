@@ -25,13 +25,13 @@ struct BasketView: View {
         let question = game.question
         switch game.outcome {
         case .correct:
-            return game.combo >= 3 ? "\(game.combo)연속! 별이 반짝반짝!" : "쏙! 정답 열매를 받았어요!"
+            return game.combo >= 3 ? String(localized: "\(game.combo)연속! 별이 반짝반짝!") : String(localized: "쏙! 정답 열매를 받았어요!")
         case .wrong:
-            return "괜찮아요! \(question.a) × \(question.b) = \(question.answer)"
+            return String(localized: "괜찮아요! \(question.a) × \(question.b) = \(question.answer)")
         case .missed:
-            return "다음엔 받아봐요! 정답은 \(question.answer)"
+            return String(localized: "다음엔 받아봐요! 정답은 \(question.answer)")
         case nil:
-            return "정답 열매 아래로 바구니를 옮겨요!"
+            return String(localized: "정답 열매 아래로 바구니를 옮겨요!")
         }
     }
 
@@ -131,7 +131,9 @@ struct BasketView: View {
                 Image(systemName: "basket.fill").font(.system(size: 15, weight: .bold))
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
                     Text("\(game.score)").font(.suiteNum(.extrabold, 16))
-                    Text("개").font(.suite(.bold, 12))
+                    if let unit = SpokenMath.countSuffix {
+                        Text(unit).font(.suite(.bold, 12))
+                    }
                 }
             }
             .foregroundStyle(Color(hex: "#fff5db"))
@@ -175,7 +177,7 @@ struct BasketView: View {
 
     private var questionBar: some View {
         VStack(spacing: 4) {
-            Text("\(game.table == nil ? "전체 구구단" : "\(game.table!)단") · \(Basket.level(score: game.score))단계")
+            Text("\(game.table.map { String(localized: "\($0)단") } ?? String(localized: "전체 구구단")) · \(Basket.level(score: game.score))단계")
                 .font(.suite(.bold, 12)).foregroundStyle(Color.gg.textMuted)
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text("\(game.question.a)").foregroundStyle(Color.gg.text)
@@ -186,7 +188,7 @@ struct BasketView: View {
                     .foregroundStyle(game.outcome == .correct ? Color.gg.success : Color.gg.textMuted)
             }
             .font(.suiteNum(.extrabold, 30))
-            .accessibilityLabel("\(game.question.a) 곱하기 \(KoreanReading.withTopic(game.question.b))?")
+            .accessibilityLabel(SpokenMath.questionLabel(game.question.a, game.question.b))
             Text(feedback)
                 .font(.suite(.bold, 12))
                 .foregroundStyle(game.outcome == .wrong || game.outcome == .missed ? Color.gg.warning : Color.gg.textMuted)
@@ -231,7 +233,7 @@ struct BasketView: View {
 
     /// 누르고 있는 동안 계속 움직이고, 손을 떼면 멈춘다
     private func moveButton(direction: Int) -> some View {
-        let label = direction < 0 ? "왼쪽" : "오른쪽"
+        let label = direction < 0 ? String(localized: "왼쪽") : String(localized: "오른쪽")
         return HStack(spacing: 8) {
             Image(systemName: direction < 0 ? "arrow.left" : "arrow.right")
                 .font(.system(size: 20, weight: .bold))
@@ -263,7 +265,9 @@ struct BasketView: View {
                 VStack(spacing: 6) {
                     Text("열매 \(game.score)개를 모았어요!")
                         .font(.suite(.extrabold, 19)).foregroundStyle(Color.gg.text)
-                    Text("최고 \(game.maxCombo)연속 정답 · \(game.score > 0 && game.score >= engine.runBest ? "나의 최고 기록이에요!" : "토끼와 다시 놀아볼까요?")")
+                    Text(game.score > 0 && game.score >= engine.runBest
+                         ? "최고 \(game.maxCombo)연속 정답 · 나의 최고 기록이에요!"
+                         : "최고 \(game.maxCombo)연속 정답 · 토끼와 다시 놀아볼까요?")
                         .font(.suite(.medium, 13)).foregroundStyle(Color.gg.textMuted)
                         .multilineTextAlignment(.center)
                 }

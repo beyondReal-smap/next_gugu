@@ -29,10 +29,10 @@ struct BattleView: View {
                     ConfirmSheet(
                         icon: "figure.walk.departure",
                         tint: .gg.danger,
-                        title: "대결을 그만할까요?",
-                        message: "푼 문제는 기록되지만 승패는 남지 않아요.",
-                        cancelLabel: "계속 싸우기",
-                        confirmLabel: "그만하기",
+                        title: String(localized: "대결을 그만할까요?"),
+                        message: String(localized: "푼 문제는 기록되지만 승패는 남지 않아요."),
+                        cancelLabel: String(localized: "계속 싸우기"),
+                        confirmLabel: String(localized: "그만하기"),
                         onCancel: {
                             withAnimation(.easeOut(duration: 0.2)) { confirmFlee = false }
                             engine.resume()
@@ -132,7 +132,7 @@ struct BattleView: View {
                     .contentShape(Rectangle())
             }
             .accessibilityLabel("대결 그만하기")
-            Text("\(engine.isBossBattle ? "보스 대결" : Battle.styleName(engine.battleStyle)) · \(npc.table)단")
+            Text("\(engine.isBossBattle ? String(localized: "보스 대결") : Battle.styleName(engine.battleStyle)) · \(npc.table)단")
                 .font(.suite(.bold, 14)).foregroundStyle(Color.gg.textMuted)
             Spacer()
             if engine.combo >= 2 {
@@ -216,8 +216,8 @@ struct BattleView: View {
                 .minimumScaleFactor(0.6)
                 .lineLimit(1)
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(KoreanReading.question(engine.problem, mode: .practice, statement: nil))
-                .accessibilityValue(showAnswer ? battleExplanation(engine) : (engine.input.isEmpty ? "" : "입력 \(engine.input)"))
+                .accessibilityLabel(SpokenMath.question(engine.problem, mode: .practice, statement: nil))
+                .accessibilityValue(showAnswer ? battleExplanation(engine) : (engine.input.isEmpty ? "" : String(localized: "입력 \(engine.input)")))
                 .pinnedBelow(width: geo.size.width) {
                     if showAnswer {
                         Text(battleExplanation(engine))
@@ -232,10 +232,10 @@ struct BattleView: View {
 
     private func battleExplanation(_ engine: BattleEngine) -> String {
         let answer = engine.problem.a * engine.problem.b
-        if engine.timedOut { return "시간 초과! 정답은 \(answer) — \(npc.name)의 반격!" }
-        let fact = engine.lastGiven.map { KoreanReading.notButIs(given: $0, answer: answer) }
-            ?? "정답은 \(KoreanReading.withCopula(answer))"
-        return engine.battleStyle == .speed ? fact : "\(fact) — \(npc.name)의 반격!"
+        if engine.timedOut { return String(localized: "시간 초과! 정답은 \(answer) — \(npc.name)의 반격!") }
+        let fact = engine.lastGiven.map { SpokenMath.notButIs(given: $0, answer: answer) }
+            ?? SpokenMath.answerIs(answer)
+        return engine.battleStyle == .speed ? fact : String(localized: "\(fact) — \(npc.name)의 반격!")
     }
 
     private func statBar(value: Double, label: String, color: Color) -> some View {
@@ -258,9 +258,9 @@ struct BattleView: View {
     private func intro(_ engine: BattleEngine) -> some View {
         let rule: String = {
             switch engine.battleStyle {
-            case .speed: return "먼저 \(Battle.raceTarget)문제를 맞히면 승리!"
-            case .counter: return "\(engine.counterLimit / 1000)초 안에 못 풀면 반격당해요!"
-            case .hp: return engine.isBossBattle ? "HP가 절반이 되면 분노해요 — 조심!" : "정답이면 공격, 오답이면 반격!"
+            case .speed: return String(localized: "먼저 \(Battle.raceTarget)문제를 맞히면 승리!")
+            case .counter: return String(localized: "\(engine.counterLimit / 1000)초 안에 못 풀면 반격당해요!")
+            case .hp: return engine.isBossBattle ? String(localized: "HP가 절반이 되면 분노해요 — 조심!") : String(localized: "정답이면 공격, 오답이면 반격!")
             }
         }()
         return ZStack {
@@ -311,8 +311,8 @@ struct BattleView: View {
                     .background(Color.gg.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                 }
                 HStack(spacing: 10) {
-                    resultStat(icon: "sparkles", tint: .gg.warning, label: "획득 XP", value: "+\(end.commit.xpEarned)")
-                    resultStat(icon: "flame.fill", tint: .gg.danger, label: "최고 콤보", value: "\(engine.maxComboReached)")
+                    resultStat(icon: "sparkles", tint: .gg.warning, label: String(localized: "획득 XP"), value: "+\(end.commit.xpEarned)")
+                    resultStat(icon: "flame.fill", tint: .gg.danger, label: String(localized: "최고 콤보"), value: "\(engine.maxComboReached)")
                 }
                 if let table = end.commit.table {
                     HStack {
@@ -438,7 +438,7 @@ struct CounterTimer: View {
                     .monospacedDigit().frame(width: 44, alignment: .trailing)
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("반격까지 \(Int(ceil(left / 1000)))초")
+            .accessibilityLabel(String(localized: "반격까지 \(Int(ceil(left / 1000)))초"))
         }
     }
 }

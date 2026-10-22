@@ -19,14 +19,14 @@ enum AdvAchievements {
     }
 
     static let all: [AdvAchievementDef] = [
-        AdvAchievementDef(id: "adv_first_win", name: "첫 승리", description: "어드벤처에서 첫 대결 승리", icon: "Swords", check: { $0.battlesWon >= 1 }),
-        AdvAchievementDef(id: "adv_speed_win", name: "스피드 레이서", description: "스피드 레이스에서 승리", icon: "Gauge", check: { defeatedBySlot($0, "n2") }),
-        AdvAchievementDef(id: "adv_counter_win", name: "침착한 반격", description: "반격전에서 승리", icon: "Timer", check: { defeatedBySlot($0, "n3") }),
-        AdvAchievementDef(id: "adv_first_boss", name: "보스 사냥꾼", description: "첫 보스 격파", icon: "Crown", check: { clearedRegions($0) >= 1 }),
-        AdvAchievementDef(id: "adv_wins_10", name: "백전노장", description: "대결 10승 달성", icon: "Medal", check: { $0.battlesWon >= 10 }),
-        AdvAchievementDef(id: "adv_half_world", name: "절반의 정복", description: "지역 4개 클리어", icon: "Flag", check: { clearedRegions($0) >= 4 }),
-        AdvAchievementDef(id: "adv_world_clear", name: "구구단 정복자", description: "8개 지역 보스를 모두 격파", icon: "Trophy", check: { clearedRegions($0) >= World.regions.count }),
-        AdvAchievementDef(id: "adv_all_npcs", name: "완전 정복", description: "모든 주민과 보스를 격파", icon: "Gem", check: { p in World.regions.allSatisfy { r in r.npcs.allSatisfy { p.defeatedNpcs.contains($0.id) } } }),
+        AdvAchievementDef(id: "adv_first_win", name: String(localized: "첫 승리", comment: "어드벤처 업적 이름"), description: String(localized: "어드벤처에서 첫 대결 승리", comment: "어드벤처 업적 설명"), icon: "Swords", check: { $0.battlesWon >= 1 }),
+        AdvAchievementDef(id: "adv_speed_win", name: String(localized: "스피드 레이서", comment: "어드벤처 업적 이름"), description: String(localized: "스피드 레이스에서 승리", comment: "어드벤처 업적 설명"), icon: "Gauge", check: { defeatedBySlot($0, "n2") }),
+        AdvAchievementDef(id: "adv_counter_win", name: String(localized: "침착한 반격", comment: "어드벤처 업적 이름"), description: String(localized: "반격전에서 승리", comment: "어드벤처 업적 설명"), icon: "Timer", check: { defeatedBySlot($0, "n3") }),
+        AdvAchievementDef(id: "adv_first_boss", name: String(localized: "보스 사냥꾼", comment: "어드벤처 업적 이름"), description: String(localized: "첫 보스 격파", comment: "어드벤처 업적 설명"), icon: "Crown", check: { clearedRegions($0) >= 1 }),
+        AdvAchievementDef(id: "adv_wins_10", name: String(localized: "백전노장", comment: "어드벤처 업적 이름"), description: String(localized: "대결 10승 달성", comment: "어드벤처 업적 설명"), icon: "Medal", check: { $0.battlesWon >= 10 }),
+        AdvAchievementDef(id: "adv_half_world", name: String(localized: "절반의 정복", comment: "어드벤처 업적 이름"), description: String(localized: "지역 4개 클리어", comment: "어드벤처 업적 설명"), icon: "Flag", check: { clearedRegions($0) >= 4 }),
+        AdvAchievementDef(id: "adv_world_clear", name: String(localized: "구구단 정복자", comment: "어드벤처 업적 이름"), description: String(localized: "8개 지역 보스를 모두 격파", comment: "어드벤처 업적 설명"), icon: "Trophy", check: { clearedRegions($0) >= World.regions.count }),
+        AdvAchievementDef(id: "adv_all_npcs", name: String(localized: "완전 정복", comment: "어드벤처 업적 이름"), description: String(localized: "모든 주민과 보스를 격파", comment: "어드벤처 업적 설명"), icon: "Gem", check: { p in World.regions.allSatisfy { r in r.npcs.allSatisfy { p.defeatedNpcs.contains($0.id) } } }),
     ]
 
     static func newlyUnlocked(_ p: AdventureProgress) -> [String] {

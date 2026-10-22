@@ -82,10 +82,10 @@ private struct SessionPlayView: View {
 
             if confirmExit {
                 ConfirmSheet(
-                    title: "그만할까요?",
-                    message: "지금까지 푼 \(engine.answeredCount)문제는 기록돼요.",
-                    cancelLabel: "계속하기",
-                    confirmLabel: "그만하기",
+                    title: String(localized: "그만할까요?"),
+                    message: String(localized: "지금까지 푼 \(engine.answeredCount)문제는 기록돼요."),
+                    cancelLabel: String(localized: "계속하기"),
+                    confirmLabel: String(localized: "그만하기"),
                     onCancel: {
                         withAnimation(.easeOut(duration: 0.2)) { confirmExit = false }
                         engine.resume()
@@ -212,7 +212,7 @@ private struct SessionPlayView: View {
                 .minimumScaleFactor(0.6)
                 .lineLimit(1)
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel(KoreanReading.question(engine.problem, mode: engine.mode, statement: engine.statement))
+                .accessibilityLabel(SpokenMath.question(engine.problem, mode: engine.mode, statement: engine.statement))
                 .accessibilityValue(accessibilityAnswerState)
                 .pinnedAbove(spacing: 14) { feedbackMark }
                 .pinnedBelow(width: geo.size.width) {
@@ -295,9 +295,9 @@ private struct SessionPlayView: View {
 
     private var accessibilityAnswerState: String {
         switch engine.feedback {
-        case .correct: return "정답"
-        case .wrong: return "오답. \(wrongExplanation)"
-        case nil: return engine.input.isEmpty ? "" : "입력 \(engine.input)"
+        case .correct: return String(localized: "정답")
+        case .wrong: return String(localized: "오답. \(wrongExplanation)")
+        case nil: return engine.input.isEmpty ? "" : String(localized: "입력 \(engine.input)")
         }
     }
 
@@ -305,14 +305,14 @@ private struct SessionPlayView: View {
         let p = engine.problem
         let answer = p.a * p.b
         if engine.mode == .truefalse, let st = engine.statement {
-            return st.isTrue ? "맞는 식이었어요 — \(p.a) × \(p.b) = \(answer)"
-                             : "\(p.a) × \(p.b) = \(answer) — 틀린 식이에요"
+            return st.isTrue ? String(localized: "맞는 식이었어요 — \(p.a) × \(p.b) = \(answer)")
+                             : String(localized: "\(p.a) × \(p.b) = \(answer) — 틀린 식이에요")
         }
         let expected = engine.mode == .missing ? p.b : answer
         if let given = engine.lastGiven {
-            return KoreanReading.notButIs(given: given, answer: expected)
+            return SpokenMath.notButIs(given: given, answer: expected)
         }
-        return "정답은 \(KoreanReading.withCopula(expected))"
+        return SpokenMath.answerIs(expected)
     }
 }
 

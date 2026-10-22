@@ -168,14 +168,14 @@ struct HomeView: View {
     // 차근차근 배우기 — 시간 제한 없이 원리부터
     private var learnGroup: some View {
         VStack(alignment: .leading, spacing: 8) {
-            groupHeader("book.fill", "차근차근 배우기", "시간 제한 없이 원리부터", .gg.accent)
+            groupHeader("book.fill", String(localized: "차근차근 배우기"), String(localized: "시간 제한 없이 원리부터"), .gg.accent)
             Button {
                 Haptics.impact(.light)
                 router.tab = .learn
             } label: {
                 modeRowLabel(icon: ModeStyle.icon(.practice), tint: ModeStyle.tint(.practice),
-                             name: "학습", tagline: "원하는 단을 골라 또박또박",
-                             meta: "\(Modes.def(.practice).total)문제 · 단 선택", locked: false)
+                             name: Modes.def(.practice).name, tagline: String(localized: "원하는 단을 골라 또박또박"),
+                             meta: String(localized: "\(Modes.def(.practice).total)문제 · 단 선택"), locked: false)
             }
             .buttonStyle(PressScaleStyle())
             ForEach(learnModes, id: \.self) { sessionModeRow($0) }
@@ -185,7 +185,7 @@ struct HomeView: View {
     // 기록 도전 — 속도와 집중력
     private var recordGroup: some View {
         VStack(alignment: .leading, spacing: 8) {
-            groupHeader("trophy.fill", "기록 도전", "속도와 집중력으로 최고 기록", .gg.warning)
+            groupHeader("trophy.fill", String(localized: "기록 도전"), String(localized: "속도와 집중력으로 최고 기록"), .gg.warning)
             ForEach(recordModes, id: \.self) { sessionModeRow($0) }
         }
     }
@@ -193,22 +193,22 @@ struct HomeView: View {
     // 직접 움직이며 놀기 — 달리기·받기 미니게임
     private var playGroup: some View {
         VStack(alignment: .leading, spacing: 8) {
-            groupHeader("figure.run", "직접 움직이며 놀기", "달리고, 피하고, 정답을 받아요", .gg.emerald)
+            groupHeader("figure.run", String(localized: "직접 움직이며 놀기"), String(localized: "달리고, 피하고, 정답을 받아요"), .gg.emerald)
             gameCard(
-                title: "구구 바구니", badge: MinigameTrial.badge(isPremium: premium.isPremium) ?? "새 모드",
-                desc: "좌우로 움직여 정답 열매를 쏙 받아요!",
+                title: String(localized: "구구 바구니"), badge: MinigameTrial.badge(isPremium: premium.isPremium) ?? String(localized: "새 모드"),
+                desc: String(localized: "좌우로 움직여 정답 열매를 쏙 받아요!"),
                 icon: "basket.fill", iconBg: Color(hex: "#794124"), iconFg: Color(hex: "#ffe7a3"),
                 tint: Color.gg.warning
             ) { router.basketOpen = true }
             gameCard(
-                title: "구구 점프", badge: MinigameTrial.badge(isPremium: premium.isPremium),
-                desc: "정답을 고르면 폴짝! 장애물을 넘어요.",
+                title: String(localized: "구구 점프"), badge: MinigameTrial.badge(isPremium: premium.isPremium),
+                desc: String(localized: "정답을 고르면 폴짝! 장애물을 넘어요."),
                 icon: "figure.run", iconBg: Color(hex: "#153f35"), iconFg: Color(hex: "#dbef9e"),
                 tint: Color.gg.emerald
             ) { router.runnerOpen = true }
             gameCard(
-                title: "구구 레인", badge: MinigameTrial.badge(isPremium: premium.isPremium) ?? "새 모드",
-                desc: "길을 바꿔 피하고, 정답 길로 쏙!",
+                title: String(localized: "구구 레인"), badge: MinigameTrial.badge(isPremium: premium.isPremium) ?? String(localized: "새 모드"),
+                desc: String(localized: "길을 바꿔 피하고, 정답 길로 쏙!"),
                 icon: "rectangle.split.1x2.fill", iconBg: Color(hex: "#153f35"), iconFg: Color(hex: "#dbef9e"),
                 tint: Color.gg.emerald
             ) { router.laneOpen = true }
@@ -217,7 +217,7 @@ struct HomeView: View {
 
     private var adventureGroup: some View {
         VStack(alignment: .leading, spacing: 8) {
-            groupHeader("map.fill", "모험", "3D 월드를 탐험하며 대결", .gg.indigo)
+            groupHeader("map.fill", String(localized: "모험"), String(localized: "3D 월드를 탐험하며 대결"), .gg.indigo)
             adventureHero
         }
     }
@@ -275,7 +275,7 @@ struct HomeView: View {
         } label: {
             modeRowLabel(
                 icon: ModeStyle.icon(id), tint: ModeStyle.tint(id), name: m.name, tagline: m.tagline,
-                meta: best > 0 ? "최고 \(best)점 · \(modeMeta(id))" : "\(modeMeta(id)) · 전체 랜덤",
+                meta: best > 0 ? String(localized: "최고 \(best)점 · \(modeMeta(id))") : String(localized: "\(modeMeta(id)) · 전체 랜덤"),
                 locked: locked
             )
         }
@@ -312,9 +312,9 @@ struct HomeView: View {
     /// 카드에 적는 규칙 요약 (문제 수 / 제한 시간 / 하트)
     private func modeMeta(_ id: GameMode) -> String {
         let m = Modes.def(id)
-        if m.kind == .timed, let limit = m.timeLimitMs { return "\(limit / 1000)초 제한" }
-        if m.kind == .lives, let lives = m.lives { return "하트 \(lives)개" }
-        return "\(m.total)문제"
+        if m.kind == .timed, let limit = m.timeLimitMs { return String(localized: "\(limit / 1000)초 제한") }
+        if m.kind == .lives, let lives = m.lives { return String(localized: "하트 \(lives)개") }
+        return String(localized: "\(m.total)문제")
     }
 
     // MARK: 어드벤처 히어로

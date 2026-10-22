@@ -127,9 +127,10 @@ struct RegionMap: View {
                             Image(systemName: "crown.fill").font(.system(size: 13)).foregroundStyle(Color.gg.warning)
                         }
                     }
-                    Text(unlocked
-                         ? "주민 격파 \(stats.defeated)/\(stats.total)\(stats.bossDefeated ? " · 클리어!" : "")"
-                         : "이전 지역 보스를 이기면 열려요")
+                    // 보간 안의 문구는 번역되지 않으므로 클리어 여부별로 문장을 따로 둔다
+                    Text(!unlocked ? "이전 지역 보스를 이기면 열려요"
+                         : stats.bossDefeated ? "주민 격파 \(stats.defeated)/\(stats.total) · 클리어!"
+                         : "주민 격파 \(stats.defeated)/\(stats.total)")
                         .font(.suite(.regular, 13)).foregroundStyle(Color.gg.textMuted)
                 }
                 Spacer()

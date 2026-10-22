@@ -25,11 +25,11 @@ enum LearningApi {
         var message: String {
             switch self {
             case .childAccount:
-                return "아이 계정의 학습 기록은 서버에 올리지 않아요."
+                return String(localized: "아이 계정의 학습 기록은 서버에 올리지 않아요.", comment: "설정 기록 보관 안내")
             case .roleUnverified:
-                return "보호자 계정으로 확인되면 기록을 안전하게 보관해요."
+                return String(localized: "보호자 계정으로 확인되면 기록을 안전하게 보관해요.", comment: "설정 기록 보관 안내")
             case .ageUnverified:
-                return "보호자 성인 확인이 끝나면 기록 보관이 켜져요."
+                return String(localized: "보호자 성인 확인이 끝나면 기록 보관이 켜져요.", comment: "설정 기록 보관 안내")
             }
         }
     }
@@ -69,9 +69,9 @@ enum LearningApi {
         var message: String {
             switch self {
             case .anonymous:
-                return "이메일을 먼저 연결하면 기록 보관을 켤 수 있어요."
+                return String(localized: "이메일을 먼저 연결하면 기록 보관을 켤 수 있어요.", comment: "설정 기록 보관 안내")
             case .noPurchase:
-                return "이용권을 구매한 계정에서 기록 보관을 켤 수 있어요."
+                return String(localized: "이용권을 구매한 계정에서 기록 보관을 켤 수 있어요.", comment: "설정 기록 보관 안내")
             }
         }
     }
@@ -88,11 +88,11 @@ enum LearningApi {
             case let .permissionDenied(denial):
                 return denial.message
             case let .http(status, code, message):
-                return "학습 서버 응답 \(status)\(code.map { " (\($0))" } ?? ""): \(message)"
+                return "학습 서버 응답 \(status)\(code.map { " (\($0))" } ?? ""): \(message)"  // i18n:skip
             case .malformedResponse:
-                return "학습 서버 응답을 해석하지 못했습니다"
+                return "학습 서버 응답을 해석하지 못했습니다"  // i18n:skip
             case let .offline(underlying):
-                return "학습 서버에 연결하지 못했습니다: \(underlying)"
+                return "학습 서버에 연결하지 못했습니다: \(underlying)"  // i18n:skip
             }
         }
 
@@ -158,14 +158,16 @@ enum LearningApi {
 
     // MARK: - 내부
 
-    private static func send<T: Decodable>(
-        path: String, method: String, accessToken: String, body: Data?
+    /// 공통 요청 — 푸시 API(PushApi)도 같은 UA·인증·오류 해석을 쓴다.
+    /// `timeout` 은 로그아웃 직전 해제처럼 오래 기다릴 수 없는 호출에서 줄인다.
+    static func send<T: Decodable>(
+        path: String, method: String, accessToken: String, body: Data?, timeout: TimeInterval = 30
     ) async throws -> T {
         guard let url = URL(string: base + path) else { throw ApiError.malformedResponse }
 
         var request = URLRequest(url: url)
         request.httpMethod = method
-        request.timeoutInterval = 30
+        request.timeoutInterval = timeout
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         if body != nil {

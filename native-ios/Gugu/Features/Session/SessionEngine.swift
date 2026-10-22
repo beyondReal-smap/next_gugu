@@ -323,7 +323,7 @@ final class SessionEngine {
 
     // MARK: - 뷰 편의
 
-    var modeName: String { review ? "취약 문제 복습" : def.name }
+    var modeName: String { review ? String(localized: "취약 문제 복습") : def.name }
     var modeKind: ModeKind { def.kind }
     var total: Int { sessionTotal }
     var maxLives: Int { def.lives ?? 3 }

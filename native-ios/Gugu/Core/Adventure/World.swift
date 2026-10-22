@@ -124,7 +124,7 @@ enum World {
                 hp: npcHp(.normal, table),
                 attack: npcAttack(.normal, table),
                 color: seed.color,
-                greeting: seed.greeting ?? "\(table)단으로 승부하자!"
+                greeting: seed.greeting ?? String(localized: "\(table)단으로 승부하자!", comment: "일반 주민 인사말 — %lld 는 단")
             )
         }
         list.append(NpcDef(
@@ -137,7 +137,7 @@ enum World {
             hp: npcHp(.boss, table),
             attack: npcAttack(.boss, table),
             color: boss.color,
-            greeting: boss.greeting ?? "이 지역의 보스다. \(table)단, 각오는 됐지?"
+            greeting: boss.greeting ?? String(localized: "이 지역의 보스다. \(table)단, 각오는 됐지?", comment: "보스 기본 인사말 — %lld 는 단")
         ))
         return list
     }
@@ -170,84 +170,84 @@ enum World {
 
     static let regions: [RegionDef] = [
         buildRegion(RegionSeed(
-            table: 2, name: "새싹 들판", deco: .tree,
+            table: 2, name: String(localized: "새싹 들판", comment: "어드벤처 지역 이름"), deco: .tree,
             theme: RegionTheme(ground: "#7ec850", accent: "#3e9b4f", sky: "#bfe3ff"),
             normals: [
-                NpcSeed(name: "토끼 로로", color: "#f4f1ea"),
-                NpcSeed(name: "다람쥐 콩이", color: "#c98a4b"),
-                NpcSeed(name: "두더지 두두", color: "#8a6f5c"),
+                NpcSeed(name: String(localized: "토끼 로로", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#f4f1ea"),
+                NpcSeed(name: String(localized: "다람쥐 콩이", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#c98a4b"),
+                NpcSeed(name: String(localized: "두더지 두두", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#8a6f5c"),
             ],
-            boss: NpcSeed(name: "들판지기 곰곰", color: "#7a5230", greeting: "들판을 지나가려면 2단쯤은 술술 나와야지!")
+            boss: NpcSeed(name: String(localized: "들판지기 곰곰", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#7a5230", greeting: String(localized: "들판을 지나가려면 2단쯤은 술술 나와야지!", comment: "보스 인사말"))
         )),
         buildRegion(RegionSeed(
-            table: 3, name: "노을 사막", deco: .rock,
+            table: 3, name: String(localized: "노을 사막", comment: "어드벤처 지역 이름"), deco: .rock,
             theme: RegionTheme(ground: "#e8c07a", accent: "#c98d52", sky: "#ffd9a0"),
             normals: [
-                NpcSeed(name: "여우 사샤", color: "#e07b39"),
-                NpcSeed(name: "도마뱀 리지", color: "#a3b86c"),
-                NpcSeed(name: "미어캣 모모", color: "#d9b38c"),
+                NpcSeed(name: String(localized: "여우 사샤", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#e07b39"),
+                NpcSeed(name: String(localized: "도마뱀 리지", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#a3b86c"),
+                NpcSeed(name: String(localized: "미어캣 모모", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#d9b38c"),
             ],
-            boss: NpcSeed(name: "사막의 왕 카오", color: "#b3541e", greeting: "사막의 태양보다 뜨거운 3단 대결이다!")
+            boss: NpcSeed(name: String(localized: "사막의 왕 카오", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#b3541e", greeting: String(localized: "사막의 태양보다 뜨거운 3단 대결이다!", comment: "보스 인사말"))
         )),
         buildRegion(RegionSeed(
-            table: 4, name: "파도 해변", deco: .rock,
+            table: 4, name: String(localized: "파도 해변", comment: "어드벤처 지역 이름"), deco: .rock,
             theme: RegionTheme(ground: "#f2e2b8", accent: "#35a7c2", sky: "#a7dcf0"),
             normals: [
-                NpcSeed(name: "게 집게", color: "#e2593b"),
-                NpcSeed(name: "갈매기 끼룩", color: "#eef2f5"),
-                NpcSeed(name: "거북 토토", color: "#4a9b6e"),
+                NpcSeed(name: String(localized: "게 집게", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#e2593b"),
+                NpcSeed(name: String(localized: "갈매기 끼룩", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#eef2f5"),
+                NpcSeed(name: String(localized: "거북 토토", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#4a9b6e"),
             ],
-            boss: NpcSeed(name: "파도술사 옥토", color: "#5a6ec7", greeting: "파도처럼 밀려오는 4단을 견뎌봐라!")
+            boss: NpcSeed(name: String(localized: "파도술사 옥토", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#5a6ec7", greeting: String(localized: "파도처럼 밀려오는 4단을 견뎌봐라!", comment: "보스 인사말"))
         )),
         buildRegion(RegionSeed(
-            table: 5, name: "버섯 숲", deco: .tree,
+            table: 5, name: String(localized: "버섯 숲", comment: "어드벤처 지역 이름"), deco: .tree,
             theme: RegionTheme(ground: "#4e8f57", accent: "#c96f4a", sky: "#a8d8b0"),
             normals: [
-                NpcSeed(name: "버섯돌이 뽀삐", color: "#d95d4e"),
-                NpcSeed(name: "올빼미 부엉", color: "#8d7a63"),
-                NpcSeed(name: "사슴 다다", color: "#b98a5a"),
+                NpcSeed(name: String(localized: "버섯돌이 뽀삐", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#d95d4e"),
+                NpcSeed(name: String(localized: "올빼미 부엉", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#8d7a63"),
+                NpcSeed(name: String(localized: "사슴 다다", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#b98a5a"),
             ],
-            boss: NpcSeed(name: "숲의 현자 무무", color: "#5b7a4a", greeting: "숲의 지혜를 시험하마. 5단이다!")
+            boss: NpcSeed(name: String(localized: "숲의 현자 무무", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#5b7a4a", greeting: String(localized: "숲의 지혜를 시험하마. 5단이다!", comment: "보스 인사말"))
         )),
         buildRegion(RegionSeed(
-            table: 6, name: "눈꽃 설원", deco: .crystal,
+            table: 6, name: String(localized: "눈꽃 설원", comment: "어드벤처 지역 이름"), deco: .crystal,
             theme: RegionTheme(ground: "#e8f1f7", accent: "#9cc3d5", sky: "#d7e9f5"),
             normals: [
-                NpcSeed(name: "펭귄 핑핑", color: "#3c4652"),
-                NpcSeed(name: "물개 살살", color: "#9aa7b5"),
-                NpcSeed(name: "눈토끼 하양", color: "#ffffff"),
+                NpcSeed(name: String(localized: "펭귄 핑핑", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#3c4652"),
+                NpcSeed(name: String(localized: "물개 살살", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#9aa7b5"),
+                NpcSeed(name: String(localized: "눈토끼 하양", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#ffffff"),
             ],
-            boss: NpcSeed(name: "얼음마녀 서리", color: "#6fa8dc", greeting: "6단이 얼어붙기 전에 답해 보시지!")
+            boss: NpcSeed(name: String(localized: "얼음마녀 서리", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#6fa8dc", greeting: String(localized: "6단이 얼어붙기 전에 답해 보시지!", comment: "보스 인사말"))
         )),
         buildRegion(RegionSeed(
-            table: 7, name: "반딧불 늪", deco: .tree,
+            table: 7, name: String(localized: "반딧불 늪", comment: "어드벤처 지역 이름"), deco: .tree,
             theme: RegionTheme(ground: "#4f6b52", accent: "#86c06c", sky: "#55666e"),
             normals: [
-                NpcSeed(name: "개구리 팝팝", color: "#6cbf5a"),
-                NpcSeed(name: "반딧불 반반", color: "#ffe066"),
-                NpcSeed(name: "수달 찰랑", color: "#8a6f52"),
+                NpcSeed(name: String(localized: "개구리 팝팝", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#6cbf5a"),
+                NpcSeed(name: String(localized: "반딧불 반반", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#ffe066"),
+                NpcSeed(name: String(localized: "수달 찰랑", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#8a6f52"),
             ],
-            boss: NpcSeed(name: "늪의 마법사 그림", color: "#4a5d7a", greeting: "늪에서 빠져나가고 싶다면 7단을 외워라!")
+            boss: NpcSeed(name: String(localized: "늪의 마법사 그림", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#4a5d7a", greeting: String(localized: "늪에서 빠져나가고 싶다면 7단을 외워라!", comment: "보스 인사말"))
         )),
         buildRegion(RegionSeed(
-            table: 8, name: "용암 화산", deco: .rock,
+            table: 8, name: String(localized: "용암 화산", comment: "어드벤처 지역 이름"), deco: .rock,
             theme: RegionTheme(ground: "#6b4a44", accent: "#e2593b", sky: "#f0a884"),
             normals: [
-                NpcSeed(name: "도롱뇽 라바", color: "#e2593b"),
-                NpcSeed(name: "박쥐 까망", color: "#3c3744"),
-                NpcSeed(name: "불꽃정령 화르", color: "#ff8c42"),
+                NpcSeed(name: String(localized: "도롱뇽 라바", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#e2593b"),
+                NpcSeed(name: String(localized: "박쥐 까망", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#3c3744"),
+                NpcSeed(name: String(localized: "불꽃정령 화르", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#ff8c42"),
             ],
-            boss: NpcSeed(name: "용암대장 부글", color: "#b3341e", greeting: "펄펄 끓는 8단 맛 좀 볼래?")
+            boss: NpcSeed(name: String(localized: "용암대장 부글", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#b3341e", greeting: String(localized: "펄펄 끓는 8단 맛 좀 볼래?", comment: "보스 인사말"))
         )),
         buildRegion(RegionSeed(
-            table: 9, name: "별빛 성", deco: .crystal,
+            table: 9, name: String(localized: "별빛 성", comment: "어드벤처 지역 이름"), deco: .crystal,
             theme: RegionTheme(ground: "#5a5d8a", accent: "#ffd166", sky: "#2e3160"),
             normals: [
-                NpcSeed(name: "기사 은별", color: "#c0c8d8"),
-                NpcSeed(name: "마법사 루나", color: "#8a6fd1"),
-                NpcSeed(name: "유령 휘휘", color: "#dfe6f0"),
+                NpcSeed(name: String(localized: "기사 은별", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#c0c8d8"),
+                NpcSeed(name: String(localized: "마법사 루나", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#8a6fd1"),
+                NpcSeed(name: String(localized: "유령 휘휘", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#dfe6f0"),
             ],
-            boss: NpcSeed(name: "구구단 대마왕", color: "#4a3670", greeting: "드디어 왔군. 9단… 최후의 대결이다!")
+            boss: NpcSeed(name: String(localized: "구구단 대마왕", comment: "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)"), color: "#4a3670", greeting: String(localized: "드디어 왔군. 9단… 최후의 대결이다!", comment: "보스 인사말"))
         )),
     ]
 

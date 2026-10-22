@@ -18,7 +18,7 @@ struct DailyGoalSheet: View {
             ChoiceChips(
                 options: SettingsView.dailyGoalOptions,
                 selected: game.state.dailyGoal,
-                label: { "\($0)개" }
+                label: { String(localized: "\($0)개") }
             ) { goal in
                 game.setDailyGoal(goal)
                 Task { await reminder.reschedule(state: game.state) }
@@ -35,10 +35,10 @@ struct DailyGoalSheet: View {
 
     private func hint(for goal: Int) -> String {
         switch goal {
-        case ..<15: return "가볍게 — 한 판(10문제)이면 거의 채워요"
-        case ..<25: return "보통 — 두 판쯤이면 채워요"
-        case ..<40: return "열심히 — 세 판쯤이면 채워요"
-        default: return "도전 — 다섯 판쯤이면 채워요"
+        case ..<15: return String(localized: "가볍게 — 한 판(10문제)이면 거의 채워요")
+        case ..<25: return String(localized: "보통 — 두 판쯤이면 채워요")
+        case ..<40: return String(localized: "열심히 — 세 판쯤이면 채워요")
+        default: return String(localized: "도전 — 다섯 판쯤이면 채워요")
         }
     }
 }

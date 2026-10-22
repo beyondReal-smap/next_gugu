@@ -142,7 +142,7 @@ struct ShopView: View {
         return Button { tapHat(h) } label: {
             HStack(spacing: 12) {
                 Text(h?.emoji ?? "🚫").font(.system(size: 26)).frame(width: 40)
-                Text(h?.name ?? "모자 없음").font(.suite(.bold, 15)).foregroundStyle(Color.gg.text)
+                Text(h?.name ?? String(localized: "모자 없음")).font(.suite(.bold, 15)).foregroundStyle(Color.gg.text)
                 Spacer()
                 if equipped {
                     Text("장착중").font(.suite(.extrabold, 12)).foregroundStyle(Color.gg.accent)
@@ -199,7 +199,7 @@ struct ShopView: View {
             Haptics.success()
         } else {
             Haptics.warning()
-            notice = "별 조각이 부족해요 — ⭐\(c.price)개가 필요해요"
+            notice = String(localized: "별 조각이 부족해요 — ⭐\(c.price)개가 필요해요")
         }
     }
 
@@ -219,7 +219,7 @@ struct ShopView: View {
             Haptics.success()
         } else {
             Haptics.warning()
-            notice = "별 조각이 부족해요 — ⭐\(h.price)개가 필요해요"
+            notice = String(localized: "별 조각이 부족해요 — ⭐\(h.price)개가 필요해요")
         }
     }
 }

@@ -16,4 +16,10 @@ final class Router {
     var laneOpen: Bool = false
     /// 구구 바구니 전체화면 오버레이
     var basketOpen: Bool = false
+    /// 설정 시트 (프로필 톱니바퀴·알림 딥링크 settings/notifications)
+    var settingsOpen: Bool = false
+    /// 설정 시트를 열면서 알림 섹션으로 내려갈지
+    var settingsFocusNotifications: Bool = false
+    /// 알림을 눌러 들어온 이동 — 온보딩·세션·미니게임이 끝난 뒤 RootView 가 적용하고 비운다
+    var pendingRoute: PushRoute?
 }

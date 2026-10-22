@@ -107,7 +107,7 @@ enum LearningValidationError: LocalizedError, Equatable {
 
     var errorDescription: String? {
         switch self {
-        case let .field(name): return "학습 이벤트 \(name) 형식이 올바르지 않습니다"
+        case let .field(name): return "학습 이벤트 \(name) 형식이 올바르지 않습니다"  // i18n:skip
         }
     }
 }

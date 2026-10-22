@@ -41,12 +41,19 @@ enum ReminderPlanner {
         min(max(hour, allowedHours.lowerBound), allowedHours.upperBound)
     }
 
-    /// "오전 9시" · "낮 12시" · "오후 6시"
+    /// "오전 9시" · "낮 12시" · "오후 6시" (en "9 AM", ja "9時" — 그 언어의 시각 서식)
     static func hourLabel(_ hour: Int) -> String {
+        guard AppLanguage.current == .ko else {
+            let f = DateFormatter()
+            f.locale = AppLanguage.formatLocale
+            f.timeZone = TimeZone(identifier: "UTC")
+            f.setLocalizedDateFormatFromTemplate("j")   // 그 지역의 시(hour) 서식 — 12/24시간제 포함
+            return f.string(from: Date(timeIntervalSince1970: TimeInterval(hour * 3600)))
+        }
         switch hour {
-        case 12: return "낮 12시"
-        case 13...: return "오후 \(hour - 12)시"
-        default: return "오전 \(hour)시"
+        case 12: return "낮 12시"  // i18n:skip
+        case 13...: return "오후 \(hour - 12)시"  // i18n:skip
+        default: return "오전 \(hour)시"  // i18n:skip
         }
     }
 
@@ -114,23 +121,29 @@ enum ReminderPlanner {
         // 오늘 조금 했지만 목표 전 — 남은 개수가 가장 구체적인 동기다
         if isToday && studiedToday {
             let remaining = max(1, state.dailyGoal - state.dailyCorrect)
-            return ("조금만 더!", "오늘 목표까지 정답 \(remaining)개 남았어요.")
+            return (String(localized: "조금만 더!", comment: "학습 알림 제목"),
+                    String(localized: "오늘 목표까지 정답 \(remaining)개 남았어요.", comment: "학습 알림 본문 — %lld 는 남은 정답 수"))
         }
         // 어제 학습했다면 오늘 하면 연속 기록이 이어진다
         if daysSinceLastPlay == 1 && state.streak > 0 {
-            return ("연속 기록 이어가기",
-                    "\(state.streak)일 연속 중이에요! 오늘도 한 판 하면 \(state.streak + 1)일째예요.")
+            return (String(localized: "연속 기록 이어가기", comment: "학습 알림 제목"),
+                    String(localized: "\(state.streak)일 연속 중이에요! 오늘도 한 판 하면 \(state.streak + 1)일째예요.",
+                           comment: "학습 알림 본문 — 첫 %lld 는 연속 일수, 둘째는 오늘 하면 되는 일수"))
         }
         // 한동안 쉬었다면 부담 없이 다시 시작하자는 말로 — 죄책감을 주는 문구는 쓰지 않는다
         if daysSinceLastPlay > dailyWindowDays {
-            return ("다시 시작해요", "오랜만이에요! 구구단 한 판으로 가볍게 시작해 볼까요?")
+            return (String(localized: "다시 시작해요", comment: "학습 알림 제목"),
+                    String(localized: "오랜만이에요! 구구단 한 판으로 가볍게 시작해 볼까요?", comment: "학습 알림 본문 — 죄책감을 주지 않는 말투"))
         }
         // 약점 복습과 일반 권유를 번갈아 보내 같은 문구가 반복되지 않게 한다
         if !weakFacts.isEmpty && index % 2 == 0 {
             let key = weakFacts[(index / 2) % weakFacts.count]
-            return ("약점 복습", "\(key.replacingOccurrences(of: "x", with: " × ")), 다시 도전해 볼까요?")
+            let fact = key.replacingOccurrences(of: "x", with: " × ")
+            return (String(localized: "약점 복습", comment: "학습 알림 제목"),
+                    String(localized: "\(fact), 다시 도전해 볼까요?", comment: "학습 알림 본문 — %@ 는 식(7 × 8)"))
         }
-        return ("오늘의 구구단", "오늘도 한 판 어때요? 목표는 정답 \(state.dailyGoal)개예요.")
+        return (String(localized: "오늘의 구구단", comment: "학습 알림 제목"),
+                String(localized: "오늘도 한 판 어때요? 목표는 정답 \(state.dailyGoal)개예요.", comment: "학습 알림 본문 — %lld 는 하루 목표 정답 수"))
     }
 
     /// 많이 틀린 순서(같으면 식 이름순)로 정렬한 식 목록 — 순서가 결정적이어야 테스트가 안정된다

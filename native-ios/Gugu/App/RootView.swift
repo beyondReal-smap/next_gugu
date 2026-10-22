@@ -13,6 +13,9 @@ struct RootView: View {
     @State private var sync = SyncStore()
     @State private var reminder = ReminderStore()
     @State private var prefs = PrefsStore()
+    @State private var push = PushStore()
+    /// AppDelegate 가 남긴 알림 탭·토큰 갱신 (GuguApp 이 주입)
+    @Environment(PushEvents.self) private var pushEvents
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -27,6 +30,7 @@ struct RootView: View {
             .environment(sync)
             .environment(reminder)
             .environment(prefs)
+            .environment(push)
             .preferredColorScheme(theme.colorScheme)
             .tint(.gg.accent)
             // 첫 실행 시 조용히 익명 계정을 만든다 — 화면을 막지 않고 실패해도 앱은 그대로 동작
@@ -35,6 +39,8 @@ struct RootView: View {
                 sync.onServerRestore = { facts in game.mergeRestoredWrongPool(facts) }
                 await auth.start()
                 await syncAccount()
+                // 원격 알림을 켜 둔 기기만 토큰·토픽·서버 등록을 맞춘다 (모두 꺼져 있으면 Firebase 를 건드리지 않는다)
+                await push.sync(pushContext)
             }
             // 구매/복원 직후에도 권한을 켠다
             .onChange(of: premium.isPremium) { _, isPremium in
@@ -54,6 +60,25 @@ struct RootView: View {
                 Task { await reminder.reschedule(state: game.state) }
                 // 앱으로 돌아올 때마다 서버 부여 프리미엄을 다시 확인한다 — DB 변경이 재설치 없이 반영된다
                 Task { await premium.refreshServerEntitlement(auth: auth) }
+                // 복귀 — 토픽 차이·하루 1회 재등록·대기 중인 광고 거부를 다시 맞춘다
+                Task { await push.sync(pushContext) }
+            }
+            // 계정(로그인·로그아웃·삭제 후 새 익명)·기록 보관 자격·학습 알림·FCM 토큰이 바뀌면 새 값으로 다시 등록한다
+            .onChange(of: pushSyncKey) { _, _ in
+                Task { await push.sync(pushContext) }
+            }
+            // 알림 표시 정책용 — 진행 중이면 공지를 배너 없이 목록에만 둔다
+            .onChange(of: isImmersive, initial: true) { _, immersive in
+                pushEvents.isImmersive = immersive
+            }
+            // 알림 탭 → 보관 → 온보딩·진행 중 화면이 끝나면 적용
+            .onChange(of: pushEvents.tappedRoute, initial: true) { _, route in
+                guard let route else { return }
+                router.pendingRoute = route
+                pushEvents.tappedRoute = nil
+            }
+            .onChange(of: canApplyRoute, initial: true) { _, ready in
+                if ready { applyPendingRoute() }
             }
             .onChange(of: game.state.dailyCorrect) { _, _ in
                 Task { await reminder.reschedule(state: game.state) }
@@ -63,6 +88,61 @@ struct RootView: View {
     /// 계정 식별 — 사용자가 바뀌거나 익명이 이메일 계정이 되면 달라진다
     private var accountKey: String {
         "\(auth.userId ?? "-")|\(auth.isPermanent)"
+    }
+
+    private var pushContext: PushStore.Context {
+        .current(auth: auth, premium: premium, reminder: reminder)
+    }
+
+    private var pushSyncKey: String {
+        "\(accountKey)|\(PushStore.guardianEligible(auth: auth, premium: premium))|\(reminder.settings.enabled)|\(pushEvents.tokenRevision)"
+    }
+
+    /// 세션·미니게임·어드벤처 진행 중 — 알림 이동을 미루고, 포그라운드 공지는 목록에만 둔다
+    private var isImmersive: Bool {
+        session.active != nil || adventure.open || router.runnerOpen || router.laneOpen || router.basketOpen
+    }
+
+    /// 보관한 알림 이동을 지금 적용해도 되는지 — 온보딩 전·진행 중·페이월이 떠 있으면 기다린다
+    private var canApplyRoute: Bool {
+        router.pendingRoute != nil && game.state.onboarded && !isImmersive && !premium.paywallOpen
+    }
+
+    /// 허용 목록 딥링크를 화면 이동으로 바꾼다. 설정 시트가 떠 있으면 닫고 이동한다
+    private func applyPendingRoute() {
+        guard let route = router.pendingRoute else { return }
+        router.pendingRoute = nil
+        let settingsWasOpen = router.settingsOpen
+        print("[Push] 알림 이동:", route.rawValue)
+        switch route {
+        case .home:
+            router.settingsOpen = false
+            router.tab = .home
+        case .learn:
+            router.settingsOpen = false
+            router.tab = .learn
+        case .profile, .profileReport:
+            // 주간 리포트 카드는 프로필 상단에 있다
+            router.settingsOpen = false
+            router.tab = .profile
+        case .settingsNotifications:
+            router.tab = .profile
+            router.settingsFocusNotifications = true
+            router.settingsOpen = true
+        case .paywall:
+            router.settingsOpen = false
+            guard !premium.isPremium else {
+                // 이미 이용권이 있다 — 결제 화면 대신 홈으로
+                print("[Push] 이미 프리미엄 — paywall 대신 홈으로")
+                router.tab = .home
+                return
+            }
+            Task {
+                // 설정 시트가 닫히는 중에 다른 시트를 띄우면 무시된다 — 닫힘을 기다린다
+                if settingsWasOpen { try? await Task.sleep(for: .milliseconds(600)) }
+                premium.paywallOpen = true
+            }
+        }
     }
 
     /// 현재 계정 기준으로 이용권·기록 보관을 맞춘다. 순서가 중요하다 —
@@ -167,4 +247,5 @@ struct MainTabView: View {
 
 #Preview {
     RootView()
+        .environment(PushEvents())
 }

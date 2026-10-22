@@ -27,9 +27,9 @@ enum Battle {
     // UI 공용 배틀 방식 이름
     static func styleName(_ style: BattleStyle) -> String {
         switch style {
-        case .hp: return "체력전"
-        case .speed: return "스피드 레이스"
-        case .counter: return "반격전"
+        case .hp: return String(localized: "체력전", comment: "어드벤처 대결 방식 이름")
+        case .speed: return String(localized: "스피드 레이스", comment: "어드벤처 대결 방식 이름")
+        case .counter: return String(localized: "반격전", comment: "어드벤처 대결 방식 이름")
         }
     }
 

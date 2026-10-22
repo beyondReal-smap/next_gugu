@@ -24,10 +24,10 @@ struct RunnerView: View {
     private var feedback: String {
         let answer = game.question.answer
         switch game.outcome {
-        case .correct: return "정답! 장애물을 넘어요."
-        case .wrong:   return "아쉬워요! \(game.question.a) × \(game.question.b) = \(answer)"
-        case .missed:  return "시간이 다 됐어요. \(game.question.a) × \(game.question.b) = \(answer)"
-        case nil:      return "장애물이 오기 전에 정답을 골라요!"
+        case .correct: return String(localized: "정답! 장애물을 넘어요.")
+        case .wrong:   return String(localized: "아쉬워요! \(game.question.a) × \(game.question.b) = \(answer)")
+        case .missed:  return String(localized: "시간이 다 됐어요. \(game.question.a) × \(game.question.b) = \(answer)")
+        case nil:      return String(localized: "장애물이 오기 전에 정답을 골라요!")
         }
     }
 
@@ -133,20 +133,26 @@ struct RunnerView: View {
         HStack(spacing: 20) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("넘은 장애물").font(.suite(.bold, 11)).foregroundStyle(Color(hex: "#c1d4c2"))
+                    .lineLimit(1).minimumScaleFactor(0.8)
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
                     Text("\(game.score)").font(.suiteNum(.extrabold, 24)).foregroundStyle(Color(hex: "#f3f6e8"))
-                    Text("개").font(.suite(.bold, 11)).foregroundStyle(Color(hex: "#c1d4c2"))
+                    if let unit = SpokenMath.countSuffix {
+                        Text(unit).font(.suite(.bold, 11)).foregroundStyle(Color(hex: "#c1d4c2"))
+                    }
                 }
             }
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
                     Image(systemName: "trophy.fill").font(.system(size: 9, weight: .bold))
                     Text(engine.table == nil ? "전체 최고" : "\(engine.table!)단 최고").font(.suite(.bold, 11))
+                        .lineLimit(1).minimumScaleFactor(0.8)
                 }
                 .foregroundStyle(Color(hex: "#c1d4c2"))
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
                     Text("\(engine.selectedBest)").font(.suiteNum(.extrabold, 24)).foregroundStyle(Color(hex: "#dbef9e"))
-                    Text("개").font(.suite(.bold, 11)).foregroundStyle(Color(hex: "#dbef9e"))
+                    if let unit = SpokenMath.countSuffix {
+                        Text(unit).font(.suite(.bold, 11)).foregroundStyle(Color(hex: "#dbef9e"))
+                    }
                 }
             }
             Spacer()
@@ -298,7 +304,7 @@ struct RunnerView: View {
         VStack(spacing: 12) {
             // 한 줄 고정 — 상태 문구가 길어져도(예: "정답을 기억해요") 줄이 늘어 아래 식이 밀리지 않게 한다
             HStack {
-                Text("\(engine.table == nil ? "전체 구구단" : "\(engine.table!)단") · \(game.round + 1)번째 장애물")
+                Text("\((engine.table.map { String(localized: "\($0)단") } ?? String(localized: "전체 구구단"))) · \(game.round + 1)번째 장애물")
                     .font(.suite(.bold, 12)).foregroundStyle(Color.gg.textMuted)
                     .lineLimit(1).minimumScaleFactor(0.8)
                 if let left = game.trialLeft { TrialProgressPill(left: left) }
@@ -330,7 +336,7 @@ struct RunnerView: View {
                         .foregroundStyle(game.outcome == .correct ? Color.gg.success : Color.gg.textMuted)
                 }
                 .font(.suiteNum(.extrabold, 40))
-                .accessibilityLabel("\(game.question.a) 곱하기 \(KoreanReading.withTopic(game.question.b))?")
+                .accessibilityLabel(SpokenMath.questionLabel(game.question.a, game.question.b))
 
                 Text(feedback)
                     .font(.suite(.bold, 13))
@@ -350,9 +356,9 @@ struct RunnerView: View {
 
     private var timeLabel: String {
         switch game.outcome {
-        case nil: return String(format: "%.1f초", Runner.remaining(game) * Runner.answerWindowMs(score: game.score) / 1000)
-        case .correct: return "점프!"
-        default: return "정답을 기억해요"
+        case nil: return Seconds.text(Runner.remaining(game) * Runner.answerWindowMs(score: game.score) / 1000)
+        case .correct: return String(localized: "점프!")
+        default: return String(localized: "정답을 기억해요")
         }
     }
 

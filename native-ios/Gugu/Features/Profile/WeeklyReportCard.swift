@@ -37,9 +37,9 @@ struct WeeklyReportCard: View {
     private var deltaLabel: (text: String, color: Color)? {
         guard report.correct > 0 || report.prevCorrect > 0 else { return nil }
         let d = report.correctDelta
-        if d > 0 { return ("지난주보다 정답 +\(d)", .gg.success) }
-        if d < 0 { return ("지난주보다 정답 −\(-d)", .gg.textMuted) }
-        return ("지난주와 같아요", .gg.textMuted)
+        if d > 0 { return (String(localized: "지난주보다 정답 +\(d)"), .gg.success) }
+        if d < 0 { return (String(localized: "지난주보다 정답 −\(-d)"), .gg.textMuted) }
+        return (String(localized: "지난주와 같아요"), .gg.textMuted)
     }
 
     // 7일 막대 — 아래는 정답, 위는 오답. 문제를 안 푼 날은 짧은 회색 막대
@@ -67,24 +67,26 @@ struct WeeklyReportCard: View {
                         .foregroundStyle(isToday ? Color.gg.accent : Color.gg.textMuted)
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(WeeklyReport.weekdayLabel(day.date))요일\(isToday ? ", 오늘" : ""): 정답 \(day.correct)개, 오답 \(day.wrong)개")
+                .accessibilityLabel(isToday
+                                    ? "\(WeeklyReport.weekdayName(day.date)), 오늘: 정답 \(day.correct)개, 오답 \(day.wrong)개"
+                                    : "\(WeeklyReport.weekdayName(day.date)): 정답 \(day.correct)개, 오답 \(day.wrong)개")
             }
         }
     }
 
     private var summary: some View {
         HStack(spacing: 0) {
-            stat("\(report.activeDays)일", "학습한 날")
-            stat("\(report.correct)개", "정답")
-            stat(report.accuracy.map { "\($0)%" } ?? "—", "정확도")
-            stat(minutesLabel, "푼 시간")
+            stat(String(localized: "\(report.activeDays)일"), String(localized: "학습한 날"))
+            stat(String(localized: "\(report.correct)개"), String(localized: "정답"))
+            stat(report.accuracy.map { "\($0)%" } ?? "—", String(localized: "정확도"))
+            stat(minutesLabel, String(localized: "푼 시간"))
         }
     }
 
     private var minutesLabel: String {
         let minutes = Int((Double(report.studyMs) / 60_000).rounded())
-        if report.studyMs > 0 && minutes == 0 { return "1분 미만" }
-        return "\(minutes)분"
+        if report.studyMs > 0 && minutes == 0 { return String(localized: "1분 미만") }
+        return String(localized: "\(minutes)분")
     }
 
     private func stat(_ value: String, _ label: String) -> some View {
@@ -118,7 +120,7 @@ struct WeeklyReportCard: View {
                     .padding(.horizontal, 10).padding(.vertical, 6)
                     .background(Color.gg.danger.opacity(0.1), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                     .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("\(miss.key.replacingOccurrences(of: "x", with: " 곱하기 ")), \(miss.count)번 틀림")
+                    .accessibilityLabel(String(localized: "\(Problems.parseKey(miss.key).map { SpokenMath.factLabel($0.a, $0.b) } ?? miss.key), \(miss.count)번 틀림"))
                 }
             }
         }

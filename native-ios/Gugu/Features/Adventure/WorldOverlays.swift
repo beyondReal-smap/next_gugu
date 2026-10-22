@@ -20,10 +20,12 @@ struct WorldHud: View {
                     .contentShape(Rectangle())
             }
             .accessibilityLabel("지역 지도로 돌아가기")
+            // 한 줄로 — 접히면 지역 이름이 둘로 쪼개진다. 길면(영어·일본어) 조금 줄인다
             HStack(spacing: 0) {
                 Text(region.name).font(.suite(.extrabold, 14))
                 Text(" · \(region.table)단").font(.suite(.extrabold, 14))
             }
+            .lineLimit(1).minimumScaleFactor(0.75)
             .foregroundStyle(.white)
             .padding(.horizontal, 14).padding(.vertical, 10)
             .background(.black.opacity(0.35), in: Capsule())

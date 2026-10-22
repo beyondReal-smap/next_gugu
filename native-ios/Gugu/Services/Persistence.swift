@@ -19,6 +19,8 @@ enum Persistence {
     static let learningOutboxKey = "gugu.learning.outbox.v1"
     /// 학습 알림 설정 (켜짐·시각·권유 여부)
     static let reminderKey = "gugu.reminder.v1"
+    /// 원격 푸시 설정 (공지·보호자 소식·광고 동의). 설치 식별자·등록 상태는 키체인(PushStore)에 둔다
+    static let pushKey = "gugu.push.v1"
 
     private static let defaults = UserDefaults.standard
 

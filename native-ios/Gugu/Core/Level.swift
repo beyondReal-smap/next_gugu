@@ -53,12 +53,12 @@ enum Level {
     }
 
     static func title(_ level: Int) -> String {
-        if level >= 30 { return "구구단 레전드" }
-        if level >= 22 { return "연산 마스터" }
-        if level >= 15 { return "곱셈 챔피언" }
-        if level >= 10 { return "숫자 전략가" }
-        if level >= 6 { return "구구단 러너" }
-        if level >= 3 { return "성장하는 학습자" }
-        return "구구단 입문자"
+        if level >= 30 { return String(localized: "구구단 레전드", comment: "레벨 칭호") }
+        if level >= 22 { return String(localized: "연산 마스터", comment: "레벨 칭호") }
+        if level >= 15 { return String(localized: "곱셈 챔피언", comment: "레벨 칭호") }
+        if level >= 10 { return String(localized: "숫자 전략가", comment: "레벨 칭호") }
+        if level >= 6 { return String(localized: "구구단 러너", comment: "레벨 칭호") }
+        if level >= 3 { return String(localized: "성장하는 학습자", comment: "레벨 칭호") }
+        return String(localized: "구구단 입문자", comment: "레벨 칭호")
     }
 }

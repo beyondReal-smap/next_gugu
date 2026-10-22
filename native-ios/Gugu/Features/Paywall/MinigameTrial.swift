@@ -10,7 +10,7 @@ enum MinigameTrial {
     static func limit(isPremium: Bool) -> Int? { isPremium ? nil : questions }
 
     /// 홈·학습 탭 카드 배지 — 무료 사용자에게만
-    static func badge(isPremium: Bool) -> String? { isPremium ? nil : "\(questions)문제 체험" }
+    static func badge(isPremium: Bool) -> String? { isPremium ? nil : String(localized: "\(questions)문제 체험") }
 }
 
 /// 시작 전 안내 — 체험이 몇 문제인지 먼저 알려 끝이 갑작스럽지 않게 한다
@@ -99,7 +99,7 @@ struct TrialEndPanel: View {
     }
 
     private var message: String {
-        let lead = correct > 0 ? "\(correct)문제를 맞혔어요! " : ""
-        return lead + "평생 이용권이 있으면 제한 없이 계속 놀면서 연습할 수 있어요."
+        let lead = correct > 0 ? String(localized: "\(correct)문제를 맞혔어요! ") : ""
+        return lead + String(localized: "평생 이용권이 있으면 제한 없이 계속 놀면서 연습할 수 있어요.")
     }
 }

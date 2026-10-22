@@ -54,16 +54,36 @@ enum SUITE: String {
     case bold = "SUITE-Bold"
     case extrabold = "SUITE-ExtraBold"
     case heavy = "SUITE-Heavy"
+
+    /// 일본어 폰트(M PLUS Rounded 1c, OFL 서브셋) — SUITE 에는 가나·한자 글리프가 없다.
+    /// 시스템 Hiragino 는 SwiftUI 글자 상자가 글자 크기와 거의 같아(행간이 빠진다) 쌓인 글이 붙어 보였다.
+    /// M+ Rounded 는 줄 높이가 SUITE 와 비슷하고 둥근 글꼴이라 브랜드 톤에도 맞는다.
+    /// 이름은 파일명(MPLUSRounded1c-*.ttf)이 아니라 폰트 안의 PostScript 이름이다
+    var japaneseFontName: String {
+        switch self {
+        case .light: return "RoundedMplus1c-Light"
+        case .regular: return "RoundedMplus1c-Regular"
+        case .medium: return "RoundedMplus1c-Medium"
+        case .semibold, .bold: return "RoundedMplus1c-Bold"
+        case .extrabold: return "RoundedMplus1c-ExtraBold"
+        case .heavy: return "RoundedMplus1c-Black"
+        }
+    }
+
+    /// 앱 언어에 맞는 폰트 이름 — .custom 이름으로 지정해야 SUITE 와 똑같이 Dynamic Type 크기 조절을 받는다
+    var fontName: String {
+        AppLanguage.current == .ja ? japaneseFontName : rawValue
+    }
 }
 
 extension Font {
     /// SUITE 커스텀 폰트 — 크기 지정
     static func suite(_ weight: SUITE, _ size: CGFloat) -> Font {
-        .custom(weight.rawValue, size: size)
+        .custom(weight.fontName, size: size)
     }
     /// 숫자 강조(고정폭) — SUITE + tabular-nums 느낌은 .monospacedDigit 모디파이어로 보강
     static func suiteNum(_ weight: SUITE, _ size: CGFloat) -> Font {
-        .custom(weight.rawValue, size: size)
+        .custom(weight.fontName, size: size)
     }
 }
 

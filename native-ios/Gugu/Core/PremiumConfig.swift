@@ -9,9 +9,6 @@ enum PremiumConfig {
     /// 자체 영수증 검증 서버 (P5에서 서버 vs StoreKit2 온디바이스 최종 결정)
     static let validatorURL = "https://gugu.smap.site/api/iap/cdv-validate"
 
-    /// 오퍼링 로드 전 표시용 가격 (스토어 연결되면 실제 가격으로 대체)
-    static let fallbackPrice = "₩4,400"
-
     /// 프리미엄 전용 게임 모드 — 학습/스피드런은 무료 유지
     static let premiumModes: Set<GameMode> = [.challenge, .survival, .missing, .truefalse]
 
@@ -20,10 +17,16 @@ enum PremiumConfig {
     /// 움직이며 놀기(점프·레인·바구니) 무료 체험 문제 수 — 이만큼 풀면 게임을 멈추고 결제 화면으로 안내한다
     static let minigameTrialQuestions = 3
 
-    /// 법적 고지 링크 (페이월·프로필에서 사용, Apple 심사 필수)
+    /// 법적 고지 링크 (페이월·프로필에서 사용, Apple 심사 필수) — 앱 언어별 문서.
+    /// 한국어는 기존 주소 그대로, 영어·일본어는 /en/·/ja/ 아래 (해외 법령 조항을 보강한 별도 문서)
     enum Legal {
-        static let terms = "https://gugu.smap.site/terms"
-        static let privacy = "https://gugu.smap.site/privacy"
-        static let deleteAccount = "https://gugu.smap.site/delete-account"
+        static let terms = url("terms")
+        static let privacy = url("privacy")
+        static let deleteAccount = url("delete-account")
+
+        static func url(_ page: String, language: AppLanguage = .current) -> String {
+            let base = "https://gugu.smap.site"
+            return language == .ko ? "\(base)/\(page)" : "\(base)/\(language.rawValue)/\(page)"
+        }
     }
 }

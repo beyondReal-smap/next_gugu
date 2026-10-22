@@ -1,12 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<!-- 개인정보 매니페스트 — 필수 사유 API(Required Reason API) 선언. 추적 없음. -->
+<!-- 개인정보 매니페스트 — 수집 데이터(기기 ID) + 필수 사유 API(Required Reason API) 선언. 추적 없음. -->
 <plist version="1.0">
 <dict>
 	<key>NSPrivacyTracking</key>
 	<false/>
 	<key>NSPrivacyTrackingDomains</key>
 	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array>
+		<!-- 기기 ID: 원격 알림을 켠 기기만 FCM 토큰·푸시 설치 식별자를 서버에 등록한다 (Store/PushStore.swift).
+		     공지·보호자 학습 소식(앱 기능)과 이벤트·혜택 알림(광고 동의자만, 개발자 광고)에 쓰고, 계정에 연결되며 추적하지 않는다 -->
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeDeviceID</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+				<string>NSPrivacyCollectedDataTypePurposeDeveloperAdvertising</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSPrivacyAccessedAPITypes</key>
 	<array>
 		<!-- UserDefaults: 이 앱의 진행도·설정을 이 앱 안에서만 읽고 쓴다 (Services/Persistence.swift) -->

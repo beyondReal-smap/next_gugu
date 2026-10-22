@@ -7,14 +7,23 @@ options:
   groupSortPosition: top
   developmentLanguage: ko
 
+# 원격 푸시(FCM) — Messaging 제품만 쓴다 (Analytics 없음)
+packages:
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: "13.0.1"
+
 settings:
   base:
-    MARKETING_VERSION: "2.4.0"
-    CURRENT_PROJECT_VERSION: "26"
+    MARKETING_VERSION: "2.5.0"
+    CURRENT_PROJECT_VERSION: "27"
     DEVELOPMENT_TEAM: ZVXXRV5MTP
     SWIFT_VERSION: "5.0"
     ENABLE_USER_SCRIPT_SANDBOXING: YES
     CODE_SIGN_STYLE: Automatic
+    # 다국어(ko·en·ja) — SwiftUI 리터럴·String(localized:)를 빌드 때 Localizable.xcstrings 로 모은다
+    SWIFT_EMIT_LOC_STRINGS: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
 
 targets:
   Gugu:
@@ -22,15 +31,37 @@ targets:
     platform: iOS
     sources:
       - path: Gugu
+        # Firebase 구성 파일(gitignore)은 Copy Bundle Resources 에 넣지 않는다 — 넣으면 파일이 없는 체크아웃에서
+        # Debug 빌드도 "입력 파일 없음"으로 멈춘다. 아래 빌드 스크립트가 파일이 있을 때만 앱 번들에 복사한다
+        excludes:
+          - GoogleService-Info.plist
+          - Resources/Voice
+      # 음성 팩 — 언어별 폴더(Voice/ko·en·ja)를 그대로 번들에 넣는다. 파일 이름이 언어마다 같아
+      # 개별 파일로 넣으면 번들 루트에서 겹친다("Multiple commands produce")
+      - path: Gugu/Resources/Voice
+        type: folder
+        buildPhase: resources
+    dependencies:
+      - package: Firebase
+        product: FirebaseMessaging
+    # 원격 푸시 — 개발 서명은 development, 배포(App Store) 내보내기 때 production 으로 바뀐다
+    entitlements:
+      path: Gugu/Gugu.entitlements
+      properties:
+        aps-environment: development
     info:
       path: Gugu/Info.plist
       properties:
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         CFBundleDisplayName: "구구 어드벤처"
-        CFBundleDevelopmentRegion: ko
+        # 카탈로그 원문 언어는 ko(options.developmentLanguage)로 두고, 실행 시 개발 지역은 en 으로 둔다 —
+        # 기기 언어 목록에 ko·en·ja 가 하나도 없는 이용자(fr·de 등)에게 영어가 보이게 (AppLanguage)
+        CFBundleDevelopmentRegion: en
         CFBundleLocalizations:
           - ko
+          - en
+          - ja
         UILaunchScreen:
           UIColorName: ""
         UIApplicationSceneManifest:
@@ -45,6 +76,10 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         SupabaseHost: "$(SUPABASE_HOST)"
         SupabaseAnonKey: "$(SUPABASE_ANON_KEY)"
+        # 앱 델리게이트 스위즐링을 끄고 APNs 토큰·알림 처리를 AppDelegate 에서 직접 한다
+        FirebaseAppDelegateProxyEnabled: false
+        # 알림을 켜기 전에는 FCM 토큰을 발급하지 않는다 (PushStore 가 켤 때만 자동 초기화를 켠다)
+        FirebaseMessagingAutoInitEnabled: false
         UIAppFonts:
           - SUITE-Light.ttf
           - SUITE-Regular.ttf
@@ -53,8 +88,39 @@ targets:
           - SUITE-Bold.ttf
           - SUITE-ExtraBold.ttf
           - SUITE-Heavy.ttf
+          # 일본어 UI (OFL, 앱이 쓰는 글자만 남긴 서브셋 — tools/i18n/subset_ja_font.py)
+          - MPLUSRounded1c-Light.ttf
+          - MPLUSRounded1c-Regular.ttf
+          - MPLUSRounded1c-Medium.ttf
+          - MPLUSRounded1c-Bold.ttf
+          - MPLUSRounded1c-ExtraBold.ttf
+          - MPLUSRounded1c-Black.ttf
     # Supabase 값은 Config.xcconfig(gitignore)에서 읽는다. 없으면 빈 값으로 빌드되고
     # 앱은 인증 없이 그대로 동작한다 (SupabaseConfig.isConfigured == false)
+    # Firebase 구성 파일(gitignore) — 있으면 앱 번들에 복사한다. 없으면 Debug 는 원격 푸시 없이 빌드되고
+    # (RemotePush.configure 가 건너뜀), Release 는 출시 빌드에서 원격 푸시가 조용히 꺼지지 않게 빌드를 멈춘다.
+    # 사용자 스크립트 샌드박스(ENABLE_USER_SCRIPT_SANDBOXING)가 켜져 있어 읽고 쓰는 파일을 inputFiles·outputFiles 로 선언한다.
+    # 이전 빌드에서 복사한 파일이 남아 있으면 지운다 — 파일을 뺀 Debug 빌드가 예전 구성으로 Firebase 를 켜지 않게
+    preBuildScripts:
+      - name: Copy GoogleService-Info.plist (Release 필수)
+        basedOnDependencyAnalysis: false
+        inputFiles:
+          - $(SRCROOT)/Gugu/GoogleService-Info.plist
+        outputFiles:
+          - $(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist
+        script: |
+          SRC="${SRCROOT}/Gugu/GoogleService-Info.plist"
+          DEST="${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleService-Info.plist"
+          if [ -f "${SRC}" ]; then
+            mkdir -p "$(dirname "${DEST}")"
+            cp "${SRC}" "${DEST}"
+          elif [ "${CONFIGURATION}" = "Release" ]; then
+            echo "error: Gugu/GoogleService-Info.plist 가 없습니다 — Firebase 콘솔(gugu-adventure)에서 받아 넣어 주세요 (gitignore 대상)"
+            exit 1
+          else
+            rm -f "${DEST}"
+            echo "note: Gugu/GoogleService-Info.plist 없음 — 원격 푸시 없이 빌드합니다 (${CONFIGURATION})"
+          fi
     configFiles:
       Debug: Config.xcconfig
       Release: Config.xcconfig
@@ -86,6 +152,10 @@ schemes:
       storeKitConfiguration: Gugu.storekit
     test:
       config: Debug
+      # 기존 테스트는 한국어 문구를 단언한다 — 시뮬레이터 언어와 무관하게 한국어로 실행한다
+      # (다른 언어 검증은 xcodebuild -testLanguage 로 따로 돌린다)
+      language: ko
+      region: KR
       targets:
         - GuguTests
     profile:

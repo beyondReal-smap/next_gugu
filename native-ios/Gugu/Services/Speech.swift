@@ -55,7 +55,7 @@ final class Speech: NSObject, AVAudioPlayerDelegate {
         }
         let line = queue.removeFirst()
         // 음성 파일 누락은 빌드 결함이다 — VoiceLinesTests 가 모든 문장의 파일을 검사한다
-        guard let url = Bundle.main.url(forResource: line.key, withExtension: "m4a") else {
+        guard let url = Self.url(for: line.key) else {
             assertionFailure("음성 파일 없음: \(line.key)")
             print("[Speech] 음성 파일 없음:", line.key)
             playNext(gen)
@@ -74,6 +74,11 @@ final class Speech: NSObject, AVAudioPlayerDelegate {
             print("[Speech] 재생 실패(\(line.key)):", error)
             playNext(gen)
         }
+    }
+
+    /// 앱 언어의 음성 파일 — Resources/Voice/{ko,en,ja}/ 폴더 참조로 번들에 들어간다
+    static func url(for key: String, language: AppLanguage = .current) -> URL? {
+        Bundle.main.url(forResource: key, withExtension: "m4a", subdirectory: "Voice/\(language.rawValue)")
     }
 
     /// 효과음(Sound)과 같은 ambient 세션 — 무음 스위치를 따르고 부모님의 음악을 끊지 않는다

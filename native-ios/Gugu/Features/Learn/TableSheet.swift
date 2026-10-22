@@ -97,9 +97,12 @@ struct TableSheet: View {
                         + Text("\(table * b)")
                             .font(.suite(.extrabold, 24)).foregroundStyle(speaking ? Color.gg.accent : Color.gg.text).monospacedDigit()
                         Spacer(minLength: 8)
-                        Text(KoreanReading.chant(table, b))
-                            .font(.suite(.bold, 13))
-                            .foregroundStyle(speaking ? Color.gg.accent : Color.gg.textMuted.opacity(0.8))
+                        // 읽기 열 — 영어는 식과 같은 내용이라 없다 (SpokenMath.chantText)
+                        if let chant = SpokenMath.chantText(table, b) {
+                            Text(chant)
+                                .font(.suite(.bold, 13))
+                                .foregroundStyle(speaking ? Color.gg.accent : Color.gg.textMuted.opacity(0.8))
+                        }
                     }
                     .padding(.horizontal, 16).padding(.vertical, 10)
                     .background(speaking ? Color.gg.accent.opacity(0.12) : Color.gg.surface,
@@ -109,7 +112,7 @@ struct TableSheet: View {
                     .animation(.easeOut(duration: 0.2), value: speaking)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("\(table) 곱하기 \(KoreanReading.withTopic(b)) \(table * b)")
+                .accessibilityLabel(SpokenMath.equationLabel(table, b))
                 .accessibilityHint("눌러서 소리로 듣기")
             }
         }
@@ -126,7 +129,7 @@ struct TableSheet: View {
                 onPractice()
             }) {
                 Image(systemName: "play.fill")
-                Text("\(table)단 연습")
+                Text("\(table)단 연습").lineLimit(1).minimumScaleFactor(0.8)
             }
         }
         .padding(.horizontal, 20)
