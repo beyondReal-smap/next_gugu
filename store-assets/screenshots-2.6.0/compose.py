@@ -75,12 +75,21 @@ SETS_ALL = {
         ("01-home", "01-home", "home"), ("02-world", "02-world", "world"), ("03-battle", "02b-battle", "battle"),
         ("04-read-aloud", "03-session", "session"), ("05-table", "05-table", "table"), ("06-report", "06-report", "report"),
     ], "tablet"),
-    "play-phone": ((1080, 2400), "android", [  # Android 다국어는 2차 — 이 스크립트는 iOS 만 만든다
+    "play-phone": ((1080, 2400), "android", [
         ("01-home", "01-home", "home"), ("02-battle", "03-battle", "battle"), ("03-read-aloud", "04-session", "session"),
         ("04-table", "05-table", "table"), ("05-minigame", "07-minigame", "minigame"), ("06-world", "02-world", "world"),
         ("07-modes", "06-learn", "learn"), ("08-report", "08-report", "report"),
     ], "android"),
 }
+# Play 태블릿 — 7형·10형 같은 그림 (Android 태블릿 에뮬레이터 실캡처, 장면은 iPad 세트와 같음)
+_PLAY_TABLET = [
+    ("01-home", "01-home", "home"), ("02-world", "02-world", "world"), ("03-battle", "02b-battle", "battle"),
+    ("04-read-aloud", "03-session", "session"), ("05-table", "05-table", "table"), ("06-report", "06-report", "report"),
+]
+SETS_ALL["play-tablet-7"] = ((1600, 2560), "android-tablet", _PLAY_TABLET, "tablet")
+SETS_ALL["play-tablet-10"] = ((1600, 2560), "android-tablet", _PLAY_TABLET, "tablet")
+# 사용: python3 compose.py <출력폴더> [en|ja] [세트...] — 세트를 생략하면 iOS 두 세트
+SETS = sys.argv[3:] or ["ios-phone", "ios-ipad"]
 
 
 LANG = "en"  # compose() 호출 전에 __main__ 이 바꾼다
@@ -215,7 +224,7 @@ def compose(canvas, shot_path, slide, kind):
 
 if __name__ == "__main__":
     for LANG in LANGS:
-        for set_name in ("ios-phone", "ios-ipad"):
+        for set_name in SETS:
             canvas, src, items, kind = SETS_ALL[set_name]
             out_dir = os.path.join(OUT, LANG, set_name)
             os.makedirs(out_dir, exist_ok=True)

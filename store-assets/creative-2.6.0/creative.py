@@ -1,8 +1,11 @@
-"""App Store 크리에이티브 자산 (2.6.0 영어·일본어) — 제품 페이지 헤더(21:9) · 검색 결과(3:2).
+"""스토어 크리에이티브 자산 (2.6.0 영어·일본어) — App Store 제품 페이지 헤더(21:9) · 검색 결과(3:2),
+Google Play 피처 그래픽(1024x500).
 
 사용: python3 creative.py [en|ja]
 규격(App Store Connect Help, Creative assets specifications):
   헤더 21:9 3840x1646, 검색 결과 3:2 3840x2560 — JPEG/PNG, 알파 채널 금지.
+  Play 피처 그래픽 1024x500 — JPEG 또는 24비트 PNG(알파 없음). 한국어판(store-assets/feature-graphic-1024x500.png)과
+  같은 구성: 왼쪽 앱 이름·한 줄 소개·강조 알약, 오른쪽 앱 아이콘의 3×3 숫자 타일.
 가이드: 실제 UI, 초점은 가운데(기기별로 좌우가 잘림), 짧은 문구, 가격·URL·수상 표기 금지, 4+ 등급.
 구성은 2.4.0 한국어판(creative-2.4.0)과 같고, 화면은 screenshots-2.6.0/raw/ios-{언어}, 글꼴은 그 compose.py 의
 언어별 글꼴(일본어 M PLUS Rounded 1c)을 쓴다.
@@ -21,6 +24,11 @@ import compose  # noqa: E402
 from compose import gradient, tile, rounded, device, shadow, ICON  # noqa: E402
 
 BG = ("#6366F1", "#3730A3")             # 홈 슬라이드·앱 아이콘과 같은 인디고 계열
+# 피처 그래픽 (한 줄 소개, 강조 알약) — 한국어판 "매일 1분, 게임으로 배우는 구구단" / "3D 월드를 탐험하며 구구단 대결!"
+FEATURE_COPY = {
+    "en": ("Times tables as a game, one minute a day", "Explore a 3D world and battle with times tables!"),
+    "ja": ("毎日1分、ゲームでおぼえる九九", "3Dワールドを探検して九九でしょうぶ！"),
+}
 COPY = {
     "en": ("Times tables, now an adventure", "3D world · battles · mini-games, one minute a day"),
     "ja": ("九九が冒険になる", "3Dワールド・バトル・ミニゲームで毎日1分"),
@@ -102,11 +110,73 @@ def search(lang):
     return img.convert("RGB")
 
 
+def number_tile(size, glyph, fill, glyph_fill, angle):
+    """오른쪽 3×3 타일 하나 — 흰 둥근 사각형 + 아래 그림자 테두리 + 숫자(SUITE)"""
+    pad = size // 4
+    im = Image.new("RGBA", (size + 2 * pad, size + 2 * pad), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    r = round(size * 0.22)
+    d.rounded_rectangle((pad, pad + round(size * 0.06), pad + size, pad + size + round(size * 0.06)), r,
+                        fill=(196, 199, 236, 255) if fill == (255, 255, 255, 255) else (214, 150, 20, 255))
+    d.rounded_rectangle((pad, pad, pad + size, pad + size), r, fill=fill)
+    f = compose.font("ExtraBold", round(size * 0.48), latin_only=True)
+    d.text((pad + size / 2, pad + size / 2), glyph, font=f, fill=glyph_fill, anchor="mm")
+    sh = shadow(im, round(size * 0.12), 70)
+    out = Image.new("RGBA", sh.size, (0, 0, 0, 0))
+    out.alpha_composite(sh, (0, round(size * 0.05)))
+    out.alpha_composite(im, (2 * round(size * 0.12), 2 * round(size * 0.12)))
+    return out.rotate(angle, resample=Image.BICUBIC, expand=True)
+
+
+def feature(lang):
+    """Play 피처 그래픽 1024x500 — 2배로 그려 줄인다. 글자는 왼쪽 60% 안, 가장자리 여백을 둔다"""
+    k = 2
+    W, H = 1024 * k, 500 * k
+    img = gradient(W, H, "#4F46E5", "#7C6CF5").convert("RGBA")
+    grid = Image.new("RGBA", (W, H), (0, 0, 0, 0))      # 옅은 격자 (한국어판과 같은 배경) — 따로 그려 반투명 합성
+    g = ImageDraw.Draw(grid)
+    for x in range(100 * k, W, 100 * k):
+        g.line((x, 0, x, H), fill=(255, 255, 255, 22), width=k)
+    for y in range(100 * k, H, 100 * k):
+        g.line((0, y, W, y), fill=(255, 255, 255, 22), width=k)
+    img.alpha_composite(grid)
+    d = ImageDraw.Draw(img)
+    sub, pill = FEATURE_COPY[lang]
+    name = compose.APP_NAME[lang]
+    x0, max_w = 72 * k, 520 * k
+    size = 84 * k
+    while font("Heavy", size).getlength(name) > max_w:
+        size -= 2
+    tf = font("Heavy", size)
+    d.text((x0, 220 * k), name, font=tf, fill=(255, 255, 255), anchor="ls")
+    size = 26 * k
+    while font("Bold", size).getlength(sub) > max_w:
+        size -= 1
+    d.text((x0, 278 * k), sub, font=font("Bold", size), fill=(232, 234, 255), anchor="ls")
+    size = 21 * k
+    while font("ExtraBold", size).getlength(pill) > max_w - 56 * k:
+        size -= 1
+    pf = font("ExtraBold", size)
+    pw, ph = pf.getlength(pill) + 56 * k, 50 * k
+    d.rounded_rectangle((x0, 306 * k, x0 + pw, 306 * k + ph), ph // 2, fill=(251, 191, 36))
+    d.text((x0 + pw / 2, 306 * k + ph / 2), pill, font=pf, fill=(92, 45, 0), anchor="mm")
+    white, indigo, amber = (255, 255, 255, 255), (79, 70, 229, 255), (251, 191, 36, 255)
+    cell = 104 * k
+    for r, row in enumerate(("246", "3×6", "489")):
+        for c, g in enumerate(row):
+            center = g == "×"
+            t = number_tile(cell, g, amber if center else white, white if center else indigo, (-4, 3, -2)[(r + c) % 3])
+            cx, cy = 780 * k + (c - 1) * 114 * k, 250 * k + (r - 1) * 114 * k
+            img.alpha_composite(t, (round(cx - t.width / 2), round(cy - t.height / 2)))
+    return img.convert("RGB").resize((1024, 500), Image.LANCZOS)
+
+
 if __name__ == "__main__":
     for lang in LANGS:
         compose.LANG = lang
         for name, im in ((f"header-21x9-3840x1646-{lang}.png", header(lang)),
-                         (f"search-3x2-3840x2560-{lang}.png", search(lang))):
+                         (f"search-3x2-3840x2560-{lang}.png", search(lang)),
+                         (f"feature-graphic-1024x500-{lang}.png", feature(lang))):
             path = os.path.join(HERE, name)
             im.save(path, optimize=True)
             print(name, im.size, im.mode, os.path.getsize(path) // 1024, "KB")
