@@ -43,7 +43,7 @@ from push_schedule import (
     weekly_report_week,
     weekly_window_open_anywhere,
 )
-from push_templates import Lang, language_for_locale, render
+from push_templates import Lang, language_for_device, render
 
 
 log = logging.getLogger("gugu-api")
@@ -74,6 +74,8 @@ class _Device(BaseModel):
     # 2026-10-22 migration 이전 RPC 는 보내지 않는다 — 없으면 한국 기기(ko·KST)
     locale: Optional[str] = None
     timeZone: Optional[str] = None
+    # 2026-10-23 migration 이전 RPC 는 보내지 않는다 — 없으면 locale 만으로 언어를 고른다
+    appVersion: Optional[str] = None
 
 
 class _WeeklyCandidate(BaseModel):
@@ -125,7 +127,7 @@ def _weekly_groups(devices: list[_Device], now: datetime) -> tuple[dict[tuple[st
         if week is None:
             outside += 1
             continue
-        groups.setdefault((week.iso_key, language_for_locale(device.locale)), []).append(device.fcmToken)
+        groups.setdefault((week.iso_key, language_for_device(device.locale, device.appVersion)), []).append(device.fcmToken)
     return groups, outside, invalid
 
 

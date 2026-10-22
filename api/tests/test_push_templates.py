@@ -12,6 +12,7 @@ from push_templates import (
     ensure_informational,
     find_ad_terms,
     format_consent_date,
+    language_for_device,
     language_for_locale,
     render,
     validate_link,
@@ -148,3 +149,19 @@ def test_learning_numbers_rejected_in_every_language(text):
 @pytest.mark.parametrize("text", ["期間限定セール", "クーポン配布中", "Special offer today"])
 def test_ad_terms_detected_in_every_language(text):
     assert find_ad_terms(text)
+
+
+@pytest.mark.parametrize("locale, app_version, expected", [
+    ("en-US", "2.5.0", "ko"),          # Android 2.5.0 — 화면은 한국어, locale 은 기기 언어
+    ("en-US", "2.5.0 (27)", "ko"),     # iOS 형식
+    ("ja-JP", "1.9", "ko"),
+    ("en-US", "beta", "ko"),           # 버전 형식을 알 수 없으면 다국어 이전으로 본다
+    ("ja-JP", "2.6.0 (34)", "ja"),
+    ("en-FR", "2.6.0", "en"),
+    ("ko-KR", "2.10.0", "ko"),
+    ("en-US", "3.0", "en"),
+    ("en-US", None, "en"),             # migration 이전 RPC — locale 만
+    (None, None, "ko"),
+])
+def test_language_for_device(locale, app_version, expected):
+    assert language_for_device(locale, app_version) == expected

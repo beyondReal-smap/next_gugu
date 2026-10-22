@@ -100,6 +100,21 @@ def language_for_locale(locale: Optional[str]) -> Lang:
     return "en"
 
 
+_APP_VERSION_RE = re.compile(r"^(\d+)\.(\d+)")
+# 이 버전부터 앱 화면이 다국어 — 이전 앱은 화면이 한국어뿐인데 locale 에 기기 언어("en-US")를 보냈다
+FIRST_MULTILINGUAL_APP = (2, 6)
+
+
+def language_for_device(locale: Optional[str], app_version: Optional[str]) -> Lang:
+    """알림 언어 = 앱 화면 언어. 2.6 이전 앱(iOS·Android)은 locale 과 무관하게 ko.
+    app_version 이 없으면(2026-10-23 migration 이전 RPC) locale 만 본다."""
+    if app_version is not None:
+        match = _APP_VERSION_RE.match(app_version)
+        if match is None or (int(match[1]), int(match[2])) < FIRST_MULTILINGUAL_APP:
+            return "ko"
+    return language_for_locale(locale)
+
+
 class TemplateError(ValueError):
     """템플릿·문구가 발송 정책을 어긴다."""
 

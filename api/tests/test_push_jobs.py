@@ -118,6 +118,21 @@ def test_weekly_report_uses_device_local_time_and_language(rpc, monkeypatch):
     assert f"weekly_report:{GUARDIAN}:2026-W42:en" in keys and f"weekly_report:{GUARDIAN}:2026-W42" in keys
 
 
+def test_weekly_report_sends_korean_to_pre_multilingual_apps(rpc, monkeypatch):
+    # 2.6 이전 앱은 화면이 한국어뿐인데 locale 에 기기 언어를 보냈다 — 기기 언어가 영어여도 한국어로
+    rpc["responses"]["gugu_push_weekly_candidates"] = {"candidates": [{"userId": GUARDIAN, "devices": [
+        {"pushInstallId": INSTALL, "fcmToken": "tok-old", "platform": "android", "locale": "en-US",
+         "timeZone": "Asia/Seoul", "appVersion": "2.5.0"},
+        {"pushInstallId": INSTALL, "fcmToken": "tok-new", "platform": "ios", "locale": "ja-JP",
+         "timeZone": "Asia/Seoul", "appVersion": "2.6.0 (34)"},
+    ]}]}
+    sender = FakeSender()
+    monkeypatch.setattr(fcm, "get_sender", lambda: sender)
+    asyncio.run(push_jobs.run_weekly_report(SUNDAY_EVENING, dry_run=False))
+    assert sorted(sender.sent) == [(["tok-new"], "weekly_report"), (["tok-old"], "weekly_report")]
+    assert sorted(sender.titles) == sorted(["이번 주 학습 리포트가 도착했어요", "今週の学習レポートが届きました"])
+
+
 def test_weekly_report_skips_unknown_time_zone(rpc, monkeypatch):
     rpc["responses"]["gugu_push_weekly_candidates"] = {"candidates": [{"userId": GUARDIAN, "devices": [
         {"pushInstallId": INSTALL, "fcmToken": "tok-x", "platform": "ios", "locale": "en-US", "timeZone": "Mars/Base"},
