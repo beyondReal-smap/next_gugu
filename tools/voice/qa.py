@@ -5,9 +5,9 @@
   2. 음량: 통합 음량(LUFS)이 가운데값보다 3LU 넘게 크거나 작은 줄
   3. 받아쓰기: Whisper 로 받아 쓴 문장이 원래 문장과 다른 줄 (숫자는 한글 수사로 바꿔 비교)
 
-사용 (Apple Silicon + mlx-whisper 필요 — 저장소 의존성에는 넣지 않는다)
-  python3 -m venv <venv> && <venv>/bin/pip install mlx-whisper
-  <venv>/bin/python tools/voice/qa.py [--report 결과.json]
+사용 (Apple Silicon + mlx-whisper 필요, 일본어는 pykakasi 도 — 저장소 의존성에는 넣지 않는다)
+  python3 -m venv <venv> && <venv>/bin/pip install mlx-whisper pykakasi
+  <venv>/bin/python tools/voice/qa.py [--lang en] [--report 결과.json]
 걸러진 줄은 직접 들어 보고 판단한다. 받아쓰기 차이는 인식 쪽 표기 차이일 수도 있다.
 """
 
@@ -20,10 +20,10 @@ import statistics
 import subprocess
 from pathlib import Path
 
-from phrases import sino
+from phrases import LANGS, cardinal, ja_number, sino
 
 ROOT = Path(__file__).resolve().parents[2]
-PACK = ROOT / "native-ios/Gugu/Resources/Voice"
+VOICE = ROOT / "native-ios/Gugu/Resources/Voice"
 ASR_MODEL = "mlx-community/whisper-large-v3-turbo"
 DURATION_Z = 3.5      # 음절당 길이의 robust z 한계
 LOUDNESS_LU = 3.0     # 가운데값에서 벗어나도 되는 음량 폭
@@ -49,13 +49,49 @@ def hangul(text: str) -> str:
     return re.sub(r"[^가-힣]", "", text)
 
 
-def normalize_heard(text: str) -> str:
-    """인식 결과의 숫자·곱셈 기호를 앱 문장과 같은 한글 표기로 바꾼다."""
+def letters(text: str) -> str:
+    return re.sub(r"[^a-z]", "", text.lower())
+
+
+def kana(text: str) -> str:
+    return re.sub(r"[^ぁ-ゖー]", "", text)
+
+
+def units(text: str, lang: str) -> str:
+    """길이·비교에 쓰는 글자 — ko 한글 음절, en 알파벳, ja 히라가나"""
+    return {"ko": hangul, "en": letters, "ja": kana}[lang](text)
+
+
+def _digits(text: str, read, limit: int) -> str:
+    text = re.sub(r"(?<=\d),(?=\d{3})", "", text)
+    return re.sub(r"\d+", lambda m: read(int(m.group())) if int(m.group()) < limit else m.group(), text)
+
+
+_kakasi = None
+
+
+def to_hiragana(text: str) -> str:
+    """인식 결과(한자·가타카나 섞임)를 히라가나로 — 七 같은 한자 읽기는 사전 기준이라 九九 줄은 사람이 다시 듣는다"""
+    global _kakasi
+    if _kakasi is None:
+        import pykakasi  # 선택 의존성 — 일본어 검수할 때만 필요
+        _kakasi = pykakasi.kakasi()
+    return "".join(item["hira"] for item in _kakasi.convert(text))
+
+
+def normalize_heard(text: str, lang: str = "ko") -> str:
+    """인식 결과의 숫자·곱셈 기호를 앱 문장과 같은 표기로 바꾼다."""
+    if lang == "en":
+        t = re.sub(r"(?<=\d)\s*[xX*×]\s*(?=\d)", " times ", text)
+        return letters(_digits(t, cardinal, 100))
+    if lang == "ja":
+        # 숫자 사이의 × 만 "かける" — "×かな"(○×퀴즈)의 × 는 "ばつ"
+        t = re.sub(r"(?<=\d)\s*[xX*×]\s*(?=\d|何)", " かける ", text)
+        t = t.replace("×", "ばつ").replace("○", "まる").replace("〇", "まる")
+        return kana(to_hiragana(_digits(t, ja_number, 100)))
     t = text.replace("×", " 곱하기 ")
     t = re.sub(r"(?<=\d)\s*[xX*]\s*(?=\d)", " 곱하기 ", t)
-    t = re.sub(r"(?<=\d),(?=\d{3})", "", t)
-    t = re.sub(r"\d+", lambda m: sino(int(m.group())) if int(m.group()) < 10_000 else m.group(), t)
-    return hangul(t)
+    return hangul(_digits(t, sino, 10_000))
 
 
 def edit_distance(a: str, b: str) -> int:
@@ -78,31 +114,33 @@ def robust_z(values: list[float]) -> list[float]:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--lang", choices=LANGS, default="ko")
     ap.add_argument("--report", type=Path, help="줄별 측정값 전체를 JSON 으로 저장")
     args = ap.parse_args()
+    pack = VOICE / args.lang
 
     import mlx_whisper  # 선택 의존성 — 검수할 때만 필요
 
-    lines: dict[str, str] = json.loads((PACK / "voice-manifest.json").read_text())["lines"]
+    lines: dict[str, str] = json.loads((pack / "voice-manifest.json").read_text())["lines"]
     rows = []
     for key, text in sorted(lines.items()):
-        path = PACK / f"{key}.m4a"
+        path = pack / f"{key}.m4a"
         rows.append({"key": key, "kind": key.split("-")[0], "text": text,
                      "dur": duration(path), "lufs": loudness(path)})
     print(f"측정 {len(rows)}개 — 받아쓰기 시작")
 
     for kind in sorted({r["kind"] for r in rows}):
         group = [r for r in rows if r["kind"] == kind]
-        rates = [r["dur"] / len(hangul(r["text"])) for r in group]
+        rates = [r["dur"] / len(units(r["text"], args.lang)) for r in group]
         for r, rate, z in zip(group, rates, robust_z(rates)):
             r["sec_per_syllable"], r["dur_z"] = round(rate, 4), round(z, 2)
     median_lufs = statistics.median(r["lufs"] for r in rows)
 
     for i, r in enumerate(rows, 1):
-        out = mlx_whisper.transcribe(str(PACK / f"{r['key']}.m4a"), path_or_hf_repo=ASR_MODEL, language="ko",
+        out = mlx_whisper.transcribe(str(pack / f"{r['key']}.m4a"), path_or_hf_repo=ASR_MODEL, language=args.lang,
                                      temperature=0.0, condition_on_previous_text=False, verbose=None)
         r["heard"] = out["text"].strip()
-        expected, heard = hangul(r["text"]), normalize_heard(r["heard"])
+        expected, heard = units(r["text"], args.lang), normalize_heard(r["heard"], args.lang)
         r["cer"] = round(edit_distance(expected, heard) / len(expected), 3)
         if i % 100 == 0:
             print(f"  받아쓰기 {i}/{len(rows)}")

@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy Policy — Gugu Adventure</title>
+  <meta name="description" content="Privacy Policy for the Gugu Adventure app and website." />
+  <link rel="icon" href="/icon-gugu.png" />
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --surface-2: #f1f5f9;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --accent: #4f46e5;
+      --accent-soft: #eef2ff;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #080b16;
+        --surface: #111727;
+        --surface-2: #1e273c;
+        --text: #f1f5f9;
+        --text-muted: #94a3b8;
+        --border: #273149;
+        --accent: #818cf8;
+        --accent-soft: #1a2138;
+      }
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "SUITE", system-ui, -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+    header.doc {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 24px;
+      margin-bottom: 8px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      background: var(--accent-soft);
+      border-radius: 999px;
+      padding: 6px 14px;
+    }
+    h1 {
+      font-size: clamp(24px, 5vw, 32px);
+      font-weight: 800;
+      margin: 18px 0 6px;
+      letter-spacing: -0.02em;
+    }
+    .meta {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin: 0;
+    }
+    .lead {
+      color: var(--text-muted);
+      font-size: 15px;
+      margin: 20px 0 28px;
+    }
+    h2 {
+      font-size: 19px;
+      font-weight: 800;
+      margin: 40px 0 12px;
+      letter-spacing: -0.01em;
+      scroll-margin-top: 20px;
+    }
+    h2 .n {
+      color: var(--accent);
+      margin-right: 8px;
+      font-variant-numeric: tabular-nums;
+    }
+    h3 {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 20px 0 8px;
+    }
+    p { margin: 10px 0; }
+    ul { margin: 10px 0; padding-left: 22px; }
+    li { margin: 6px 0; }
+    strong { font-weight: 700; }
+    a { color: var(--accent); }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin: 16px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14.5px;
+      display: block;
+      overflow-x: auto;
+    }
+    thead th {
+      text-align: left;
+      background: var(--surface-2);
+      color: var(--text);
+      font-weight: 700;
+      padding: 12px 14px;
+      white-space: nowrap;
+    }
+    tbody td {
+      padding: 12px 14px;
+      border-top: 1px solid var(--border);
+      vertical-align: top;
+    }
+    table, thead, tbody, tr { border: 0; }
+    .table-wrap {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .table-wrap table { margin: 0; }
+    .note {
+      font-size: 13.5px;
+      color: var(--text-muted);
+    }
+    footer.doc {
+      margin-top: 56px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 13.5px;
+    }
+  </style>
+</head>
+<body>
+  <!-- DRAFT: English translation of public/privacy.html (Korean, effective 2026-10-19) plus region-specific sections.
+       Not for publication until legal review is complete. Intended path: /en/privacy -->
+  <div role="note" style="background:#fef3c7;color:#92400e;border-bottom:2px solid #f59e0b;text-align:center;font-weight:800;padding:10px 16px;">DRAFT — pending legal review</div>
+  <main class="wrap">
+    <header class="doc">
+      <span class="badge">🔒 Privacy Policy</span>
+      <h1>Gugu Adventure Privacy Policy</h1>
+      <p class="meta">Effective: [TBD on publication] · Based on the Korean version effective October 19, 2026</p>
+    </header>
+
+    <!-- LEGAL REVIEW: Operator name is copied as written in the Korean pages ("정진"). Confirm the official romanized name to display, and whether a business name is required. -->
+    <p class="lead">
+      정진 (the “Operator,” “we,” “us”) complies with applicable data protection laws and does its best to keep your personal information safe.
+      This policy applies to the mobile app and website <strong>Gugu Adventure (구구 어드벤처, the “Service”)</strong>. The Service was previously named “구구단 마스터” (Gugudan Master); it is the same service regardless of the name change.
+    </p>
+
+    <div class="card">
+      <strong>Key points</strong>
+      <ul style="margin-bottom:0;">
+        <li>Signing in is <strong>optional</strong>. You can use every learning feature as a <strong>guest</strong> without signing in, and in that case we do not collect personal information. However, if a guest <strong>turns on app notifications</strong>, we collect the device information needed to send them (such as a notification token).</li>
+        <li>We send app notifications (Announcements and Weekly progress for parents) only if you turn them on yourself. <strong>Promotional notifications (“Events &amp; offers”) are not offered or sent outside Korea</strong> (see Section 7).</li>
+        <li>Learning progress (levels, streaks, mastery, etc.) is <strong>stored only on your device</strong> by default and is not sent to our servers.</li>
+        <li>Only if you want to keep your records when changing devices can <strong>a parent link an email address</strong>; only then are learning records stored on our server. If no email is linked, records never leave the device.</li>
+        <li>Payments are made only through <strong>in-app purchase</strong> on the Apple App Store / Google Play. We do not store card numbers or other payment details.</li>
+        <li>The iOS and Android apps contain <strong>no advertising SDK and no analytics SDK</strong>. We do not sell or share personal information, and we do not use it for behavioral (targeted) advertising.</li>
+      </ul>
+    </div>
+
+    <h2><span class="n">1.</span>Information we collect and how</h2>
+    <p>We collect only the minimum information needed to provide the Service.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Information</th>
+            <th>When and how</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Account sign-up / sign-in<br /><span class="note">(optional)</span></td>
+            <td>Email address</td>
+            <td>Entered directly when you sign in or sign up with email (no password; you sign in with a one-time code sent to the email)</td>
+          </tr>
+          <tr>
+            <td>Device identification<br /><span class="note">(automatic)</span></td>
+            <td>An anonymous identifier (UUID) issued automatically when the app is installed</td>
+            <td>Generated automatically on first launch — contains no information that identifies a person</td>
+          </tr>
+          <tr>
+            <td>Learning-record backup on our server<br /><span class="note">(optional, conditional)</span></td>
+            <td>Multiplication facts (2–9 times tables), whether each answer was correct, the submitted answer, response time, session and device identifiers</td>
+            <td>Sent only from an account where a parent has linked an email and a Lifetime Pass purchase has been confirmed</td>
+          </tr>
+          <tr>
+            <td>App notifications<br /><span class="note">(optional)</span></td>
+            <td>Notification token (Firebase Cloud Messaging registration token), notification installation identifier (UUID), operating system type, app version, language and time zone, notification settings (whether Announcements, Weekly progress for parents and Practice Reminder are on), and whether consent to promotional notifications was given, with the date and time of consent or withdrawal</td>
+            <td>When you turn on notifications in the app settings, or allow notifications from the Practice Reminder prompt</td>
+          </tr>
+          <tr>
+            <td>Purchases / Premium</td>
+            <td>Purchased product identifier, in-app purchase receipt verification result, account-link identifier</td>
+            <td>Collected from the store receipt when you buy or restore Premium</td>
+          </tr>
+          <tr>
+            <td>Automatically collected<br /><span class="note">(website only)</span></td>
+            <td>IP address, device and browser information, usage records, cookies and similar identifiers</td>
+            <td>Generated and collected automatically through Google Analytics while you use the website. <strong>The iOS and Android apps do not use Google Analytics.</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      * Learning progress data (levels, streaks, mastery, Adventure progress, etc.) does not identify a person and is stored only in storage on your device.
+    </p>
+    <p class="note">
+      * The app does not request access to the camera, microphone, contacts, photos or location, and has no chat or public sharing features.
+    </p>
+    <div class="card">
+      <strong>Learning records are stored on our server only when both of the following are true.</strong>
+      <ul style="margin-bottom:0;">
+        <li>A parent has created an account by linking an email address.</li>
+        <li>A Lifetime Pass purchase has been confirmed for that account.</li>
+      </ul>
+      <p style="margin-bottom:0;">If either condition is missing, learning records are <strong>never sent off the device</strong>. Our server rejects learning-record uploads from accounts that do not meet these conditions.</p>
+    </div>
+
+    <h2><span class="n">2.</span>Why we use your information</h2>
+    <ul>
+      <li><strong>Account identification and providing the Service:</strong> processing email sign-in and keeping you signed in</li>
+      <li><strong>Learning-record backup:</strong> letting you continue your records after changing devices or reinstalling the app (accounts with a linked email only)</li>
+      <li><strong>Purchase management:</strong> confirming and restoring Premium, recognizing purchases on the web and other devices</li>
+      <li><strong>Service improvement:</strong> improving features and finding errors by analyzing usage statistics (website only, via Google Analytics)</li>
+      <li><strong>Customer support:</strong> handling inquiries and requests, and giving notice of announcements</li>
+      <li><strong>Sending app notifications:</strong> update and maintenance announcements, Weekly progress for parents (a notice that the weekly learning report is ready), and account or Lifetime Pass notices</li>
+      <li><strong>Promotional messages (Korea only):</strong> only for users in Korea who separately consented to “Events &amp; offers” notifications — news about new features, events and discounts, and keeping records of that consent. Not offered outside Korea (see Section 7).</li>
+    </ul>
+
+    <h2><span class="n">3.</span>How long we keep your information</h2>
+    <ul>
+      <li><strong>Account information (email, etc.):</strong> kept until you delete your account, then destroyed without delay.</li>
+      <li><strong>Learning records stored on our server:</strong> deleted together with the account when you delete your account.</li>
+      <li><strong>Purchase / Premium history:</strong> unlinked from the account when you delete your account, and kept for the period required by applicable law where retention is required. Receipts do not contain your name or email.</li>
+      <li><strong>App notification information:</strong> destroyed without delay when you turn off all notifications in the app, when the app has not been used for 270 days or more, or when you delete your account. Records of consent to and withdrawal from promotional notifications are kept until account deletion to verify consent.</li>
+      <li><strong>Automatically collected information (website):</strong> destroyed when the purpose of collection is achieved or according to Google Analytics’ data retention policy.</li>
+    </ul>
+    <p class="note">However, where laws require retention (for example, the Korean Act on Consumer Protection in Electronic Commerce), we keep the information for the required period.</p>
+    <!-- LEGAL REVIEW: The Korean policy does not state the specific statutory retention period for purchase records. Confirm the period (Korean e-commerce act; any US/EU/JP tax or consumer-law requirement) and whether it should be stated explicitly. -->
+
+    <h2><span class="n">4.</span>Service providers (processors) and disclosure to third parties</h2>
+    <p>As a rule, we do not provide your personal information to outside parties. However, to provide a stable Service, we entrust processing to the following service providers.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Service provider</th>
+            <th>Work entrusted</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Supabase, Inc.</td>
+            <td>Account authentication (email sign-in), storing and managing account information, learning-record backup</td>
+          </tr>
+          <tr>
+            <td>Google LLC</td>
+            <td>Analysis of website usage statistics (Google Analytics)</td>
+          </tr>
+          <tr>
+            <td>Apple Inc. / Google LLC</td>
+            <td>In-app purchase processing and receipt verification (App Store / Google Play)</td>
+          </tr>
+          <tr>
+            <td>Google LLC</td>
+            <td>Sending app notifications (Firebase Cloud Messaging)</td>
+          </tr>
+          <tr>
+            <td>Apple Inc.</td>
+            <td>Delivering notifications to iPhone and iPad devices (Apple Push Notification service)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- LEGAL REVIEW: The Operator's own API server (purchase verification; purchase records in a MariaDB database; push sending) runs on an AWS-hosted host per api/README.md. Neither the Korean policy nor this draft lists that hosting provider or its region. Confirm whether it must be listed as a processor / transfer destination. -->
+
+    <h2><span class="n">5.</span>International transfers of personal information</h2>
+    <p>The Operator is based in the Republic of Korea. While you use the Service, your personal information is transferred to and stored in other countries as follows.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Recipient</th>
+            <th>Country</th>
+            <th>Information transferred</th>
+            <th>Purpose</th>
+            <th>Retention</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Supabase, Inc.</td>
+            <td>Japan<br /><span class="note">(AWS ap-northeast-1)</span></td>
+            <td>Email, anonymous identifier, learning records</td>
+            <td>Account authentication and learning-record backup</td>
+            <td>Until account deletion</td>
+          </tr>
+          <tr>
+            <td>Google LLC</td>
+            <td>United States and other countries</td>
+            <td>IP address, device and browser information, usage records, cookie identifiers (website)</td>
+            <td>Usage statistics analysis</td>
+            <td>According to Google Analytics’ data retention policy</td>
+          </tr>
+          <tr>
+            <td>Apple Inc. / Google LLC</td>
+            <td>United States and other countries</td>
+            <td>Purchased product identifier, receipt verification result</td>
+            <td>In-app purchase processing and receipt verification</td>
+            <td>According to each company’s policy</td>
+          </tr>
+          <tr>
+            <td>Google LLC / Apple Inc.</td>
+            <td>United States and other countries</td>
+            <td>Notification token, notification installation identifier, operating system type, app version, language</td>
+            <td>Sending and delivering app notifications (sent over the network when you turn notifications on)</td>
+            <td>Until notifications are turned off, 270 days without use, or account deletion</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- LEGAL REVIEW: The Korean transfer table omits (a) time zone, notification settings and promotional-consent records, which are collected per Section 1 and stored in the Supabase database (push_devices / push_consent_events tables), and (b) notification data from the Supabase row. This draft mirrors the Korean table; decide whether both versions should be corrected. -->
+    <p class="note">
+      You may refuse the international transfer of learning records: simply use the Service without linking an email. In that case learning records are not sent off the device.
+      If you do not want app notification information transferred abroad, do not turn on app notifications; every feature works without notifications.
+      Website usage statistics (Google Analytics) can be refused as described in Section 6. Payment processing is necessary to make a purchase, so if you refuse it you cannot buy Premium.
+    </p>
+
+    <h2><span class="n">6.</span>Cookies and automatic collection tools</h2>
+    <p>
+      Our website uses Google Analytics to analyze usage statistics, and cookies and similar technologies may be used in this process. <strong>The iOS and Android apps do not use Google Analytics, cookies for analytics, or any other analytics tool.</strong>
+      You can refuse collection by blocking cookies in your browser settings or by installing the Google Analytics Opt-out Browser Add-on (<a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">tools.google.com/dlpage/gaoptout</a>).
+    </p>
+    <!-- LEGAL REVIEW: The website (app/GoogleAnalytics.tsx) loads Google Analytics for every web visitor with no consent banner. For a child-directed site this may conflict with COPPA (third-party persistent identifiers) and with EU/UK ePrivacy cookie-consent rules. Decide: add a consent banner, disable GA for non-Korean visitors, or drop GA. -->
+
+    <h2><span class="n">7.</span>App notifications and promotional messages</h2>
+    <ul>
+      <li><strong>Types of notifications:</strong> (1) Announcements (updates, maintenance, etc.) (2) Weekly progress for parents (a notice that the weekly learning report is ready; only for parent accounts with record backup turned on) (3) Practice Reminder (scheduled only on the device; no information is sent to our server) (4) Events &amp; offers (promotional; Korea only).</li>
+      <li><strong>Optional:</strong> We send notifications only if you turn them on, and all features of the Service work without notifications. You can turn notifications off at any time in the app under <em>Profile → Settings → Notifications</em> or in your device settings.</li>
+      <li><strong>Local time:</strong> Weekly progress for parents is sent according to the time zone of your device, so that it arrives at a reasonable local time. This is why we store your device’s language and time zone.</li>
+      <li><strong>No promotional notifications outside Korea:</strong> The option to receive Events &amp; offers (promotional) notifications is shown only on devices using the Korean App Store storefront. Outside Korea the option is not shown, no promotional consent is requested, and we do not send promotional or marketing notifications. Allowing notifications on your device is never treated as consent to promotional messages.</li>
+      <li><strong>If you consented in Korea and then moved:</strong> the Events &amp; offers switch stays visible so that you can withdraw consent at any time under <em>Profile → Settings → Notifications → Events &amp; offers (promotional)</em>, free of charge.</li>
+      <li><strong>Notification content:</strong> Notifications do not include a child’s learning figures (number of correct answers, accuracy, etc.), so these are not shown on the lock screen.</li>
+    </ul>
+    <!-- LEGAL REVIEW: The storefront check is client-side (PromoVisibility: shown if storefront == KOR or already opted in). The server sends promotional messages to every device subscribed to the "promo" topic, so a user who opted in on the Korean storefront and later moved abroad could still receive Korean-language promotional pushes until they opt out. Confirm the "no promotional notifications outside Korea" wording is acceptable, or add a server-side restriction. Also note: Android has no storefront gate (the Android app is not part of this en/ja launch). -->
+
+    <h2><span class="n">8.</span>Your rights and how to exercise them</h2>
+    <p>You may at any time request access to, correction of, deletion of, or suspension of processing of your personal information.</p>
+    <ul>
+      <li><strong>Delete records on the device:</strong> <em>Profile → Settings → Reset learning records</em> immediately deletes learning data stored on the device. Deleting the app also deletes it.</li>
+      <li><strong>Delete your account in the app:</strong> You can delete it yourself under <em>Profile → Settings → Protect Your Records → Delete Account</em>. This removes the account and the learning records stored on our server and unlinks your purchase history. Learning data on the device and your Lifetime Pass remain.</li>
+      <li><strong>Request by email:</strong> You can also send a request from the linked email address to <a href="mailto:admin@smap.site">admin@smap.site</a>. We handle requests without delay and reply with the result within 30 days at the latest. See the <a href="/en/delete-account">Account &amp; Data Deletion</a> guide for details.</li>
+      <li><strong>Other rights:</strong> Requests for access, correction or suspension of processing can also be sent to the contact above, and we will act on them without delay.</li>
+    </ul>
+    <p>Additional rights for users in specific regions are described in Sections 14 to 17.</p>
+
+    <h2><span class="n">9.</span>How we destroy personal information</h2>
+    <p>
+      We destroy personal information without delay when the retention period ends or the purpose of processing is achieved.
+      Information in electronic files is permanently deleted in a way that cannot be recovered or reproduced, and data stored on the device is deleted when the app is deleted or its data is reset.
+    </p>
+
+    <h2><span class="n">10.</span>Security measures</h2>
+    <ul>
+      <li>Encryption in transit (HTTPS/TLS)</li>
+      <li>Encrypted storage of authentication information (such as sign-in sessions)</li>
+      <li>Minimizing and controlling access rights to personal information</li>
+    </ul>
+
+    <h2><span class="n">11.</span>Children’s privacy</h2>
+    <p>
+      The Service is a times-tables learning service for children and is available to all ages. Every learning feature can be used as a guest without signing in, so children can use the Service without providing personal information.
+      If we learn that a child’s personal information was collected without the required consent, we will delete it without delay.
+    </p>
+    <p>
+      The feature that stores learning records on our server works <strong>only for accounts where a parent has linked an email and purchased the Lifetime Pass</strong>.
+      Entering the email and making the purchase are intended to be done by a parent, and our server rejects learning-record uploads from accounts that do not meet these conditions.
+    </p>
+    <p>
+      However, a purchase record alone cannot confirm that the buyer is an adult (for example, Family Sharing or gift cards). The Service has no separate adult-verification step.
+      To withdraw consent, request account deletion as described in Section 8.
+    </p>
+    <p>
+      App notifications do not include a child’s learning figures (number of correct answers, accuracy, etc.), so these are not shown on the lock screen.
+      Promotional notifications are not offered outside Korea.
+    </p>
+    <p class="note">Region-specific rules for children’s data are described in Section 14 (United States — COPPA) and Section 15 (EEA/UK — GDPR). Korea-specific rules (the under-14 consent rule) are summarized in Section 17.</p>
+
+    <h2><span class="n">12.</span>Privacy officer and contact</h2>
+    <div class="card">
+      <p style="margin-top:0;"><strong>Privacy officer:</strong> 정진</p>
+      <p style="margin-bottom:0;"><strong>Contact email:</strong> <a href="mailto:admin@smap.site">admin@smap.site</a></p>
+    </div>
+    <!-- LEGAL REVIEW: The Korean pages give only a name and an email. COPPA (16 CFR 312.4(d)) requires the operator's name, physical address, telephone number and email; APPI requires the address of the business operator. No address or phone number exists in the source pages — do not publish until these are provided or confirmed unnecessary. -->
+
+    <h2><span class="n">13.</span>Changes to this policy</h2>
+    <p>
+      This Privacy Policy may be revised due to changes in laws or service policies, and changes will be posted on this page.
+      For important changes, we will give notice before the effective date.
+    </p>
+    <!-- LEGAL REVIEW: COPPA requires notice to parents and new consent for material changes in collection/use of children's data; GDPR may require direct notice. Confirm whether "posted on this page" is sufficient. -->
+
+    <h2><span class="n">14.</span>United States — Children’s privacy (COPPA) and California</h2>
+    <h3>Children’s Online Privacy Protection Act (COPPA)</h3>
+    <p>
+      Gugu Adventure is directed to children. This section explains our practices for personal information of children under 13, as required by the U.S. Children’s Online Privacy Protection Act (COPPA). The operator is 정진, who can be contacted at <a href="mailto:admin@smap.site">admin@smap.site</a>.
+    </p>
+    <ul>
+      <li><strong>What we do not collect from children:</strong> We do not ask a child for a name, email address, phone number, home address, photos, videos, voice recordings or location. The app has no chat, messaging, public profile or social features, and a child can use every learning feature without an account.</li>
+      <li><strong>Persistent identifiers used only for internal operations:</strong> The app uses an anonymous identifier (UUID) created on first launch, and — only if notifications are turned on — a notification token and notification installation identifier. We use these only to support the internal operations of the Service: making the app work, verifying and restoring purchases, delivering the notifications that were turned on, maintaining security, and preventing errors and abuse. We do not use them to build profiles, for behavioral advertising, or to track a child across other apps or websites.</li>
+      <li><strong>Learning records on the device:</strong> Learning progress stays on the device unless a parent links an email and purchases the Lifetime Pass (Section 1).</li>
+      <li><strong>Information from parents:</strong> The email address for sign-in and record backup is meant to be entered by a parent, and the Lifetime Pass is purchased through the App Store or Google Play. Learning records are uploaded only for these parent accounts.</li>
+      <li><strong>No advertising, no sale, no sharing:</strong> The apps contain no third-party advertising or analytics SDKs. We do not show behavioral (targeted) advertising, we do not sell or rent personal information, and we do not disclose children’s personal information to third parties other than the service providers in Section 4 that process it on our behalf. No promotional notifications are sent to users in the United States.</li>
+      <li><strong>Parental rights:</strong> A parent may at any time (1) review the personal information we hold about their child, (2) have it deleted, and (3) refuse further collection or use. You can do this yourself — reset learning records, turn off notifications (which deletes notification information), or delete the account in the app (Section 8) — or email <a href="mailto:admin@smap.site">admin@smap.site</a> from the linked email address. We reply within 30 days at the latest.</li>
+      <li><strong>Retention and deletion:</strong> We keep children’s information only as long as described in Section 3 and delete it as described in Section 9.</li>
+    </ul>
+    <!-- LEGAL REVIEW: COPPA verifiable parental consent (VPC). The Korean policy treats "linking an email" as legal-guardian consent; this draft does not carry that over to the U.S. Confirm whether "parent links email + App Store/Google Play purchase" qualifies as a VPC method (e.g., a monetary transaction with notice to the account holder), or whether a separate direct notice + consent flow is needed before server backup. -->
+    <!-- LEGAL REVIEW: Confirm that FCM/APNs tokens and the install UUID fall within the "support for internal operations" exception, including for parent-report and announcement pushes, in light of the 2025 COPPA Rule amendments (engagement/push notification provisions, written data-retention policy requirement, separate consent for third-party disclosure). -->
+    <!-- LEGAL REVIEW: Google Analytics on the child-directed website (see Section 6) — third-party persistent identifiers may require VPC under COPPA. -->
+    <h3>California (CCPA/CPRA)</h3>
+    <p>
+      We do not sell or share personal information as those terms are defined in the California Consumer Privacy Act, as amended by the CPRA, and we do not use personal information for cross-context behavioral advertising. We do not sell or share personal information of consumers under 16.
+      California residents may ask what personal information we hold, and ask us to correct or delete it, by contacting <a href="mailto:admin@smap.site">admin@smap.site</a>. We will not discriminate against you for exercising these rights.
+    </p>
+    <!-- LEGAL REVIEW: Confirm whether the Operator meets any CCPA applicability threshold, and whether other U.S. state privacy laws (e.g., those with children's provisions) require additional disclosures. -->
+
+    <h2><span class="n">15.</span>European Economic Area and United Kingdom (GDPR / UK GDPR)</h2>
+    <p>If you are in the EEA or the UK, the following applies in addition to the sections above. The controller of your personal information is 정진 (contact: <a href="mailto:admin@smap.site">admin@smap.site</a>).</p>
+    <!-- LEGAL REVIEW: Art. 27 GDPR / UK GDPR — determine whether an EU representative and a UK representative must be appointed (the Operator has no establishment in the EU/UK and offers the app there). If so, add their names and contact details here. -->
+    <h3>Legal bases for processing</h3>
+    <ul>
+      <li><strong>Performance of a contract (Art. 6(1)(b)):</strong> email sign-in and keeping you signed in, learning-record backup for parent accounts, verifying and restoring purchases, and responding to your requests.</li>
+      <li><strong>Consent (Art. 6(1)(a)):</strong> app notifications, which are off by default and sent only after you turn them on; you can withdraw consent at any time by turning them off. Website analytics cookies, where consent is required by law.</li>
+      <li><strong>Legitimate interests (Art. 6(1)(f)):</strong> keeping the Service secure and stable, preventing fraud and abuse (for example, bypassing purchase verification), and operating the anonymous app identifier needed for the app to function.</li>
+      <li><strong>Legal obligation (Art. 6(1)(c)):</strong> keeping purchase records where the law requires it.</li>
+    </ul>
+    <h3>Children’s data (Art. 8)</h3>
+    <p>
+      The Service is intended for children, but it does not rely on a child’s consent for any marketing. We do not process children’s data on the basis of consent for marketing purposes, promotional notifications are not offered in the EEA or the UK, and we do not profile children or use their data for advertising.
+      Account creation and record backup are intended to be carried out by a parent. Notifications are off by default.
+    </p>
+    <!-- LEGAL REVIEW: If notification opt-in is based on consent and is turned on by a child, Art. 8 (age of digital consent 13–16 depending on the member state; 13 in the UK) may require parental authorization. Confirm the appropriate legal basis for notifications and for anonymous accounts, and UK Age Appropriate Design Code compliance. -->
+    <h3>International transfers</h3>
+    <p>
+      Your personal information is transferred outside the EEA/UK: to the Republic of Korea (where the Operator is located), to Japan (Supabase, Inc., AWS ap-northeast-1), and to the United States and other countries (Google LLC; Apple Inc.), as listed in Section 5.
+      Where applicable, these transfers rely on adequacy decisions (for example, for Japan and the Republic of Korea) or on Standard Contractual Clauses or other appropriate safeguards provided by the recipient. You can ask us for more information about these safeguards at the contact above.
+    </p>
+    <!-- LEGAL REVIEW: Verify the transfer mechanism per recipient (adequacy decisions for Japan/Korea under EU and UK law; EU-U.S. Data Privacy Framework / UK Extension or SCCs/IDTA for Google and Apple; Supabase's DPA). "Other countries" in the Korean table is not specific enough for GDPR — list countries if possible. -->
+    <h3>Your rights</h3>
+    <p>
+      You have the right to access, rectify and erase your personal information, to restrict or object to its processing, to data portability, and to withdraw consent at any time (without affecting processing before withdrawal). To exercise these rights, use the in-app options in Section 8 or email <a href="mailto:admin@smap.site">admin@smap.site</a>. We will reply within 30 days.
+    </p>
+    <p>
+      You also have the right to lodge a complaint with a supervisory authority, in particular in the EU member state where you live, work, or where the alleged infringement took place. In the UK, the supervisory authority is the Information Commissioner’s Office (ICO).
+    </p>
+    <p>We do not make decisions based solely on automated processing that produce legal or similarly significant effects on you.</p>
+
+    <h2><span class="n">16.</span>Japan (Act on the Protection of Personal Information)</h2>
+    <p>
+      For users in Japan, the Japanese version of this policy (<a href="/ja/privacy">/ja/privacy</a>) explains the purposes of use, the provision of personal information to third parties in foreign countries (including the countries involved and information about their personal-information protection systems), our security control measures, and how to request disclosure, correction, suspension of use or deletion. Requests can be sent to <a href="mailto:admin@smap.site">admin@smap.site</a>.
+    </p>
+
+    <h2><span class="n">17.</span>For users in Korea</h2>
+    <p>
+      For users in Korea, the Korean version of this policy (<a href="/privacy">/privacy</a>) applies and prevails. It includes provisions that apply only under Korean law, which are not repeated in full here:
+    </p>
+    <ul>
+      <li>Collection of personal information of children under 14 with the consent of a legal representative under the Personal Information Protection Act, including the rule that linking an email is treated as the legal representative’s consent.</li>
+      <li>Consent to promotional (Events &amp; offers) notifications under Article 50 of the Act on Promotion of Information and Communications Network Utilization and Information Protection: a parent age check (birth year, not stored), separate opt-in consent, the “(광고)” [advertisement] label, no sending between 9 p.m. and 8 a.m., on-screen confirmation of opt-in/opt-out results, and re-confirmation every two years.</li>
+      <li>Counseling on privacy infringement through the Personal Information Infringement Report Center (privacy.kisa.or.kr, call 118 in Korea).</li>
+    </ul>
+
+    <footer class="doc">
+      © 2026 Gugu Adventure · Operator 정진 · Contact admin@smap.site
+    </footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,2 @@
+magic_link: 구구 어드벤처 로그인 코드
+email_change: 구구 어드벤처 이메일 확인 코드

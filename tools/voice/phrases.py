@@ -1,7 +1,8 @@
 """앱이 소리 내어 읽는 모든 문장 목록 (음성 파일 생성용).
 
-Core/KoreanReading(Swift·Kotlin)과 같은 규칙으로 만든다. 두 앱의 단위 테스트가
-이 목록으로 만든 manifest.json 과 앱 쪽 문장을 대조하므로, 규칙이 어긋나면 테스트가 실패한다.
+언어별로 앱의 읽기 규칙과 같게 만든다 — ko: Core/KoreanReading(Swift·Kotlin), en: EnglishReading,
+ja: JapaneseReading(Swift). 앱 단위 테스트가 이 목록으로 만든 manifest 와 앱 쪽 문장을 대조하므로,
+규칙이 어긋나면 테스트가 실패한다. 키는 세 언어가 같다.
 
 키 규칙
   q-{a}x{b}          문제 (학습·스피드런·챌린지·서바이벌)   "칠 곱하기 팔은?"
@@ -50,7 +51,16 @@ def ox_shown_values(a: int, b: int) -> list[int]:
     return sorted({answer, *(w for w in wrong if w > 0 and w != answer)})
 
 
-def phrases() -> dict[str, str]:
+LANGS = ("ko", "en", "ja")
+
+
+def phrases(lang: str = "ko") -> dict[str, str]:
+    if lang == "en":
+        return english_phrases()
+    if lang == "ja":
+        return japanese_phrases()
+    if lang != "ko":
+        raise ValueError(f"지원하지 않는 언어: {lang}")
     out: dict[str, str] = {}
     for a in TABLES:
         for b in MULTIPLIERS:
@@ -66,8 +76,88 @@ def phrases() -> dict[str, str]:
     return out
 
 
+# MARK: 영어 (EnglishReading.swift 와 같다)
+
+EN_ONES = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven",
+           "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"]
+EN_TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+
+
+def cardinal(n: int) -> str:
+    if not 0 <= n < 100:
+        raise ValueError(f"읽을 수 없는 수: {n}")
+    if n < 20:
+        return EN_ONES[n]
+    return EN_TENS[n // 10] + ("" if n % 10 == 0 else "-" + EN_ONES[n % 10])
+
+
+def sentence(text: str) -> str:
+    return text[:1].upper() + text[1:]
+
+
+def english_phrases() -> dict[str, str]:
+    out: dict[str, str] = {}
+    for a in TABLES:
+        for b in MULTIPLIERS:
+            A, B, P = cardinal(a), cardinal(b), cardinal(a * b)
+            out[f"q-{a}x{b}"] = f"What is {A} times {B}?"
+            out[f"m-{a}x{b}"] = sentence(f"{P} is {A} times what?")
+            for shown in ox_shown_values(a, b):
+                out[f"ox-{a}x{b}-{shown}"] = sentence(f"{A} times {B} is {cardinal(shown)}. True or false?")
+            out[f"c-{a}x{b}"] = sentence(f"{A} times {B} is {P}.")
+    return out
+
+
+# MARK: 일본어 (JapaneseReading.swift 와 같다 — 九九 표는 원어민 검수 대상)
+
+JA_DIGITS = ["", "いち", "に", "さん", "よん", "ご", "ろく", "なな", "はち", "きゅう"]
+KUKU = {
+    2: ["にいちが に", "ににんが し", "にさんが ろく", "にしが はち", "にご じゅう",
+        "にろく じゅうに", "にしち じゅうし", "にはち じゅうろく", "にく じゅうはち"],
+    3: ["さんいちが さん", "さんにが ろく", "さざんが く", "さんし じゅうに", "さんご じゅうご",
+        "さぶろく じゅうはち", "さんしち にじゅういち", "さんぱ にじゅうし", "さんく にじゅうしち"],
+    4: ["しいちが し", "しにが はち", "しさん じゅうに", "しし じゅうろく", "しご にじゅう",
+        "しろく にじゅうし", "ししち にじゅうはち", "しは さんじゅうに", "しく さんじゅうろく"],
+    5: ["ごいちが ご", "ごに じゅう", "ごさん じゅうご", "ごし にじゅう", "ごご にじゅうご",
+        "ごろく さんじゅう", "ごしち さんじゅうご", "ごは しじゅう", "ごっく しじゅうご"],
+    6: ["ろくいちが ろく", "ろくに じゅうに", "ろくさん じゅうはち", "ろくし にじゅうし", "ろくご さんじゅう",
+        "ろくろく さんじゅうろく", "ろくしち しじゅうに", "ろくは しじゅうはち", "ろっく ごじゅうし"],
+    7: ["しちいちが しち", "しちに じゅうし", "しちさん にじゅういち", "しちし にじゅうはち", "しちご さんじゅうご",
+        "しちろく しじゅうに", "しちしち しじゅうく", "しちは ごじゅうろく", "しちく ろくじゅうさん"],
+    8: ["はちいちが はち", "はちに じゅうろく", "はちさん にじゅうし", "はちし さんじゅうに", "はちご しじゅう",
+        "はちろく しじゅうはち", "はちしち ごじゅうろく", "はっぱ ろくじゅうし", "はっく しちじゅうに"],
+    9: ["くいちが く", "くに じゅうはち", "くさん にじゅうしち", "くし さんじゅうろく", "くご しじゅうご",
+        "くろく ごじゅうし", "くしち ろくじゅうさん", "くは しちじゅうに", "くく はちじゅういち"],
+}
+
+
+def ja_number(n: int) -> str:
+    if not 0 <= n < 100:
+        raise ValueError(f"읽을 수 없는 수: {n}")
+    if n == 0:
+        return "ぜろ"
+    ten, unit = divmod(n, 10)
+    head = "" if ten == 0 else ("" if ten == 1 else JA_DIGITS[ten]) + "じゅう"
+    return head + JA_DIGITS[unit]
+
+
+def japanese_phrases() -> dict[str, str]:
+    out: dict[str, str] = {}
+    for a in TABLES:
+        for b in MULTIPLIERS:
+            A, B, P = ja_number(a), ja_number(b), ja_number(a * b)
+            # 조사 "は" 앞을 띄어 쓴다 — 붙이면 "ごは"가 "ご飯", "いちは さん"이 "じゅうさん"처럼 들렸다 (음성 검수)
+            out[f"q-{a}x{b}"] = f"{A} かける {B} は？"
+            out[f"m-{a}x{b}"] = f"{P} は {A} かける なに？"
+            for shown in ox_shown_values(a, b):
+                out[f"ox-{a}x{b}-{shown}"] = f"{A} かける {B} は、{ja_number(shown)}。まるかな？ ばつかな？"
+            out[f"c-{a}x{b}"] = KUKU[a][b - 1] + "。"
+    return out
+
+
 if __name__ == "__main__":
-    items = phrases()
+    import sys
+    items = phrases(sys.argv[1] if len(sys.argv) > 1 else "ko")
     kinds = {}
     for k in items:
         kinds[k.split("-")[0]] = kinds.get(k.split("-")[0], 0) + 1

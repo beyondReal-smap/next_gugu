@@ -3,10 +3,11 @@
 
 사용
   python3 tools/voice/generate.py models                    # 쓸 수 있는 모델 보기
-  python3 tools/voice/generate.py voices                    # 한국어 여성 목소리 후보 (라이브러리)
-  python3 tools/voice/generate.py sample --voice ID ...     # 후보별 샘플 → tools/voice/samples/
-  python3 tools/voice/generate.py build --voice ID          # 552문장 생성 → 두 앱 리소스로 배치
+  python3 tools/voice/generate.py voices [--lang en]        # 그 언어 여성 목소리 후보 (라이브러리)
+  python3 tools/voice/generate.py sample --lang en --voice ID ...  # 후보별 샘플 → tools/voice/samples/
+  python3 tools/voice/generate.py build --lang en --voice ID       # 552문장 생성 → 앱 리소스로 배치
   python3 tools/voice/generate.py build --voice ID --regen c-3x2   # 특정 줄만 새로 녹음
+  --lang 기본값은 ko. iOS 는 Voice/{ko,en,ja}/ 언어별 폴더, Android 는 아직 ko 만 기존 assets/voice/ 에 쓴다.
   (검수: tools/voice/qa.py — 길이·음량·받아쓰기로 이상한 줄을 골라낸다)
 
 API 키: 환경변수 ELEVENLABS_API_KEY 또는 ~/.config/gugu/elevenlabs.env (ELEVENLABS_API_KEY=...)
@@ -29,13 +30,13 @@ from pathlib import Path
 
 import requests
 
-from phrases import phrases
+from phrases import LANGS, phrases
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
 CACHE = HERE / ".cache"
 SAMPLES = HERE / "samples"
-IOS_OUT = ROOT / "native-ios/Gugu/Resources/Voice"
+IOS_VOICE = ROOT / "native-ios/Gugu/Resources/Voice"
 ANDROID_OUT = ROOT / "native-android/app/src/main/assets/voice"
 API = "https://api.elevenlabs.io"
 
@@ -51,8 +52,14 @@ def settings_for(model: str) -> dict:
     return dict(BASE_SETTINGS)
 
 
-# 앱에서 실제로 읽는 세 종류 문장 (문제·외우기·빈칸)
-SAMPLE_TEXT = "칠 곱하기 팔은?\n\n칠 팔은 오십육.\n\n칠 곱하기 몇이 오십육일까요?"
+# 앱에서 실제로 읽는 문장 종류별 샘플 (문제·외우기·빈칸·OX)
+SAMPLE_TEXT = {
+    "ko": "칠 곱하기 팔은?\n\n칠 팔은 오십육.\n\n칠 곱하기 몇이 오십육일까요?",
+    "en": "What is seven times eight?\n\nSeven times eight is fifty-six.\n\nFifty-six is seven times what?\n\n"
+          "Seven times eight is fifty-four. True or false?",
+    "ja": "なな かける はち は？\n\nしちは ごじゅうろく。\n\nごじゅうろく は なな かける なに？\n\n"
+          "ににんが し。さざんが く。くく はちじゅういち。",
+}
 PCM_RATE = 24_000
 AAC_BITRATE = 48_000
 # 줄마다 체감 음량을 맞춘다 — 최고치 기준으로 맞췄을 때는 순간 튀는 소리 때문에 줄마다 최대 8.7LU 차이가 났다
@@ -106,14 +113,20 @@ def cmd_models(_args) -> None:
         print(f"{m['model_id']:32} ko={'ko' in langs}  {m.get('name')}")
 
 
+def candidates_path(lang: str) -> Path:
+    return CACHE / ("candidates.json" if lang == "ko" else f"candidates-{lang}.json")
+
+
 def cmd_voices(args) -> None:
     s = session()
-    params = {"language": "ko", "gender": "female", "page_size": 40, "sort": "trending"}
+    params = {"language": args.lang, "gender": "female", "page_size": 40, "sort": "trending"}
     if args.search:
         params["search"] = args.search
+    if args.use_case:
+        params["use_cases"] = args.use_case
     voices = request(s, "GET", "/v1/shared-voices", params=params).json().get("voices", [])
     CACHE.mkdir(parents=True, exist_ok=True)
-    (CACHE / "candidates.json").write_text(json.dumps(voices, ensure_ascii=False, indent=1))
+    candidates_path(args.lang).write_text(json.dumps(voices, ensure_ascii=False, indent=1))
     for v in voices:
         desc = (v.get("description") or "").replace("\n", " ")[:70]
         print(f"{v['voice_id']}  {v.get('name')!s:28} age={v.get('age')} use={v.get('use_case')} "
@@ -125,7 +138,8 @@ def ensure_voice(s: requests.Session, voice_id: str) -> None:
     r = s.get(f"{API}/v1/voices/{voice_id}", timeout=30)
     if r.ok:
         return
-    candidates = json.loads((CACHE / "candidates.json").read_text()) if (CACHE / "candidates.json").exists() else []
+    candidates = [v for lang in LANGS if candidates_path(lang).exists()
+                  for v in json.loads(candidates_path(lang).read_text())]
     match = next((v for v in candidates if v["voice_id"] == voice_id), None)
     if match is None:
         raise RuntimeError(f"목소리 {voice_id} 를 찾을 수 없습니다 — 먼저 `voices` 로 후보를 불러오세요.")
@@ -211,8 +225,9 @@ def cmd_sample(args) -> None:
     for voice in args.voice:
         ensure_voice(s, voice)
         r = request(s, "POST", f"/v1/text-to-speech/{voice}", params={"output_format": "mp3_44100_128"},
-                    json={"text": SAMPLE_TEXT, "model_id": args.model, "voice_settings": settings_for(args.model)})
-        out = SAMPLES / f"{voice}-{args.model}.mp3"
+                    json={"text": SAMPLE_TEXT[args.lang], "model_id": args.model,
+                          "voice_settings": settings_for(args.model)})
+        out = SAMPLES / f"{args.lang}-{voice}-{args.model}.mp3"
         out.write_bytes(r.content)
         print(out)
 
@@ -221,7 +236,7 @@ def cmd_build(args) -> None:
     s = session()
     settings = settings_for(args.model)
     ensure_voice(s, args.voice)
-    lines = phrases()
+    lines = phrases(args.lang)
     work_dir = CACHE / "m4a" / args.voice
     work_dir.mkdir(parents=True, exist_ok=True)
     (CACHE / "pcm").mkdir(parents=True, exist_ok=True)
@@ -251,8 +266,10 @@ def cmd_build(args) -> None:
             if done % 25 == 0 or done == len(todo):
                 print(f"  생성 {done}/{len(todo)}")
 
-    # 마스터링 → 두 앱에 같은 파일 배치
-    for out in (IOS_OUT, ANDROID_OUT):
+    # 마스터링 → 앱 리소스 배치. Android 는 언어별 폴더 전환(2차) 전까지 ko 만 기존 경로에 쓴다
+    ios_out = IOS_VOICE / args.lang
+    outs = [ios_out] + ([ANDROID_OUT] if args.lang == "ko" else [])
+    for out in outs:
         out.mkdir(parents=True, exist_ok=True)
         stale = sorted(p.name for p in out.glob("*.m4a") if p.stem not in lines)
         if stale:
@@ -261,16 +278,17 @@ def cmd_build(args) -> None:
         m4a = work_dir / f"{key}.m4a"
         master(cache_path(args.voice, args.model, text, settings), m4a)
         data = m4a.read_bytes()
-        (IOS_OUT / f"{key}.m4a").write_bytes(data)
-        (ANDROID_OUT / f"{key}.m4a").write_bytes(data)
+        for out in outs:
+            (out / f"{key}.m4a").write_bytes(data)
         if i % 100 == 0:
             print(f"  마스터링 {i}/{len(lines)}")
 
     manifest = {"voice": args.voice, "model": args.model, "settings": settings, "lines": lines}
     body = json.dumps(manifest, ensure_ascii=False, indent=1, sort_keys=True)
-    (IOS_OUT / "voice-manifest.json").write_text(body)
-    (ANDROID_OUT / "manifest.json").write_text(body)
-    size = sum(p.stat().st_size for p in IOS_OUT.glob("*.m4a"))
+    (ios_out / "voice-manifest.json").write_text(body)
+    if args.lang == "ko":
+        (ANDROID_OUT / "manifest.json").write_text(body)
+    size = sum(p.stat().st_size for p in ios_out.glob("*.m4a"))
     print(f"완료 — {len(lines)}개, {size / 1024 / 1024:.1f}MB (앱마다)")
 
 
@@ -279,11 +297,15 @@ def main() -> None:
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("models")
     v = sub.add_parser("voices")
+    v.add_argument("--lang", choices=LANGS, default="ko")
     v.add_argument("--search")
+    v.add_argument("--use-case", help="라이브러리 용도 필터 (예: narrative_story, informative_educational)")
     sm = sub.add_parser("sample")
+    sm.add_argument("--lang", choices=LANGS, default="ko")
     sm.add_argument("--voice", action="append", required=True)
     sm.add_argument("--model", default=DEFAULT_MODEL)
     b = sub.add_parser("build")
+    b.add_argument("--lang", choices=LANGS, default="ko")
     b.add_argument("--voice", required=True)
     b.add_argument("--model", default=DEFAULT_MODEL)
     b.add_argument("--workers", type=int, default=3)
