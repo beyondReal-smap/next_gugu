@@ -8,9 +8,25 @@
     <cloud-backup>
         <exclude domain="sharedpref" path="gugu_device.xml" />
         <exclude domain="sharedpref" path="gugu_device.xml.bak" />
+        <!-- Firebase(FCM) 가 기기에 남기는 파일 — 에뮬레이터(API 36)에서 run-as 로 확인한 실제 이름 (2026-10-19).
+             appid.xml = FCM 토큰·토픽 대기열, messaging.xml = 자동 초기화 값, HeartBeat = 사용일 기록, datatransport = 전송 대기 이벤트.
+             설치 ID(no_backup/PersistedInstallation.*.json)는 noBackupFilesDir 라 자동 제외된다. -->
+        <exclude domain="sharedpref" path="com.google.android.gms.appid.xml" />
+        <exclude domain="sharedpref" path="com.google.firebase.messaging.xml" />
+        <exclude domain="file" path="datastore/FirebaseHeartBeatW0RFRkFVTFRd+MToyMjg3NzYwNDY0Mzk6YW5kcm9pZDphMWVlNzcyNjU0MzRjMWRiNmU0OWMy.preferences_pb" />
+        <exclude domain="database" path="com.google.android.datatransport.events" />
+        <exclude domain="database" path="com.google.android.datatransport.events-journal" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="sharedpref" path="gugu_device.xml" />
         <exclude domain="sharedpref" path="gugu_device.xml.bak" />
+        <!-- Firebase(FCM) 가 기기에 남기는 파일 — 에뮬레이터(API 36)에서 run-as 로 확인한 실제 이름 (2026-10-19).
+             appid.xml = FCM 토큰·토픽 대기열, messaging.xml = 자동 초기화 값, HeartBeat = 사용일 기록, datatransport = 전송 대기 이벤트.
+             설치 ID(no_backup/PersistedInstallation.*.json)는 noBackupFilesDir 라 자동 제외된다. -->
+        <exclude domain="sharedpref" path="com.google.android.gms.appid.xml" />
+        <exclude domain="sharedpref" path="com.google.firebase.messaging.xml" />
+        <exclude domain="file" path="datastore/FirebaseHeartBeatW0RFRkFVTFRd+MToyMjg3NzYwNDY0Mzk6YW5kcm9pZDphMWVlNzcyNjU0MzRjMWRiNmU0OWMy.preferences_pb" />
+        <exclude domain="database" path="com.google.android.datatransport.events" />
+        <exclude domain="database" path="com.google.android.datatransport.events-journal" />
     </device-transfer>
 </data-extraction-rules>

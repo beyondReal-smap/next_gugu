@@ -36,6 +36,7 @@ import site.smap.gugudan.designsystem.*
 import site.smap.gugudan.core.ReminderPlanner
 import site.smap.gugudan.features.reminder.rememberEnableReminder
 import site.smap.gugudan.store.LocalGame
+import site.smap.gugudan.store.LocalPush
 import site.smap.gugudan.store.LocalReminder
 import androidx.compose.material.icons.filled.NotificationsActive
 import java.time.LocalTime
@@ -68,10 +69,13 @@ fun ResultView(engine: SessionEngine, done: SessionDone, onClose: () -> Unit) {
 
     // 학습 알림 권유 — 첫 실행이 아니라 한 판을 끝낸 뒤에 묻는다 (iOS 와 같은 흐름)
     val reminder = LocalReminder.current
+    val push = LocalPush.current
     // 권유 시각 = 지금 시각. "이 시간에" 공부한 아이는 내일도 이 시간이 편하다 (야간은 8~20시로 당긴다)
     val offerHour = remember { ReminderPlanner.clampHour(LocalTime.now().hour) }
     var reminderNotice by remember { mutableStateOf<String?>(null) }
     val enableReminder = rememberEnableReminder { granted ->
+        // 학습 알림을 허용하면 공지 알림도 함께 켠다 (카드 부제에서 안내)
+        if (granted) push.setService(true)
         reminderNotice = if (granted) {
             "매일 ${ReminderPlanner.hourLabel(offerHour)}에 알려드릴게요. 프로필 > 설정에서 바꿀 수 있어요."
         } else {
@@ -212,7 +216,8 @@ fun ResultView(engine: SessionEngine, done: SessionDone, onClose: () -> Unit) {
                                 style = suite(FontWeight.ExtraBold, 15), color = gg.text)
                         }
                         Text(
-                            "매일 ${ReminderPlanner.hourLabel(offerHour)}에 오늘의 구구단을 알려드려요. 밤에는 보내지 않아요.",
+                            "매일 ${ReminderPlanner.hourLabel(offerHour)}에 오늘의 구구단을 알려드려요. 밤에는 보내지 않아요.\n" +
+                                "중요한 공지도 함께 알려 드려요.",
                             style = suite(FontWeight.Medium, 13), color = gg.textMuted,
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

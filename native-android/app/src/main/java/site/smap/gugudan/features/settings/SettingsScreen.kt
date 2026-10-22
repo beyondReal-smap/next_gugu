@@ -15,8 +15,12 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Campaign
+import androidx.compose.material.icons.filled.CardGiftcard
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Contrast
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.FamilyRestroom
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.RecordVoiceOver
@@ -35,6 +39,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -46,12 +52,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import kotlinx.coroutines.launch
+import java.time.ZoneId
 import site.smap.gugudan.BuildConfig
 import site.smap.gugudan.core.PremiumConfig
 import site.smap.gugudan.core.ReminderPlanner
 import site.smap.gugudan.core.Theme
 import site.smap.gugudan.designsystem.*
+import site.smap.gugudan.core.PushCopy
 import site.smap.gugudan.features.reminder.rememberEnableReminder
+import site.smap.gugudan.features.reminder.rememberNotificationAccess
 import site.smap.gugudan.services.Haptics
 import site.smap.gugudan.store.*
 
@@ -78,6 +87,24 @@ fun SettingsScreen(onClose: () -> Unit) {
     var restoreNotice by remember { mutableStateOf<String?>(null) }
     var confirmReset by remember { mutableStateOf(false) }
     val enableReminder = rememberEnableReminder { }
+    val push = LocalPush.current
+    val router = LocalRouter.current
+    val notificationAccess = rememberNotificationAccess()
+    // 알림 딥링크(settings/notifications)로 열면 알림 섹션까지 내려간다 — 섹션 위치는 첫 배치 후에 알 수 있다
+    val scrollState = rememberScrollState()
+    var notificationsY by remember { mutableIntStateOf(-1) }
+    LaunchedEffect(router.settingsFocusNotifications, notificationsY) {
+        if (router.settingsFocusNotifications && notificationsY >= 0) {
+            scrollState.animateScrollTo(notificationsY)
+            router.settingsFocusNotifications = false
+        }
+    }
+    // 광고 동의 흐름: 보호자 확인 → 동의 시트 → 서버 기록 → 처리 결과 알림창
+    var marketingStep by remember { mutableStateOf(MarketingStep.NONE) }
+    var marketingBusy by remember { mutableStateOf(false) }
+    var marketingResult by remember { mutableStateOf<Pair<String?, String>?>(null) }
+    // 보호자 학습 소식은 기록 보관 계정(이메일 연결 + 이용권)만 받을 수 있다
+    val learningEligible = auth.isPermanent && premium.isPremium
 
     BackHandler(onBack = onClose)
 
@@ -99,7 +126,7 @@ fun SettingsScreen(onClose: () -> Unit) {
         }
 
         Column(
-            Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+            Modifier.fillMaxSize().verticalScroll(scrollState)
                 .navigationBarsPadding()
                 .readableWidth()
                 .padding(horizontal = 20.dp).padding(top = 8.dp, bottom = 32.dp),
@@ -151,8 +178,16 @@ fun SettingsScreen(onClose: () -> Unit) {
             }
 
             // 알림
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                Modifier.onGloballyPositioned { notificationsY = it.positionInParent().y.toInt() },
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 SettingsGroup("알림") {
+                    // 기존 사용자 1회 안내 — 공지 알림이 꺼져 있고 아직 닫지 않았을 때만 (공지를 켜거나 닫으면 다시 안 보인다)
+                    if (push.settings.showsNoticeHint) {
+                        NoticeHintRow(onDismiss = { push.dismissNoticeHint() })
+                        SettingsDivider()
+                    }
                     ToggleRow(
                         Icons.Filled.Notifications, "학습 알림",
                         "하루 한 번, 오늘의 구구단을 알려 드려요. 밤에는 보내지 않아요.",
@@ -181,9 +216,60 @@ fun SettingsScreen(onClose: () -> Unit) {
                             }
                         }
                     }
+                    SettingsDivider()
+                    ToggleRow(
+                        Icons.Filled.Campaign, "공지 알림",
+                        "업데이트·점검 같은 중요한 소식을 알려 드려요.",
+                        push.settings.serviceOptIn,
+                    ) { on ->
+                        if (!on) push.setService(false)
+                        else notificationAccess { allowed ->
+                            if (allowed) push.setService(true) else push.markDeniedBySystem()
+                        }
+                    }
+                    SettingsDivider()
+                    ToggleRow(
+                        Icons.Filled.FamilyRestroom, "보호자 학습 소식",
+                        if (learningEligible) "매주 학습 리포트가 준비되면 알려 드려요."
+                        else "이메일을 연결하고 기록 보관을 켜면 받을 수 있어요.",
+                        checked = learningEligible && push.settings.learningOptIn,
+                        enabled = learningEligible,
+                    ) { on ->
+                        if (!on) push.setLearning(false)
+                        else notificationAccess { allowed ->
+                            if (allowed) push.setLearning(true) else push.markDeniedBySystem()
+                        }
+                    }
+                    SettingsDivider()
+                    val consentDate = PushCopy.localDate(push.settings.marketingOptInAt, ZoneId.systemDefault())
+                    ToggleRow(
+                        Icons.Filled.CardGiftcard, "이벤트·혜택 알림 (광고)",
+                        if (push.settings.marketingOptIn && consentDate != null) PushCopy.consentSubtitle(consentDate)
+                        else PushCopy.MARKETING_OFF_SUBTITLE,
+                        checked = push.settings.marketingOptIn,
+                        enabled = !marketingBusy,
+                    ) { on ->
+                        if (on) {
+                            notificationAccess { allowed ->
+                                if (allowed) marketingStep = MarketingStep.GATE else push.markDeniedBySystem()
+                            }
+                        } else {
+                            // 끄기는 즉시 — 서버 기록이 실패해도 대기열에 두고 기기 날짜로 결과를 알린다
+                            marketingBusy = true
+                            scope.launch {
+                                val done = push.revokeMarketing()
+                                marketingBusy = false
+                                marketingResult = PushCopy.REVOKED_TITLE to PushCopy.revokedMessage(done.date, done.sender)
+                            }
+                        }
+                    }
                 }
+                Text(
+                    "알림을 꺼도 모든 기능을 그대로 쓸 수 있어요.",
+                    style = suite(FontWeight.Medium, 12), color = gg.textMuted,
+                )
                 // 앱에서는 켰지만 시스템 설정에서 꺼진 경우 — 앱이 대신 켤 수 없어 설정으로 안내한다
-                if (reminder.deniedBySystem) {
+                if (reminder.deniedBySystem || push.deniedBySystem) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("휴대폰 설정에서 구구 어드벤처 알림이 꺼져 있어요.",
                             style = suite(FontWeight.Medium, 12), color = gg.warning, modifier = Modifier.weight(1f))
@@ -281,7 +367,37 @@ fun SettingsScreen(onClose: () -> Unit) {
             }
         }
     }
+    // 광고 동의 시트·결과 알림창 — 별도 창(Dialog)에 띄워 설정 화면 레이아웃을 건드리지 않는다
+    when (marketingStep) {
+        MarketingStep.NONE -> Unit
+        MarketingStep.GATE -> GuardianGateSheet(
+            onCancel = { marketingStep = MarketingStep.NONE },
+            onPassed = { marketingStep = MarketingStep.CONSENT },
+        )
+        MarketingStep.CONSENT -> MarketingConsentSheet(
+            busy = marketingBusy,
+            onCancel = { marketingStep = MarketingStep.NONE },
+            onAgree = {
+                marketingBusy = true
+                scope.launch {
+                    val result = push.grantMarketing()
+                    marketingBusy = false
+                    marketingStep = MarketingStep.NONE
+                    marketingResult = when (result) {
+                        is PushStore.MarketingResult.Recorded ->
+                            PushCopy.GRANTED_TITLE to PushCopy.grantedMessage(result.date, result.sender)
+                        PushStore.MarketingResult.Failed -> null to PushCopy.FAILED_MESSAGE
+                    }
+                }
+            },
+        )
+    }
+    marketingResult?.let { (title, message) ->
+        PushResultDialog(title, message) { marketingResult = null }
+    }
 }
+
+private enum class MarketingStep { NONE, GATE, CONSENT }
 
 // MARK: 설정 행 구성 요소
 
@@ -291,6 +407,33 @@ private fun SettingsGroup(title: String, content: @Composable ColumnScope.() -> 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(title, style = suite(FontWeight.Bold, 14), color = gg.textMuted, modifier = Modifier.semantics { heading() })
         Column(Modifier.fillMaxWidth().ggCard(16.dp), content = content)
+    }
+}
+
+/** 설정 알림 섹션 맨 위 1회 안내 — 새로 생긴 공지 알림을 알린다 */
+@Composable
+private fun NoticeHintRow(onDismiss: () -> Unit) {
+    val gg = LocalGG.current
+    Row(
+        Modifier.fillMaxWidth().background(gg.accent.copy(alpha = 0.08f))
+            .padding(start = 20.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(Icons.Filled.AutoAwesome, null, tint = gg.accent, modifier = Modifier.size(20.dp))
+        Text(
+            "새 기능: 공지 알림을 켜면 업데이트·점검 소식을 받을 수 있어요.",
+            style = suite(FontWeight.Bold, 13), color = gg.text, modifier = Modifier.weight(1f),
+        )
+        // 보이는 아이콘은 18dp, 누르는 영역은 48dp
+        Box(
+            Modifier.size(48.dp).clip(CircleShape)
+                .clickable(role = Role.Button) { Haptics.impactLight(); onDismiss() }
+                .semantics { contentDescription = "안내 닫기" },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Icons.Filled.Close, null, tint = gg.textMuted, modifier = Modifier.size(18.dp))
+        }
     }
 }
 
@@ -341,6 +484,10 @@ private fun ToggleRow(
                 uncheckedTrackColor = gg.surface2,
                 uncheckedThumbColor = gg.textMuted,
                 uncheckedBorderColor = gg.border,
+                // 비활성(보호자 학습 소식 자격 없음) — 기본값은 다크 테마에서 흰색으로 튀어 꺼진 상태처럼 흐리게 둔다
+                disabledUncheckedTrackColor = gg.surface2.copy(alpha = 0.5f),
+                disabledUncheckedThumbColor = gg.textMuted.copy(alpha = 0.4f),
+                disabledUncheckedBorderColor = gg.border,
             ),
         )
     }

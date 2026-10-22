@@ -1,6 +1,8 @@
 package site.smap.gugudan
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -53,6 +55,8 @@ import site.smap.gugudan.services.LearningIdentityStore
 import site.smap.gugudan.services.LearningOutboxStore
 import site.smap.gugudan.services.LocalNotifications
 import site.smap.gugudan.services.Persistence
+import site.smap.gugudan.services.RemotePush
+import site.smap.gugudan.core.PushRoute
 import site.smap.gugudan.services.Sound
 import site.smap.gugudan.store.*
 import androidx.lifecycle.lifecycleScope
@@ -101,7 +105,7 @@ class MainActivity : ComponentActivity() {
         val premium = PremiumStore(this, persistence, devForcePremium = devFlag("premium"))
         val theme = ThemeStore(persistence)
         val prefs = PrefsStore(persistence)
-        val router = Router()
+        val router = Router().also { this.router = it }
         val auth = AuthStore(persistence, lifecycleScope)
         val sync = SyncStore(
             LearningIdentityStore(persistence), LearningOutboxStore(persistence), lifecycleScope,
@@ -110,10 +114,21 @@ class MainActivity : ComponentActivity() {
         // 로그인한 계정의 서버 기록(문제별 통계)은 약한 문제로 반영한다
         sync.onServerRestore = { facts -> game.mergeRestoredWrongPool(facts) }
 
+        // 알림 채널 4종(학습·공지·보호자 소식·광고)을 앱 시작 때 한 번에 만든다
         reminder = ReminderStore(this, persistence).also { LocalNotifications.ensureChannel(this) }
         gameStore = game
         premiumStore = premium
         authStore = auth
+        val push = PushStore(
+            PersistencePushStorage(persistence), FirebasePushMessaging, ApiPushServer,
+            SystemPushPermission(applicationContext), AuthPushAccount(auth), lifecycleScope,
+            learningEligible = { auth.isPermanent && premium.isPremium },
+            localReminderEnabled = { reminder.settings.enabled },
+        )
+        pushStore = push
+
+        // 알림을 눌러 앱을 처음 연 경우 — 재생성(복원)일 때는 이미 처리했으므로 건너뛴다
+        if (savedInstanceState == null) handlePushIntent(intent)
 
         setContent {
             CompositionLocalProvider(
@@ -127,6 +142,7 @@ class MainActivity : ComponentActivity() {
                 LocalAuth provides auth,
                 LocalSync provides sync,
                 LocalReminder provides reminder,
+                LocalPush provides push,
             ) {
                 // 상태바·내비게이션바 아이콘 색을 앱 테마에 맞춘다.
                 // 기본값(auto)은 기기 설정을 따라, 기기가 라이트인데 앱이 다크면 검은 아이콘이 검은 배경에 묻혔다.
@@ -145,6 +161,7 @@ class MainActivity : ComponentActivity() {
                     LaunchedEffect(Unit) {
                         auth.start()
                         syncAccount(auth, premium, sync)
+                        push.sync()
                     }
                     // 구매/복원 직후에도 권한을 켠다
                     LaunchedEffect(premium.isPremium) {
@@ -159,6 +176,18 @@ class MainActivity : ComponentActivity() {
                         if (accountKey != lastAccountKey) {
                             lastAccountKey = accountKey
                             syncAccount(auth, premium, sync)
+                            // 새 계정(새 JWT)으로 알림 기기를 다시 등록한다
+                            push.sync()
+                        }
+                    }
+                    // 보호자 학습 소식 자격(이용권)·로컬 학습 알림이 바뀌면 서버 등록 내용도 맞춘다 (켜진 원격 항목이 없으면 아무것도 안 함).
+                    // 첫 진입은 시작 흐름(위)·onResume 이 이미 동기화하므로 건너뛴다.
+                    val pushKey = premium.isPremium to reminder.settings.enabled
+                    var lastPushKey by remember { mutableStateOf(pushKey) }
+                    LaunchedEffect(pushKey) {
+                        if (pushKey != lastPushKey) {
+                            lastPushKey = pushKey
+                            push.requestSync()
                         }
                     }
                     // 학습 알림 재예약 — 학습해서 오늘 진척이 바뀔 때.
@@ -174,6 +203,8 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         if (::reminder.isInitialized) reminder.reschedule(gameStore.state)
+        // 원격 푸시 — 토큰·토픽·하루 1회 재등록·광고 거부 대기열 (시스템 알림 설정이 바뀌었을 수도 있다)
+        if (::pushStore.isInitialized) pushStore.requestSync()
         // 앱으로 돌아올 때마다 서버 부여 프리미엄을 다시 확인한다 — DB 변경이 재설치 없이 반영된다
         if (::premiumStore.isInitialized) {
             lifecycleScope.launch { premiumStore.refreshServerEntitlement(authStore) }
@@ -194,7 +225,39 @@ class MainActivity : ComponentActivity() {
         else sync.flush(auth)
     }
 
+    // 앱 화면이 보이는지 — 메시징 서비스가 광고를 조용히 둘지 정할 때 읽는다
+    override fun onStart() {
+        super.onStart()
+        RemotePush.appInForeground = true
+    }
+
+    override fun onStop() {
+        RemotePush.appInForeground = false
+        super.onStop()
+    }
+
+    // singleTop — 앱이 떠 있을 때 알림을 누르면 새 화면 대신 여기로 온다
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handlePushIntent(intent)
+    }
+
+    /** 알림 data `link` → 이동 대상. 허용 목록 밖이면 홈. 온보딩 전·진행 중이면 RootScreen 이 끝난 뒤 적용한다 */
+    private fun handlePushIntent(intent: Intent?) {
+        if (!RemotePush.isPushIntent(intent)) return
+        val link = intent?.getStringExtra(RemotePush.EXTRA_LINK)
+        if (!PushRoute.isKnown(link)) Log.w("Push", "허용 목록 밖 링크 — 홈으로 이동: ${link?.take(40)}")
+        router.pendingRoute = PushRoute.parse(link)
+        // 같은 인텐트가 다시 전달돼도 반복 이동하지 않게 표시를 지운다
+        intent?.removeExtra(RemotePush.EXTRA_LINK)
+        intent?.removeExtra(RemotePush.EXTRA_FROM_PUSH)
+        intent?.removeExtra("google.message_id")
+    }
+
     private lateinit var reminder: ReminderStore
+    private lateinit var router: Router
+    private lateinit var pushStore: PushStore
     private lateinit var gameStore: GameStore
     private lateinit var premiumStore: PremiumStore
     private lateinit var authStore: AuthStore
@@ -217,6 +280,17 @@ fun RootScreen() {
     val adventure = LocalAdventure.current
     val premium = LocalPremium.current
     val router = LocalRouter.current
+
+    // 세션·미니게임·어드벤처 진행 중에는 원격 알림을 소리·배너 없이 목록에만 둔다
+    val playing = session.active != null || adventure.open || router.runnerOpen || router.laneOpen || router.basketOpen
+    LaunchedEffect(playing) { RemotePush.playing = playing }
+    // 알림으로 들어온 이동 — 온보딩을 마치고 진행 중인 세션·미니게임·어드벤처가 끝난 뒤에 적용한다 (그 전에는 보관)
+    val pendingRoute = router.pendingRoute
+    LaunchedEffect(pendingRoute, game.state.onboarded, playing) {
+        router.applyPendingRoute(
+            onboarded = game.state.onboarded, playing = playing, isPremium = premium.isPremium,
+        ) { premium.openPaywall() }
+    }
 
     Box(Modifier.fillMaxSize().background(gg.bg)) {
         if (!game.state.onboarded) {

@@ -134,6 +134,34 @@ class PersistenceTests {
         assertTrue(Persistence.AUTH_SESSION_KEY in Persistence.DEVICE_KEYS)
     }
 
+    /** 원격 푸시 3종은 이 설치에 묶인다 — 광고 동의·pushInstallId 가 백업으로 새 기기에 따라가면 안 된다 */
+    @Test fun pushKeysAreDeviceKeys() {
+        assertTrue(Persistence.PUSH_INSTALL_KEY in Persistence.DEVICE_KEYS)
+        assertTrue(Persistence.PUSH_STATE_KEY in Persistence.DEVICE_KEYS)
+        assertTrue(Persistence.PUSH_SETTINGS_KEY in Persistence.DEVICE_KEYS)
+    }
+
+    /** 백업 규칙 — Firebase 가 기기에 남기는 파일(토큰·설치 ID·자동 초기화 값)도 백업·기기 이전에서 뺀다 */
+    @Test fun backupRulesExcludeFirebaseFiles() {
+        val rules = listOf(
+            File("src/main/res/xml/backup_rules.xml").readText(),
+            File("src/main/res/xml/data_extraction_rules.xml").readText(),
+        )
+        for (text in rules) {
+            for (path in FIREBASE_BACKUP_EXCLUDES) {
+                assertTrue(text.contains("path=\"$path\""), "백업 제외 누락: $path")
+            }
+        }
+        // 클라우드 백업과 기기 이전 양쪽 모두
+        val extraction = rules[1]
+        val cloud = extraction.substringAfter("<cloud-backup>").substringBefore("</cloud-backup>")
+        val transfer = extraction.substringAfter("<device-transfer>").substringBefore("</device-transfer>")
+        FIREBASE_BACKUP_EXCLUDES.forEach {
+            assertTrue(cloud.contains(it), "cloud-backup 제외 누락: $it")
+            assertTrue(transfer.contains(it), "device-transfer 제외 누락: $it")
+        }
+    }
+
     // MARK: 기기 값 이관 (gugu → gugu_device)
 
     private val session = Persistence.AUTH_SESSION_KEY
@@ -289,7 +317,8 @@ class PersistenceTests {
     /** 백업 규칙의 제외 경로가 실제 기기 파일 이름과 어긋나면(이름 변경 등) 토큰이 조용히 백업에 실린다 */
     @Test fun backupRulesExcludeExactlyTheDeviceFile() {
         val file = "${Persistence.DEVICE_PREFS_NAME}.xml"
-        val expected = setOf(file, "$file.bak")
+        // Firebase(FCM) 토큰·자동 초기화 값도 sharedpref 로 남는다 — 함께 뺀다 (backupRulesExcludeFirebaseFiles)
+        val expected = setOf(file, "$file.bak", "com.google.android.gms.appid.xml", "com.google.firebase.messaging.xml")
         // 단위 테스트의 작업 디렉터리는 모듈(app/) 이다
         fun body(name: String) = File("src/main/res/xml/$name").readText()
             .replace(Regex("<!--.*?-->", RegexOption.DOT_MATCHES_ALL), "")   // 주석 제거
@@ -386,3 +415,11 @@ private class FakePrefs(var commitOk: Boolean = true, initial: Map<String, Any> 
         }
     }
 }
+
+/** 기기에서 확인한 Firebase 저장 파일 (res/xml 백업 규칙과 같아야 한다) */
+private val FIREBASE_BACKUP_EXCLUDES = listOf(
+    "com.google.android.gms.appid.xml",
+    "com.google.firebase.messaging.xml",
+    "datastore/FirebaseHeartBeatW0RFRkFVTFRd+MToyMjg3NzYwNDY0Mzk6YW5kcm9pZDphMWVlNzcyNjU0MzRjMWRiNmU0OWMy.preferences_pb",
+    "com.google.android.datatransport.events",
+)

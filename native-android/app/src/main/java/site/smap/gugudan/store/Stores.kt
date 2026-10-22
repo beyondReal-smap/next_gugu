@@ -192,6 +192,37 @@ class Router {
 
     /** 설정 화면 (프로필 톱니바퀴) */
     var settingsOpen: Boolean by mutableStateOf(false)
+
+    /** 설정 화면을 열면서 알림 섹션으로 스크롤할지 — 알림 딥링크 settings/notifications. 스크롤한 뒤 설정 화면이 끈다 */
+    var settingsFocusNotifications: Boolean by mutableStateOf(false)
+
+    /** 알림을 눌러 들어온 이동 대상 — 온보딩 전·세션·미니게임·어드벤처 진행 중이면 보관했다가 끝난 뒤 적용한다 */
+    var pendingRoute: PushRoute? by mutableStateOf(null)
+
+    /**
+     * 보관한 이동 대상을 지금 적용할 수 있으면 적용하고 비운다. 온보딩 전이거나 진행 중(playing)이면 그대로 둔다 —
+     * 아이의 진행을 끊지 않고, 끝나면(playing 이 false 로 바뀌면) 다시 불려 적용된다. 적용했으면 true.
+     */
+    fun applyPendingRoute(onboarded: Boolean, playing: Boolean, isPremium: Boolean, openPaywall: () -> Unit): Boolean {
+        val route = pendingRoute ?: return false
+        if (!onboarded || playing) return false
+        pendingRoute = null
+        open(route, isPremium, openPaywall)
+        return true
+    }
+
+    /** 알림 이동 대상을 연다. 이미 이용권이 있으면 페이월 대신 홈으로 */
+    fun open(route: PushRoute, isPremium: Boolean, openPaywall: () -> Unit) {
+        when (route) {
+            PushRoute.HOME -> { settingsOpen = false; tab = AppTab.HOME }
+            PushRoute.LEARN -> { settingsOpen = false; tab = AppTab.LEARN }
+            // 주간 리포트 카드는 프로필 탭에 있다
+            PushRoute.PROFILE, PushRoute.PROFILE_REPORT -> { settingsOpen = false; tab = AppTab.PROFILE }
+            PushRoute.PAYWALL ->
+                if (isPremium) { settingsOpen = false; tab = AppTab.HOME } else openPaywall()
+            PushRoute.SETTINGS_NOTIFICATIONS -> { settingsFocusNotifications = true; settingsOpen = true }
+        }
+    }
 }
 
 // CompositionLocal 제공 (루트에서 주입)
@@ -205,3 +236,4 @@ val LocalAuth = staticCompositionLocalOf<AuthStore> { error("AuthStore 미제공
 val LocalSync = staticCompositionLocalOf<SyncStore> { error("SyncStore 미제공") }
 val LocalReminder = staticCompositionLocalOf<ReminderStore> { error("ReminderStore 미제공") }
 val LocalPrefs = staticCompositionLocalOf<PrefsStore> { error("PrefsStore 미제공") }
+val LocalPush = staticCompositionLocalOf<PushStore> { error("PushStore 미제공") }

@@ -20,6 +20,7 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import site.smap.gugudan.R
 import site.smap.gugudan.core.PlannedReminder
+import site.smap.gugudan.core.PushChannels
 import site.smap.gugudan.core.ReminderPlanner
 import java.time.LocalTime
 import java.util.concurrent.TimeUnit
@@ -29,13 +30,25 @@ import java.util.concurrent.TimeUnit
 
 object LocalNotifications {
     private const val TAG = "Reminder"
-    private const val CHANNEL_ID = "learning_reminder"
+    private const val CHANNEL_ID = PushChannels.LEARNING_REMINDER
     private const val WORK_TAG = "gugu-reminder"
 
+    /**
+     * 알림 채널 4종을 한 번에 만든다 (앱 시작·표시 직전). 이미 있으면 이름·설명만 갱신되고 사용자가 바꾼 중요도는 유지된다.
+     * 학습 알림(로컬)은 기존 그대로, 나머지 셋은 원격 푸시용 — 공지 채널이 FCM 기본 채널이다(매니페스트).
+     */
     fun ensureChannel(context: Context) {
-        val channel = NotificationChannel(CHANNEL_ID, "학습 알림", NotificationManager.IMPORTANCE_DEFAULT)
-            .apply { description = "정해진 시간에 오늘의 구구단을 알려드려요" }
-        context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        val channels = listOf(
+            NotificationChannel(CHANNEL_ID, "학습 알림", NotificationManager.IMPORTANCE_DEFAULT)
+                .apply { description = "정해진 시간에 오늘의 구구단을 알려드려요" },
+            NotificationChannel(PushChannels.SERVICE_NOTICE, "공지·서비스 알림", NotificationManager.IMPORTANCE_HIGH)
+                .apply { description = "업데이트·점검 같은 중요한 소식을 알려 드려요." },
+            NotificationChannel(PushChannels.GUARDIAN_REPORT, "보호자 학습 소식", NotificationManager.IMPORTANCE_HIGH)
+                .apply { description = "매주 학습 리포트가 준비되면 알려 드려요." },
+            NotificationChannel(PushChannels.PROMOTION, "이벤트·혜택 알림(광고)", NotificationManager.IMPORTANCE_DEFAULT)
+                .apply { description = "새 기능·이벤트 소식을 받아요." },
+        )
+        context.getSystemService(NotificationManager::class.java).createNotificationChannels(channels)
     }
 
     /** Android 13 이상에서 아직 알림 권한이 없으면 true — 이때만 런타임 요청을 띄운다 */

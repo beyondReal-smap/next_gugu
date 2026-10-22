@@ -9,3 +9,6 @@ app/build/
 .gradle/
 local.properties
 .kotlin/
+
+# Firebase 구성 파일 — Supabase 키와 같은 방식으로 저장소에 올리지 않는다
+app/google-services.json

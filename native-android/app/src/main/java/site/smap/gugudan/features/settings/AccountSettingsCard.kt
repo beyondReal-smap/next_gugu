@@ -34,6 +34,7 @@ import site.smap.gugudan.services.Haptics
 import site.smap.gugudan.store.AuthStore
 import site.smap.gugudan.store.LocalAuth
 import site.smap.gugudan.store.LocalPremium
+import site.smap.gugudan.store.LocalPush
 import site.smap.gugudan.store.LocalSync
 import site.smap.gugudan.store.SyncStore
 import kotlin.math.ceil
@@ -49,6 +50,7 @@ fun AccountSettingsCard(showsAccountManagement: Boolean = true) {
     val auth = LocalAuth.current
     val sync = LocalSync.current
     val premium = LocalPremium.current
+    val push = LocalPush.current
     val scope = rememberCoroutineScope()
 
     var email by remember { mutableStateOf("") }
@@ -86,6 +88,8 @@ fun AccountSettingsCard(showsAccountManagement: Boolean = true) {
                 if (!signingOut) {
                     signingOut = true
                     scope.launch {
+                        // 세션을 지우기 전에 기존 JWT 로 알림 기기 등록을 해제한다 (5초 제한, 실패하면 새 계정으로 재등록)
+                        push.unregisterBeforeSignOut()
                         auth.signOut(onLocalSessionCleared = clearAccountLocalState)
                         signingOut = false
                         confirmSignOut = false
@@ -249,7 +253,11 @@ fun AccountSettingsCard(showsAccountManagement: Boolean = true) {
                                 deleteNotice = null
                                 scope.launch {
                                     // 기기에 남은 신원·아웃박스·서버 부여 이용권은 서버 삭제 직후(익명 재로그인을 기다리기 전)에 정리한다
-                                    val ok = auth.deleteAccount(onLocalSessionCleared = clearAccountLocalState)
+                                    // 서버 purge 가 알림 기기·동의 기록도 지운다 — 광고 동의를 초기화하고 새 계정으로 다시 등록하게 한다
+                                    val ok = auth.deleteAccount(onLocalSessionCleared = {
+                                        clearAccountLocalState()
+                                        push.onAccountDeleted()
+                                    })
                                     deletingAccount = false
                                     confirmDeleteAccount = false
                                     if (ok) email = ""

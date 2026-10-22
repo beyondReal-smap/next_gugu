@@ -6,6 +6,8 @@ import android.util.Log
 import kotlinx.serialization.json.Json
 import site.smap.gugudan.BuildConfig
 import site.smap.gugudan.core.GameState
+import site.smap.gugudan.core.PushRegistrationState
+import site.smap.gugudan.core.PushSettings
 import site.smap.gugudan.core.adventure.AdventureProgress
 import java.io.File
 import java.io.IOException
@@ -71,6 +73,13 @@ class Persistence(context: Context) {
         /** 학습 알림 설정 (켜짐·시각·권유 여부) */
         const val REMINDER_KEY = "gugu.reminder.v1"
 
+        /** 원격 푸시 — 푸시 전용 설치 식별자(UUID). 학습 installId 와 달리 계정이 바뀌어도 유지한다 */
+        const val PUSH_INSTALL_KEY = "gugu.push.install.v1"
+        /** 원격 푸시 — 등록 상태(구독 토픽·등록 계정·토큰 지문) */
+        const val PUSH_STATE_KEY = "gugu.push.state.v1"
+        /** 원격 푸시 — 사용자 설정(공지·보호자 소식·광고 동의) */
+        const val PUSH_SETTINGS_KEY = "gugu.push.v1"
+
         /** 기기에 묶인 값을 담는 별도 prefs 파일 이름 — res/xml 백업 규칙이 `gugu_device.xml` 을 제외한다 */
         internal const val DEVICE_PREFS_NAME = "gugu_device"
         /** 기기 값 이관 완료 마커 (gugu_device 파일 안에 기록한다) */
@@ -81,9 +90,11 @@ class Persistence(context: Context) {
          * 신원만 빼면 복원된 기기에 주인 없는 이벤트가 남아 서버 거부 목록에 영구히 쌓인다.
          * 서버 부여 프리미엄도 이 기기의 계정(세션)에 딸린 값이라 함께 둔다 — 다른 기기로 복원되면 계정이 달라진다.
          * 재로그인 대기 표시도 세션의 짝이라 함께 둔다 — 세션 없이 표시만 복원되면 익명 발급이 막힌다.
+         * 원격 푸시 3종도 이 설치에 묶인다 — 광고 동의가 새 기기로 따라가면 서버 기록 없는 동의로 광고를 받게 된다.
          */
         internal val DEVICE_KEYS = setOf(
             AUTH_SESSION_KEY, AUTH_REAUTH_KEY, LEARNING_IDENTITY_KEY, LEARNING_OUTBOX_KEY, SERVER_PREMIUM_KEY,
+            PUSH_INSTALL_KEY, PUSH_STATE_KEY, PUSH_SETTINGS_KEY,
         )
     }
 
@@ -104,6 +115,20 @@ class Persistence(context: Context) {
 
     fun saveAdventure(p: AdventureProgress) =
         putString(ADVENTURE_KEY, json.encodeToString(AdventureProgress.serializer(), p))
+
+    fun loadPushSettings(): PushSettings? = decodeOrNull(PUSH_SETTINGS_KEY) {
+        json.decodeFromString(PushSettings.serializer(), it)
+    }
+
+    fun savePushSettings(settings: PushSettings) =
+        putString(PUSH_SETTINGS_KEY, json.encodeToString(PushSettings.serializer(), settings))
+
+    fun loadPushState(): PushRegistrationState? = decodeOrNull(PUSH_STATE_KEY) {
+        json.decodeFromString(PushRegistrationState.serializer(), it)
+    }
+
+    fun savePushState(state: PushRegistrationState) =
+        putString(PUSH_STATE_KEY, json.encodeToString(PushRegistrationState.serializer(), state))
 
     /** 저장본을 읽는다. 키가 없으면 null(신규 설치). 있는데 못 읽으면 원문을 격리한 뒤 null — 호출부가 기본값으로 시작해 곧바로 저장하기 때문이다 */
     private inline fun <T> decodeOrNull(key: String, decode: (String) -> T): T? {

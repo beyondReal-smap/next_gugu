@@ -6,6 +6,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization")
     id("com.github.triplet.play")
+    id("com.google.gms.google-services")
 }
 
 // 릴리스 서명 자격 — keystore.properties(gitignore, 시크릿)에서 로드
@@ -40,8 +41,8 @@ android {
         applicationId = "site.smap.gugudan"
         minSdk = 28          // SceneView(Filament) 요구 — 기기 커버리지 ~97%
         targetSdk = 36
-        versionCode = 22     // vc22: 2.4.0 — 이메일 로그인·로그아웃·재로그인, 서버 학습 기록 복원
-        versionName = "2.4.0"
+        versionCode = 23     // vc23: 2.5.0 — FCM 원격 푸시(공지·보호자 학습 소식·이벤트 알림)
+        versionName = "2.5.0"
 
         buildConfigField("String", "SUPABASE_HOST", "\"${supabaseProp("SUPABASE_HOST")}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${supabaseProp("SUPABASE_ANON_KEY")}\"")
@@ -121,6 +122,9 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.10.1")
     implementation("com.android.billingclient:billing-ktx:8.0.0")
     implementation("io.github.sceneview:sceneview:4.24.0")
+    // 원격 푸시(FCM) — Messaging 만 쓴다. Analytics 는 넣지 않는다 (게스트 개인정보 미수집 방침)
+    implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
+    implementation("com.google.firebase:firebase-messaging")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlin:kotlin-test:2.1.20")

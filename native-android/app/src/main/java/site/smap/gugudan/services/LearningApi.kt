@@ -149,17 +149,19 @@ object LearningApi {
         send("/account", "DELETE", accessToken, null)
     }
 
-    private suspend fun send(
+    /** 공통 전송 — PushApi 도 같은 UA·인증·오류 해석을 쓴다. timeoutMs 는 연결·읽기 각각의 제한 */
+    internal suspend fun send(
         path: String,
         method: String,
         accessToken: String,
         body: String?,
+        timeoutMs: Int = 30_000,
     ): String = withContext(Dispatchers.IO) {
         val conn = try {
             (URL(BASE + path).openConnection() as HttpURLConnection).apply {
                 requestMethod = method
-                connectTimeout = 30_000
-                readTimeout = 30_000
+                connectTimeout = timeoutMs
+                readTimeout = timeoutMs
                 setRequestProperty("User-Agent", userAgent)
                 setRequestProperty("Authorization", "Bearer $accessToken")
                 if (body != null) {

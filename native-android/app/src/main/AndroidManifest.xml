@@ -8,6 +8,8 @@
     <uses-permission android:name="com.android.vending.BILLING" />
     <!-- 학습 알림 (Android 13+ 런타임 권한). 결과 화면에서 맥락을 설명한 뒤에만 요청한다 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 광고 ID 는 쓰지 않는다 — 라이브러리(Firebase 등)가 병합해 넣더라도 지운다 (Play 가족 정책·아동 대상 앱) -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
 
     <!-- 진행도(gugu.xml)는 백업하되, 기기에 묶인 값(gugu_device.xml: 세션·학습 신원·아웃박스)은 백업·기기 이전에서 뺀다.
          API 28~30 은 fullBackupContent, 31+ 는 dataExtractionRules 를 본다 (minSdk 28 이라 둘 다 필요) -->
@@ -26,6 +28,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:configChanges="orientation|screenSize|keyboardHidden|uiMode"
             android:theme="@style/Theme.Gugu">
@@ -34,5 +37,25 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- 원격 푸시(FCM). 알림을 켜기 전에는 토큰을 만들지 않는다 — 자동 초기화를 끄고 PushStore 가 켤 때만 발급한다 -->
+        <meta-data
+            android:name="firebase_messaging_auto_init_enabled"
+            android:value="false" />
+        <!-- 앱이 꺼져 있을 때 시스템이 직접 띄우는 알림의 기본 채널·아이콘 (채널을 지정하지 않은 메시지) -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="service_notice" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_reminder" />
+
+        <service
+            android:name=".services.GuguMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>
