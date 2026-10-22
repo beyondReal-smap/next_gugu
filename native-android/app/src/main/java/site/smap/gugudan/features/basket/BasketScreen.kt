@@ -40,11 +40,14 @@ import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -52,13 +55,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import site.smap.gugudan.R
 import site.smap.gugudan.core.Basket
 import site.smap.gugudan.core.BasketOutcome
 import site.smap.gugudan.core.RunnerPhase
+import site.smap.gugudan.core.SpokenMath
 import site.smap.gugudan.designsystem.*
 import site.smap.gugudan.features.paywall.*
 import site.smap.gugudan.services.Haptics
 import site.smap.gugudan.services.Persistence
+import site.smap.gugudan.services.rememberStrings
 import site.smap.gugudan.store.LocalPremium
 
 // 구구 바구니 화면 (BasketScreen.tsx / iOS BasketView 이식)
@@ -126,13 +132,13 @@ fun BasketScreen(onExit: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = gg.textMuted, modifier = Modifier.size(16.dp))
-                    Text("홈으로", style = suite(FontWeight.Bold, 14), color = gg.textMuted)
+                    Text(stringResource(R.string.home_2), style = suite(FontWeight.Bold, 14), color = gg.textMuted)
                 }
             }
             Spacer(Modifier.weight(1f))
             Pill(bg = gg.surface, fg = gg.textMuted) {
                 Icon(Icons.Filled.ShoppingBasket, null, Modifier.size(14.dp))
-                Text("토끼의 작은 과수원")
+                Text(stringResource(R.string.the_bunny_s_little_orchard))
             }
         }
 
@@ -146,8 +152,9 @@ fun BasketScreen(onExit: () -> Unit) {
                 Hud(engine, playing)
                 if (playing) QuestionBar(engine)
 
+                // 과수원은 무대 안으로 자른다(iOS .clipped()) — 나무 윗부분이 문제 바의 안내 문구를 가리지 않게
                 Box(
-                    Modifier.fillMaxWidth().aspectRatio(6f / 5f)
+                    Modifier.fillMaxWidth().aspectRatio(6f / 5f).clipToBounds()
                         .pointerInput(game.phase) {
                             if (game.phase != RunnerPhase.RUNNING) return@pointerInput
                             val width = size.width.toFloat()
@@ -170,13 +177,13 @@ fun BasketScreen(onExit: () -> Unit) {
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center,
                         ) {
-                            Text("잠깐 쉬어가요", style = suite(FontWeight.ExtraBold, 20), color = HUD_BG)
+                            Text(stringResource(R.string.taking_a_break), style = suite(FontWeight.ExtraBold, 20), color = HUD_BG)
                             Spacer(Modifier.height(12.dp))
                             GGButton(
                                 variant = GGButtonVariant.PRIMARY, size = GGButtonSize.MD,
                                 onClick = { engine.togglePause() },
                             ) {
-                                Text("이어서 받기")
+                                Text(stringResource(R.string.keep_catching))
                             }
                         }
                     }
@@ -196,7 +203,7 @@ fun BasketScreen(onExit: () -> Unit) {
                     ) {
                         game.trialLeft?.let { TrialProgressPill(it) }
                         Text(
-                            "화면을 좌우로 끌거나 방향 버튼을 꾹 눌러요",
+                            stringResource(R.string.drag_left_or_right_or_press_and_hold_the),
                             style = suite(FontWeight.Medium, 11), color = gg.textMuted,
                             textAlign = TextAlign.Center,
                         )
@@ -220,6 +227,9 @@ fun BasketScreen(onExit: () -> Unit) {
 @Composable
 private fun Hud(engine: BasketEngine, playing: Boolean) {
     val game = engine.game
+    // 개수 단위 — 영어는 숫자만 (iOS SpokenMath.countSuffix)
+    val countSuffix = SpokenMath.countSuffix(rememberStrings()).orEmpty()
+    val heartsLabel = pluralStringResource(R.plurals.hearts_left, game.lives, game.lives)
     Row(
         Modifier.fillMaxWidth().background(HUD_BG).padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -227,7 +237,7 @@ private fun Hud(engine: BasketEngine, playing: Boolean) {
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Filled.ShoppingBasket, null, tint = HUD_FG, modifier = Modifier.size(18.dp))
-            Text("${game.score}개", style = suite(FontWeight.ExtraBold, 16), color = HUD_FG)
+            Text("${game.score}$countSuffix", style = suite(FontWeight.ExtraBold, 16), color = HUD_FG)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Filled.EmojiEvents, null, tint = HUD_MUTED, modifier = Modifier.size(13.dp))
@@ -236,7 +246,7 @@ private fun Hud(engine: BasketEngine, playing: Boolean) {
         Spacer(Modifier.weight(1f))
         Row(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.semantics { contentDescription = "남은 하트 ${game.lives}개" },
+            modifier = Modifier.semantics { contentDescription = heartsLabel },
         ) {
             for (heart in 1..Basket.MAX_LIVES) {
                 Icon(
@@ -255,7 +265,7 @@ private fun Hud(engine: BasketEngine, playing: Boolean) {
                 ) {
                     Icon(
                         if (game.phase == RunnerPhase.PAUSED) Icons.Filled.PlayArrow else Icons.Filled.Pause,
-                        contentDescription = if (game.phase == RunnerPhase.PAUSED) "게임 계속하기" else "일시정지",
+                        contentDescription = stringResource(if (game.phase == RunnerPhase.PAUSED) R.string.resume_game else R.string.pause),
                         tint = HUD_FG, modifier = Modifier.size(16.dp),
                     )
                 }
@@ -271,10 +281,11 @@ private fun QuestionBar(engine: BasketEngine) {
     val answer = game.question.answer
     val feedback = when (game.outcome) {
         BasketOutcome.CORRECT ->
-            if (game.combo >= 3) "${game.combo}연속! 별이 반짝반짝!" else "쏙! 정답 열매를 받았어요!"
-        BasketOutcome.WRONG -> "괜찮아요! ${game.question.a} × ${game.question.b} = $answer"
-        BasketOutcome.MISSED -> "다음엔 받아봐요! 정답은 $answer"
-        null -> "정답 열매 아래로 바구니를 옮겨요!"
+            if (game.combo >= 3) stringResource(R.string.in_a_row_stars_are_sparkling, game.combo)
+            else stringResource(R.string.plop_you_caught_the_right_fruit)
+        BasketOutcome.WRONG -> stringResource(R.string.that_s_ok, game.question.a, game.question.b, answer)
+        BasketOutcome.MISSED -> stringResource(R.string.catch_it_next_time_the_answer_is, answer)
+        null -> stringResource(R.string.move_the_basket_under_the_right_fruit)
     }
 
     Column(
@@ -283,7 +294,11 @@ private fun QuestionBar(engine: BasketEngine) {
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(
-            "${if (game.table == null) "전체 구구단" else "${game.table}단"} · ${Basket.level(game.score)}단계",
+            stringResource(
+                R.string.speed,
+                game.table?.let { stringResource(R.string.table, it) } ?: stringResource(R.string.all_tables),
+                Basket.level(game.score),
+            ),
             style = suite(FontWeight.Bold, 12), color = gg.textMuted,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -309,6 +324,7 @@ private fun QuestionBar(engine: BasketEngine) {
 /** 누르고 있는 동안 계속 움직이고, 손을 떼면 멈춘다 */
 @Composable
 private fun MoveButton(direction: Int, enabled: Boolean, modifier: Modifier, engine: BasketEngine) {
+    val label = stringResource(if (direction < 0) R.string.move_basket_left else R.string.move_basket_right)
     Box(
         modifier.height(56.dp)
             .clip(RoundedCornerShape(16.dp))
@@ -326,7 +342,7 @@ private fun MoveButton(direction: Int, enabled: Boolean, modifier: Modifier, eng
                     },
                 )
             }
-            .semantics { contentDescription = if (direction < 0) "바구니 왼쪽으로" else "바구니 오른쪽으로" },
+            .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -334,7 +350,7 @@ private fun MoveButton(direction: Int, enabled: Boolean, modifier: Modifier, eng
                 if (direction < 0) Icons.AutoMirrored.Filled.ArrowBack else Icons.AutoMirrored.Filled.ArrowForward,
                 null, tint = HUD_BG, modifier = Modifier.size(22.dp),
             )
-            Text(if (direction < 0) "왼쪽" else "오른쪽", style = suite(FontWeight.ExtraBold, 15), color = HUD_BG)
+            Text(stringResource(if (direction < 0) R.string.left else R.string.right), style = suite(FontWeight.ExtraBold, 15), color = HUD_BG)
         }
     }
 }
@@ -352,33 +368,35 @@ private fun SetupPanel(engine: BasketEngine, over: Boolean) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Text("열매 ${game.score}개를 모았어요!", style = suite(FontWeight.ExtraBold, 19), color = gg.text)
+                Text(pluralStringResource(R.plurals.you_caught_fruits, game.score, game.score), style = suite(FontWeight.ExtraBold, 19), color = gg.text)
                 Text(
-                    "최고 ${game.maxCombo}연속 정답 · " +
-                        if (game.score > 0 && game.score >= engine.runBest) "나의 최고 기록이에요!"
-                        else "토끼와 다시 놀아볼까요?",
+                    pluralStringResource(
+                        if (game.score > 0 && game.score >= engine.runBest) R.plurals.best_correct_in_a_row_your_best_ever
+                        else R.plurals.best_correct_in_a_row_play_with_the,
+                        game.maxCombo, game.maxCombo,
+                    ),
                     style = suite(FontWeight.Medium, 13), color = gg.textMuted, textAlign = TextAlign.Center,
                 )
             }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("정답 열매 아래로, 쏙!", style = suite(FontWeight.ExtraBold, 15), color = gg.text)
+                Text(stringResource(R.string.under_the_right_fruit_catch), style = suite(FontWeight.ExtraBold, 15), color = gg.text)
                 Text(
-                    "바구니를 직접 움직여 정답 열매를 받아요. 다른 열매를 받거나 놓치면 하트가 하나 줄어요. 처음에는 2단부터 천천히!",
+                    stringResource(R.string.move_the_basket_to_catch_the_right),
                     style = suite(FontWeight.Medium, 13), color = gg.textMuted,
                 )
             }
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("연습할 단", style = suite(FontWeight.ExtraBold, 12), color = gg.textMuted)
+            Text(stringResource(R.string.table_to_practice), style = suite(FontWeight.ExtraBold, 12), color = gg.textMuted)
             val options: List<Int?> = listOf(null) + BasketEngine.TABLES
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 options.chunked(5).forEach { row ->
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         row.forEach { value ->
                             TableChip(
-                                label = if (value == null) "전체" else "${value}단",
+                                label = if (value == null) stringResource(R.string.all) else stringResource(R.string.table, value),
                                 selected = engine.table == value,
                                 modifier = Modifier.weight(1f),
                                 onClick = { Haptics.selection(); engine.table = value },
@@ -397,11 +415,11 @@ private fun SetupPanel(engine: BasketEngine, over: Boolean) {
                 if (over) Icons.Filled.RotateLeft else Icons.Filled.PlayArrow, null,
                 modifier = Modifier.size(18.dp),
             )
-            Text(if (over) "다시 받기" else "열매 받기 시작")
+            Text(stringResource(if (over) R.string.catch_again else R.string.start_catching))
         }
 
         Text(
-            "하트 3개 · 정답 3개마다 조금씩 빨라져요. 단별 최고 기록은 이 기기에 저장돼요.",
+            stringResource(R.string.s_3_hearts_it_gets_a_little_faster_every_3),
             style = suite(FontWeight.Medium, 12), color = gg.textMuted,
             textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(),
         )

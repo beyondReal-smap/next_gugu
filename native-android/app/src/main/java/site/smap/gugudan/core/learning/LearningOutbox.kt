@@ -16,11 +16,11 @@ data class LearningOutboxState(
 )
 
 sealed class LearningOutboxException(message: String) : IllegalStateException(message) {
-    class Full(limit: Int) : LearningOutboxException("학습 아웃박스 상한(${limit}건)을 초과했습니다")
+    class Full(limit: Int) : LearningOutboxException("학습 아웃박스 상한(${limit}건)을 초과했습니다")  // i18n:skip
     class ConflictingEvent(eventId: String) :
-        LearningOutboxException("같은 아이디의 학습 이벤트 내용이 다릅니다 ($eventId)")
+        LearningOutboxException("같은 아이디의 학습 이벤트 내용이 다릅니다 ($eventId)")  // i18n:skip
     class ResponseOutOfBatch(eventId: String) :
-        LearningOutboxException("서버가 현재 배치에 없는 이벤트를 반환했습니다 ($eventId)")
+        LearningOutboxException("서버가 현재 배치에 없는 이벤트를 반환했습니다 ($eventId)")  // i18n:skip
 }
 
 object LearningOutbox {

@@ -7,6 +7,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.res.stringResource
+import site.smap.gugudan.R
+import site.smap.gugudan.core.AppLanguage
 import site.smap.gugudan.core.KoreanReading
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -207,7 +210,13 @@ fun WorldScene(
             ) {
                 CircularProgressIndicator(color = Color.White, strokeWidth = 3.dp, modifier = Modifier.size(36.dp))
                 Spacer(Modifier.height(14.dp))
-                Text("${KoreanReading.toward(region.name)} 가는 중…", style = suite(FontWeight.ExtraBold, 16), color = Color.White)
+                // 한국어는 지역 이름에 방향 조사(로/으로)를 붙여 넘긴다 — 다른 언어는 이름 그대로 ("Going to …", "…へ いどう中…")
+                val regionName = stringResource(region.nameRes)
+                Text(
+                    stringResource(R.string.going_to_region,
+                        if (AppLanguage.current == AppLanguage.KO) KoreanReading.toward(regionName) else regionName),
+                    style = suite(FontWeight.ExtraBold, 16), color = Color.White,
+                )
             }
         }
     }
@@ -276,11 +285,11 @@ private fun CompassChip(
     val (label, tx, tz, tint) = when {
         target != null -> {
             val boss = target.kind == NpcKind.BOSS
-            Quad(if (boss) "보스!" else target.name,
+            Quad(if (boss) stringResource(R.string.boss_2) else stringResource(target.nameRes),
                 target.pos.x.toFloat(), target.pos.z.toFloat(),
                 if (boss) Color(0xFFFF5A76) else Color.White)
         }
-        hasPortal -> Quad("포털", PortalSpec.X, PortalSpec.Z, Color(0xFF7DD3FC))
+        hasPortal -> Quad(stringResource(R.string.portal), PortalSpec.X, PortalSpec.Z, Color(0xFF7DD3FC))
         else -> return
     }
     // 화면 위 = 월드 -z, 화면 오른쪽 = 월드 +x
@@ -294,8 +303,9 @@ private fun CompassChip(
     ) {
         Icon(Icons.Filled.Navigation, null, tint = tint,
             modifier = Modifier.size(20.dp).rotate(angle))
+        // 영어·일본어 이름은 길어 두 줄까지 허용한다 (iOS lineLimit(2))
         Text(label, style = suite(FontWeight.ExtraBold, 10), color = Color.White,
-            maxLines = 1, textAlign = TextAlign.Center)
+            maxLines = 2, textAlign = TextAlign.Center)
     }
 }
 

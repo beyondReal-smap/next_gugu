@@ -1,5 +1,8 @@
 package site.smap.gugudan.core
 
+import androidx.annotation.StringRes
+import site.smap.gugudan.R
+
 // 레벨 / 경험치(XP) 시스템 (Level.swift 이식)
 
 data class LevelInfo(
@@ -50,13 +53,15 @@ object Level {
         return base + comboBonus + speedBonus + Modes.def(mode).xpBonus
     }
 
-    fun title(level: Int): String = when {
-        level >= 30 -> "구구단 레전드"
-        level >= 22 -> "연산 마스터"
-        level >= 15 -> "곱셈 챔피언"
-        level >= 10 -> "숫자 전략가"
-        level >= 6 -> "구구단 러너"
-        level >= 3 -> "성장하는 학습자"
-        else -> "구구단 입문자"
+    /** 레벨 칭호 — 화면에서 stringResource 로 읽는다 */
+    @StringRes
+    fun titleRes(level: Int): Int = when {
+        level >= 30 -> R.string.times_table_legend
+        level >= 22 -> R.string.math_master
+        level >= 15 -> R.string.multiplication_champ
+        level >= 10 -> R.string.number_strategist
+        level >= 6 -> R.string.times_table_runner
+        level >= 3 -> R.string.growing_learner
+        else -> R.string.times_table_beginner
     }
 }

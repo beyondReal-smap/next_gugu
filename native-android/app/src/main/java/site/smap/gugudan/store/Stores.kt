@@ -1,9 +1,11 @@
 package site.smap.gugudan.store
 
+import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import site.smap.gugudan.R
 import site.smap.gugudan.core.*
 import site.smap.gugudan.core.adventure.AdvProgress
 import site.smap.gugudan.core.adventure.AdvAchievements
@@ -168,10 +170,12 @@ class ThemeStore(private val persistence: Persistence) {
     }
 
     companion object {
-        fun label(t: Theme): String = when (t) {
-            Theme.SYSTEM -> "기기 설정"
-            Theme.LIGHT -> "라이트"
-            Theme.DARK -> "다크"
+        /** 테마 이름 — 화면에서 stringResource 로 읽는다 */
+        @StringRes
+        fun labelRes(t: Theme): Int = when (t) {
+            Theme.SYSTEM -> R.string.system
+            Theme.LIGHT -> R.string.light
+            Theme.DARK -> R.string.dark
         }
     }
 }

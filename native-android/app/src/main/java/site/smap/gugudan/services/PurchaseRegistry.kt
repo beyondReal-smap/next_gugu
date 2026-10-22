@@ -54,13 +54,13 @@ object PurchaseRegistry {
                 val text = (if (status in 200..299) conn.inputStream else conn.errorStream)
                     ?.bufferedReader()?.use { it.readText() } ?: ""
                 if (status !in 200..299) {
-                    throw PurchaseRegistryException("구매 등록 응답 $status: ${text.take(200)}")
+                    throw PurchaseRegistryException("구매 등록 응답 $status: ${text.take(200)}")  // i18n:skip
                 }
                 val decoded = runCatching { json.decodeFromString(PurchaseVerifyResponse.serializer(), text) }
-                    .getOrElse { throw PurchaseRegistryException("구매 등록 응답을 해석하지 못했습니다") }
+                    .getOrElse { throw PurchaseRegistryException("구매 등록 응답을 해석하지 못했습니다") }  // i18n:skip
                 // 서버는 요청을 처리하기만 해도 ok=true 를 준다. 실제 검증 결과는 premium 이다.
                 if (!decoded.premium) {
-                    throw PurchaseRegistryException("스토어가 이 영수증을 확인하지 못했습니다")
+                    throw PurchaseRegistryException("스토어가 이 영수증을 확인하지 못했습니다")  // i18n:skip
                 }
                 decoded
             } finally {

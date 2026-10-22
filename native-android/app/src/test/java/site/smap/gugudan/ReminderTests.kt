@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import site.smap.gugudan.core.AppLanguage
 import site.smap.gugudan.core.GameState
 import site.smap.gugudan.core.PlannedReminder
 import site.smap.gugudan.core.ReminderPlanner
@@ -32,7 +33,7 @@ class ReminderTests {
 
     private val on = ReminderSettings(enabled = true, hour = 18, askedPermission = true)
     private fun plan(s: GameState, settings: ReminderSettings = on, now: ZonedDateTime) =
-        ReminderPlanner.plan(s, settings, now)
+        ReminderPlanner.plan(TestStrings(AppLanguage.KO), s, settings, now)
     private fun dayOf(r: PlannedReminder): LocalDate =
         Instant.ofEpochMilli(r.fireAtEpochMs).atZone(seoul).toLocalDate()
     private fun hourOf(r: PlannedReminder) = Instant.ofEpochMilli(r.fireAtEpochMs).atZone(seoul).hour
@@ -115,8 +116,8 @@ class ReminderTests {
     }
 
     @Test fun hourLabels() {
-        assertEquals("오전 9시", ReminderPlanner.hourLabel(9))
-        assertEquals("낮 12시", ReminderPlanner.hourLabel(12))
-        assertEquals("오후 6시", ReminderPlanner.hourLabel(18))
+        assertEquals("오전 9시", ReminderPlanner.hourLabel(9, AppLanguage.KO))
+        assertEquals("낮 12시", ReminderPlanner.hourLabel(12, AppLanguage.KO))
+        assertEquals("오후 6시", ReminderPlanner.hourLabel(18, AppLanguage.KO))
     }
 }

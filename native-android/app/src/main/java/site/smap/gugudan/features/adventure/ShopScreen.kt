@@ -21,15 +21,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import site.smap.gugudan.R
+import site.smap.gugudan.core.Strings
 import site.smap.gugudan.core.adventure.Shop
 import site.smap.gugudan.core.adventure.ShopColor
 import site.smap.gugudan.core.adventure.ShopHat
 import site.smap.gugudan.designsystem.*
 import site.smap.gugudan.services.Haptics
 import site.smap.gugudan.services.Sound
+import site.smap.gugudan.services.rememberStrings
 import site.smap.gugudan.store.LocalAdventure
 
 // 꾸미기 상점 (iOS ShopView 이식) — 구매 즉시 장착(원탭)
@@ -40,6 +44,7 @@ fun ShopScreen(onDismiss: () -> Unit) {
     val gg = LocalGG.current
     val adventure = LocalAdventure.current
     var notice by remember { mutableStateOf<String?>(null) }
+    val strings = rememberStrings()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
@@ -54,14 +59,14 @@ fun ShopScreen(onDismiss: () -> Unit) {
         ) {
             // 헤더
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("꾸미기 상점", style = suite(FontWeight.ExtraBold, 22), color = gg.text, modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.style_shop), style = suite(FontWeight.ExtraBold, 22), color = gg.text, modifier = Modifier.weight(1f))
                 Pill(bg = gg.warning.copy(alpha = 0.15f), fg = gg.warning) {
                     Icon(Icons.Filled.Star, null, Modifier.size(14.dp))
                     Text("${adventure.progress.starShards}")
                 }
                 Spacer(Modifier.width(8.dp))
                 PressableCard(onClick = onDismiss) {
-                    Icon(Icons.Filled.Close, "닫기", tint = gg.textMuted, modifier = Modifier.size(20.dp))
+                    Icon(Icons.Filled.Close, stringResource(R.string.close), tint = gg.textMuted, modifier = Modifier.size(20.dp))
                 }
             }
 
@@ -92,54 +97,54 @@ fun ShopScreen(onDismiss: () -> Unit) {
                         }
                     }
                 }
-                Text("내 캐릭터", style = suite(FontWeight.Bold, 12), color = gg.textMuted)
+                Text(stringResource(R.string.my_character), style = suite(FontWeight.Bold, 12), color = gg.textMuted)
             }
 
             // 색상 3열
-            Text("몸 색깔", style = suite(FontWeight.Bold, 14), color = gg.textMuted)
+            Text(stringResource(R.string.body_color), style = suite(FontWeight.Bold, 14), color = gg.textMuted)
             Shop.colors.chunked(3).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    row.forEach { c -> ColorCell(c, Modifier.weight(1f)) { tapColor(adventure, c) { notice = it } } }
+                    row.forEach { c -> ColorCell(c, Modifier.weight(1f)) { tapColor(strings, adventure, c) { notice = it } } }
                     repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
                 }
             }
 
             // 모자
-            Text("모자", style = suite(FontWeight.Bold, 14), color = gg.textMuted)
-            HatRow(null) { tapHat(adventure, null) { notice = it } }
+            Text(stringResource(R.string.hat), style = suite(FontWeight.Bold, 14), color = gg.textMuted)
+            HatRow(null) { tapHat(strings, adventure, null) { notice = it } }
             Shop.hats.forEach { h ->
-                HatRow(h) { tapHat(adventure, h) { notice = it } }
+                HatRow(h) { tapHat(strings, adventure, h) { notice = it } }
             }
 
             notice?.let {
                 Text(it, style = suite(FontWeight.Bold, 13), color = gg.danger,
                     textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
             }
-            Text("별 조각은 어드벤처 월드를 탐험하며 모을 수 있어요 ⭐",
+            Text(stringResource(R.string.collect_star_pieces_by_exploring_the),
                 style = suite(FontWeight.Medium, 12), color = gg.textMuted,
                 textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         }
     }
 }
 
-private fun tapColor(adventure: site.smap.gugudan.store.AdventureStore, c: ShopColor, setNotice: (String?) -> Unit) {
+private fun tapColor(strings: Strings, adventure: site.smap.gugudan.store.AdventureStore, c: ShopColor, setNotice: (String?) -> Unit) {
     setNotice(null)
     when {
         adventure.progress.equippedColor == c.id -> {}
         adventure.ownsColor(c.id) -> { adventure.equipColor(c.id); Haptics.selection() }
         adventure.buyColor(c.id) -> { Sound.collect(); Haptics.success() }
-        else -> { Haptics.warning(); setNotice("별 조각이 부족해요 — ⭐${c.price}개가 필요해요") }
+        else -> { Haptics.warning(); setNotice(strings.plural(R.plurals.not_enough_star_pieces_you_need, c.price, c.price)) }
     }
 }
 
-private fun tapHat(adventure: site.smap.gugudan.store.AdventureStore, h: ShopHat?, setNotice: (String?) -> Unit) {
+private fun tapHat(strings: Strings, adventure: site.smap.gugudan.store.AdventureStore, h: ShopHat?, setNotice: (String?) -> Unit) {
     setNotice(null)
     if (h == null) { adventure.equipHat(null); Haptics.selection(); return }
     when {
         adventure.progress.equippedHat == h.id -> {}
         adventure.ownsHat(h.id) -> { adventure.equipHat(h.id); Haptics.selection() }
         adventure.buyHat(h.id) -> { Sound.collect(); Haptics.success() }
-        else -> { Haptics.warning(); setNotice("별 조각이 부족해요 — ⭐${h.price}개가 필요해요") }
+        else -> { Haptics.warning(); setNotice(strings.plural(R.plurals.not_enough_star_pieces_you_need, h.price, h.price)) }
     }
 }
 
@@ -164,10 +169,10 @@ private fun ColorCell(c: ShopColor, modifier: Modifier, onTap: () -> Unit) {
                 contentAlignment = Alignment.Center) {
                 if (equipped) Icon(Icons.Filled.Check, null, tint = Color.White, modifier = Modifier.size(16.dp))
             }
-            Text(c.name, style = suite(FontWeight.Bold, 12), color = gg.text)
+            Text(stringResource(c.nameRes), style = suite(FontWeight.Bold, 12), color = gg.text)
             when {
-                equipped -> Text("장착중", style = suite(FontWeight.ExtraBold, 10), color = gg.accent)
-                owned -> Text("보유", style = suite(FontWeight.ExtraBold, 10), color = gg.textMuted)
+                equipped -> Text(stringResource(R.string.equipped), style = suite(FontWeight.ExtraBold, 10), color = gg.accent)
+                owned -> Text(stringResource(R.string.owned), style = suite(FontWeight.ExtraBold, 10), color = gg.textMuted)
                 else -> Row(horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.Star, null, tint = gg.warning, modifier = Modifier.size(8.dp))
                     Text("${c.price}", style = suite(FontWeight.ExtraBold, 10), color = gg.warning)
@@ -199,15 +204,15 @@ private fun HatRow(h: ShopHat?, onTap: () -> Unit) {
             } else {
                 Icon(Icons.Filled.Block, null, tint = gg.textMuted, modifier = Modifier.width(40.dp).size(26.dp))
             }
-            Text(h?.name ?: "모자 없음", style = suite(FontWeight.Bold, 15), color = gg.text, modifier = Modifier.weight(1f))
+            Text(h?.let { stringResource(it.nameRes) } ?: stringResource(R.string.no_hat), style = suite(FontWeight.Bold, 15), color = gg.text, modifier = Modifier.weight(1f))
             when {
                 equipped -> Box(Modifier.clip(CircleShape).background(gg.accent.copy(alpha = 0.12f))
                     .padding(horizontal = 10.dp, vertical = 4.dp)) {
-                    Text("장착중", style = suite(FontWeight.ExtraBold, 12), color = gg.accent)
+                    Text(stringResource(R.string.equipped), style = suite(FontWeight.ExtraBold, 12), color = gg.accent)
                 }
                 owned -> Box(Modifier.clip(CircleShape).background(gg.surface2)
                     .padding(horizontal = 10.dp, vertical = 4.dp)) {
-                    Text("장착", style = suite(FontWeight.ExtraBold, 12), color = gg.textMuted)
+                    Text(stringResource(R.string.equip), style = suite(FontWeight.ExtraBold, 12), color = gg.textMuted)
                 }
                 h != null -> Row(
                     Modifier.clip(CircleShape).background(gg.warning.copy(alpha = 0.15f))

@@ -18,6 +18,7 @@ import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -28,6 +29,7 @@ import site.smap.gugudan.features.runner.drawGroundBase
 import site.smap.gugudan.features.runner.drawHills
 import site.smap.gugudan.features.runner.drawObstacleShape
 import site.smap.gugudan.features.runner.drawSparkles
+import site.smap.gugudan.R
 import site.smap.gugudan.core.LaneObstacle
 import site.smap.gugudan.features.runner.drawBackdrop
 import site.smap.gugudan.features.runner.drawDinoBody
@@ -72,6 +74,7 @@ private fun baseAt(offset: Double): Float {
 @Composable
 fun LaneScene(game: LaneRunnerState, reducedMotion: Boolean = false, modifier: Modifier = Modifier) {
     val measurer = rememberTextMeasurer()
+    val speedUpLabel = stringResource(R.string.speed_up)
     Canvas(modifier.fillMaxSize()) {
         // 아래를 기준으로 채운다 (xMinYMax slice)
         val s = max(size.width / SCENE_W, size.height / SCENE_H)
@@ -88,7 +91,7 @@ fun LaneScene(game: LaneRunnerState, reducedMotion: Boolean = false, modifier: M
                     drawGate(game, measurer)
                     drawObstacles(game)
                     drawLaneDino(game, travel, walking, reducedMotion)
-                    drawLaneEffects(game, reducedMotion, measurer)
+                    drawLaneEffects(game, reducedMotion, measurer, speedUpLabel)
                 }
             }
         }
@@ -213,7 +216,9 @@ private fun DrawScope.drawLaneDino(
     }
 }
 
-private fun DrawScope.drawLaneEffects(game: LaneRunnerState, reducedMotion: Boolean, measurer: TextMeasurer) {
+private fun DrawScope.drawLaneEffects(
+    game: LaneRunnerState, reducedMotion: Boolean, measurer: TextMeasurer, speedUpLabel: String,
+) {
     val offset = if (reducedMotion) game.lane.toDouble() else LaneRunner.offset(game)
     val base = baseAt(offset)
 
@@ -242,7 +247,7 @@ private fun DrawScope.drawLaneEffects(game: LaneRunnerState, reducedMotion: Bool
 
     if (LaneRunner.leveledUp(game)) {
         val speedUp = measurer.measure(
-            "속도 UP!",
+            speedUpLabel,
             TextStyle(
                 color = Color(0xFFC2562B).copy(alpha = min(1.0, (1 - reward) * 2).toFloat()),
                 fontSize = TextUnit(36f, TextUnitType.Sp), fontWeight = FontWeight.Black,

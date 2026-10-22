@@ -1,6 +1,7 @@
 package site.smap.gugudan.store
 
 import android.util.Log
+import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -37,7 +38,8 @@ class SyncStore(
         data object Idle : State
         data object Uploading : State
         /** 보호자 검증 전 — 큐에 쌓아 두고 기다린다 */
-        data class WaitingForGuardian(val message: String) : State
+        /** 보호자 검증 전이라 보관이 꺼져 있다 — 안내 문구는 리소스 ID (화면에서 읽는다) */
+        data class WaitingForGuardian(@StringRes val messageRes: Int) : State
         /** 귀속 후보가 여럿 — 사용자가 골라야 한다 */
         data class NeedsLearnerChoice(val candidates: List<LearningClaimCandidate>) : State
         data class Failed(val message: String) : State
@@ -124,7 +126,7 @@ class SyncStore(
         }
         val token = auth.accessToken()
         if (token == null) {
-            state = State.Failed("계정 세션이 없어 업로드를 건너뜁니다")
+            state = State.Failed("계정 세션이 없어 업로드를 건너뜁니다")  // i18n:skip
             return
         }
 
@@ -145,7 +147,7 @@ class SyncStore(
         } catch (e: LearningApiException.PermissionDenied) {
             // 검증 전 — 큐를 그대로 두고 더 시도하지 않는다
             blockedUserId = auth.userId
-            state = State.WaitingForGuardian(e.denial.message)
+            state = State.WaitingForGuardian(e.denial.messageRes)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -208,7 +210,7 @@ class SyncStore(
                 LearningClaimAction.CREATE_LEARNER -> {
                     val learnerId = response.learnerId
                     if (learnerId == null) {
-                        state = State.Failed("서버가 학습자 아이디를 주지 않았습니다")
+                        state = State.Failed("서버가 학습자 아이디를 주지 않았습니다")  // i18n:skip
                         return
                     }
                     bind(learnerId, userId, auth)
@@ -347,7 +349,7 @@ class SyncStore(
             val denial = if (e.status == 403) GuardianDenial.of(e.code) else null
             if (denial != null) {
                 // 구매 없음/익명 — 정상적인 거부다. 사용자에게 사유를 보여 준다.
-                state = State.WaitingForGuardian(denial.message)
+                state = State.WaitingForGuardian(denial.messageRes)
                 blockedUserId = auth.userId
             } else {
                 Log.w(TAG, "보호자 권한 설정 실패: ${e.message}")

@@ -171,7 +171,7 @@ object SupabaseAuth {
         val userId = user?.get("id")?.jsonPrimitive?.contentOrNullSafe()
         if (accessToken == null || refreshToken == null || userId == null) {
             Log.w(TAG, "응답에 토큰/사용자 정보가 없습니다")
-            throw IOException("Supabase 응답을 해석하지 못했습니다")
+            throw IOException("Supabase 응답을 해석하지 못했습니다")  // i18n:skip
         }
         // expires_at(절대시각)을 주면 그대로 쓰고, 없으면 expires_in(상대초)으로 계산한다
         val expiresAt = obj["expires_at"]?.jsonPrimitive?.doubleOrNullSafe()

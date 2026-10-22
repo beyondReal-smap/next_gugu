@@ -9,8 +9,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import site.smap.gugudan.R
 import site.smap.gugudan.designsystem.GGButton
 import site.smap.gugudan.designsystem.GGButtonVariant
 import site.smap.gugudan.designsystem.LocalGG
@@ -26,9 +28,9 @@ fun PhasePlaceholder(title: String, phase: String, onExit: (() -> Unit)? = null)
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(title, style = suite(FontWeight.ExtraBold, 24), color = gg.text)
-        Text("${phase}에서 구현 예정", style = suite(FontWeight.Bold, 13), color = gg.textMuted)
+        Text(stringResource(R.string.coming_in, phase), style = suite(FontWeight.Bold, 13), color = gg.textMuted)
         if (onExit != null) {
-            GGButton(variant = GGButtonVariant.SURFACE, onClick = onExit) { Text("닫기") }
+            GGButton(variant = GGButtonVariant.SURFACE, onClick = onExit) { Text(stringResource(R.string.close)) }
         }
     }
 }

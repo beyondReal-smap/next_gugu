@@ -1,9 +1,16 @@
 package site.smap.gugudan.core
 
 import kotlinx.serialization.Serializable
+import site.smap.gugudan.R
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZonedDateTime
+import java.time.chrono.IsoChronology
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatterBuilder
+import java.time.format.FormatStyle
 import java.time.temporal.ChronoUnit
+import java.util.Locale
 
 // 로컬 학습 알림 계획 (iOS Core/ReminderPlanner.swift 이식) — 무엇을 언제 보낼지 계산만 한다.
 // 예약·취소는 services/LocalNotifications 가 맡는다. 시각을 주입받는 순수 로직이라 단위 테스트로 규칙을 고정한다.
@@ -44,15 +51,29 @@ object ReminderPlanner {
 
     fun clampHour(hour: Int): Int = hour.coerceIn(ALLOWED_HOURS)
 
-    /** "오전 9시" · "낮 12시" · "오후 6시" */
-    fun hourLabel(hour: Int): String = when {
-        hour == 12 -> "낮 12시"
-        hour > 12 -> "오후 ${hour - 12}시"
-        else -> "오전 ${hour}시"
+    /**
+     * "오전 9시" · "낮 12시" · "오후 6시" (en "6 PM", ja "18時" — iOS ReminderPlanner.hourLabel 과 같은 결과).
+     * 영어는 그 지역이 12시간제면 "6 PM"(숫자와 AM/PM 사이 U+202F, iOS·CLDR 과 같음), 24시간제면 "18".
+     */
+    fun hourLabel(hour: Int, language: AppLanguage = AppLanguage.current, locale: Locale = AppLanguage.formatLocale): String {
+        val pattern = when (language) {
+            AppLanguage.KO -> return when {
+                hour == 12 -> "낮 12시"  // i18n:skip
+                hour > 12 -> "오후 ${hour - 12}시"  // i18n:skip
+                else -> "오전 ${hour}시"  // i18n:skip
+            }
+            AppLanguage.JA -> "H時"
+            AppLanguage.EN -> {
+                val short = DateTimeFormatterBuilder.getLocalizedDateTimePattern(
+                    null, FormatStyle.SHORT, IsoChronology.INSTANCE, locale)
+                if (short.contains('h') || short.contains('K')) "h\u202Fa" else "HH"
+            }
+        }
+        return DateTimeFormatter.ofPattern(pattern, locale).format(LocalTime.of(hour, 0))
     }
 
-    /** 앞으로 보낼 알림 목록. 앱을 열거나 학습할 때마다 통째로 다시 계산해 교체한다. */
-    fun plan(state: GameState, settings: ReminderSettings, now: ZonedDateTime): List<PlannedReminder> {
+    /** 앞으로 보낼 알림 목록. 앱을 열거나 학습할 때마다 통째로 다시 계산해 교체한다. 문구는 [strings] 언어로 만든다 */
+    fun plan(strings: Strings, state: GameState, settings: ReminderSettings, now: ZonedDateTime): List<PlannedReminder> {
         if (!settings.enabled) return emptyList()
 
         val hour = clampHour(settings.hour)
@@ -80,6 +101,7 @@ object ReminderPlanner {
             if (since > DAILY_WINDOW_DAYS && since % 7 != 0) continue
 
             val (title, body) = message(
+                strings = strings,
                 state = state,
                 isToday = offset == 0,
                 studiedToday = studiedToday,
@@ -98,6 +120,7 @@ object ReminderPlanner {
     }
 
     private fun message(
+        strings: Strings,
         state: GameState,
         isToday: Boolean,
         studiedToday: Boolean,
@@ -108,23 +131,25 @@ object ReminderPlanner {
         // 오늘 조금 했지만 목표 전 — 남은 개수가 가장 구체적인 동기다
         if (isToday && studiedToday) {
             val remaining = maxOf(1, state.dailyGoal - state.dailyCorrect)
-            return "조금만 더!" to "오늘 목표까지 정답 ${remaining}개 남았어요."
+            return strings.get(R.string.almost_there) to
+                strings.plural(R.plurals.just_more_correct_answers_to_reach_today, remaining, remaining)
         }
         // 어제 학습했다면 오늘 하면 연속 기록이 이어진다
         if (daysSinceLastPlay == 1 && state.streak > 0) {
-            return "연속 기록 이어가기" to
-                "${state.streak}일 연속 중이에요! 오늘도 한 판 하면 ${state.streak + 1}일째예요."
+            return strings.get(R.string.keep_your_streak_going) to
+                strings.get(R.string.you_re_on_a_day_streak_play_today_to, state.streak, state.streak + 1)
         }
         // 한동안 쉬었다면 부담 없이 다시 시작하자는 말로 — 죄책감을 주는 문구는 쓰지 않는다
         if (daysSinceLastPlay > DAILY_WINDOW_DAYS) {
-            return "다시 시작해요" to "오랜만이에요! 구구단 한 판으로 가볍게 시작해 볼까요?"
+            return strings.get(R.string.let_s_start_again) to strings.get(R.string.it_s_been_a_while_how_about_an_easy)
         }
         // 약점 복습과 일반 권유를 번갈아 보내 같은 문구가 반복되지 않게 한다
         if (weakFacts.isNotEmpty() && index % 2 == 0) {
             val key = weakFacts[(index / 2) % weakFacts.size]
-            return "약점 복습" to "${key.replace("x", " × ")}, 다시 도전해 볼까요?"
+            return strings.get(R.string.review_time) to strings.get(R.string.want_to_try_again, key.replace("x", " × "))
         }
-        return "오늘의 구구단" to "오늘도 한 판 어때요? 목표는 정답 ${state.dailyGoal}개예요."
+        return strings.get(R.string.today_s_times_tables) to
+            strings.plural(R.plurals.how_about_a_round_today_your_goal_is, state.dailyGoal, state.dailyGoal)
     }
 
     /** 많이 틀린 순서(같으면 식 이름순) — 순서가 결정적이어야 테스트가 안정된다 */

@@ -1,5 +1,6 @@
 package site.smap.gugudan.core.adventure
 
+import androidx.annotation.StringRes
 import kotlinx.serialization.Serializable
 
 // 어드벤처 모드 — 도메인 타입 (AdventureModels.swift 이식, UI 무의존)
@@ -14,7 +15,7 @@ data class DecoItem(val x: Double, val z: Double, val scale: Double)
 
 data class NpcDef(
     val id: String,          // 예: 'r2-n1', 'r2-boss'
-    val name: String,
+    @StringRes val nameRes: Int,
     val kind: NpcKind,
     val battle: BattleStyle,
     val table: Int,
@@ -22,7 +23,9 @@ data class NpcDef(
     val hp: Int,
     val attack: Int,
     val color: String,       // #hex
-    val greeting: String,
+    /** 인사말 — 일반 주민 기본 인사말은 단(%d)을 받는다. 화면에서 stringResource(greetingRes, table) 로 읽는다
+     *  (인자가 없는 보스 인사말에 단을 넘겨도 서식이 무시한다) */
+    @StringRes val greetingRes: Int,
 )
 
 data class RegionTheme(val ground: String, val accent: String, val sky: String)
@@ -35,7 +38,7 @@ data class Landmark(val kind: LandmarkKind, val pos: Vec2)
 
 data class RegionDef(
     val table: Int,
-    val name: String,
+    @StringRes val nameRes: Int,
     val deco: DecoKind,
     val decoItems: List<DecoItem>,
     val spawn: Vec2,

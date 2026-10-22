@@ -226,7 +226,7 @@ class CoreTests {
         for (r in World.regions) {
             assertEquals(4, r.npcs.size)
             assertEquals(1, r.npcs.count { it.kind == NpcKind.BOSS })
-            assertTrue(r.decoItems.size in 12..16, "${r.name} 소품 수")
+            assertTrue(r.decoItems.size in 12..16, "${r.table}단 지역 소품 수")
         }
         assertEquals((2..9).toList(), World.regions.map { it.table })
     }
@@ -333,7 +333,7 @@ class CoreTests {
 
     @Test fun starSpots() {
         for (r in World.regions) {
-            assertEquals(5, r.starSpots.size, "${r.name} 별 조각 수")
+            assertEquals(5, r.starSpots.size, "${r.table}단 지역 별 조각 수")
             for (s in r.starSpots) {
                 assertTrue(abs(s.x) <= 13.5 && abs(s.z) <= 13.5)
                 for (n in r.npcs) {

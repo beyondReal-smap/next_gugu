@@ -10,6 +10,7 @@ import kotlin.test.assertTrue
 // UI/UX 개선에 쓰는 Core 로직 — iOS(GuguTests/UxCoreTests.swift)와 같은 케이스 미러링
 
 class UxCoreTests {
+    private val ko = TestStrings(AppLanguage.KO)
 
     // MARK: KoreanReading
 
@@ -77,41 +78,41 @@ class UxCoreTests {
     // MARK: Hints
 
     @Test fun coachHintStrategies() {
-        val nine = Hints.coach(9, 7)
+        val nine = Hints.coach(ko, 9, 7)
         assertEquals("10단에서 한 번 빼기", nine.title)
         assertEquals("70 − 7 = ?", nine.scaffold)
         assertEquals("9 × 7 = 70 − 7 = 63", nine.full)
 
-        val swapped = Hints.coach(6, 2)
+        val swapped = Hints.coach(ko, 6, 2)
         assertEquals("순서를 바꿔 두 번 더하기", swapped.title)
         assertEquals("6 + 6 = ?", swapped.scaffold)
         assertEquals("6 × 2 = 6 + 6 = 12", swapped.full)
 
-        assertEquals("두 번 더하기", Hints.coach(2, 2).title)
-        assertEquals("2 + 2 = ?", Hints.coach(2, 2).scaffold)
+        assertEquals("두 번 더하기", Hints.coach(ko, 2, 2).title)
+        assertEquals("2 + 2 = ?", Hints.coach(ko, 2, 2).scaffold)
 
-        val one = Hints.coach(8, 1)
+        val one = Hints.coach(ko, 8, 1)
         assertEquals("1을 곱하면 그대로예요", one.title)
         assertEquals("8 × 1 = 8", one.full)
 
-        val five = Hints.coach(5, 3)
+        val five = Hints.coach(ko, 5, 3)
         assertEquals("5씩 3번 세어 봐요", five.scaffold)
         assertEquals("5 × 3 → 5, 10, 15", five.full)
 
-        assertEquals("30 + 12 = ?", Hints.coach(7, 6).scaffold)
-        assertEquals("7 × 6 = 30 + 12 = 42", Hints.coach(7, 6).full)
-        assertEquals("3 × 4 = 8 + 4 = 12", Hints.coach(3, 4).full)
-        assertEquals("12 + 12 = ?", Hints.coach(4, 6).scaffold)
-        assertEquals("28 + 28 = ?", Hints.coach(8, 7).scaffold)
-        assertEquals("35 + 7 = ?", Hints.coach(6, 7).scaffold)
-        assertEquals(Hints.coach(9, 7), Hints.tableTip(9))
+        assertEquals("30 + 12 = ?", Hints.coach(ko, 7, 6).scaffold)
+        assertEquals("7 × 6 = 30 + 12 = 42", Hints.coach(ko, 7, 6).full)
+        assertEquals("3 × 4 = 8 + 4 = 12", Hints.coach(ko, 3, 4).full)
+        assertEquals("12 + 12 = ?", Hints.coach(ko, 4, 6).scaffold)
+        assertEquals("28 + 28 = ?", Hints.coach(ko, 8, 7).scaffold)
+        assertEquals("35 + 7 = ?", Hints.coach(ko, 6, 7).scaffold)
+        assertEquals(Hints.coach(ko, 9, 7), Hints.tableTip(ko, 9))
     }
 
     /** 전 범위에서 풀이의 답이 맞고, 푸는 중에 보여 주는 scaffold 에는 정답이 드러나지 않는다 */
     @Test fun coachHintsNeverLeakAnswerAndAreCorrect() {
         for (a in Problems.MIN_TABLE..Problems.MAX_TABLE) {
             for (b in Problems.MIN_B..Problems.MAX_B) {
-                val hint = Hints.coach(a, b)
+                val hint = Hints.coach(ko, a, b)
                 assertTrue(hint.full.endsWith((a * b).toString()), "$a×$b full=${hint.full}")
                 val numbers = Regex("""\d+""").findAll(hint.scaffold).map { it.value.toInt() }.toList()
                 assertFalse((a * b) in numbers, "$a×$b scaffold 에 정답 노출: ${hint.scaffold}")
@@ -171,9 +172,9 @@ class UxCoreTests {
         assertEquals("2026-02-28", WeeklyReport.shift("2026-03-01", -1))
         assertEquals("2024-02-29", WeeklyReport.shift("2024-03-01", -1))
         assertEquals("2025-12-26", WeeklyReport.shift("2026-01-01", -6))
-        assertEquals("화", WeeklyReport.weekdayLabel("2026-09-29"))
-        assertEquals("일", WeeklyReport.weekdayLabel("2026-03-01"))
-        assertEquals("목", WeeklyReport.weekdayLabel("2024-02-29"))
+        assertEquals("화", WeeklyReport.weekdayLabel("2026-09-29", AppLanguage.KO))
+        assertEquals("일", WeeklyReport.weekdayLabel("2026-03-01", AppLanguage.KO))
+        assertEquals("목", WeeklyReport.weekdayLabel("2024-02-29", AppLanguage.KO))
     }
 
     @Test fun weeklyReportAggregates() {
@@ -220,17 +221,17 @@ class UxCoreTests {
     @Test fun weeklyParentTip() {
         val today = "2026-09-29"
         assertEquals("이번 주는 아직 기록이 없어요. 하루 5분, 한 판부터 함께 시작해 보세요.",
-            WeeklyReport.build(emptyList(), today).parentTip)
+            WeeklyReport.build(emptyList(), today).parentTip(ko))
         // 같은 문제를 2번 이상 틀렸으면 그 단 외우기를 권한다 (8=팔 → "8이에요")
         val missed = listOf(DayLogEntry(today, correct = 5, wrong = 2, msSum = 1, misses = mapOf("7x8" to 2)))
         assertEquals("자주 헷갈리는 문제는 7 × 8이에요. 7단 표를 소리 내어 함께 외워 보세요.",
-            WeeklyReport.build(missed, today).parentTip)
+            WeeklyReport.build(missed, today).parentTip(ko))
         // 하루만 했으면 습관을 권한다
         val once = listOf(DayLogEntry(today, correct = 9, wrong = 1, msSum = 1, misses = mapOf("6x9" to 1)))
-        assertTrue(WeeklyReport.build(once, today).parentTip.startsWith("짧게라도 매일"))
+        assertTrue(WeeklyReport.build(once, today).parentTip(ko).startsWith("짧게라도 매일"))
         // 사흘 이상 + 정확도 90% 이상이면 속도 도전을 권한다
         val steady = listOf("2026-09-27", "2026-09-28", "2026-09-29").map { DayLogEntry(it, correct = 10, msSum = 1) }
-        assertTrue(WeeklyReport.build(steady, today).parentTip.startsWith("정확도가 아주 좋아요"))
+        assertTrue(WeeklyReport.build(steady, today).parentTip(ko).startsWith("정확도가 아주 좋아요"))
     }
 
     // MARK: Commit — 빈 판

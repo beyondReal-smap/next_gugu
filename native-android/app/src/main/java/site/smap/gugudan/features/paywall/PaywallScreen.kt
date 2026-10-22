@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.DirectionsRun
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -28,12 +29,15 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
+import site.smap.gugudan.R
 import site.smap.gugudan.core.PremiumConfig
 import site.smap.gugudan.designsystem.*
 import androidx.compose.material.icons.filled.Verified
@@ -48,7 +52,7 @@ import site.smap.gugudan.store.PurchaseResult
 
 // 페이월 (iOS PaywallView 이식) — Play Billing 단일 인앱 상품
 
-private const val STORE_NOT_READY_NOTICE = "스토어 연결 준비 중이에요. 잠시 후 다시 시도해주세요."
+private val STORE_NOT_READY_NOTICE = R.string.connecting_to_the_store_please_try_again
 
 private data class Benefit(val icon: ImageVector, val title: String, val desc: String)
 
@@ -63,16 +67,20 @@ fun PaywallScreen(onDismiss: () -> Unit) {
     val context = LocalContext.current
 
     var busy by remember { mutableStateOf(false) }
-    var notice by remember { mutableStateOf<String?>(null) }
+    var notice by remember { mutableStateOf<Int?>(null) }   // @StringRes
     // 결제·복원은 됐지만 아직 이메일 로그인 전 — 닫기 전에 로그인을 권한다
     var showLinkPrompt by remember { mutableStateOf(false) }
 
     val benefits = listOf(
-        Benefit(Icons.Filled.Map, "3D 어드벤처 전 지역", "8개 지역 탐험 · 주민/보스 구구단 대결"),
-        Benefit(Icons.Filled.Bolt, "게임 모드 전부 해제", "60초 챌린지 · 서바이벌 · 빈칸 추리 · OX 퀴즈"),
-        Benefit(Icons.Filled.DirectionsRun, "움직이며 놀기 무제한",
-            "구구 점프 · 레인 · 바구니 (무료는 ${PremiumConfig.MINIGAME_TRIAL_QUESTIONS}문제 체험)"),
-        Benefit(Icons.Filled.AllInclusive, "한 번 결제, 평생 소장", "추가 결제 없음 · 업데이트 콘텐츠도 전부 포함"),
+        Benefit(Icons.Filled.Map, stringResource(R.string.all_3d_adventure_regions),
+            stringResource(R.string.explore_8_regions_times_table_battles)),
+        Benefit(Icons.Filled.Bolt, stringResource(R.string.unlock_all_game_modes),
+            stringResource(R.string.s_60_second_challenge_survival_missing)),
+        Benefit(Icons.Filled.DirectionsRun, stringResource(R.string.unlimited_move_and_play_games),
+            pluralStringResource(R.plurals.gugu_jump_lanes_basket_free_try_problems,
+                PremiumConfig.MINIGAME_TRIAL_QUESTIONS, PremiumConfig.MINIGAME_TRIAL_QUESTIONS)),
+        Benefit(Icons.Filled.AllInclusive, stringResource(R.string.pay_once_keep_forever),
+            stringResource(R.string.no_extra_charges_all_updates_included)),
     )
 
     fun open(url: String) = context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
@@ -105,7 +113,7 @@ fun PaywallScreen(onDismiss: () -> Unit) {
         // 닫기
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             PressableCard(onClick = onDismiss) {
-                Icon(Icons.Filled.Close, "닫기", tint = gg.textMuted, modifier = Modifier.size(24.dp))
+                Icon(Icons.Filled.Close, stringResource(R.string.close), tint = gg.textMuted, modifier = Modifier.size(24.dp))
             }
         }
 
@@ -118,11 +126,13 @@ fun PaywallScreen(onDismiss: () -> Unit) {
             Icon(Icons.Filled.Coffee, null, tint = Color.White, modifier = Modifier.size(32.dp))
         }
         Spacer(Modifier.height(12.dp))
-        Text("커피 한 잔 값으로,\n아이의 구구단 실력을",
+        Text(stringResource(R.string.for_about_the_price_of_a_coffee_build),
             style = suite(FontWeight.ExtraBold, 24).copy(lineHeight = 32.sp),
             color = gg.text, textAlign = TextAlign.Center)
         Spacer(Modifier.height(8.dp))
-        Text("딱 한 번 ${premium.price} — 모든 기능을 평생 이용해요",
+        // 스토어 가격을 받기 전에는 금액 없는 문구 (고정 원화 폴백 없음 — iOS 와 같다)
+        Text(premium.price?.let { stringResource(R.string.just_once_every_feature_for_life, it) }
+            ?: stringResource(R.string.one_payment_unlocks_every_feature_for),
             style = suite(FontWeight.Bold, 14), color = gg.textMuted, textAlign = TextAlign.Center)
         Spacer(Modifier.height(20.dp))
 
@@ -158,18 +168,26 @@ fun PaywallScreen(onDismiss: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Row(verticalAlignment = Alignment.Bottom) {
-                    Text(premium.price, style = suite(FontWeight.ExtraBold, 36), color = gg.text)
-                    Text(" · 딱 한 번", style = suite(FontWeight.Bold, 14), color = gg.textMuted,
+                    val price = premium.price
+                    if (price != null) {
+                        Text(price, style = suite(FontWeight.ExtraBold, 36), color = gg.text)
+                    } else {
+                        // 스토어 가격을 받기 전 — 금액 자리를 같은 높이로 비워 둔다 (iOS ProgressView 와 같다)
+                        Box(Modifier.height(44.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = gg.accent, strokeWidth = 3.dp, modifier = Modifier.size(28.dp))
+                        }
+                    }
+                    Text(" " + stringResource(R.string.one_time), style = suite(FontWeight.Bold, 14), color = gg.textMuted,
                         modifier = Modifier.padding(bottom = 6.dp))
                 }
-                Text("정기 결제 아니에요 — 한 번 사면 끝!", style = suite(FontWeight.Bold, 12), color = gg.textMuted)
+                Text(stringResource(R.string.not_a_subscription_buy_once_and_you_re), style = suite(FontWeight.Bold, 12), color = gg.textMuted)
             }
             Box(
                 Modifier.align(Alignment.TopCenter).offset(y = (-12).dp)
                     .clip(CircleShape).background(Color(0xFFFBBF24))
                     .padding(horizontal = 12.dp, vertical = 5.dp)
             ) {
-                Text("☕ 커피 한 잔 값", style = suite(FontWeight.ExtraBold, 11), color = Color(0xFF78350F))
+                Text(stringResource(R.string.price_of_a_coffee), style = suite(FontWeight.ExtraBold, 11), color = Color(0xFF78350F))
             }
         }
         Spacer(Modifier.height(16.dp))
@@ -186,38 +204,38 @@ fun PaywallScreen(onDismiss: () -> Unit) {
                 busy = false
                 notice = when (result) {
                     PurchaseResult.OK, PurchaseResult.CANCELLED -> null
-                    PurchaseResult.PENDING -> "구매가 대기 중이에요 (승인 필요)."
-                    PurchaseResult.ERROR -> "구매에 실패했어요. 잠시 후 다시 시도해주세요."
+                    PurchaseResult.PENDING -> R.string.your_purchase_is_pending_approval_needed
+                    PurchaseResult.ERROR -> R.string.purchase_failed_please_try_again_in_a
                 }
             }
         }) {
             Icon(Icons.Filled.AutoAwesome, null, Modifier.size(18.dp))
-            Text(if (busy) "처리 중…" else "평생 이용권 시작하기")
+            Text(if (busy) stringResource(R.string.processing) else stringResource(R.string.get_lifetime_pass))
         }
 
         if (!premium.storeReady) {
             Spacer(Modifier.height(8.dp))
-            Text("스토어 연결 준비 중 — 가격은 결제 화면에서 최종 확인돼요.",
+            Text(stringResource(R.string.connecting_to_the_store_the_final_price),
                 style = suite(FontWeight.Bold, 11), color = gg.warning, textAlign = TextAlign.Center)
         }
         notice?.let {
             Spacer(Modifier.height(8.dp))
-            Text(it, style = suite(FontWeight.Bold, 12), color = gg.accent, textAlign = TextAlign.Center)
+            Text(stringResource(it), style = suite(FontWeight.Bold, 12), color = gg.accent, textAlign = TextAlign.Center)
         }
 
         Spacer(Modifier.height(16.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             val linkStyle = suite(FontWeight.Bold, 11).copy(textDecoration = TextDecoration.Underline)
-            FooterLink("구매 복원", linkStyle) {
+            FooterLink(stringResource(R.string.restore_purchases), linkStyle) {
                 premium.restore { ok ->
-                    notice = if (ok) "구매가 복원되었어요! 🎉" else "복원할 구매 내역이 없어요."
+                    notice = if (ok) R.string.purchase_restored else R.string.no_purchases_to_restore
                     // 이미 보유한 상품은 새 구매 플로우가 뜨지 않으므로, 복원 경로에서도
                     // 서버 구매 등록과 보호자 권한을 시도한다.
                     if (ok) scope.launch { sync.enableGuardianSync(auth, premium.lastPurchaseToken) }
                 }
             }
-            FooterLink("이용약관", linkStyle) { open(PremiumConfig.Legal.TERMS) }
-            FooterLink("개인정보처리방침", linkStyle) { open(PremiumConfig.Legal.PRIVACY) }
+            FooterLink(stringResource(R.string.terms_of_use), linkStyle) { open(PremiumConfig.Legal.TERMS) }
+            FooterLink(stringResource(R.string.privacy_policy), linkStyle) { open(PremiumConfig.Legal.PRIVACY) }
         }
     }
 }
@@ -249,13 +267,13 @@ private fun PaywallLinkPrompt(isPermanent: Boolean, onDismiss: () -> Unit) {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Icon(Icons.Filled.Verified, null, tint = gg.success, modifier = Modifier.size(44.dp))
-            Text("평생 이용권이 열렸어요 🎉", style = suite(FontWeight.ExtraBold, 22), color = gg.text, textAlign = TextAlign.Center)
+            Text(stringResource(R.string.lifetime_pass_unlocked), style = suite(FontWeight.ExtraBold, 22), color = gg.text, textAlign = TextAlign.Center)
             Text(
-                "보호자 이메일로 로그인해 두면 앱을 다시 설치하거나 기기를 바꿔도 이용권이 따라와요.",
+                stringResource(R.string.sign_in_with_a_parent_s_email_and_your),
                 style = suite(FontWeight.Medium, 14), color = gg.textMuted, textAlign = TextAlign.Center,
             )
             Text(
-                "로그인하지 않아도 같은 Google 계정에서는 「구매 복원」으로 되살릴 수 있어요.",
+                stringResource(R.string.restore_on_same_google_account),
                 style = suite(FontWeight.Medium, 12), color = gg.textMuted, textAlign = TextAlign.Center,
             )
         }
@@ -265,12 +283,12 @@ private fun PaywallLinkPrompt(isPermanent: Boolean, onDismiss: () -> Unit) {
         if (isPermanent) {
             GGButton(onClick = onDismiss, variant = GGButtonVariant.PRIMARY, size = GGButtonSize.LG,
                 modifier = Modifier.fillMaxWidth()) {
-                Text("시작하기")
+                Text(stringResource(R.string.get_started))
             }
         } else {
             GGButton(onClick = onDismiss, variant = GGButtonVariant.SURFACE, size = GGButtonSize.MD,
                 modifier = Modifier.fillMaxWidth()) {
-                Text("나중에 할게요", style = suite(FontWeight.Bold, 14), color = gg.text)
+                Text(stringResource(R.string.maybe_later), style = suite(FontWeight.Bold, 14), color = gg.text)
             }
         }
     }

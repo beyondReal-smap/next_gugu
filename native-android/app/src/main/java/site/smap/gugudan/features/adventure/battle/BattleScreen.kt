@@ -20,11 +20,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import site.smap.gugudan.R
 import site.smap.gugudan.core.SessionResult
+import site.smap.gugudan.core.SpokenMath
+import site.smap.gugudan.core.Strings
 import site.smap.gugudan.core.adventure.Battle
 import site.smap.gugudan.core.adventure.BattleStyle
 import site.smap.gugudan.core.adventure.NpcDef
@@ -33,6 +38,7 @@ import site.smap.gugudan.designsystem.*
 import site.smap.gugudan.features.home.GaugeBar
 import site.smap.gugudan.features.session.AnswerFeedback
 import site.smap.gugudan.features.session.Keypad
+import site.smap.gugudan.services.rememberStrings
 import site.smap.gugudan.store.LocalAdventure
 import site.smap.gugudan.store.LocalAuth
 import site.smap.gugudan.store.LocalGame
@@ -45,7 +51,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Density
 import site.smap.gugudan.core.GameMode
-import site.smap.gugudan.core.KoreanReading
 
 // 배틀 화면 (iOS BattleView.swift 이식) — 3종 방식 + 보스 분노 + 인트로/결과 오버레이
 
@@ -120,10 +125,10 @@ fun BattleScreen(npc: NpcDef, onWorld: () -> Unit, onRetry: () -> Unit, onFlee: 
         // 결판이 나면(확인 중 마지막 답이 처리된 경우) 시트는 의미가 없으니 띄우지 않는다
         ConfirmSheet(
             visible = confirmFlee && engine.phase == BattlePhase.PLAY,
-            title = "대결을 그만할까요?",
-            message = "푼 문제는 기록되지만 승패는 남지 않아요.",
-            cancelLabel = "계속 싸우기",
-            confirmLabel = "그만하기",
+            title = stringResource(R.string.quit_this_battle),
+            message = stringResource(R.string.solved_problems_are_saved_but_wins_and),
+            cancelLabel = stringResource(R.string.keep_battling),
+            confirmLabel = stringResource(R.string.quit),
             icon = Icons.AutoMirrored.Filled.DirectionsWalk,
             tint = gg.danger,
             onCancel = {
@@ -153,17 +158,18 @@ private fun BattleBody(engine: BattleEngine, onFlee: () -> Unit) {
         Row(Modifier.height(44.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             PressableCard(onClick = onFlee) {
                 Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Filled.Close, "대결 그만하기", tint = gg.textMuted, modifier = Modifier.size(22.dp))
+                    Icon(Icons.Filled.Close, stringResource(R.string.quit_battle), tint = gg.textMuted, modifier = Modifier.size(22.dp))
                 }
             }
             Text(
-                "${if (engine.isBoss) "보스 대결" else Battle.styleName(engine.style)} · ${engine.npc.table}단",
+                stringResource(R.string.table_2,
+                    stringResource(if (engine.isBoss) R.string.boss_battle else Battle.styleNameRes(engine.style)), engine.npc.table),
                 style = suite(FontWeight.Bold, 14), color = gg.textMuted, modifier = Modifier.weight(1f),
             )
             if (engine.combo >= 2) {
                 Pill(bg = gg.danger.copy(alpha = 0.15f), fg = gg.danger) {
                     Icon(Icons.Filled.LocalFireDepartment, null, Modifier.size(14.dp))
-                    Text("${engine.combo} 콤보")
+                    Text(stringResource(R.string.combo, engine.combo))
                 }
             }
         }
@@ -175,9 +181,9 @@ private fun BattleBody(engine: BattleEngine, onFlee: () -> Unit) {
             enraged = engine.enraged, floater = engine.npcFloat,
             title = {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(engine.npc.name, style = suite(FontWeight.ExtraBold, 14), color = gg.text, maxLines = 1)
-                    if (engine.isBoss) Chip("보스", gg.danger, gg.danger.copy(alpha = 0.15f))
-                    if (engine.enraged) Chip("분노", Color.White, gg.danger)
+                    Text(stringResource(engine.npc.nameRes), style = suite(FontWeight.ExtraBold, 14), color = gg.text, maxLines = 1)
+                    if (engine.isBoss) Chip(stringResource(R.string.boss), gg.danger, gg.danger.copy(alpha = 0.15f))
+                    if (engine.enraged) Chip(stringResource(R.string.rage), Color.White, gg.danger)
                 }
             },
             bar = {
@@ -213,12 +219,13 @@ private fun BattleBody(engine: BattleEngine, onFlee: () -> Unit) {
                 engine.input.isEmpty() -> gg.border
                 else -> gg.accent
             }
-            val explanation = battleExplanation(engine)
+            val explanation = battleExplanation(rememberStrings(), engine, stringResource(engine.npc.nameRes))
+            val inputLabel = stringResource(R.string.entered, engine.input)
             Row(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.clearAndSetSemantics {
-                    contentDescription = KoreanReading.question(p, GameMode.PRACTICE, null)
-                    stateDescription = if (showAnswer) explanation else if (engine.input.isEmpty()) "" else "입력 ${engine.input}"
+                    contentDescription = SpokenMath.question(p, GameMode.PRACTICE, null)
+                    stateDescription = if (showAnswer) explanation else if (engine.input.isEmpty()) "" else inputLabel
                 },
             ) {
                 Text("${p.a}", style = big, color = gg.text)
@@ -241,7 +248,7 @@ private fun BattleBody(engine: BattleEngine, onFlee: () -> Unit) {
         Panel(
             avatarColor = adventure.equippedColorHex, avatarSize = 44.dp, boss = false,
             enraged = false, floater = engine.playerFloat,
-            title = { Text("나", style = suite(FontWeight.ExtraBold, 14), color = gg.text) },
+            title = { Text(stringResource(R.string.me), style = suite(FontWeight.ExtraBold, 14), color = gg.text) },
             bar = {
                 if (engine.style == BattleStyle.SPEED) {
                     StatBar(engine.playerScore.toDouble() / Battle.RACE_TARGET, "${engine.playerScore}/${Battle.RACE_TARGET}", gg.accent)
@@ -343,8 +350,10 @@ private fun CounterTimer(engine: BattleEngine) {
         }
     }
     val urgent = left <= 2000
+    val secondsLeft = ((left + 999) / 1000).toInt()
+    val timerLabel = pluralStringResource(R.plurals.counterattack_in_seconds, secondsLeft, secondsLeft)
     Row(
-        Modifier.clearAndSetSemantics { contentDescription = "반격까지 ${(left + 999) / 1000}초" },
+        Modifier.clearAndSetSemantics { contentDescription = timerLabel },
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -357,12 +366,11 @@ private fun CounterTimer(engine: BattleEngine) {
 }
 
 /** 오답 설명 — 아이가 낸 답과 정답을 함께. 반격이 있는 방식이면 반격 알림을 붙인다 */
-private fun battleExplanation(engine: BattleEngine): String {
+private fun battleExplanation(strings: Strings, engine: BattleEngine, npcName: String): String {
     val answer = engine.problem.a * engine.problem.b
-    if (engine.timedOut) return "시간 초과! 정답은 $answer — ${engine.npc.name}의 반격!"
-    val fact = engine.lastGiven?.let { KoreanReading.notButIs(it, answer) }
-        ?: "정답은 ${KoreanReading.withCopula(answer)}"
-    return if (engine.style == BattleStyle.SPEED) fact else "$fact — ${engine.npc.name}의 반격!"
+    if (engine.timedOut) return strings.get(R.string.time_s_up_the_answer_was_strikes_back, answer, npcName)
+    val fact = engine.lastGiven?.let { SpokenMath.notButIs(it, answer) } ?: SpokenMath.answerIs(answer)
+    return if (engine.style == BattleStyle.SPEED) fact else strings.get(R.string.strikes_back, fact, npcName)
 }
 
 // MARK: 인트로 / 결과 오버레이
@@ -371,9 +379,9 @@ private fun battleExplanation(engine: BattleEngine): String {
 private fun IntroOverlay(engine: BattleEngine) {
     val gg = LocalGG.current
     val rule = when (engine.style) {
-        BattleStyle.SPEED -> "먼저 ${Battle.RACE_TARGET}문제를 맞히면 승리!"
-        BattleStyle.COUNTER -> "${engine.counterLimit / 1000}초 안에 못 풀면 반격당해요!"
-        BattleStyle.HP -> if (engine.isBoss) "HP가 절반이 되면 분노해요 — 조심!" else "정답이면 공격, 오답이면 반격!"
+        BattleStyle.SPEED -> pluralStringResource(R.plurals.first_to_get_problems_right_wins, Battle.RACE_TARGET, Battle.RACE_TARGET)
+        BattleStyle.COUNTER -> (engine.counterLimit / 1000).let { pluralStringResource(R.plurals.answer_within_seconds_or_get_hit_back, it, it) }
+        BattleStyle.HP -> stringResource(if (engine.isBoss) R.string.gets_angry_at_half_hp_watch_out else R.string.right_attack_wrong_counterattack)
     }
     Column(
         Modifier.fillMaxSize().background(gg.bg.copy(alpha = 0.95f)).padding(32.dp),
@@ -381,18 +389,18 @@ private fun IntroOverlay(engine: BattleEngine) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         BattleAvatar(engine.npc.color, 88.dp, engine.isBoss, false)
-        Text(engine.npc.name, style = suite(FontWeight.ExtraBold, 20), color = gg.text)
-        Text("“${engine.npc.greeting}”", style = suite(FontWeight.Bold, 14), color = gg.textMuted,
+        Text(stringResource(engine.npc.nameRes), style = suite(FontWeight.ExtraBold, 20), color = gg.text)
+        Text(stringResource(R.string.s_21, stringResource(engine.npc.greetingRes, engine.npc.table)), style = suite(FontWeight.Bold, 14), color = gg.textMuted,
             textAlign = TextAlign.Center)
         Box(Modifier.clip(CircleShape).background(gg.surface2).padding(horizontal = 16.dp, vertical = 6.dp)) {
-            Text("${Battle.styleName(engine.style)} — $rule", style = suite(FontWeight.ExtraBold, 12), color = gg.textMuted)
+            Text("${stringResource(Battle.styleNameRes(engine.style))} — $rule", style = suite(FontWeight.ExtraBold, 12), color = gg.textMuted)
         }
         Row(
             Modifier.clip(CircleShape).background(gg.danger).padding(horizontal = 20.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(Icons.Filled.Shield, null, tint = Color.White, modifier = Modifier.size(18.dp))
-            Text("대결 시작!", style = suite(FontWeight.ExtraBold, 18), color = Color.White)
+            Text(stringResource(R.string.start_battle), style = suite(FontWeight.ExtraBold, 18), color = Color.White)
         }
     }
 }
@@ -415,13 +423,13 @@ private fun ResultOverlay(engine: BattleEngine, end: BattleEnd, onWorld: () -> U
                 if (end.won) adventure.equippedColorHex else engine.npc.color,
                 72.dp, engine.isBoss && !end.won, false)
             Text(
-                if (end.won) (if (worldCleared) "월드 클리어! 👑" else "승리! 🎉") else "아쉬운 패배…",
+                stringResource(if (end.won) (if (worldCleared) R.string.world_cleared else R.string.victory) else R.string.so_close_you_lost),
                 style = suite(FontWeight.ExtraBold, 24), color = gg.text)
             Text(
                 if (end.won) {
-                    if (worldCleared) "모든 지역을 정복했어요 — 진정한 구구단 정복자!"
-                    else "${engine.npc.name}을(를) 물리쳤어요!"
-                } else "괜찮아요, 답을 익히고 다시 도전해요",
+                    if (worldCleared) stringResource(R.string.you_ve_conquered_every_region_a_true)
+                    else stringResource(R.string.you_beat, stringResource(engine.npc.nameRes))
+                } else stringResource(R.string.that_s_ok_learn_the_answers_and_try),
                 style = suite(FontWeight.Bold, 14), color = gg.textMuted, textAlign = TextAlign.Center)
 
             if (end.won && engine.isBoss && !worldCleared && nextRegion != null) {
@@ -431,14 +439,14 @@ private fun ResultOverlay(engine: BattleEngine, end: BattleEnd, onWorld: () -> U
                     horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(Icons.Filled.LockOpen, null, tint = gg.accent, modifier = Modifier.size(14.dp))
-                    Text("${nextRegion.name}(${nextRegion.table}단)이 열렸어요!",
+                    Text(stringResource(R.string.table_is_now_open, stringResource(nextRegion.nameRes), nextRegion.table),
                         style = suite(FontWeight.ExtraBold, 14), color = gg.accent)
                 }
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                ResultStat(Modifier.weight(1f), Icons.Filled.AutoAwesome, gg.warning, "획득 XP", "+${end.commit.xpEarned}")
-                ResultStat(Modifier.weight(1f), Icons.Filled.LocalFireDepartment, gg.danger, "최고 콤보", "${engine.maxCombo}")
+                ResultStat(Modifier.weight(1f), Icons.Filled.AutoAwesome, gg.warning, stringResource(R.string.xp_earned), "+${end.commit.xpEarned}")
+                ResultStat(Modifier.weight(1f), Icons.Filled.LocalFireDepartment, gg.danger, stringResource(R.string.best_combo), "${engine.maxCombo}")
             }
 
             end.commit.table?.let { table ->
@@ -448,8 +456,8 @@ private fun ResultOverlay(engine: BattleEngine, end: BattleEnd, onWorld: () -> U
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text("${table}단 마스터리", style = suite(FontWeight.Bold, 14), color = gg.text)
-                        if (end.commit.improvedStars) Text("새 기록!", style = suite(FontWeight.Bold, 12), color = gg.accent)
+                        Text(stringResource(R.string.table_mastery, table), style = suite(FontWeight.Bold, 14), color = gg.text)
+                        if (end.commit.improvedStars) Text(stringResource(R.string.new_best), style = suite(FontWeight.Bold, 12), color = gg.accent)
                     }
                     StarsView(end.commit.newStars, size = 22.dp)
                 }
@@ -459,13 +467,13 @@ private fun ResultOverlay(engine: BattleEngine, end: BattleEnd, onWorld: () -> U
                 if (!end.won) {
                     GGButton(variant = GGButtonVariant.PRIMARY, size = GGButtonSize.LG, onClick = onRetry) {
                         Icon(Icons.Filled.Refresh, null, Modifier.size(18.dp))
-                        Text("다시 도전")
+                        Text(stringResource(R.string.try_again))
                     }
                 }
                 GGButton(
                     variant = if (end.won) GGButtonVariant.PRIMARY else GGButtonVariant.SURFACE,
                     size = GGButtonSize.LG, onClick = onWorld,
-                ) { Text("월드로 돌아가기") }
+                ) { Text(stringResource(R.string.back_to_the_world)) }
             }
         }
     }

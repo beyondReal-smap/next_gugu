@@ -13,6 +13,7 @@ import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.GetBillingConfigParams
 import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
@@ -52,7 +53,12 @@ class PremiumStore(
     var isPremium: Boolean by mutableStateOf(devForcePremium || storeOwned || serverGranted)
         private set
     var paywallOpen: Boolean by mutableStateOf(false)
-    var price: String by mutableStateOf(PremiumConfig.FALLBACK_PRICE)
+    /** 스토어 표시 가격 — 상품을 불러오기 전에는 null (화면은 가격 자리를 비우거나 로딩 표시, iOS 와 같다).
+     *  고정 원화 폴백을 두면 해외에서 상품을 불러오기 전 원화가 보인다 */
+    var price: String? by mutableStateOf(null)
+        private set
+    /** Play 결제 국가(ISO 3166-1 alpha-2, 예: "KR") — 광고 알림 토글 노출 판정(PromoVisibility)에 쓴다. 모르면 null */
+    var billingCountry: String? by mutableStateOf(null)
         private set
     var storeReady: Boolean by mutableStateOf(false)
         private set
@@ -91,6 +97,7 @@ class PremiumStore(
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                     queryProduct()
                     refreshEntitlements()
+                    queryBillingCountry()
                 } else {
                     Log.w("Premium", "Billing 연결 실패: ${result.debugMessage}")
                 }
@@ -143,6 +150,20 @@ class PremiumStore(
                     storeReady = true
                 } else {
                     Log.w("Premium", "상품 조회 실패: ${result.debugMessage}")
+                }
+            }
+        }
+    }
+
+    /** Play 결제 국가 조회 — iOS Storefront.countryCode 대응. 실패하면 null 로 두어 광고 토글을 숨긴다(알 수 없으면 숨김) */
+    private fun queryBillingCountry() {
+        billing.getBillingConfigAsync(GetBillingConfigParams.newBuilder().build()) { result, config ->
+            main.post {
+                if (result.responseCode == BillingClient.BillingResponseCode.OK && config != null) {
+                    billingCountry = config.countryCode
+                    Log.i(TAG, "결제 국가 ${config.countryCode}")
+                } else {
+                    Log.w(TAG, "결제 국가 조회 실패: ${result.debugMessage}")
                 }
             }
         }

@@ -7,7 +7,9 @@
   python3 tools/voice/generate.py sample --lang en --voice ID ...  # 후보별 샘플 → tools/voice/samples/
   python3 tools/voice/generate.py build --lang en --voice ID       # 552문장 생성 → 앱 리소스로 배치
   python3 tools/voice/generate.py build --voice ID --regen c-3x2   # 특정 줄만 새로 녹음
-  --lang 기본값은 ko. iOS 는 Voice/{ko,en,ja}/ 언어별 폴더, Android 는 아직 ko 만 기존 assets/voice/ 에 쓴다.
+  python3 tools/voice/generate.py sync-android --lang en           # iOS 음성 팩을 Android 로 그대로 복사 (생성·크레딧 없음)
+  --lang 기본값은 ko. 두 앱 모두 언어별 폴더에 쓴다 — iOS Voice/{ko,en,ja}/voice-manifest.json,
+  Android assets/voice/{ko,en,ja}/manifest.json (같은 파일, 매니페스트 이름만 다르다).
   (검수: tools/voice/qa.py — 길이·음량·받아쓰기로 이상한 줄을 골라낸다)
 
 API 키: 환경변수 ELEVENLABS_API_KEY 또는 ~/.config/gugu/elevenlabs.env (ELEVENLABS_API_KEY=...)
@@ -22,6 +24,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import struct
 import subprocess
 import sys
@@ -37,7 +40,10 @@ HERE = Path(__file__).resolve().parent
 CACHE = HERE / ".cache"
 SAMPLES = HERE / "samples"
 IOS_VOICE = ROOT / "native-ios/Gugu/Resources/Voice"
-ANDROID_OUT = ROOT / "native-android/app/src/main/assets/voice"
+ANDROID_VOICE = ROOT / "native-android/app/src/main/assets/voice"
+# 앱마다 매니페스트 파일 이름이 다르다 (iOS 번들 리소스 / Android VoiceLinesTests·assets)
+IOS_MANIFEST = "voice-manifest.json"
+ANDROID_MANIFEST = "manifest.json"
 API = "https://api.elevenlabs.io"
 
 DEFAULT_MODEL = "eleven_v4"
@@ -266,14 +272,13 @@ def cmd_build(args) -> None:
             if done % 25 == 0 or done == len(todo):
                 print(f"  생성 {done}/{len(todo)}")
 
-    # 마스터링 → 앱 리소스 배치. Android 는 언어별 폴더 전환(2차) 전까지 ko 만 기존 경로에 쓴다
+    # 마스터링 → 앱 리소스 배치. 두 앱 모두 언어별 폴더에 같은 파일을 쓴다
     ios_out = IOS_VOICE / args.lang
-    outs = [ios_out] + ([ANDROID_OUT] if args.lang == "ko" else [])
+    android_out = ANDROID_VOICE / args.lang
+    outs = [ios_out, android_out]
     for out in outs:
         out.mkdir(parents=True, exist_ok=True)
-        stale = sorted(p.name for p in out.glob("*.m4a") if p.stem not in lines)
-        if stale:
-            raise RuntimeError(f"{out} 에 목록에 없는 파일이 있습니다 — 확인 후 지워 주세요: {stale[:10]}")
+        check_stale(out, lines)
     for i, (key, text) in enumerate(lines.items(), 1):
         m4a = work_dir / f"{key}.m4a"
         master(cache_path(args.voice, args.model, text, settings), m4a)
@@ -285,11 +290,41 @@ def cmd_build(args) -> None:
 
     manifest = {"voice": args.voice, "model": args.model, "settings": settings, "lines": lines}
     body = json.dumps(manifest, ensure_ascii=False, indent=1, sort_keys=True)
-    (ios_out / "voice-manifest.json").write_text(body)
-    if args.lang == "ko":
-        (ANDROID_OUT / "manifest.json").write_text(body)
+    (ios_out / IOS_MANIFEST).write_text(body)
+    (android_out / ANDROID_MANIFEST).write_text(body)
     size = sum(p.stat().st_size for p in ios_out.glob("*.m4a"))
     print(f"완료 — {len(lines)}개, {size / 1024 / 1024:.1f}MB (앱마다)")
+
+
+def check_stale(out: Path, lines: dict[str, str]) -> None:
+    """목록에 없는 음성 파일이 있으면 멈춘다 — 지우는 판단은 사람이 한다"""
+    stale = sorted(p.name for p in out.glob("*.m4a") if p.stem not in lines)
+    if stale:
+        raise RuntimeError(f"{out} 에 목록에 없는 파일이 있습니다 — 확인 후 지워 주세요: {stale[:10]}")
+
+
+def cmd_sync_android(args) -> None:
+    """이미 만든 iOS 음성 팩을 Android 로 바이트 그대로 복사한다 (다시 생성하지 않으므로 크레딧을 쓰지 않는다).
+    iOS 매니페스트의 문장이 지금 phrases.py 와 다르면 멈춘다 — 음성 팩이 낡았다는 뜻이므로 build 를 먼저 다시 돌린다."""
+    src = IOS_VOICE / args.lang
+    dst = ANDROID_VOICE / args.lang
+    manifest_path = src / IOS_MANIFEST
+    if not manifest_path.exists():
+        raise SystemExit(f"iOS 음성 팩이 없습니다: {manifest_path} — build --lang {args.lang} 를 먼저 실행하세요")
+    manifest = json.loads(manifest_path.read_text())
+    lines = phrases(args.lang)
+    if manifest["lines"] != lines:
+        changed = sorted(k for k in set(lines) | set(manifest["lines"]) if lines.get(k) != manifest["lines"].get(k))
+        raise SystemExit(f"iOS 음성 팩 문장이 phrases.py 와 다릅니다 ({len(changed)}줄, 예: {changed[:5]}) — build 를 먼저 실행하세요")
+    missing = sorted(k for k in lines if not (src / f"{k}.m4a").exists())
+    if missing:
+        raise SystemExit(f"iOS 음성 파일 없음: {missing[:10]}")
+    dst.mkdir(parents=True, exist_ok=True)
+    check_stale(dst, lines)
+    for key in lines:
+        shutil.copyfile(src / f"{key}.m4a", dst / f"{key}.m4a")
+    shutil.copyfile(manifest_path, dst / ANDROID_MANIFEST)
+    print(f"복사 완료 — {args.lang} {len(lines)}개 → {dst.relative_to(ROOT)}")
 
 
 def main() -> None:
@@ -311,8 +346,11 @@ def main() -> None:
     b.add_argument("--workers", type=int, default=3)
     b.add_argument("--regen", nargs="+", default=[], metavar="KEY",
                    help="캐시를 무시하고 새로 녹음할 문장 키 (발음이 모호한 줄을 다시 받을 때)")
+    sa = sub.add_parser("sync-android", help="iOS 음성 팩을 Android assets 로 그대로 복사")
+    sa.add_argument("--lang", choices=LANGS, required=True)
     args = ap.parse_args()
-    {"models": cmd_models, "voices": cmd_voices, "sample": cmd_sample, "build": cmd_build}[args.cmd](args)
+    {"models": cmd_models, "voices": cmd_voices, "sample": cmd_sample, "build": cmd_build,
+     "sync-android": cmd_sync_android}[args.cmd](args)
 
 
 if __name__ == "__main__":

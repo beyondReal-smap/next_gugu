@@ -36,17 +36,21 @@ object LocalNotifications {
     /**
      * 알림 채널 4종을 한 번에 만든다 (앱 시작·표시 직전). 이미 있으면 이름·설명만 갱신되고 사용자가 바꾼 중요도는 유지된다.
      * 학습 알림(로컬)은 기존 그대로, 나머지 셋은 원격 푸시용 — 공지 채널이 FCM 기본 채널이다(매니페스트).
+     * 이름·설명은 앱 언어 리소스 — 언어를 바꾸면 다음 실행(또는 Activity 재생성)에서 갱신된다.
      */
     fun ensureChannel(context: Context) {
         val channels = listOf(
-            NotificationChannel(CHANNEL_ID, "학습 알림", NotificationManager.IMPORTANCE_DEFAULT)
-                .apply { description = "정해진 시간에 오늘의 구구단을 알려드려요" },
-            NotificationChannel(PushChannels.SERVICE_NOTICE, "공지·서비스 알림", NotificationManager.IMPORTANCE_HIGH)
-                .apply { description = "업데이트·점검 같은 중요한 소식을 알려 드려요." },
-            NotificationChannel(PushChannels.GUARDIAN_REPORT, "보호자 학습 소식", NotificationManager.IMPORTANCE_HIGH)
-                .apply { description = "매주 학습 리포트가 준비되면 알려 드려요." },
-            NotificationChannel(PushChannels.PROMOTION, "이벤트·혜택 알림(광고)", NotificationManager.IMPORTANCE_DEFAULT)
-                .apply { description = "새 기능·이벤트 소식을 받아요." },
+            NotificationChannel(CHANNEL_ID, context.getString(R.string.practice_reminder), NotificationManager.IMPORTANCE_DEFAULT)
+                .apply { description = context.getString(R.string.practice_reminder_channel_description) },
+            NotificationChannel(PushChannels.SERVICE_NOTICE, context.getString(R.string.announcements_service_channel),
+                NotificationManager.IMPORTANCE_HIGH)
+                .apply { description = context.getString(R.string.important_news_such_as_updates_and) },
+            NotificationChannel(PushChannels.GUARDIAN_REPORT, context.getString(R.string.weekly_progress_for_parents),
+                NotificationManager.IMPORTANCE_HIGH)
+                .apply { description = context.getString(R.string.we_ll_let_you_know_when_the_weekly) },
+            NotificationChannel(PushChannels.PROMOTION, context.getString(R.string.events_offers_promotional),
+                NotificationManager.IMPORTANCE_DEFAULT)
+                .apply { description = context.getString(R.string.promotion_channel_description) },
         )
         context.getSystemService(NotificationManager::class.java).createNotificationChannels(channels)
     }
@@ -111,6 +115,8 @@ object LocalNotifications {
 /** 예약 시각에 깨어나 알림을 띄운다 */
 class ReminderWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
     override fun doWork(): Result {
+        // 워커는 Activity 없이 깨어날 수 있다 — 채널 이름을 앱 언어로 맞추기 전에 언어를 정한다
+        AndroidStrings.updateLanguage(applicationContext)
         if (!LocalNotifications.isAuthorized(applicationContext)) return Result.success()
         // WorkManager 는 절전 때문에 늦게 실행될 수 있다. 밀려서 야간에 깨어났다면 보내지 않는다.
         if (LocalTime.now().hour !in ReminderPlanner.ALLOWED_HOURS) {

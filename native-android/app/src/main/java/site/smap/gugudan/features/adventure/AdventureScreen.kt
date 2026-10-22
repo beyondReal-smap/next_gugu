@@ -29,10 +29,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import site.smap.gugudan.R
 import site.smap.gugudan.core.adventure.AdvAchievements
 import site.smap.gugudan.core.adventure.AdvProgress
 import site.smap.gugudan.core.adventure.Battle
@@ -204,12 +207,12 @@ private fun RegionMapView(onSelect: (RegionDef) -> Unit, onExit: () -> Unit) {
     ) {
         Column(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("어드벤처", style = suite(FontWeight.ExtraBold, 24), color = gg.text, modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.adventure), style = suite(FontWeight.ExtraBold, 24), color = gg.text, modifier = Modifier.weight(1f))
                 PressableCard(onClick = onExit) {
-                    Icon(Icons.Filled.Close, "닫기", tint = gg.textMuted, modifier = Modifier.size(24.dp))
+                    Icon(Icons.Filled.Close, stringResource(R.string.close), tint = gg.textMuted, modifier = Modifier.size(24.dp))
                 }
             }
-            Text("지역을 탐험하고 주민들과 구구단 대결을 펼쳐요",
+            Text(stringResource(R.string.explore_regions_and_battle_residents),
                 style = suite(FontWeight.Normal, 14), color = gg.textMuted)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.weight(1f)) {
@@ -233,8 +236,8 @@ private fun RegionMapView(onSelect: (RegionDef) -> Unit, onExit: () -> Unit) {
                 ) {
                     Icon(Icons.Filled.Star, null, tint = gg.warning, modifier = Modifier.size(14.dp))
                     Text("${adventure.progress.starShards}", style = suite(FontWeight.ExtraBold, 15), color = gg.text)
-                    Text("꾸미기 상점", style = suite(FontWeight.Bold, 14), color = gg.text, modifier = Modifier.weight(1f))
-                    Text("색상 · 모자", style = suite(FontWeight.Bold, 12), color = gg.textMuted)
+                    Text(stringResource(R.string.style_shop), style = suite(FontWeight.Bold, 14), color = gg.text, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.colors_hats), style = suite(FontWeight.Bold, 12), color = gg.textMuted)
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = gg.textMuted, modifier = Modifier.size(16.dp))
                 }
             }
@@ -254,7 +257,7 @@ private fun RegionMapView(onSelect: (RegionDef) -> Unit, onExit: () -> Unit) {
                         Icon(achievementIcon(a.icon), null,
                             tint = (if (on) gg.warning else gg.textMuted).copy(alpha = if (on) 1f else 0.6f),
                             modifier = Modifier.size(10.dp))
-                        Text(a.name, style = suite(FontWeight.ExtraBold, 10),
+                        Text(stringResource(a.nameRes), style = suite(FontWeight.ExtraBold, 10),
                             color = (if (on) gg.warning else gg.textMuted).copy(alpha = if (on) 1f else 0.6f))
                     }
                 }
@@ -296,20 +299,23 @@ private fun RegionMapView(onSelect: (RegionDef) -> Unit, onExit: () -> Unit) {
                         }
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Text(region.name, style = suite(FontWeight.ExtraBold, 16),
+                                Text(stringResource(region.nameRes), style = suite(FontWeight.ExtraBold, 16),
                                     color = gg.text.copy(alpha = if (unlocked) 1f else 0.55f), maxLines = 1)
                                 Box(Modifier.clip(CircleShape).background(gg.accent.copy(alpha = 0.12f))
                                     .padding(horizontal = 8.dp, vertical = 2.dp)) {
-                                    Text("${region.table}단", style = suite(FontWeight.ExtraBold, 10), color = gg.accent)
+                                    Text(stringResource(R.string.table, region.table), style = suite(FontWeight.ExtraBold, 10), color = gg.accent)
                                 }
                                 if (stats.bossDefeated) {
                                     Icon(Icons.Filled.EmojiEvents, null, tint = gg.warning, modifier = Modifier.size(14.dp))
                                 }
                             }
+                            // 클리어 여부별로 문장을 따로 둔다 (iOS 와 같은 키 — 조각을 이어 붙이면 번역 어순이 깨진다)
                             Text(
-                                if (unlocked) "주민 격파 ${stats.defeated}/${stats.total}" +
-                                    (if (stats.bossDefeated) " · 클리어!" else "")
-                                else "이전 지역 보스를 이기면 열려요",
+                                when {
+                                    !unlocked -> stringResource(R.string.beat_the_previous_region_s_boss_to)
+                                    stats.bossDefeated -> stringResource(R.string.residents_defeated_cleared, stats.defeated, stats.total)
+                                    else -> stringResource(R.string.residents_defeated, stats.defeated, stats.total)
+                                },
                                 style = suite(FontWeight.Normal, 13),
                                 color = gg.textMuted.copy(alpha = if (unlocked) 1f else 0.55f),
                             )
@@ -342,12 +348,12 @@ private fun WorldHud(
         PressableCard(onClick = onBack) {
             Box(Modifier.size(40.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.35f)),
                 contentAlignment = Alignment.Center) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, "지역 선택", tint = Color.White, modifier = Modifier.size(20.dp))
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back_to_region_map), tint = Color.White, modifier = Modifier.size(20.dp))
             }
         }
         Box(Modifier.clip(CircleShape).background(Color.Black.copy(alpha = 0.35f))
             .padding(horizontal = 14.dp, vertical = 10.dp)) {
-            Text("${region.name} · ${region.table}단", style = suite(FontWeight.ExtraBold, 14), color = Color.White)
+            Text(stringResource(R.string.table_2, stringResource(region.nameRes), region.table), style = suite(FontWeight.ExtraBold, 14), color = Color.White)
         }
         Spacer(Modifier.weight(1f))
         Row(Modifier.clip(CircleShape).background(Color.Black.copy(alpha = 0.35f))
@@ -383,8 +389,8 @@ private fun RegionBanner(region: RegionDef) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Text(region.name, style = suite(FontWeight.Black, 34), color = Color.White)
-                Text("${region.table}단의 세계", style = suite(FontWeight.Bold, 15), color = Color.White.copy(alpha = 0.85f))
+                Text(stringResource(region.nameRes), style = suite(FontWeight.Black, 34), color = Color.White)
+                Text(stringResource(R.string.land_of_the_times_table, region.table), style = suite(FontWeight.Bold, 15), color = Color.White.copy(alpha = 0.85f))
             }
         }
     }
@@ -400,9 +406,10 @@ private fun ClearCelebration(region: RegionDef, next: RegionDef?) {
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text("🎉", style = suite(FontWeight.Bold, 44))
-            Text("${region.name} 클리어!", style = suite(FontWeight.Black, 30), color = Color.White)
+            Text(stringResource(R.string.cleared, stringResource(region.nameRes)), style = suite(FontWeight.Black, 30), color = Color.White)
             Text(
-                if (next != null) "북쪽 끝에 ${next.name} 포털이 열렸어요!" else "모든 지역을 정복했어요! 👑",
+                if (next != null) stringResource(R.string.a_portal_to_has_opened_in_the_far_north, stringResource(next.nameRes))
+                else stringResource(R.string.every_region_conquered),
                 style = suite(FontWeight.Bold, 14), color = Color.White.copy(alpha = 0.9f),
                 textAlign = TextAlign.Center,
             )
@@ -442,31 +449,34 @@ private fun EncounterPrompt(npc: NpcDef, defeated: Boolean, bossLocked: Boolean,
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text(npc.name, style = suite(FontWeight.ExtraBold, 15), color = gg.text, maxLines = 1)
+                    Text(stringResource(npc.nameRes), style = suite(FontWeight.ExtraBold, 15), color = gg.text, maxLines = 1)
                     if (isBoss) {
                         Box(Modifier.clip(CircleShape).background(gg.danger.copy(alpha = 0.15f))
                             .padding(horizontal = 8.dp, vertical = 2.dp)) {
-                            Text("보스", style = suite(FontWeight.ExtraBold, 10), color = gg.danger)
+                            Text(stringResource(R.string.boss), style = suite(FontWeight.ExtraBold, 10), color = gg.danger)
                         }
                     }
                     Box(Modifier.clip(CircleShape).background(gg.accent.copy(alpha = 0.12f))
                         .padding(horizontal = 8.dp, vertical = 2.dp)) {
-                        Text("${npc.table}단", style = suite(FontWeight.ExtraBold, 10), color = gg.accent)
+                        Text(stringResource(R.string.table, npc.table), style = suite(FontWeight.ExtraBold, 10), color = gg.accent)
                     }
                     if (!isBoss) {
                         Box(Modifier.clip(CircleShape).background(gg.surface2)
                             .padding(horizontal = 8.dp, vertical = 2.dp)) {
-                            Text(Battle.styleName(npc.battle), style = suite(FontWeight.ExtraBold, 10), color = gg.textMuted)
+                            Text(stringResource(Battle.styleNameRes(npc.battle)), style = suite(FontWeight.ExtraBold, 10), color = gg.textMuted)
                         }
                     }
                 }
                 Text(
                     when {
-                        bossLocked -> "부하들을 모두 이기면 도전할 수 있어요"
-                        defeated -> "이미 격파한 상대 — 연습 대결로 XP를 벌 수 있어요"
-                        else -> "“${npc.greeting}”"
+                        bossLocked -> stringResource(R.string.beat_all_the_minions_to_challenge_the)
+                        defeated -> stringResource(R.string.already_defeated_earn_xp_in_a_practice)
+                        // 따옴표도 언어별 (ja 「」) — iOS 키 “%@”
+                        else -> stringResource(R.string.s_21, stringResource(npc.greetingRes, npc.table))
                     },
-                    style = suite(FontWeight.Normal, 13), color = gg.textMuted, maxLines = 1,
+                    // 영어·일본어 인사말은 한 줄을 넘어 두 줄까지 보이고 그래도 넘치면 말줄임
+                    style = suite(FontWeight.Normal, 13), color = gg.textMuted, maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -475,7 +485,7 @@ private fun EncounterPrompt(npc: NpcDef, defeated: Boolean, bossLocked: Boolean,
             size = GGButtonSize.MD, enabled = !bossLocked, onClick = onBattle,
         ) {
             Icon(if (bossLocked) Icons.Filled.Lock else Icons.Filled.Shield, null, Modifier.size(16.dp))
-            Text(if (bossLocked) "잠겨 있어요" else if (defeated) "다시 대결하기" else "대결하기")
+            Text(stringResource(if (bossLocked) R.string.locked else if (defeated) R.string.battle_again else R.string.battle))
         }
     }
 }

@@ -1,5 +1,7 @@
 package site.smap.gugudan.core.adventure
 
+import androidx.annotation.StringRes
+import site.smap.gugudan.R
 import kotlin.math.hypot
 
 // 어드벤처 월드 — 지역/NPC 정적 데이터의 단일 출처 (World.swift 이식)
@@ -98,13 +100,13 @@ object World {
 
     // MARK: 지역/NPC 빌드
 
-    data class NpcSeed(val name: String, val color: String, val greeting: String? = null)
+    data class NpcSeed(@StringRes val nameRes: Int, val color: String, @StringRes val greetingRes: Int? = null)
 
     private fun buildNpcs(table: Int, layout: RegionLayout, normals: List<NpcSeed>, boss: NpcSeed): List<NpcDef> {
         val list = normals.mapIndexed { i, seed ->
             NpcDef(
                 id = "r$table-n${i + 1}",
-                name = seed.name,
+                nameRes = seed.nameRes,
                 kind = NpcKind.NORMAL,
                 battle = normalStyles[i],
                 table = table,
@@ -112,12 +114,12 @@ object World {
                 hp = npcHp(NpcKind.NORMAL, table),
                 attack = npcAttack(NpcKind.NORMAL, table),
                 color = seed.color,
-                greeting = seed.greeting ?: "${table}단으로 승부하자!",
+                greetingRes = seed.greetingRes ?: R.string.let_s_battle_with_the_times_table,
             )
         }
         return list + NpcDef(
             id = bossId(table),
-            name = boss.name,
+            nameRes = boss.nameRes,
             kind = NpcKind.BOSS,
             battle = BattleStyle.HP,
             table = table,
@@ -125,12 +127,12 @@ object World {
             hp = npcHp(NpcKind.BOSS, table),
             attack = npcAttack(NpcKind.BOSS, table),
             color = boss.color,
-            greeting = boss.greeting ?: "이 지역의 보스다. ${table}단, 각오는 됐지?",
+            greetingRes = boss.greetingRes ?: R.string.i_m_the_boss_of_this_area_ready_for_the,
         )
     }
 
     private data class RegionSeed(
-        val table: Int, val name: String, val deco: DecoKind,
+        val table: Int, @StringRes val nameRes: Int, val deco: DecoKind,
         val theme: RegionTheme, val normals: List<NpcSeed>, val boss: NpcSeed,
     )
 
@@ -138,7 +140,7 @@ object World {
         val layout = layouts.getValue(seed.table)
         return RegionDef(
             table = seed.table,
-            name = seed.name,
+            nameRes = seed.nameRes,
             deco = seed.deco,
             decoItems = genDecoItems(seed.table, layout),
             spawn = layout.spawn,
@@ -150,38 +152,38 @@ object World {
     }
 
     val regions: List<RegionDef> = listOf(
-        buildRegion(RegionSeed(2, "새싹 들판", DecoKind.TREE,
+        buildRegion(RegionSeed(2, R.string.sprout_meadow, DecoKind.TREE,
             RegionTheme("#7ec850", "#3e9b4f", "#bfe3ff"),
-            listOf(NpcSeed("토끼 로로", "#f4f1ea"), NpcSeed("다람쥐 콩이", "#c98a4b"), NpcSeed("두더지 두두", "#8a6f5c")),
-            NpcSeed("들판지기 곰곰", "#7a5230", "들판을 지나가려면 2단쯤은 술술 나와야지!"))),
-        buildRegion(RegionSeed(3, "노을 사막", DecoKind.ROCK,
+            listOf(NpcSeed(R.string.hoppy_the_bunny, "#f4f1ea"), NpcSeed(R.string.peanut_the_squirrel, "#c98a4b"), NpcSeed(R.string.digby_the_mole, "#8a6f5c")),
+            NpcSeed(R.string.meadow_keeper_bruin, "#7a5230", R.string.to_cross_this_meadow_the_2_times_table))),
+        buildRegion(RegionSeed(3, R.string.sunset_desert, DecoKind.ROCK,
             RegionTheme("#e8c07a", "#c98d52", "#ffd9a0"),
-            listOf(NpcSeed("여우 사샤", "#e07b39"), NpcSeed("도마뱀 리지", "#a3b86c"), NpcSeed("미어캣 모모", "#d9b38c")),
-            NpcSeed("사막의 왕 카오", "#b3541e", "사막의 태양보다 뜨거운 3단 대결이다!"))),
-        buildRegion(RegionSeed(4, "파도 해변", DecoKind.ROCK,
+            listOf(NpcSeed(R.string.sandy_the_fox, "#e07b39"), NpcSeed(R.string.ziggy_the_lizard, "#a3b86c"), NpcSeed(R.string.peeky_the_meerkat, "#d9b38c")),
+            NpcSeed(R.string.scorch_king_of_the_desert, "#b3541e", R.string.a_3_times_table_battle_hotter_than_the))),
+        buildRegion(RegionSeed(4, R.string.wave_beach, DecoKind.ROCK,
             RegionTheme("#f2e2b8", "#35a7c2", "#a7dcf0"),
-            listOf(NpcSeed("게 집게", "#e2593b"), NpcSeed("갈매기 끼룩", "#eef2f5"), NpcSeed("거북 토토", "#4a9b6e")),
-            NpcSeed("파도술사 옥토", "#5a6ec7", "파도처럼 밀려오는 4단을 견뎌봐라!"))),
-        buildRegion(RegionSeed(5, "버섯 숲", DecoKind.TREE,
+            listOf(NpcSeed(R.string.pinchy_the_crab, "#e2593b"), NpcSeed(R.string.squawk_the_seagull, "#eef2f5"), NpcSeed(R.string.shelly_the_turtle, "#4a9b6e")),
+            NpcSeed(R.string.tidemaster_octo, "#5a6ec7", R.string.can_you_withstand_the_4_times_table))),
+        buildRegion(RegionSeed(5, R.string.mushroom_forest, DecoKind.TREE,
             RegionTheme("#4e8f57", "#c96f4a", "#a8d8b0"),
-            listOf(NpcSeed("버섯돌이 뽀삐", "#d95d4e"), NpcSeed("올빼미 부엉", "#8d7a63"), NpcSeed("사슴 다다", "#b98a5a")),
-            NpcSeed("숲의 현자 무무", "#5b7a4a", "숲의 지혜를 시험하마. 5단이다!"))),
-        buildRegion(RegionSeed(6, "눈꽃 설원", DecoKind.CRYSTAL,
+            listOf(NpcSeed(R.string.button_the_mushroom_kid, "#d95d4e"), NpcSeed(R.string.hoot_the_owl, "#8d7a63"), NpcSeed(R.string.dash_the_deer, "#b98a5a")),
+            NpcSeed(R.string.mossbeard_sage_of_the_forest, "#5b7a4a", R.string.i_shall_test_you_with_the_forest_s))),
+        buildRegion(RegionSeed(6, R.string.snowflake_fields, DecoKind.CRYSTAL,
             RegionTheme("#e8f1f7", "#9cc3d5", "#d7e9f5"),
-            listOf(NpcSeed("펭귄 핑핑", "#3c4652"), NpcSeed("물개 살살", "#9aa7b5"), NpcSeed("눈토끼 하양", "#ffffff")),
-            NpcSeed("얼음마녀 서리", "#6fa8dc", "6단이 얼어붙기 전에 답해 보시지!"))),
-        buildRegion(RegionSeed(7, "반딧불 늪", DecoKind.TREE,
+            listOf(NpcSeed(R.string.waddles_the_penguin, "#3c4652"), NpcSeed(R.string.slick_the_seal, "#9aa7b5"), NpcSeed(R.string.snowy_the_hare, "#ffffff")),
+            NpcSeed(R.string.frost_the_ice_witch, "#6fa8dc", R.string.answer_before_the_6_times_table_freezes))),
+        buildRegion(RegionSeed(7, R.string.firefly_swamp, DecoKind.TREE,
             RegionTheme("#4f6b52", "#86c06c", "#55666e"),
-            listOf(NpcSeed("개구리 팝팝", "#6cbf5a"), NpcSeed("반딧불 반반", "#ffe066"), NpcSeed("수달 찰랑", "#8a6f52")),
-            NpcSeed("늪의 마법사 그림", "#4a5d7a", "늪에서 빠져나가고 싶다면 7단을 외워라!"))),
-        buildRegion(RegionSeed(8, "용암 화산", DecoKind.ROCK,
+            listOf(NpcSeed(R.string.pip_the_frog, "#6cbf5a"), NpcSeed(R.string.glimmer_the_firefly, "#ffe066"), NpcSeed(R.string.splash_the_otter, "#8a6f52")),
+            NpcSeed(R.string.grimble_swamp_wizard, "#4a5d7a", R.string.want_out_of_the_swamp_recite_the_7_times))),
+        buildRegion(RegionSeed(8, R.string.lava_volcano, DecoKind.ROCK,
             RegionTheme("#6b4a44", "#e2593b", "#f0a884"),
-            listOf(NpcSeed("도롱뇽 라바", "#e2593b"), NpcSeed("박쥐 까망", "#3c3744"), NpcSeed("불꽃정령 화르", "#ff8c42")),
-            NpcSeed("용암대장 부글", "#b3341e", "펄펄 끓는 8단 맛 좀 볼래?"))),
-        buildRegion(RegionSeed(9, "별빛 성", DecoKind.CRYSTAL,
+            listOf(NpcSeed(R.string.ember_the_salamander, "#e2593b"), NpcSeed(R.string.inky_the_bat, "#3c3744"), NpcSeed(R.string.flicker_the_fire_sprite, "#ff8c42")),
+            NpcSeed(R.string.lava_chief_bubbleboil, "#b3341e", R.string.care_for_a_taste_of_my_boiling_hot_8))),
+        buildRegion(RegionSeed(9, R.string.starlight_castle, DecoKind.CRYSTAL,
             RegionTheme("#5a5d8a", "#ffd166", "#2e3160"),
-            listOf(NpcSeed("기사 은별", "#c0c8d8"), NpcSeed("마법사 루나", "#8a6fd1"), NpcSeed("유령 휘휘", "#dfe6f0")),
-            NpcSeed("구구단 대마왕", "#4a3670", "드디어 왔군. 9단… 최후의 대결이다!"))),
+            listOf(NpcSeed(R.string.sir_silverstar, "#c0c8d8"), NpcSeed(R.string.luna_the_sorceress, "#8a6fd1"), NpcSeed(R.string.whoosh_the_ghost, "#dfe6f0")),
+            NpcSeed(R.string.the_times_table_overlord, "#4a3670", R.string.so_you_ve_finally_come_the_9_times_table))),
     )
 
     fun region(table: Int): RegionDef? = regions.firstOrNull { it.table == table }

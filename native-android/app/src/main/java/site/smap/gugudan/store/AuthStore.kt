@@ -10,6 +10,8 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import site.smap.gugudan.R
+import site.smap.gugudan.core.Strings
 import site.smap.gugudan.services.AuthSession
 import site.smap.gugudan.services.LearningApi
 import site.smap.gugudan.services.Persistence
@@ -27,6 +29,8 @@ import site.smap.gugudan.services.SupabaseConfig
 class AuthStore(
     private val persistence: Persistence,
     private val scope: CoroutineScope,
+    /** 이메일 연결·로그인 안내 문구 — 앱 언어 리소스 */
+    private val strings: Strings,
 ) {
     sealed interface State {
         data object Idle : State          // 아직 시도 전
@@ -93,7 +97,7 @@ class AuthStore(
     suspend fun requestEmailCode(email: String) {
         val trimmed = email.trim().lowercase()
         if (!trimmed.contains("@") || trimmed.length < 5) {
-            promotion = Promotion.Failed("이메일 주소를 확인해 주세요")
+            promotion = Promotion.Failed(strings.get(R.string.please_check_the_email_address))
             return
         }
         promotion = Promotion.Sending
@@ -106,7 +110,7 @@ class AuthStore(
             }
             val token = accessToken()
             if (token == null) {
-                promotion = Promotion.Failed("계정 세션이 없어 연결할 수 없습니다")
+                promotion = Promotion.Failed(strings.get(R.string.couldn_t_link_because_there_s_no_account))
                 return
             }
             try {
@@ -119,7 +123,7 @@ class AuthStore(
                 codeSent(trimmed, CodePurpose.SIGN_IN)
             }
         } catch (e: SupabaseAuthException) {
-            promotion = Promotion.Failed(promotionMessage(e))
+            promotion = Promotion.Failed(promotionMessage(strings, e))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -136,7 +140,7 @@ class AuthStore(
                 CodePurpose.LINK -> {
                     val token = accessToken()
                     if (token == null) {
-                        promotion = Promotion.CodeSent(sent.email, sent.purpose, "계정 세션이 없어 다시 보낼 수 없습니다")
+                        promotion = Promotion.CodeSent(sent.email, sent.purpose, strings.get(R.string.couldn_t_resend_because_there_s_no))
                         return
                     }
                     SupabaseAuth.requestEmailPromotion(token, sent.email)
@@ -144,7 +148,7 @@ class AuthStore(
             }
             codeSent(sent.email, sent.purpose)
         } catch (e: SupabaseAuthException) {
-            promotion = Promotion.CodeSent(sent.email, sent.purpose, promotionMessage(e))
+            promotion = Promotion.CodeSent(sent.email, sent.purpose, promotionMessage(strings, e))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -165,7 +169,7 @@ class AuthStore(
         val purpose = sent.purpose
         val trimmed = code.trim()
         if (trimmed.isEmpty()) {
-            promotion = Promotion.CodeSent(email, purpose, "확인 코드를 입력해 주세요")
+            promotion = Promotion.CodeSent(email, purpose, strings.get(R.string.enter_the_verification_code))
             return
         }
         promotion = Promotion.Verifying(email, purpose)
@@ -187,7 +191,7 @@ class AuthStore(
                 revoke(previous)
             }
         } catch (e: SupabaseAuthException) {
-            promotion = Promotion.CodeSent(email, purpose, promotionMessage(e))
+            promotion = Promotion.CodeSent(email, purpose, promotionMessage(strings, e))
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -211,7 +215,7 @@ class AuthStore(
     }
 
     /** 이메일 계정의 리프레시가 거부돼 재로그인을 기다려야 한다 */
-    class ReauthRequiredException : Exception("다시 로그인이 필요합니다")
+    class ReauthRequiredException : Exception("다시 로그인이 필요합니다")  // i18n:skip
 
     companion object {
         private const val TAG = "AuthStore"
@@ -227,16 +231,16 @@ class AuthStore(
             e.code == "email_exists" || e.code == "user_already_exists"
 
         /** 서버 오류 코드를 사용자 문구로 — 발송 제한이 가장 흔하다 */
-        fun promotionMessage(e: SupabaseAuthException): String = when (e.code) {
-            "over_email_send_rate_limit" -> "확인 메일을 방금 보냈어요. 잠시 뒤 다시 시도해 주세요."
-            "over_request_rate_limit" -> "요청이 많아요. 잠시 뒤 다시 시도해 주세요."
-            "email_address_invalid" -> "이 이메일 주소는 쓸 수 없어요. 다른 주소를 넣어 주세요."
-            "email_exists", "user_already_exists" -> "이미 연결된 이메일이에요."
+        fun promotionMessage(strings: Strings, e: SupabaseAuthException): String = when (e.code) {
+            "over_email_send_rate_limit" -> strings.get(R.string.we_just_sent_a_verification_email_please)
+            "over_request_rate_limit" -> strings.get(R.string.too_many_requests_please_try_again_in_a)
+            "email_address_invalid" -> strings.get(R.string.this_email_address_can_t_be_used_please)
+            "email_exists", "user_already_exists" -> strings.get(R.string.this_email_is_already_linked)
             // 코드를 틀려도 서버는 이 코드로 답한다
-            "otp_expired" -> "확인 코드가 맞지 않거나 만료됐어요. 다시 확인해 주세요."
+            "otp_expired" -> strings.get(R.string.the_code_is_incorrect_or_has_expired)
             // create_user=false 로그인에서 없는 주소일 때
-            "otp_disabled" -> "이 이메일로 만든 계정이 없어요. 주소를 확인해 주세요."
-            else -> e.message?.takeIf { it.isNotEmpty() } ?: "연결에 실패했어요"
+            "otp_disabled" -> strings.get(R.string.there_s_no_account_for_this_email_please)
+            else -> e.message?.takeIf { it.isNotEmpty() } ?: strings.get(R.string.connection_failed)
         }
     }
 

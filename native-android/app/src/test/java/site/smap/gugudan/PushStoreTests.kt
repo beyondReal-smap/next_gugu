@@ -8,6 +8,7 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
 import org.junit.Test
+import site.smap.gugudan.core.AppLanguage
 import site.smap.gugudan.core.PushCopy
 import site.smap.gugudan.core.PushRegistrationState
 import site.smap.gugudan.core.PushRoute
@@ -153,6 +154,30 @@ class PushStoreTests {
         assertTrue("consent:false" in world.log, world.log.toString())
         assertTrue("unsubscribe:promo" in world.log, world.log.toString())
         assertFalse(world.log.any { it.startsWith("subscribe:") || it == "token" }, world.log.toString())
+    }
+
+    // MARK: 앱 언어 (M6)
+
+    /** 서버에는 앱 언어 + 기기 지역을 보내고, 앱별 언어를 바꾸면 바로 다시 등록하며 공지 토픽을 그 언어로 바꾼다 */
+    @Test fun languageChangeReregistersAndSwitchesNoticeTopics() = pushTest(
+        settings = PushSettings(serviceOptIn = true),
+    ) { world, store ->
+        try {
+            AppLanguage.update("ko", "KR")
+            store.sync()
+            assertEquals("ko-KR", world.lastRequest?.locale)
+            assertTrue("subscribe:notice" in world.log && "subscribe:notice-android" in world.log, world.log.toString())
+
+            world.log.clear()
+            AppLanguage.update("en", "KR")
+            store.sync()
+            assertEquals("en-KR", world.lastRequest?.locale)
+            assertTrue("register:u1" in world.log, "언어가 바뀌면 하루를 기다리지 않고 다시 등록: ${world.log}")
+            assertTrue("unsubscribe:notice" in world.log && "unsubscribe:notice-android" in world.log, world.log.toString())
+            assertTrue("subscribe:notice-en" in world.log && "subscribe:notice-en-android" in world.log, world.log.toString())
+        } finally {
+            AppLanguage.update("ko", "KR")
+        }
     }
 
     // MARK: 계정 변화
@@ -380,6 +405,8 @@ class PushStoreTests {
         var consentError: Exception? = null
         var serverMarketing = false
         var userId: String? = "u1"
+        /** 마지막 등록 요청 — locale·timeZone 확인용 */
+        var lastRequest: PushDeviceRequest? = null
 
         /** requestSync 로 띄운 작업이 모두 끝날 때까지 기다린다 */
         suspend fun settle() {
@@ -418,6 +445,7 @@ class PushStoreTests {
             server = object : PushServer {
                 override suspend fun register(jwt: String, request: PushDeviceRequest): PushDeviceResponse {
                     log += "register:${userId}"
+                    lastRequest = request
                     return PushDeviceResponse(
                         pushInstallId = request.pushInstallId,
                         serviceOptIn = request.serviceOptIn,

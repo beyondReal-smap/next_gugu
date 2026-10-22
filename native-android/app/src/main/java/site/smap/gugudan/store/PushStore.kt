@@ -21,7 +21,6 @@ import site.smap.gugudan.services.PushApi
 import site.smap.gugudan.services.PushDeviceRequest
 import java.time.LocalDate
 import java.time.ZoneId
-import java.util.Locale
 import java.util.UUID
 
 // 원격 푸시 수명주기 (iOS Store/PushStore.swift 대응). 단일 기준: .claude/plans/native-push-app-spec.md
@@ -88,7 +87,8 @@ class PushStore(
     }
 
     sealed interface MarketingResult {
-        data class Recorded(val date: LocalDate, val sender: String) : MarketingResult
+        /** 서버가 기록한 날짜 — 처리 결과 문구의 보내는 곳은 앱 언어의 앱 이름(PushCopy.sender)을 쓴다 (iOS 와 같다) */
+        data class Recorded(val date: LocalDate) : MarketingResult
         data object Failed : MarketingResult
     }
 
@@ -155,7 +155,6 @@ class PushStore(
                 }
                 MarketingResult.Recorded(
                     PushCopy.localDate(response.recordedAt, ZoneId.systemDefault()) ?: LocalDate.now(),
-                    response.sender,
                 )
             } catch (e: CancellationException) {
                 throw e
@@ -197,7 +196,7 @@ class PushStore(
             null
         }
         requestSync()
-        return recorded ?: MarketingResult.Recorded(LocalDate.now(), PushCopy.SENDER)
+        return recorded ?: MarketingResult.Recorded(LocalDate.now())
     }
 
     // MARK: 계정 변화
@@ -346,7 +345,10 @@ class PushStore(
         val userId = account.userId ?: return false
         val effective = effectiveSettings()
         val reminder = localReminderEnabled()
-        val signature = PushRegistration.signature(token, userId, effective, reminder)
+        // 앱 언어·지역·시간대가 바뀌면 지문이 달라져 바로 다시 등록한다 (서버가 알림 언어·발송 시각을 이 값으로 고른다)
+        val locale = PushApi.localeTag()
+        val timeZone = PushApi.timeZoneId()
+        val signature = PushRegistration.signature(token, userId, effective, reminder, locale, timeZone)
         val now = System.currentTimeMillis()
         if (!force && !PushRegistration.needsRegister(state, signature, now)) return true
 
@@ -357,8 +359,8 @@ class PushStore(
                 fcmToken = token,
                 platform = "android",
                 appVersion = PushApi.appVersion,
-                locale = PushApi.normalizedLocale(Locale.getDefault().toLanguageTag()),
-                timeZone = PushApi.normalizedTimeZone(ZoneId.systemDefault().id),
+                locale = locale,
+                timeZone = timeZone,
                 serviceOptIn = effective.serviceOptIn,
                 learningOptIn = effective.learningOptIn,
                 localReminderEnabled = reminder,
@@ -404,7 +406,6 @@ class PushStore(
             log.info("광고 수신 거부 기록 완료")
             MarketingResult.Recorded(
                 PushCopy.localDate(response.recordedAt, ZoneId.systemDefault()) ?: LocalDate.now(),
-                response.sender,
             )
         } catch (e: LearningApiException.Http) {
             if (e.status == 404) {
@@ -491,7 +492,7 @@ class PushStore(
     private fun isUuid(value: String): Boolean =
         runCatching { UUID.fromString(value) }.isSuccess && value.length == 36
 
-    private class TopicTimeoutException(topic: String) : Exception("토픽 응답 시간 초과: $topic")
+    private class TopicTimeoutException(topic: String) : Exception("토픽 응답 시간 초과: $topic")  // i18n:skip
 
     private companion object {
         const val SIGN_OUT_UNREGISTER_TIMEOUT_MS = 5_000L

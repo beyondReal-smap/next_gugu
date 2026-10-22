@@ -1,5 +1,6 @@
 package site.smap.gugudan.services
 
+import androidx.annotation.StringRes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -9,6 +10,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import site.smap.gugudan.BuildConfig
+import site.smap.gugudan.R
 import site.smap.gugudan.core.learning.LearningEvent
 import site.smap.gugudan.core.learning.LearningClaimConfirmResponse
 import site.smap.gugudan.core.learning.LearningClaimResponse
@@ -38,21 +40,21 @@ data class PremiumStatusResponse(
     val products: List<String> = emptyList(),
 )
 
-/** 보호자 권한 설정이 거부되는 사유 */
-enum class GuardianDenial(val code: String, val message: String) {
-    ANONYMOUS("ANONYMOUS_NOT_ELIGIBLE", "이메일을 먼저 연결하면 기록 보관을 켤 수 있어요."),
-    NO_PURCHASE("NO_PURCHASE_FOUND", "이용권을 구매한 계정에서 기록 보관을 켤 수 있어요.");
+/** 보호자 권한 설정이 거부되는 사유 — 안내 문구는 리소스 ID (화면에서 읽는다) */
+enum class GuardianDenial(val code: String, @StringRes val messageRes: Int) {
+    ANONYMOUS("ANONYMOUS_NOT_ELIGIBLE", R.string.link_an_email_first_to_turn_on_record),
+    NO_PURCHASE("NO_PURCHASE_FOUND", R.string.record_backup_is_available_on_the);
 
     companion object {
         fun of(code: String?): GuardianDenial? = entries.firstOrNull { it.code == code }
     }
 }
 
-/** 서버가 업로드를 거부하는 사유 — 보호자 검증이 끝나지 않은 계정 */
-enum class PermissionDenial(val code: String, val message: String) {
-    CHILD_ACCOUNT("CHILD_ACCOUNT_UPLOAD_FORBIDDEN", "아이 계정의 학습 기록은 서버에 올리지 않아요."),
-    ROLE_UNVERIFIED("ACCOUNT_ROLE_UNVERIFIED", "보호자 계정으로 확인되면 기록을 안전하게 보관해요."),
-    AGE_UNVERIFIED("ACCOUNT_AGE_UNVERIFIED", "보호자 성인 확인이 끝나면 기록 보관이 켜져요.");
+/** 서버가 업로드를 거부하는 사유 — 보호자 검증이 끝나지 않은 계정. 안내 문구는 리소스 ID (화면에서 읽는다) */
+enum class PermissionDenial(val code: String, @StringRes val messageRes: Int) {
+    CHILD_ACCOUNT("CHILD_ACCOUNT_UPLOAD_FORBIDDEN", R.string.learning_records_from_a_child_s_account),
+    ROLE_UNVERIFIED("ACCOUNT_ROLE_UNVERIFIED", R.string.once_this_is_confirmed_as_a_parent),
+    AGE_UNVERIFIED("ACCOUNT_AGE_UNVERIFIED", R.string.record_backup_turns_on_once_the_parent_s);
 
     companion object {
         fun of(code: String?): PermissionDenial? = entries.firstOrNull { it.code == code }
@@ -61,11 +63,11 @@ enum class PermissionDenial(val code: String, val message: String) {
 
 sealed class LearningApiException(message: String) : IOException(message) {
     /** 보호자 검증 전 — 재시도해도 통과하지 않는다 */
-    class PermissionDenied(val denial: PermissionDenial) : LearningApiException(denial.message)
+    class PermissionDenied(val denial: PermissionDenial) : LearningApiException(denial.code)
     class Http(val status: Int, val code: String?, message: String) :
-        LearningApiException("학습 서버 응답 $status${code?.let { " ($it)" } ?: ""}: $message")
-    class Malformed : LearningApiException("학습 서버 응답을 해석하지 못했습니다")
-    class Offline(cause: String) : LearningApiException("학습 서버에 연결하지 못했습니다: $cause")
+        LearningApiException("학습 서버 응답 $status${code?.let { " ($it)" } ?: ""}: $message")  // i18n:skip
+    class Malformed : LearningApiException("학습 서버 응답을 해석하지 못했습니다")  // i18n:skip
+    class Offline(cause: String) : LearningApiException("학습 서버에 연결하지 못했습니다: $cause")  // i18n:skip
 
     /** 지금 재시도해도 소용없는 상태인지 (권한 문제는 큐를 그대로 두고 멈춘다) */
     val isPermanent: Boolean

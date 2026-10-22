@@ -3,9 +3,11 @@ package site.smap.gugudan.features.session
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import site.smap.gugudan.R
 import site.smap.gugudan.core.*
 import site.smap.gugudan.services.Haptics
 import site.smap.gugudan.services.Sound
@@ -100,19 +102,19 @@ class SessionEngine(
     private fun now() = SystemClock.elapsedRealtime()
 
     // 뷰 편의
-    val modeName get() = if (review) "취약 문제 복습" else def.name
+    @get:StringRes
+    val modeNameRes: Int get() = if (review) R.string.review_weak_spots else def.nameRes
     val modeKind get() = def.kind
     val total get() = sessionTotal
     val maxLives get() = def.lives ?: 3
     val timeLimitMs get() = def.timeLimitMs
 
-    /** 지금 문제에 붙일 코치 힌트 — 학습 모드에서 같은 단을 여러 번 틀렸을 때만 */
-    val coachHint: CoachHint?
-        get() {
-            if (mode != GameMode.PRACTICE) return null
-            if ((missesByTable[problem.a] ?: 0) < COACH_AFTER_MISSES) return null
-            return Hints.coach(problem.a, problem.b)
-        }
+    /** 지금 문제에 붙일 코치 힌트 — 학습 모드에서 같은 단을 여러 번 틀렸을 때만. 문구는 [strings] 언어로 */
+    fun coachHint(strings: Strings): CoachHint? {
+        if (mode != GameMode.PRACTICE) return null
+        if ((missesByTable[problem.a] ?: 0) < COACH_AFTER_MISSES) return null
+        return Hints.coach(strings, problem.a, problem.b)
+    }
 
     fun start() {
         sessionStart = now()

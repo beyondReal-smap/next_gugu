@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import site.smap.gugudan.BuildConfig
+import site.smap.gugudan.core.AppLanguage
 import site.smap.gugudan.core.VoiceLine
 import java.io.FileNotFoundException
 
@@ -74,7 +75,8 @@ object Speech {
         }
         val context = checkNotNull(app) { "Speech.init 전에 호출됐습니다" }
         val afd = try {
-            context.assets.openFd("voice/${line.key}.m4a")
+            // 음성 팩은 언어별 폴더 — 키는 언어와 무관하다 (VoiceLines)
+            context.assets.openFd("voice/${AppLanguage.current.code}/${line.key}.m4a")
         } catch (e: FileNotFoundException) {
             // 음성 파일 누락은 빌드 결함이다 — VoiceLinesTests 가 모든 문장의 파일을 검사한다.
             // 디버그 빌드에서는 바로 멈춰 드러내고(iOS assertionFailure 와 같다), 출시 빌드에서는 그 줄만 건너뛴다

@@ -19,6 +19,8 @@ class GuguMessagingService : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(message: RemoteMessage) {
+        // 앱이 꺼진 채로 깨어날 수 있다 — 채널 이름 등 앱 언어를 먼저 맞춘다
+        AndroidStrings.updateLanguage(applicationContext)
         val data = message.data
         val kind = data[RemotePush.EXTRA_KIND]
         val settings = Persistence(applicationContext).loadPushSettings() ?: PushSettings()

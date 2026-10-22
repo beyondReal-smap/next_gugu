@@ -1,14 +1,18 @@
 package site.smap.gugudan.core
 
+import androidx.annotation.StringRes
+import site.smap.gugudan.R
+
 // 게임 모드 레지스트리 — 모드별 규칙/메타데이터의 단일 출처 (Modes.swift 이식)
+// 이름·소개는 리소스 ID 로 둔다 — 앱별 언어를 바꾸면 Activity 만 다시 만들어지므로 문자열을 들고 있으면 이전 언어가 남는다
 
 enum class ModeKind { FIXED, TIMED, LIVES }
 
 data class ModeDef(
     val id: GameMode,
-    val name: String,
-    val tagline: String,
-    val detail: String,
+    @StringRes val nameRes: Int,
+    @StringRes val taglineRes: Int,
+    @StringRes val detailRes: Int,
     val kind: ModeKind,
     val total: Int,
     val timeLimitMs: Int?,
@@ -21,32 +25,32 @@ data class ModeDef(
 object Modes {
     val all: Map<GameMode, ModeDef> = mapOf(
         GameMode.PRACTICE to ModeDef(
-            GameMode.PRACTICE, "학습", "차근차근 기본기",
-            "압박 없이 또박또박 — 틀린 문제는 다시 나와요.",
+            GameMode.PRACTICE, R.string.mode_practice_name, R.string.step_by_step_basics,
+            R.string.no_pressure_one_at_a_time_missed,
             ModeKind.FIXED, 10, null, null, supportsTable = true, scored = false, xpBonus = 0),
         GameMode.TIME_ATTACK to ModeDef(
-            GameMode.TIME_ATTACK, "스피드런", "10문제 최고 속도",
-            "속도가 곧 점수! 빠르게 풀수록 XP가 올라가요.",
+            GameMode.TIME_ATTACK, R.string.speed_run, R.string.s_10_problems_top_speed,
+            R.string.speed_is_your_score_the_faster_you,
             ModeKind.FIXED, 10, null, null, supportsTable = true, scored = false, xpBonus = 4),
         GameMode.CHALLENGE to ModeDef(
-            GameMode.CHALLENGE, "60초 챌린지", "제한 시간 최대 점수",
-            "60초 동안 몇 문제나 풀 수 있을까요? 최고 기록에 도전!",
+            GameMode.CHALLENGE, R.string.s_60_second_challenge, R.string.beat_the_clock,
+            R.string.how_many_can_you_solve_in_60_seconds_go,
             ModeKind.TIMED, 0, 60_000, null, supportsTable = false, scored = true, xpBonus = 4),
         GameMode.SURVIVAL to ModeDef(
-            GameMode.SURVIVAL, "서바이벌", "기회는 단 3번",
-            "목숨 3개로 버티기! 틀릴 때마다 하트가 하나씩 사라져요.",
+            GameMode.SURVIVAL, R.string.survival, R.string.only_3_chances,
+            R.string.hang_on_with_3_lives_you_lose_a_heart,
             ModeKind.LIVES, 0, null, 3, supportsTable = false, scored = true, xpBonus = 3),
         GameMode.MISSING to ModeDef(
-            GameMode.MISSING, "빈칸 추리", "? 에 들어갈 수는",
-            "곱셈을 거꾸로! 빈칸의 수를 찾으면 XP 보너스가 커요.",
+            GameMode.MISSING, R.string.missing_number, R.string.what_goes_in_the,
+            R.string.multiplication_in_reverse_find_the,
             ModeKind.FIXED, 10, null, null, supportsTable = true, scored = false, xpBonus = 6),
         GameMode.TRUEFALSE to ModeDef(
-            GameMode.TRUEFALSE, "OX 퀴즈", "맞으면 O, 틀리면 X",
-            "식이 맞는지 순간 판단! 헷갈리는 한 끗 차이를 가려내요.",
+            GameMode.TRUEFALSE, R.string.true_or_false, R.string.right_wrong,
+            R.string.is_the_equation_right_decide_fast_and,
             ModeKind.FIXED, 10, null, null, supportsTable = true, scored = false, xpBonus = 0),
         GameMode.ADVENTURE to ModeDef(
-            GameMode.ADVENTURE, "어드벤처", "월드에서 대결",
-            "3D 월드 주민과 구구단 대결. 학습 모드 기록과는 따로 쌓여요.",
+            GameMode.ADVENTURE, R.string.adventure, R.string.battle_in_the_world,
+            R.string.battle_the_residents_of_a_3d_world_with,
             ModeKind.FIXED, 0, null, null, supportsTable = true, scored = false, xpBonus = 3),
     )
 

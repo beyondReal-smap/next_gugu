@@ -3,6 +3,7 @@ package site.smap.gugudan
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import org.junit.Test
+import site.smap.gugudan.core.AppLanguage
 import site.smap.gugudan.core.GuardianGate
 import site.smap.gugudan.core.PushChannels
 import site.smap.gugudan.core.PushConsent
@@ -25,6 +26,7 @@ import kotlin.test.assertTrue
 // 원격 푸시 규칙 (iOS PushTests 와 같은 사례) — .claude/plans/native-push-app-spec.md "테스트" 목록
 class PushTests {
     private val seoul = ZoneId.of("Asia/Seoul")
+    private val ko = TestStrings(AppLanguage.KO)
 
     // MARK: PushTopics.desired 조합
 
@@ -176,16 +178,19 @@ class PushTests {
 
     @Test fun registerWhenContentChangesOrDayPasses() {
         val s = PushSettings(serviceOptIn = true)
-        val sig = PushRegistration.signature("tokenA", "user1", s, localReminderEnabled = false)
+        val sig = PushRegistration.signature("tokenA", "user1", s, localReminderEnabled = false, "ko-KR", "Asia/Seoul")
         val now = 1_000_000_000L
         val registered = PushRegistrationState(registeredUserId = "user1", registeredSignature = sig, lastRegisteredAtMs = now)
 
         assertFalse(PushRegistration.needsRegister(registered, sig, now + 60_000))
         assertTrue(PushRegistration.needsRegister(registered, sig, now + PushRegistration.REREGISTER_INTERVAL_MS))
         // 토큰 갱신·계정 변경·설정 변경은 지문이 달라진다
-        assertTrue(PushRegistration.needsRegister(registered, PushRegistration.signature("tokenB", "user1", s, false), now))
-        assertTrue(PushRegistration.needsRegister(registered, PushRegistration.signature("tokenA", "user2", s, false), now))
-        assertTrue(PushRegistration.needsRegister(registered, PushRegistration.signature("tokenA", "user1", s, true), now))
+        assertTrue(PushRegistration.needsRegister(registered, PushRegistration.signature("tokenB", "user1", s, false, "ko-KR", "Asia/Seoul"), now))
+        assertTrue(PushRegistration.needsRegister(registered, PushRegistration.signature("tokenA", "user2", s, false, "ko-KR", "Asia/Seoul"), now))
+        assertTrue(PushRegistration.needsRegister(registered, PushRegistration.signature("tokenA", "user1", s, true, "ko-KR", "Asia/Seoul"), now))
+        // 앱 언어·지역·시간대가 바뀌어도 지문이 달라진다 — 서버가 알림 언어·발송 시각을 이 값으로 고른다
+        assertTrue(PushRegistration.needsRegister(registered, PushRegistration.signature("tokenA", "user1", s, false, "en-KR", "Asia/Seoul"), now))
+        assertTrue(PushRegistration.needsRegister(registered, PushRegistration.signature("tokenA", "user1", s, false, "ko-KR", "Asia/Tokyo"), now))
         // 로그아웃 전 해제 실패
         assertTrue(PushRegistration.needsRegister(registered.copy(needsReregister = true), sig, now))
         // 처음
@@ -193,7 +198,7 @@ class PushTests {
     }
 
     @Test fun signatureDoesNotContainToken() {
-        val sig = PushRegistration.signature("secret-token-value", "user1", PushSettings(), false)
+        val sig = PushRegistration.signature("secret-token-value", "user1", PushSettings(), false, "ko-KR", "Asia/Seoul")
         assertFalse(sig.contains("secret"))
         assertEquals(64, sig.length)
     }
@@ -233,16 +238,16 @@ class PushTests {
         assertEquals(LocalDate.of(2026, 10, 20), PushCopy.localDate("2026-10-19T15:30:00+00:00", seoul))
         assertNull(PushCopy.localDate("not-a-date", seoul))
         assertNull(PushCopy.localDate(null, seoul))
-        assertEquals("2026.10.20 수신 동의", PushCopy.consentSubtitle(date!!))
+        assertEquals("2026.10.20 수신 동의", PushCopy.consentSubtitle(ko, date!!))
     }
 
     @Test fun resultMessagesMatchSpec() {
         val d = LocalDate.of(2026, 3, 5)
-        assertEquals("구구 어드벤처 · 2026년 3월 5일\n이벤트·혜택 알림 수신 동의가 처리됐어요.", PushCopy.grantedMessage(d))
-        assertEquals("구구 어드벤처 · 2026년 3월 5일\n이벤트·혜택 알림 수신 거부가 처리됐어요.", PushCopy.revokedMessage(d))
-        assertEquals("수신 동의 완료", PushCopy.GRANTED_TITLE)
-        assertEquals("수신 거부 완료", PushCopy.REVOKED_TITLE)
-        assertEquals("2026.03.05", PushCopy.shortDate(d))
+        assertEquals("구구 어드벤처 · 2026년 3월 5일\n이벤트·혜택 알림 수신 동의가 처리됐어요.", PushCopy.grantedMessage(ko, d))
+        assertEquals("구구 어드벤처 · 2026년 3월 5일\n이벤트·혜택 알림 수신 거부가 처리됐어요.", PushCopy.revokedMessage(ko, d))
+        assertEquals("수신 동의 완료", PushCopy.grantedTitle(ko))
+        assertEquals("수신 거부 완료", PushCopy.revokedTitle(ko))
+        assertEquals("2026.03.05", PushCopy.shortDate(d, AppLanguage.KO))
     }
 
     // MARK: 서버 계약 (api/push.py — 모르는 필드는 400)

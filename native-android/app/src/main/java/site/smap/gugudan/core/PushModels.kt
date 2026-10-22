@@ -1,6 +1,7 @@
 package site.smap.gugudan.core
 
 import kotlinx.serialization.Serializable
+import site.smap.gugudan.R
 import java.security.MessageDigest
 import java.time.Instant
 import java.time.LocalDate
@@ -8,6 +9,8 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import java.time.format.FormatStyle
+import java.util.Locale
 
 // 원격 푸시(FCM) 규칙 — 순수 로직만 둔다 (iOS Core/PushModels.swift 와 같은 규칙·문구).
 // 단일 기준: .claude/plans/native-push-app-spec.md
@@ -92,12 +95,24 @@ object PushTopics {
     const val NOTICE_IOS = "notice-ios"
     const val PROMO = "promo"
 
+    /**
+     * 공지 토픽 — 한국어는 기존 이름(notice, notice-android) 그대로, 다른 언어는 언어를 붙인다(notice-en, notice-en-android).
+     * 서버가 공지를 언어별 토픽으로 따로 보낸다. 앱별 언어를 바꾸면 다음 동기화에서 diff 가 구독을 바꾼다 (iOS 와 같은 규칙)
+     */
+    fun noticeTopics(platform: String, language: AppLanguage): Set<String> {
+        val os = if (platform == "ios") "ios" else "android"
+        if (language == AppLanguage.KO) return setOf(NOTICE, if (os == "ios") NOTICE_IOS else NOTICE_ANDROID)
+        val base = "$NOTICE-${language.code}"
+        return setOf(base, "$base-$os")
+    }
+
     /** 지금 구독해야 하는 토픽. 보호자 학습 소식은 토픽이 아니다(서버 기기별 발송) */
-    fun desired(settings: PushSettings, platform: String = "android"): Set<String> = buildSet {
-        if (settings.serviceOptIn) {
-            add(NOTICE)
-            add(if (platform == "ios") NOTICE_IOS else NOTICE_ANDROID)
-        }
+    fun desired(
+        settings: PushSettings,
+        platform: String = "android",
+        language: AppLanguage = AppLanguage.current,
+    ): Set<String> = buildSet {
+        if (settings.serviceOptIn) addAll(noticeTopics(platform, language))
         if (settings.marketingOptIn) add(PROMO)
     }
 
@@ -194,14 +209,16 @@ object PushConsent {
 object PushRegistration {
     const val REREGISTER_INTERVAL_MS = 24L * 60 * 60 * 1000
 
-    /** 토큰 원문을 저장하지 않으려고 지문만 남긴다 */
+    /** 토큰 원문을 저장하지 않으려고 지문만 남긴다. 언어·시간대가 바뀌어도 다음 동기화에서 바로 다시 등록한다 */
     fun signature(
         token: String,
         userId: String,
         settings: PushSettings,
         localReminderEnabled: Boolean,
+        locale: String?,
+        timeZone: String?,
     ): String {
-        val raw = "$token|$userId|${settings.serviceOptIn}|${settings.learningOptIn}|$localReminderEnabled"
+        val raw = "$token|$userId|${settings.serviceOptIn}|${settings.learningOptIn}|$localReminderEnabled|$locale|$timeZone"
         return MessageDigest.getInstance("SHA-256").digest(raw.toByteArray())
             .joinToString("") { "%02x".format(it) }
     }
@@ -226,12 +243,20 @@ object GuardianGate {
     }
 }
 
-/** 동의 일시 표시·처리 결과 문구 (iOS 와 글자 단위로 같게) */
-object PushCopy {
-    const val SENDER = "구구 어드벤처"
+/**
+ * 광고성 알림(이벤트·혜택) 토글 노출 범위 (iOS PromoVisibility 와 같은 규칙).
+ * 광고 동의는 한국 Play 스토어(결제 국가 KR)에서만 받는다 — 해외는 아동 대상 광고 동의 규제(미국 COPPA·EU GDPR 제8조 등)가
+ * 달라 토글 자체를 보이지 않는다. 국가를 모르면 숨긴다. 이미 켜 둔 사람(국가를 옮긴 경우)에게는 끌 수 있도록 계속 보인다.
+ */
+object PromoVisibility {
+    /** @param country Play Billing BillingConfig.countryCode (ISO 3166-1 alpha-2, 예: "KR"). 모르면 null */
+    fun showsToggle(country: String?, marketingOn: Boolean): Boolean = marketingOn || country == "KR"
+}
 
-    private val shortDate = DateTimeFormatter.ofPattern("yyyy.MM.dd")
-    private val longDate = DateTimeFormatter.ofPattern("yyyy년 M월 d일")
+/** 동의 일시 표시·처리 결과 문구 (한국어는 iOS 와 글자 단위로 같게, 다른 언어는 그 언어의 날짜 서식) */
+object PushCopy {
+    private val shortDateKo = DateTimeFormatter.ofPattern("yyyy.MM.dd")
+    private val longDateKo = DateTimeFormatter.ofPattern("yyyy년 M월 d일")  // i18n:skip
 
     /** 서버 recordedAt(ISO-8601) → 기기 시간대의 날짜. 해석하지 못하면 null */
     fun localDate(iso: String?, zone: ZoneId): LocalDate? {
@@ -247,21 +272,30 @@ object PushCopy {
         }
     }
 
-    fun shortDate(date: LocalDate): String = date.format(shortDate)
-    fun longDate(date: LocalDate): String = date.format(longDate)
+    /** 설정 부제용 날짜 — 한국어 "2026.10.22", 그 밖은 그 언어의 중간 길이 날짜 ("Oct 22, 2026", "2026/10/22") */
+    fun shortDate(date: LocalDate, language: AppLanguage = AppLanguage.current, locale: Locale = AppLanguage.formatLocale): String =
+        date.format(if (language == AppLanguage.KO) shortDateKo else DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale))
+
+    /** 처리 결과 알림창용 날짜 — 한국어 "2026년 10월 22일", 그 밖은 긴 날짜 ("October 22, 2026", "2026年10月22日") */
+    fun longDate(date: LocalDate, language: AppLanguage = AppLanguage.current, locale: Locale = AppLanguage.formatLocale): String =
+        date.format(if (language == AppLanguage.KO) longDateKo else DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale))
+
+    /** 보내는 곳 — 앱 이름 (iOS 처럼 서버 응답의 sender 대신 앱 언어의 이름을 쓴다) */
+    fun sender(strings: Strings): String = strings.get(R.string.gugu_adventure)
 
     /** 설정 화면 광고 토글 부제 (켜짐) */
-    fun consentSubtitle(date: LocalDate): String = "${shortDate(date)} 수신 동의"
+    fun consentSubtitle(strings: Strings, date: LocalDate, locale: Locale = AppLanguage.formatLocale): String =
+        strings.get(R.string.agreed_on, shortDate(date, strings.language, locale))
 
-    const val MARKETING_OFF_SUBTITLE = "새 기능·이벤트 소식을 받아요. 보호자 확인 후 켤 수 있어요."
+    fun marketingOffSubtitle(strings: Strings): String = strings.get(R.string.news_about_new_features_and_events_a)
 
-    const val GRANTED_TITLE = "수신 동의 완료"
-    const val REVOKED_TITLE = "수신 거부 완료"
-    const val FAILED_MESSAGE = "지금은 처리할 수 없어요. 잠시 후 다시 시도해 주세요."
+    fun grantedTitle(strings: Strings): String = strings.get(R.string.consent_recorded)
+    fun revokedTitle(strings: Strings): String = strings.get(R.string.opt_out_recorded)
+    fun failedMessage(strings: Strings): String = strings.get(R.string.we_can_t_process_this_right_now_please)
 
-    fun grantedMessage(date: LocalDate, sender: String = SENDER): String =
-        "$sender · ${longDate(date)}\n이벤트·혜택 알림 수신 동의가 처리됐어요."
+    fun grantedMessage(strings: Strings, date: LocalDate, locale: Locale = AppLanguage.formatLocale): String =
+        strings.get(R.string.your_consent_to_event_offer, sender(strings), longDate(date, strings.language, locale))
 
-    fun revokedMessage(date: LocalDate, sender: String = SENDER): String =
-        "$sender · ${longDate(date)}\n이벤트·혜택 알림 수신 거부가 처리됐어요."
+    fun revokedMessage(strings: Strings, date: LocalDate, locale: Locale = AppLanguage.formatLocale): String =
+        strings.get(R.string.you_ve_opted_out_of_event_offer, sender(strings), longDate(date, strings.language, locale))
 }

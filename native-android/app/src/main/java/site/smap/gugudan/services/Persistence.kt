@@ -266,7 +266,7 @@ internal fun quarantinedFiles(dir: File, key: String): List<File> =
 /** 원문을 격리 폴더에 그대로 남긴다. Log 를 부르지 않는 순수 함수 — JVM 단위 테스트에서 android.util.Log 는 모킹되지 않는다 */
 internal fun writeQuarantine(dir: File, key: String, raw: String, buildTag: Int, nowMillis: Long): QuarantineResult =
     try {
-        if (!dir.isDirectory && !dir.mkdirs()) throw IOException("격리 폴더를 만들 수 없음: $dir")
+        if (!dir.isDirectory && !dir.mkdirs()) throw IOException("격리 폴더를 만들 수 없음: $dir")  // i18n:skip
         if (quarantinedFiles(dir, key).size >= Persistence.MAX_QUARANTINE_PER_KEY) {
             QuarantineResult.LimitReached
         } else {

@@ -1,5 +1,7 @@
 package site.smap.gugudan.core.adventure
 
+import androidx.annotation.StringRes
+import site.smap.gugudan.R
 import site.smap.gugudan.core.AnswerRecord
 import site.smap.gugudan.core.GameMode
 import site.smap.gugudan.core.SessionResult
@@ -28,10 +30,11 @@ object Battle {
     const val BOSS_ENRAGE_RATIO = 0.5
     fun enragedAttack(attack: Int): Int = Math.round(attack * 1.5).toInt()
 
-    fun styleName(style: BattleStyle): String = when (style) {
-        BattleStyle.HP -> "체력전"
-        BattleStyle.SPEED -> "스피드 레이스"
-        BattleStyle.COUNTER -> "반격전"
+    @StringRes
+    fun styleNameRes(style: BattleStyle): Int = when (style) {
+        BattleStyle.HP -> R.string.hp_battle
+        BattleStyle.SPEED -> R.string.speed_race
+        BattleStyle.COUNTER -> R.string.counterattack
     }
 
     /** 재대결 XP 배율 — 막지는 않되 무한 농장을 줄인다 */

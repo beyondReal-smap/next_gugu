@@ -7,6 +7,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import site.smap.gugudan.core.AppLanguage
 import site.smap.gugudan.core.learning.LearningFactStats
 import site.smap.gugudan.core.learning.LearningIdentity
 import site.smap.gugudan.core.learning.LearningRestore
@@ -87,7 +88,7 @@ class AuthFlowTests {
     // MARK: 오류 문구 (iOS promotionMessage 와 글자까지 같아야 한다)
 
     @Test fun promotionMessages() {
-        fun message(code: String) = AuthStore.promotionMessage(SupabaseAuthException(400, code, "raw"))
+        fun message(code: String) = AuthStore.promotionMessage(TestStrings(AppLanguage.KO), SupabaseAuthException(400, code, "raw"))
         assertEquals("확인 코드가 맞지 않거나 만료됐어요. 다시 확인해 주세요.", message("otp_expired"))
         assertEquals("이 이메일로 만든 계정이 없어요. 주소를 확인해 주세요.", message("otp_disabled"))
         assertEquals("확인 메일을 방금 보냈어요. 잠시 뒤 다시 시도해 주세요.", message("over_email_send_rate_limit"))

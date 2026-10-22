@@ -3,6 +3,9 @@ package site.smap.gugudan.services
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import site.smap.gugudan.BuildConfig
+import site.smap.gugudan.core.AppLanguage
+import java.time.ZoneId
+import java.util.Locale
 
 // 원격 푸시 기기 등록·광고 동의 API (서버 api/push.py, /api/v1/push).
 // 전송·인증·오류 해석은 LearningApi.send 를 그대로 쓴다 (UA 없이 부르면 Cloudflare 가 막는다).
@@ -66,6 +69,19 @@ object PushApi {
 
     fun normalizedLocale(tag: String): String? = tag.takeIf { it.length <= 35 && localePattern.matches(it) }
     fun normalizedTimeZone(id: String): String? = id.takeIf { it.length <= 64 && timeZonePattern.matches(it) }
+
+    /**
+     * 앱 언어·기기 지역 "ko-KR" / "en-FR" — 서버가 알림 문구(주간 리포트 등) 언어를 고르는 값이라 기기 언어가 아닌
+     * 앱 언어(AppLanguage)를 쓴다 (fr 기기는 앱이 영어이므로 "en-FR", iOS PushApi.localeTag 와 같은 규칙).
+     * 지역을 모르면 언어만, 서버 형식에 맞지 않으면 null(선택 항목)
+     */
+    fun localeTag(language: AppLanguage = AppLanguage.current, locale: Locale = AppLanguage.formatLocale): String? {
+        val region = locale.country
+        return normalizedLocale(if (region.isEmpty()) language.code else "${language.code}-$region")
+    }
+
+    /** 기기 시간대 "Asia/Seoul" — 서버 형식에 맞지 않으면 null(선택 항목) */
+    fun timeZoneId(zone: ZoneId = ZoneId.systemDefault()): String? = normalizedTimeZone(zone.id)
 
     suspend fun register(accessToken: String, request: PushDeviceRequest): PushDeviceResponse {
         val body = json.encodeToString(PushDeviceRequest.serializer(), request)

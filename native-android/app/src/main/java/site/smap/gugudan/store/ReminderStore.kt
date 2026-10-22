@@ -9,6 +9,7 @@ import kotlinx.serialization.json.Json
 import site.smap.gugudan.core.GameState
 import site.smap.gugudan.core.ReminderPlanner
 import site.smap.gugudan.core.ReminderSettings
+import site.smap.gugudan.services.AndroidStrings
 import site.smap.gugudan.services.LocalNotifications
 import site.smap.gugudan.services.Persistence
 import java.time.ZonedDateTime
@@ -76,7 +77,8 @@ class ReminderStore(private val context: Context, private val persistence: Persi
             return
         }
         deniedBySystem = false
-        LocalNotifications.replace(context, ReminderPlanner.plan(state, settings, now))
+        // 알림 문구는 예약 시점의 앱 언어로 만든다 — 언어를 바꾸면 다음 재예약(앱 진입) 때 새 언어로 교체된다
+        LocalNotifications.replace(context, ReminderPlanner.plan(AndroidStrings(context), state, settings, now))
     }
 
     private fun load(): ReminderSettings {

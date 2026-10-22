@@ -1,0 +1,3 @@
+Gugu Adventure now speaks English and Japanese!
+• The whole app, plus a friendly teacher's voice that reads every problem aloud
+• On Android 13 and later, pick the app language in Settings > Apps > Gugu Adventure > Language

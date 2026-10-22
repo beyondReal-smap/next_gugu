@@ -32,6 +32,8 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -39,6 +41,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import site.smap.gugudan.R
 import site.smap.gugudan.core.AchievementDef
 import site.smap.gugudan.core.AchievementProgress
 import site.smap.gugudan.core.Achievements
@@ -46,6 +49,8 @@ import site.smap.gugudan.core.Commit
 import site.smap.gugudan.core.GameMode
 import site.smap.gugudan.core.Level
 import site.smap.gugudan.core.Modes
+import site.smap.gugudan.core.Problems
+import site.smap.gugudan.core.SpokenMath
 import site.smap.gugudan.core.WeeklyReport
 import site.smap.gugudan.designsystem.*
 import site.smap.gugudan.features.home.GaugeBar
@@ -97,21 +102,23 @@ fun ProfileScreen() {
     ) {
         // 헤더 + 설정
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("프로필", style = suite(FontWeight.ExtraBold, 24), color = gg.text,
+            Text(stringResource(R.string.profile), style = suite(FontWeight.ExtraBold, 24), color = gg.text,
                 modifier = Modifier.weight(1f).semantics { heading() })
             PressableCard(onClick = { router.settingsOpen = true }) {
                 Box(Modifier.size(44.dp).clip(CircleShape).background(gg.surface2), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Filled.Settings, "설정", tint = gg.textMuted, modifier = Modifier.size(22.dp))
+                    Icon(Icons.Filled.Settings, stringResource(R.string.settings), tint = gg.textMuted, modifier = Modifier.size(22.dp))
                 }
             }
         }
 
         // 레벨 헤더
+        val levelTitle = stringResource(Level.titleRes(level.level))
+        val xpToNext = level.xpForNextLevel - level.currentLevelXp
+        val levelLabel = stringResource(R.string.level_summary_a11y, level.level, levelTitle, xpToNext)
         Row(
             Modifier.fillMaxWidth().ggCard().padding(20.dp)
                 .clearAndSetSemantics {
-                    contentDescription = "레벨 ${level.level}, ${Level.title(level.level)}, " +
-                        "다음 레벨까지 ${level.xpForNextLevel - level.currentLevelXp} XP"
+                    contentDescription = levelLabel
                 },
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -121,34 +128,38 @@ fun ProfileScreen() {
                 Text("${level.level}", style = suite(FontWeight.ExtraBold, 24), color = gg.accentFg)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Lv.${level.level} · ${Level.title(level.level)}",
+                Text("Lv.${level.level} · $levelTitle",
                     style = suite(FontWeight.ExtraBold, 17), color = gg.text)
                 GaugeBar(level.progress, height = 8.dp)
-                Text("${level.totalXp} XP · 다음 레벨까지 ${level.xpForNextLevel - level.currentLevelXp} XP",
+                Text(stringResource(R.string.xp_xp_to_next_level, level.totalXp, xpToNext),
                     style = suite(FontWeight.Bold, 12), color = gg.textMuted)
             }
         }
 
         // 통계 3열
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MiniStat(Modifier.weight(1f), "정답", "${state.totalCorrect}")
-            MiniStat(Modifier.weight(1f), "정확도", "$accuracy%")
-            MiniStat(Modifier.weight(1f), "최고 콤보", "${state.maxCombo}")
+            MiniStat(Modifier.weight(1f), stringResource(R.string.correct), "${state.totalCorrect}")
+            MiniStat(Modifier.weight(1f), stringResource(R.string.accuracy), "$accuracy%")
+            MiniStat(Modifier.weight(1f), stringResource(R.string.best_combo), "${state.maxCombo}")
         }
 
         // 이번 주 학습 리포트
         WeeklyReportCard(report, onReview = if (state.wrongPool.isEmpty()) null else ({ session.startReview() }))
 
         // 최고 기록
-        Text("최고 기록", style = suite(FontWeight.Bold, 14), color = gg.textMuted)
+        Text(stringResource(R.string.best_scores), style = suite(FontWeight.Bold, 14), color = gg.textMuted)
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             SCORED_MODES.forEach { id ->
                 val best = state.bestScores[id] ?: 0
                 val tint = ModeStyle.tint(id)
+                val modeName = stringResource(Modes.def(id).nameRes)
+                // 낭독은 "모드 이름 + 최고 기록 n점" — 기록 문구는 iOS 키("최고 기록 %lld점")를 쓴다
+                val bestLabel = if (best > 0) pluralStringResource(R.plurals.best_points, best, best)
+                    else stringResource(R.string.no_best_score_yet)
                 Row(
                     Modifier.weight(1f).ggCard(16.dp).padding(horizontal = 16.dp, vertical = 12.dp)
                         .clearAndSetSemantics {
-                            contentDescription = "${Modes.def(id).name} 최고 기록 ${if (best > 0) "${best}점" else "없음"}"
+                            contentDescription = "$modeName $bestLabel"
                         },
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -158,8 +169,8 @@ fun ProfileScreen() {
                         Icon(modeIcon(id), null, tint = tint, modifier = Modifier.size(20.dp))
                     }
                     Column {
-                        Text(Modes.def(id).name, style = suite(FontWeight.Bold, 12), color = gg.textMuted)
-                        Text(if (best > 0) "${best}점" else "—", style = suite(FontWeight.ExtraBold, 17), color = gg.text)
+                        Text(modeName, style = suite(FontWeight.Bold, 12), color = gg.textMuted)
+                        Text(if (best > 0) pluralStringResource(R.plurals.pts, best, best) else "—", style = suite(FontWeight.ExtraBold, 17), color = gg.text)
                     }
                 }
             }
@@ -170,17 +181,19 @@ fun ProfileScreen() {
             Column(Modifier.fillMaxWidth().ggCard().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("최근 정확도 추이", style = suite(FontWeight.Bold, 14), color = gg.text)
-                        Text("최근 ${state.recentAccuracy.size}판 · 점선은 50%",
+                        Text(stringResource(R.string.recent_accuracy), style = suite(FontWeight.Bold, 14), color = gg.text)
+                        Text(pluralStringResource(R.plurals.last_rounds_dashed_line_50,
+                            state.recentAccuracy.size, state.recentAccuracy.size),
                             style = suite(FontWeight.Medium, 12), color = gg.textMuted)
                     }
                     // 그래프만으로는 현재 수준을 읽을 수 없어 최신값을 숫자로 집어 준다
                     Text("${state.recentAccuracy.last()}%",
                         style = suite(FontWeight.ExtraBold, 24), color = gg.accent)
                 }
+                val trendLabel = stringResource(R.string.recent_accuracy_2, state.recentAccuracy.joinToString(", ") { "$it%" })
                 Row(
                     Modifier.clearAndSetSemantics {
-                        contentDescription = "최근 정확도 " + state.recentAccuracy.joinToString(", ") { "$it%" }
+                        contentDescription = trendLabel
                     },
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
@@ -206,7 +219,7 @@ fun ProfileScreen() {
         // 집중 공략 문제 → 바로 복습
         if (weakProblems.isNotEmpty()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("집중 공략 문제", style = suite(FontWeight.Bold, 14), color = gg.textMuted, modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.focus_problems), style = suite(FontWeight.Bold, 14), color = gg.textMuted, modifier = Modifier.weight(1f))
                 PressableCard(onClick = { session.startReview() }) {
                     Row(
                         Modifier.height(32.dp).clip(CircleShape).background(gg.accent).padding(horizontal = 12.dp),
@@ -214,19 +227,21 @@ fun ProfileScreen() {
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(Icons.Filled.PlayArrow, null, tint = gg.accentFg, modifier = Modifier.size(14.dp))
-                        Text("복습 시작", style = suite(FontWeight.ExtraBold, 13), color = gg.accentFg)
+                        Text(stringResource(R.string.start_review), style = suite(FontWeight.ExtraBold, 13), color = gg.accentFg)
                     }
                 }
             }
             @OptIn(ExperimentalLayoutApi::class)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 weakProblems.forEach { key ->
+                    // 낭독은 앱 언어의 곱셈식 라벨 (iOS 와 같다 — 형식이 어긋난 키는 그대로 읽는다)
+                    val factLabel = Problems.parseKey(key)?.let { SpokenMath.factLabel(it.a, it.b) } ?: key
                     Box(
                         Modifier.clip(RoundedCornerShape(12.dp))
                             .background(gg.danger.copy(alpha = 0.1f))
                             .border(1.dp, gg.danger.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
                             .padding(horizontal = 12.dp, vertical = 6.dp)
-                            .clearAndSetSemantics { contentDescription = key.replace("x", " 곱하기 ") }
+                            .clearAndSetSemantics { contentDescription = factLabel }
                     ) {
                         Text(key.replace("x", " × "), style = suite(FontWeight.ExtraBold, 14), color = gg.danger)
                     }
@@ -236,9 +251,9 @@ fun ProfileScreen() {
 
         // 업적 그리드 3열 — 눌러서 목표·진행도를 본다
         Row(verticalAlignment = Alignment.Bottom) {
-            Text("업적 (${unlocked.size}/${Achievements.all.size})", style = suite(FontWeight.Bold, 14),
+            Text(stringResource(R.string.achievements, unlocked.size, Achievements.all.size), style = suite(FontWeight.Bold, 14),
                 color = gg.textMuted, modifier = Modifier.weight(1f))
-            Text("눌러서 목표 보기", style = suite(FontWeight.Medium, 11), color = gg.textMuted.copy(alpha = 0.8f))
+            Text(stringResource(R.string.tap_to_see_goals), style = suite(FontWeight.Medium, 11), color = gg.textMuted.copy(alpha = 0.8f))
         }
         Achievements.all.chunked(3).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -246,9 +261,11 @@ fun ProfileScreen() {
                     val on = a.id in unlocked
                     val tint = (if (on) gg.accent else gg.textMuted).copy(alpha = if (on) 1f else 0.7f)
                     val fraction = Achievements.progress(a, state).fraction.toFloat()
+                    val name = stringResource(a.nameRes)
+                    val cellLabel = stringResource(if (on) R.string.earned else R.string.in_progress, name)
                     PressableCard(
                         modifier = Modifier.weight(1f).clearAndSetSemantics {
-                            contentDescription = "${a.name}, ${if (on) "달성" else "진행 중"}"
+                            contentDescription = cellLabel
                         },
                         onClick = { selectedAchievement = a },
                     ) {
@@ -262,7 +279,7 @@ fun ProfileScreen() {
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Icon(achievementIcon(a.icon), null, tint = tint, modifier = Modifier.size(22.dp))
-                            Text(a.name, style = suite(FontWeight.Bold, 11), color = tint,
+                            Text(name, style = suite(FontWeight.Bold, 11), color = tint,
                                 textAlign = TextAlign.Center, minLines = 2, maxLines = 2)
                             // 잠긴 업적은 얼마나 왔는지 가는 막대로 보여 준다
                             Box(Modifier.width(44.dp).height(3.dp).clip(CircleShape)
@@ -290,12 +307,14 @@ fun ProfileScreen() {
                     }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(
-                            if (auth.needsReauth) "다시 로그인이 필요해요" else "기록 지키기",
+                            stringResource(if (auth.needsReauth) R.string.you_need_to_sign_in_again else R.string.protect_your_records),
                             style = suite(FontWeight.ExtraBold, 15), color = gg.text,
                         )
                         Text(
-                            if (auth.needsReauth) "보호자 이메일로 확인해 주세요"
-                            else "이메일로 로그인하면 새 기기에서도 이어서 쓸 수 있어요",
+                            stringResource(
+                                if (auth.needsReauth) R.string.please_verify_with_a_parent_s_email
+                                else R.string.sign_in_with_email_to_pick_up_where_you
+                            ),
                             style = suite(FontWeight.Medium, 12), color = gg.textMuted,
                         )
                     }
@@ -319,11 +338,12 @@ fun ProfileScreen() {
                         Icon(Icons.Filled.AutoAwesome, null, tint = Color.White, modifier = Modifier.size(20.dp))
                     }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("평생 이용권", style = suite(FontWeight.ExtraBold, 15), color = Color.White)
-                        Text("모든 모드와 3D 어드벤처 · 한 번 구매로 계속",
+                        Text(stringResource(R.string.lifetime_pass), style = suite(FontWeight.ExtraBold, 15), color = Color.White)
+                        Text(stringResource(R.string.all_modes_3d_adventure_buy_once_keep),
                             style = suite(FontWeight.Medium, 12), color = Color.White.copy(alpha = 0.85f))
                     }
-                    Text(premium.price, style = suite(FontWeight.ExtraBold, 14), color = Color.White)
+                    // 스토어 가격을 받기 전에는 금액을 비워 둔다 (고정 원화 폴백 없음 — iOS 와 같다)
+                    premium.price?.let { Text(it, style = suite(FontWeight.ExtraBold, 14), color = Color.White) }
                 }
             }
         }
@@ -355,18 +375,19 @@ private fun AchievementDetail(def: AchievementDef, unlocked: Boolean, progress: 
             Icon(achievementIcon(def.icon), null, tint = tint, modifier = Modifier.size(32.dp))
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(def.name, style = suite(FontWeight.ExtraBold, 22), color = gg.text)
-            Text(def.description, style = suite(FontWeight.Medium, 15), color = gg.textMuted, textAlign = TextAlign.Center)
+            Text(stringResource(def.nameRes), style = suite(FontWeight.ExtraBold, 22), color = gg.text)
+            Text(stringResource(def.descriptionRes), style = suite(FontWeight.Medium, 15), color = gg.textMuted, textAlign = TextAlign.Center)
         }
         if (unlocked) {
             Pill(bg = gg.success.copy(alpha = 0.15f), fg = gg.success) {
                 Icon(Icons.Filled.Verified, null, Modifier.size(14.dp))
-                Text("달성했어요!")
+                Text(stringResource(R.string.unlocked))
             }
         } else {
+            val progressLabel = stringResource(R.string.progress_of, progress.target, progress.current)
             Column(
                 Modifier.fillMaxWidth().padding(horizontal = 12.dp)
-                    .clearAndSetSemantics { contentDescription = "진행도 ${progress.target} 중 ${progress.current}" },
+                    .clearAndSetSemantics { contentDescription = progressLabel },
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {

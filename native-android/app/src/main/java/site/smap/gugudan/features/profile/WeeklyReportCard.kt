@@ -13,14 +13,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import site.smap.gugudan.R
+import site.smap.gugudan.core.Problems
+import site.smap.gugudan.core.SpokenMath
 import site.smap.gugudan.core.WeeklyReport
 import site.smap.gugudan.designsystem.*
+import site.smap.gugudan.services.rememberStrings
 
 // 이번 주 학습 리포트 (iOS WeeklyReportCard.swift 이식) — 보호자가 한눈에 보는 최근 7일 요약
 
@@ -41,15 +47,15 @@ fun WeeklyReportCard(report: WeeklyReport, onReview: (() -> Unit)?) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(Icons.Filled.BarChart, null, tint = gg.accent, modifier = Modifier.size(16.dp))
-                Text("이번 주 학습", style = suite(FontWeight.ExtraBold, 15), color = gg.text)
+                Text(stringResource(R.string.this_week), style = suite(FontWeight.ExtraBold, 15), color = gg.text)
             }
             if (report.correct > 0 || report.prevCorrect > 0) {
                 val d = report.correctDelta
                 Text(
                     when {
-                        d > 0 -> "지난주보다 정답 +$d"
-                        d < 0 -> "지난주보다 정답 −${-d}"
-                        else -> "지난주와 같아요"
+                        d > 0 -> pluralStringResource(R.plurals.correct_answers_vs_last_week, d, d)
+                        d < 0 -> pluralStringResource(R.plurals.correct_answers_vs_last_week_2, -d, -d)
+                        else -> stringResource(R.string.same_as_last_week)
                     },
                     style = suite(FontWeight.Bold, 12),
                     color = if (d > 0) gg.success else gg.textMuted,
@@ -62,9 +68,14 @@ fun WeeklyReportCard(report: WeeklyReport, onReview: (() -> Unit)?) {
             report.days.forEachIndexed { i, day ->
                 val isToday = i == report.days.lastIndex
                 val weekday = WeeklyReport.weekdayLabel(day.date)
+                // 낭독은 요일 전체 이름("화요일" / "Tuesday" / "火曜日") — iOS 와 같은 문장
+                val dayLabel = stringResource(
+                    if (isToday) R.string.today_correct_wrong else R.string.correct_wrong,
+                    WeeklyReport.weekdayName(day.date), day.correct, day.wrong,
+                )
                 Column(
                     Modifier.weight(1f).clearAndSetSemantics {
-                        contentDescription = "${weekday}요일${if (isToday) ", 오늘" else ""}: 정답 ${day.correct}개, 오답 ${day.wrong}개"
+                        contentDescription = dayLabel
                     },
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -90,40 +101,46 @@ fun WeeklyReportCard(report: WeeklyReport, onReview: (() -> Unit)?) {
 
         // 요약 수치
         val minutes = Math.round(report.studyMs / 60_000.0).toInt()
-        val minutesLabel = if (report.studyMs > 0 && minutes == 0) "1분 미만" else "${minutes}분"
+        val minutesLabel = if (report.studyMs > 0 && minutes == 0) stringResource(R.string.under_1_min)
+            else pluralStringResource(R.plurals.min, minutes, minutes)
         Row {
-            SummaryStat(Modifier.weight(1f), "${report.activeDays}일", "학습한 날")
-            SummaryStat(Modifier.weight(1f), "${report.correct}개", "정답")
-            SummaryStat(Modifier.weight(1f), report.accuracy?.let { "$it%" } ?: "—", "정확도")
-            SummaryStat(Modifier.weight(1f), minutesLabel, "푼 시간")
+            SummaryStat(Modifier.weight(1f), pluralStringResource(R.plurals.days, report.activeDays, report.activeDays),
+                stringResource(R.string.days_practiced))
+            SummaryStat(Modifier.weight(1f), pluralStringResource(R.plurals.answers, report.correct, report.correct),
+                stringResource(R.string.correct))
+            SummaryStat(Modifier.weight(1f), report.accuracy?.let { "$it%" } ?: "—", stringResource(R.string.accuracy))
+            SummaryStat(Modifier.weight(1f), minutesLabel, stringResource(R.string.time_spent))
         }
 
         // 자주 틀린 문제
         if (report.topMisses.isNotEmpty()) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("자주 틀린 문제", style = suite(FontWeight.Bold, 12), color = gg.textMuted, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.often_missed), style = suite(FontWeight.Bold, 12), color = gg.textMuted, modifier = Modifier.weight(1f))
                     if (onReview != null) {
                         PressableCard(onClick = onReview) {
                             Box(Modifier.height(32.dp), contentAlignment = Alignment.Center) {
-                                Text("복습하기", style = suite(FontWeight.ExtraBold, 12), color = gg.accent)
+                                Text(stringResource(R.string.review), style = suite(FontWeight.ExtraBold, 12), color = gg.accent)
                             }
                         }
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     report.topMisses.forEach { miss ->
+                        // 곱셈식은 앱 언어의 낭독 라벨 (iOS 와 같다 — 형식이 어긋난 키는 그대로 읽는다)
+                        val fact = Problems.parseKey(miss.key)?.let { SpokenMath.factLabel(it.a, it.b) } ?: miss.key
+                        val missLabel = stringResource(R.string.times_missed, fact, miss.count)
                         Row(
                             Modifier.clip(RoundedCornerShape(10.dp)).background(gg.danger.copy(alpha = 0.1f))
                                 .padding(horizontal = 10.dp, vertical = 6.dp)
                                 .clearAndSetSemantics {
-                                    contentDescription = "${miss.key.replace("x", " 곱하기 ")}, ${miss.count}번 틀림"
+                                    contentDescription = missLabel
                                 },
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalAlignment = Alignment.Bottom,
                         ) {
                             Text(miss.key.replace("x", " × "), style = suite(FontWeight.ExtraBold, 14), color = gg.danger)
-                            Text("${miss.count}번", style = suite(FontWeight.Bold, 11), color = gg.danger.copy(alpha = 0.8f))
+                            Text(pluralStringResource(R.plurals.misses, miss.count, miss.count), style = suite(FontWeight.Bold, 11), color = gg.danger.copy(alpha = 0.8f))
                         }
                     }
                 }
@@ -131,14 +148,16 @@ fun WeeklyReportCard(report: WeeklyReport, onReview: (() -> Unit)?) {
         }
 
         // 보호자 한마디
+        val parentTip = report.parentTip(rememberStrings())
+        val tipLabel = stringResource(R.string.tip_for_parents, parentTip)
         Row(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(gg.accent.copy(alpha = 0.08f))
                 .padding(12.dp)
-                .clearAndSetSemantics { contentDescription = "보호자 한마디. ${report.parentTip}" },
+                .clearAndSetSemantics { contentDescription = tipLabel },
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Icon(Icons.Filled.FormatQuote, null, tint = gg.accent, modifier = Modifier.size(16.dp))
-            Text(report.parentTip, style = suite(FontWeight.Medium, 13), color = gg.text)
+            Text(parentTip, style = suite(FontWeight.Medium, 13), color = gg.text)
         }
     }
 }

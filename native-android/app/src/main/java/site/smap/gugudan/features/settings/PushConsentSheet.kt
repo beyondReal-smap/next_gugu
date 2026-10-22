@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -29,6 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import site.smap.gugudan.R
 import site.smap.gugudan.core.GuardianGate
 import site.smap.gugudan.designsystem.*
 import java.time.LocalDate
@@ -44,9 +46,9 @@ fun GuardianGateSheet(onCancel: () -> Unit, onPassed: () -> Unit) {
     var input by remember { mutableStateOf("") }
     var error by remember { mutableStateOf(false) }
 
-    PushSheet(title = "보호자 확인", icon = Icons.Filled.Shield, onDismiss = onCancel) {
+    PushSheet(title = stringResource(R.string.parent_check), icon = Icons.Filled.Shield, onDismiss = onCancel) {
         Text(
-            "보호자의 출생연도 4자리를 입력해 주세요.",
+            stringResource(R.string.enter_the_parent_s_4_digit_birth_year),
             style = suite(FontWeight.Medium, 14), color = gg.textMuted, textAlign = TextAlign.Center,
         )
         OutlinedTextField(
@@ -56,7 +58,7 @@ fun GuardianGateSheet(onCancel: () -> Unit, onPassed: () -> Unit) {
                 error = false
             },
             singleLine = true,
-            placeholder = { Text("예: 1985", style = suite(FontWeight.Medium, 16), color = gg.textMuted) },
+            placeholder = { Text(stringResource(R.string.e_g_1985), style = suite(FontWeight.Medium, 16), color = gg.textMuted) },
             textStyle = suite(FontWeight.Bold, 18).copy(color = gg.text, textAlign = TextAlign.Center),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
             isError = error,
@@ -69,9 +71,9 @@ fun GuardianGateSheet(onCancel: () -> Unit, onPassed: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
         )
         if (error) {
-            Text("출생연도를 다시 확인해 주세요.", style = suite(FontWeight.Bold, 13), color = gg.danger)
+            Text(stringResource(R.string.please_check_the_birth_year_again), style = suite(FontWeight.Bold, 13), color = gg.danger)
         }
-        SheetButtons(confirmLabel = "확인", busy = false, onCancel = onCancel) {
+        SheetButtons(confirmLabel = stringResource(R.string.ok_2), busy = false, onCancel = onCancel) {
             // 입력값은 판단에만 쓰고 저장하지 않는다
             if (GuardianGate.isValidBirthYear(input, LocalDate.now().year)) {
                 input = ""
@@ -88,21 +90,17 @@ fun GuardianGateSheet(onCancel: () -> Unit, onPassed: () -> Unit) {
 fun MarketingConsentSheet(busy: Boolean, onCancel: () -> Unit, onAgree: () -> Unit) {
     val gg = LocalGG.current
     PushSheet(
-        title = "이벤트·혜택 알림 수신 동의 (선택)",
+        title = stringResource(R.string.consent_to_event_offer_notifications),
         icon = Icons.Filled.CardGiftcard,
         onDismiss = { if (!busy) onCancel() },
     ) {
         Text(
-            "구구 어드벤처의 새 기능, 이벤트, 할인 소식을 앱 알림으로 보내 드려요.\n" +
-                "· 보내는 곳: 구구 어드벤처\n" +
-                "· 받는 시간: 오전 8시 ~ 오후 9시\n" +
-                "· 언제든 설정 > 알림에서 끌 수 있어요.\n" +
-                "동의하지 않아도 앱을 그대로 쓸 수 있어요.",
+            stringResource(R.string.we_ll_send_news_about_gugu_adventure_s),
             style = suite(FontWeight.Medium, 14), color = gg.text,
             modifier = Modifier.fillMaxWidth(),
         )
         SheetButtons(
-            confirmLabel = if (busy) "처리 중…" else "동의하고 켜기",
+            confirmLabel = if (busy) stringResource(R.string.processing) else stringResource(R.string.agree_and_turn_on),
             busy = busy,
             onCancel = onCancel,
             onConfirm = onAgree,
@@ -118,7 +116,7 @@ fun PushResultDialog(title: String?, message: String, onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("확인", style = suite(FontWeight.Bold, 15), color = gg.accent)
+                Text(stringResource(R.string.ok_2), style = suite(FontWeight.Bold, 15), color = gg.accent)
             }
         },
         title = title?.let { { Text(it, style = suite(FontWeight.ExtraBold, 18), color = gg.text) } },
@@ -178,7 +176,7 @@ private fun SheetButtons(confirmLabel: String, busy: Boolean, onCancel: () -> Un
         GGButton(
             variant = GGButtonVariant.SURFACE, size = GGButtonSize.MD, enabled = !busy,
             modifier = Modifier.weight(1f), onClick = onCancel,
-        ) { Text("취소", color = gg.text) }
+        ) { Text(stringResource(R.string.cancel), color = gg.text) }
         GGButton(
             variant = GGButtonVariant.PRIMARY, size = GGButtonSize.MD, enabled = !busy,
             modifier = Modifier.weight(1f), onClick = onConfirm,

@@ -6,9 +6,6 @@ object PremiumConfig {
     /** 스토어 상품 ID — Google Play 1회성 인앱 상품 (기존 등록분 재사용) */
     const val PRODUCT_ID = "site.smap.next.premium"
 
-    /** 오퍼링 로드 전 표시용 가격 */
-    const val FALLBACK_PRICE = "₩4,400"
-
     /** 프리미엄 전용 게임 모드 — 학습/스피드런은 무료 유지 */
     val premiumModes: Set<GameMode> = setOf(
         GameMode.CHALLENGE, GameMode.SURVIVAL, GameMode.MISSING, GameMode.TRUEFALSE)
@@ -18,10 +15,16 @@ object PremiumConfig {
     /** 움직이며 놀기(점프·레인·바구니) 무료 체험 문제 수 — 이만큼 풀면 게임을 멈추고 결제 화면으로 안내한다 */
     const val MINIGAME_TRIAL_QUESTIONS = 3
 
-    /** 법적 고지 링크 */
+    /** 법적 고지 링크 — 앱 언어별 문서. 한국어는 기존 주소 그대로, 영어·일본어는 /en/·/ja/ 아래 (iOS 와 같은 규칙).
+     *  앱별 언어를 바꿔도 프로세스가 살아 있으므로 열 때마다 현재 언어로 만든다 */
     object Legal {
-        const val TERMS = "https://gugu.smap.site/terms"
-        const val PRIVACY = "https://gugu.smap.site/privacy"
-        const val DELETE_ACCOUNT = "https://gugu.smap.site/delete-account"
+        val TERMS: String get() = url("terms")
+        val PRIVACY: String get() = url("privacy")
+        val DELETE_ACCOUNT: String get() = url("delete-account")
+
+        fun url(page: String, language: AppLanguage = AppLanguage.current): String {
+            val base = "https://gugu.smap.site"
+            return if (language == AppLanguage.KO) "$base/$page" else "$base/${language.code}/$page"
+        }
     }
 }

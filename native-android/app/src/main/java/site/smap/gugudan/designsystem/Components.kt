@@ -14,6 +14,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.selected
 import androidx.compose.material3.Text
@@ -108,6 +112,8 @@ fun GGButton(
 fun PressableCard(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    /** TalkBack 동작 이름 — "두 번 탭하여 <이름>" 으로 읽힌다 (iOS accessibilityHint 대응) */
+    onClickLabel: String? = null,
     onClick: () -> Unit,
     content: @Composable () -> Unit,
 ) {
@@ -117,7 +123,7 @@ fun PressableCard(
     Box(
         modifier
             .scale(scale)
-            .clickable(interactionSource = interaction, indication = null, enabled = enabled) {
+            .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClickLabel = onClickLabel) {
                 Haptics.impactLight()
                 onClick()
             }
@@ -224,23 +230,27 @@ fun <T> ChoiceChips(
     onSelect: (T) -> Unit,
 ) {
     val gg = LocalGG.current
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    // 칩 높이를 줄 안에서 맞춘다 — 한 칩만 두 줄이 돼도 나란히 같은 높이로 보이게
+    Row(modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         options.forEach { option ->
             val on = option == selected
             PressableCard(
-                modifier = Modifier.weight(1f).semantics { this.selected = on },
+                modifier = Modifier.weight(1f).fillMaxHeight().semantics { this.selected = on },
                 onClick = { Haptics.selection(); onSelect(option) },
             ) {
+                // 높이는 최소 48dp(터치 영역) — 영어 "20 answers" 처럼 두 줄이 되면 칩이 늘어나 글자가 잘리지 않게 한다
                 Box(
-                    Modifier.fillMaxWidth().height(48.dp)   // 최소 터치 영역 48dp
+                    Modifier.fillMaxWidth().fillMaxHeight().heightIn(min = 48.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(if (on) gg.accent else gg.surface2),
+                        .background(if (on) gg.accent else gg.surface2)
+                        .padding(horizontal = 4.dp, vertical = 6.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         label(option),
                         style = suite(if (on) FontWeight.ExtraBold else FontWeight.Bold, 14),
                         color = if (on) gg.accentFg else gg.text,
+                        textAlign = TextAlign.Center,
                     )
                 }
             }

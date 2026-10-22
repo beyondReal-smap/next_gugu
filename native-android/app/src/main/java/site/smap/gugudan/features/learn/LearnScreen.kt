@@ -21,11 +21,14 @@ import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
+import site.smap.gugudan.R
 import site.smap.gugudan.core.Hints
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -76,7 +79,7 @@ fun LearnScreen() {
     ) {
         // 헤더
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("학습", style = suite(FontWeight.ExtraBold, 24), color = gg.text, modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.learn), style = suite(FontWeight.ExtraBold, 24), color = gg.text, modifier = Modifier.weight(1f))
             Pill(bg = gg.warning.copy(alpha = 0.12f), fg = gg.warning) {
                 Icon(Icons.Filled.EmojiEvents, null, Modifier.size(14.dp))
                 Text("$totalStars/24")
@@ -106,8 +109,8 @@ fun LearnScreen() {
                                     contentAlignment = Alignment.Center) {
                                     Icon(modeIcon(m.id), null, tint = tint, modifier = Modifier.size(20.dp))
                                 }
-                                Text(m.name, style = suite(FontWeight.ExtraBold, 14), color = gg.text)
-                                Text(m.tagline, style = suite(FontWeight.Normal, 12), color = gg.textMuted, maxLines = 1)
+                                Text(stringResource(m.nameRes), style = suite(FontWeight.ExtraBold, 14), color = gg.text)
+                                Text(stringResource(m.taglineRes), style = suite(FontWeight.Normal, 12), color = gg.textMuted, maxLines = 1)
                             }
                             if (locked) {
                                 Box(Modifier.align(Alignment.TopEnd).size(20.dp).clip(CircleShape)
@@ -118,7 +121,7 @@ fun LearnScreen() {
                                 Box(Modifier.align(Alignment.TopEnd).clip(CircleShape)
                                     .background(gg.warning.copy(alpha = 0.15f))
                                     .padding(horizontal = 8.dp, vertical = 2.dp)) {
-                                    Text("최고 $best", style = suite(FontWeight.ExtraBold, 10), color = gg.warning)
+                                    Text(stringResource(R.string.best, best), style = suite(FontWeight.ExtraBold, 10), color = gg.warning)
                                 }
                             }
                         }
@@ -127,7 +130,7 @@ fun LearnScreen() {
             }
         }
 
-        Text(def.detail, style = suite(FontWeight.Medium, 14), color = gg.textMuted)
+        Text(stringResource(def.detailRes), style = suite(FontWeight.Medium, 14), color = gg.textMuted)
 
         // 모드를 고르면 바로 단을 고르게 — 미니게임 링크가 이 사이에 끼어 흐름이 끊기던 것을 하단으로 옮겼다
         if (def.supportsTable) {
@@ -143,17 +146,17 @@ fun LearnScreen() {
                         Icon(Icons.Filled.Shuffle, null, tint = gg.accent, modifier = Modifier.size(20.dp))
                     }
                     Column {
-                        Text("전체 랜덤", style = suite(FontWeight.Bold, 15), color = gg.text)
-                        Text("2~9단을 골고루 섞어서", style = suite(FontWeight.Normal, 13), color = gg.textMuted)
+                        Text(stringResource(R.string.random_mix_2), style = suite(FontWeight.Bold, 15), color = gg.text)
+                        Text(stringResource(R.string.an_even_mix_of_tables_2_9), style = suite(FontWeight.Normal, 13), color = gg.textMuted)
                     }
                 }
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("단 선택", style = suite(FontWeight.Bold, 14), color = gg.textMuted,
+                Text(stringResource(R.string.pick_a_table), style = suite(FontWeight.Bold, 14), color = gg.textMuted,
                     modifier = Modifier.semantics { heading() })
                 Text(
-                    "추천 순서 ${Hints.ROADMAP_TABLES.joinToString(" → ")}단 · 책 버튼을 누르면 표를 볼 수 있어요",
+                    stringResource(R.string.suggested_order_tap_a_book_to_see_its, Hints.ROADMAP_TABLES.joinToString(" → ")),
                     style = suite(FontWeight.Medium, 11), color = gg.textMuted.copy(alpha = 0.85f),
                 )
             }
@@ -178,8 +181,8 @@ fun LearnScreen() {
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text("내 최고 기록", style = suite(FontWeight.Bold, 14), color = gg.textMuted)
-                        Text(if (best > 0) "${best}점" else "—", style = suite(FontWeight.ExtraBold, 36), color = gg.text)
+                        Text(stringResource(R.string.my_best), style = suite(FontWeight.Bold, 14), color = gg.textMuted)
+                        Text(if (best > 0) pluralStringResource(R.plurals.pts, best, best) else "—", style = suite(FontWeight.ExtraBold, 36), color = gg.text)
                     }
                     Box(Modifier.size(56.dp).clip(RoundedCornerShape(16.dp)).background(tint.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center) {
@@ -189,19 +192,22 @@ fun LearnScreen() {
                 GGButton(variant = GGButtonVariant.PRIMARY, size = GGButtonSize.LG,
                     onClick = { session.start(mode, null) }) {
                     Icon(Icons.Filled.PlayArrow, null, Modifier.size(20.dp))
-                    Text("도전 시작")
+                    Text(stringResource(R.string.start_challenge))
                 }
             }
         }
 
         // 달리기·받기 미니게임 (웹 Learn 의 게임 링크 대응)
         Spacer(Modifier.height(4.dp))
-        Text("움직이며 연습하기", style = suite(FontWeight.Bold, 14), color = gg.textMuted,
+        Text(stringResource(R.string.practice_on_the_move), style = suite(FontWeight.Bold, 14), color = gg.textMuted,
             modifier = Modifier.semantics { heading() })
-        GameLink("구구 점프", "정답을 골라 장애물 넘기", Icons.Filled.DirectionsRun) { router.runnerOpen = true }
-        GameLink("구구 레인", "길을 바꿔 피하고 정답 길로", Icons.Filled.ViewStream) { router.laneOpen = true }
+        GameLink(stringResource(R.string.gugu_jump), stringResource(R.string.pick_answers_to_jump_obstacles),
+            Icons.Filled.DirectionsRun) { router.runnerOpen = true }
+        GameLink(stringResource(R.string.gugu_lanes), stringResource(R.string.switch_lanes_to_dodge_find_the_answer),
+            Icons.Filled.ViewStream) { router.laneOpen = true }
         GameLink(
-            "구구 바구니", "정답 열매를 바구니로 쏙", Icons.Filled.ShoppingBasket,
+            stringResource(R.string.gugu_basket), stringResource(R.string.catch_the_right_fruit_in_your_basket),
+            Icons.Filled.ShoppingBasket,
             iconBg = Color(0xFF794124), iconFg = Color(0xFFFFE7A3), tint = LocalGG.current.warning,
         ) { router.basketOpen = true }
     }
@@ -228,10 +234,15 @@ private fun TableCard(
     val gg = LocalGG.current
     val game = LocalGame.current
     val stars = game.state.tableMastery[table]?.stars ?: 0
+    val modeName = stringResource(Modes.def(mode).nameRes)
+    val cardLabel = stringResource(
+        if (recommended) R.string.start_times_table_stars_recommended else R.string.start_times_table_stars,
+        table, modeName, stars,
+    )
     Box(modifier) {
         PressableCard(
             modifier = Modifier.clearAndSetSemantics {
-                contentDescription = "${table}단 ${Modes.def(mode).name} 시작, 별 ${stars}개" + if (recommended) ", 추천" else ""
+                contentDescription = cardLabel
                 onClick { onStart(); true }
             },
             onClick = onStart,
@@ -247,13 +258,13 @@ private fun TableCard(
             ) {
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text("$table", style = suite(FontWeight.ExtraBold, 30), color = gg.text)
-                    Text("단", style = suite(FontWeight.Bold, 18), color = gg.textMuted,
-                        modifier = Modifier.padding(bottom = 4.dp))
+                    Text(stringResource(R.string.times_table), style = suite(FontWeight.Bold, 18), color = gg.textMuted,
+                        modifier = Modifier.padding(bottom = 4.dp, start = 2.dp))
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                     StarsView(stars, size = 16.dp)
                     if (recommended) {
-                        Text("추천", style = suite(FontWeight.ExtraBold, 10), color = gg.accentFg,
+                        Text(stringResource(R.string.pick), style = suite(FontWeight.ExtraBold, 10), color = gg.accentFg,
                             modifier = Modifier.clip(CircleShape).background(gg.accent)
                                 .padding(horizontal = 7.dp, vertical = 2.dp))
                     }
@@ -268,7 +279,7 @@ private fun TableCard(
             Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
                 Box(Modifier.size(34.dp).clip(CircleShape).background(gg.accent.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center) {
-                    Icon(Icons.AutoMirrored.Filled.MenuBook, "${table}단 표 보기", tint = gg.accent, modifier = Modifier.size(18.dp))
+                    Icon(Icons.AutoMirrored.Filled.MenuBook, stringResource(R.string.view_the_times_table, table), tint = gg.accent, modifier = Modifier.size(18.dp))
                 }
             }
         }

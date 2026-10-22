@@ -48,19 +48,25 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import site.smap.gugudan.R
 import site.smap.gugudan.core.LaneOutcome
 import site.smap.gugudan.core.LaneRunner
 import site.smap.gugudan.core.RunnerPhase
+import site.smap.gugudan.core.Seconds
+import site.smap.gugudan.core.SpokenMath
 import site.smap.gugudan.designsystem.*
 import site.smap.gugudan.features.paywall.*
 import site.smap.gugudan.services.Haptics
 import site.smap.gugudan.services.Persistence
+import site.smap.gugudan.services.rememberStrings
 import site.smap.gugudan.store.LocalPremium
 import kotlin.math.abs
 
@@ -78,7 +84,7 @@ private val OVERLAY_MUTED = Color(0xFF486146)
 private val HEART_ON = Color(0xFFF3A88C)
 private val HEART_OFF = Color(0xFF6C897B)
 
-private val LANE_NAMES = listOf("위", "가운데", "아래")
+private val LANE_NAMES = listOf(R.string.top, R.string.middle, R.string.bottom)
 
 /** 스와이프로 인정하는 세로 이동 거리(px) */
 private const val SWIPE_PX = 28f
@@ -137,13 +143,13 @@ fun LaneRunnerScreen(onExit: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = gg.textMuted, modifier = Modifier.size(16.dp))
-                    Text("홈으로", style = suite(FontWeight.Bold, 14), color = gg.textMuted)
+                    Text(stringResource(R.string.home_2), style = suite(FontWeight.Bold, 14), color = gg.textMuted)
                 }
             }
             Spacer(Modifier.weight(1f))
             Pill(bg = gg.surface, fg = gg.textMuted) {
                 Icon(Icons.Filled.ViewStream, null, Modifier.size(14.dp))
-                Text("길을 바꾸며 배우는 구구단")
+                Text(stringResource(R.string.learn_times_tables_by_switching_lanes))
             }
         }
 
@@ -183,12 +189,16 @@ fun LaneRunnerScreen(onExit: () -> Unit) {
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
                         Text(
-                            if (ready) "오늘의 작은 모험" else "${game.distance.toInt()}m 달리는 중",
+                            if (ready) stringResource(R.string.today_s_little_adventure)
+                            else stringResource(R.string.running_m, game.distance.toInt()),
                             style = suite(FontWeight.ExtraBold, 11), color = OVERLAY_MUTED,
                         )
                         Text(
-                            if (game.combo >= 2) "${game.combo}연속 정답 길! · 속도 ${LaneRunner.level(game.score) + 1}단계"
-                            else "속도 ${LaneRunner.level(game.score) + 1}단계",
+                            if (game.combo >= 2) {
+                                stringResource(R.string.right_lanes_in_a_row_speed, game.combo, LaneRunner.level(game.score) + 1)
+                            } else {
+                                stringResource(R.string.speed_level, LaneRunner.level(game.score) + 1)
+                            },
                             style = suite(FontWeight.ExtraBold, 11), color = OVERLAY_MUTED,
                         )
                     }
@@ -203,12 +213,12 @@ fun LaneRunnerScreen(onExit: () -> Unit) {
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 Text(
-                                    if (paused) "잠깐 쉬어가요" else "멋진 달리기였어요!",
+                                    stringResource(if (paused) R.string.taking_a_break else R.string.great_run),
                                     style = suite(FontWeight.ExtraBold, 22), color = OVERLAY_TEXT,
                                 )
                                 Text(
-                                    if (paused) "준비되면 이어서 달려요."
-                                    else "정답 길 ${game.score}개 · 피한 장애물 ${game.dodged}개 · 최고 ${game.maxCombo}연속",
+                                    if (paused) stringResource(R.string.keep_running_when_you_re_ready)
+                                    else stringResource(R.string.correct_lanes_dodged_best_streak, game.score, game.dodged, game.maxCombo),
                                     style = suite(FontWeight.Bold, 13), color = OVERLAY_MUTED,
                                     textAlign = TextAlign.Center,
                                 )
@@ -229,15 +239,17 @@ fun LaneRunnerScreen(onExit: () -> Unit) {
 
             Column(Modifier.padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(
-                    "화면을 위아래로 밀거나 ▲▼ 버튼으로 길을 옮겨요.",
+                    stringResource(R.string.swipe_up_or_down_or_use_the_buttons_to),
                     style = suite(FontWeight.Medium, 12), color = gg.textMuted,
                 )
                 Text(
-                    "정답 길 ${LaneRunner.SCORE_PER_LEVEL}개를 지날 때마다 속도가 한 단계 빨라져요. 앱을 벗어나면 자동으로 일시정지해요.",
+                    pluralStringResource(
+                        R.plurals.every_time_you_pass_correct_lanes_the, LaneRunner.SCORE_PER_LEVEL, LaneRunner.SCORE_PER_LEVEL,
+                    ),
                     style = suite(FontWeight.Medium, 12), color = gg.textMuted,
                 )
                 Text(
-                    "단별 최고 기록은 이 기기에 저장돼요.",
+                    stringResource(R.string.best_scores_for_each_table_are_saved_on),
                     style = suite(FontWeight.Medium, 12), color = gg.textMuted,
                 )
             }
@@ -248,14 +260,16 @@ fun LaneRunnerScreen(onExit: () -> Unit) {
 @Composable
 private fun Scoreboard(engine: LaneRunnerEngine, enabled: Boolean) {
     val game = engine.game
+    // 개수 단위 — 영어는 숫자만 (iOS SpokenMath.countSuffix)
+    val countSuffix = SpokenMath.countSuffix(rememberStrings()).orEmpty()
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
         horizontalArrangement = Arrangement.spacedBy(20.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column {
-            Text("통과한 정답 길", style = suite(FontWeight.Bold, 11), color = STAGE_MUTED)
-            Text("${game.score}개", style = suite(FontWeight.ExtraBold, 22), color = STAGE_FG)
+            Text(stringResource(R.string.lanes_passed), style = suite(FontWeight.Bold, 11), color = STAGE_MUTED)
+            Text("${game.score}$countSuffix", style = suite(FontWeight.ExtraBold, 22), color = STAGE_FG)
         }
         Column {
             Row(
@@ -264,11 +278,11 @@ private fun Scoreboard(engine: LaneRunnerEngine, enabled: Boolean) {
             ) {
                 Icon(Icons.Filled.EmojiEvents, null, tint = STAGE_MUTED, modifier = Modifier.size(10.dp))
                 Text(
-                    if (engine.table == null) "전체 최고" else "${engine.table}단 최고",
+                    engine.table?.let { stringResource(R.string.table_best, it) } ?: stringResource(R.string.overall_best),
                     style = suite(FontWeight.Bold, 11), color = STAGE_MUTED,
                 )
             }
-            Text("${engine.selectedBest}개", style = suite(FontWeight.ExtraBold, 22), color = STAGE_ACCENT)
+            Text("${engine.selectedBest}$countSuffix", style = suite(FontWeight.ExtraBold, 22), color = STAGE_ACCENT)
         }
         Spacer(Modifier.weight(1f))
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -288,7 +302,7 @@ private fun Scoreboard(engine: LaneRunnerEngine, enabled: Boolean) {
             ) {
                 Icon(
                     if (game.phase == RunnerPhase.PAUSED) Icons.Filled.PlayArrow else Icons.Filled.Pause,
-                    contentDescription = if (game.phase == RunnerPhase.PAUSED) "계속 달리기" else "일시정지",
+                    contentDescription = stringResource(if (game.phase == RunnerPhase.PAUSED) R.string.keep_running else R.string.pause),
                     tint = STAGE_FG, modifier = Modifier.size(18.dp),
                 )
             }
@@ -310,12 +324,14 @@ private fun SetupPanel(engine: LaneRunnerEngine, over: Boolean) {
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text(
-                    if (game.score > 0 && game.score >= engine.runBest) "나의 최고 기록을 달성했어요!"
-                    else "한 번 더, 더 멀리 가볼까요?",
+                    stringResource(
+                        if (game.score > 0 && game.score >= engine.runBest) R.string.new_personal_best
+                        else R.string.one_more_time_can_you_go_farther,
+                    ),
                     style = suite(FontWeight.ExtraBold, 17), color = gg.text, textAlign = TextAlign.Center,
                 )
                 Text(
-                    "정답 길을 ${game.score}개 지났어요. 정답을 익히면 다음엔 더 멀리!",
+                    pluralStringResource(R.plurals.you_passed_correct_lanes_learn_the, game.score, game.score),
                     style = suite(FontWeight.Medium, 13), color = gg.textMuted, textAlign = TextAlign.Center,
                 )
             }
@@ -329,9 +345,9 @@ private fun SetupPanel(engine: LaneRunnerEngine, over: Boolean) {
                     Icon(Icons.Filled.ViewStream, null, tint = GGColors.emerald, modifier = Modifier.size(20.dp))
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("길을 직접 바꾸며 달려요!", style = suite(FontWeight.ExtraBold, 15), color = gg.text)
+                    Text(stringResource(R.string.switch_lanes_yourself_as_you_run), style = suite(FontWeight.ExtraBold, 15), color = gg.text)
                     Text(
-                        "위아래로 길을 옮겨 장애물을 피하고, 문제가 나오면 정답 숫자가 적힌 길로 들어가요. 부딪히거나 틀리면 하트가 하나 줄어요.",
+                        stringResource(R.string.switch_lanes_up_and_down_to_dodge),
                         style = suite(FontWeight.Medium, 13), color = gg.textMuted,
                     )
                 }
@@ -339,7 +355,7 @@ private fun SetupPanel(engine: LaneRunnerEngine, over: Boolean) {
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("달리면서 연습할 단", style = suite(FontWeight.ExtraBold, 12), color = gg.textMuted)
+            Text(stringResource(R.string.table_to_practice_while_running), style = suite(FontWeight.ExtraBold, 12), color = gg.textMuted)
             // 전체 + 2~9단 = 9개를 5열로 배치 (웹과 동일)
             val options: List<Int?> = listOf(null) + LaneRunnerEngine.TABLES
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -347,7 +363,7 @@ private fun SetupPanel(engine: LaneRunnerEngine, over: Boolean) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         row.forEach { value ->
                             TableChip(
-                                label = if (value == null) "전체" else "${value}단",
+                                label = if (value == null) stringResource(R.string.all) else stringResource(R.string.table, value),
                                 selected = engine.table == value,
                                 modifier = Modifier.weight(1f),
                                 onClick = { Haptics.selection(); engine.table = value },
@@ -366,7 +382,7 @@ private fun SetupPanel(engine: LaneRunnerEngine, over: Boolean) {
                 if (over) Icons.Filled.RotateLeft else Icons.Filled.PlayArrow, null,
                 modifier = Modifier.size(18.dp),
             )
-            Text(if (over) "다시 달리기" else "달리기 시작")
+            Text(stringResource(if (over) R.string.run_again else R.string.start_running))
         }
     }
 }
@@ -396,14 +412,14 @@ private fun PausePanel(engine: LaneRunnerEngine, onExit: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text("장애물과 남은 시간이 멈춰 있어요.", style = suite(FontWeight.Medium, 13), color = gg.textMuted)
+        Text(stringResource(R.string.the_obstacles_and_timer_are_paused), style = suite(FontWeight.Medium, 13), color = gg.textMuted)
         GGButton(variant = GGButtonVariant.PRIMARY, size = GGButtonSize.LG, onClick = { engine.togglePause() }) {
             Icon(Icons.Filled.PlayArrow, null, Modifier.size(18.dp))
-            Text("이어서 달리기")
+            Text(stringResource(R.string.keep_running_2))
         }
         PressableCard(onClick = { engine.pause(); onExit() }) {
             Box(Modifier.height(44.dp), contentAlignment = Alignment.Center) {
-                Text("학습 모드로 돌아가기", style = suite(FontWeight.Bold, 13), color = gg.textMuted)
+                Text(stringResource(R.string.back_to_practice), style = suite(FontWeight.Bold, 13), color = gg.textMuted)
             }
         }
     }
@@ -419,6 +435,7 @@ private fun PlayPanel(engine: LaneRunnerEngine, active: Boolean) {
     val quiz = question != null && gate != null
     val reveal = game.outcome == LaneOutcome.CORRECT || game.outcome == LaneOutcome.WRONG
     val answer = question?.answer
+    val strings = rememberStrings()
 
     val remaining = if (gate != null && gate.startX > LaneRunner.JUDGE_X) {
         ((gate.x - LaneRunner.JUDGE_X) / (gate.startX - LaneRunner.JUDGE_X)).coerceIn(0.0, 1.0).toFloat()
@@ -426,20 +443,24 @@ private fun PlayPanel(engine: LaneRunnerEngine, active: Boolean) {
         0f
     }
     val statusLabel = when {
-        !quiz || gate == null -> "피한 장애물 ${game.dodged}개"
-        reveal -> if (game.outcome == LaneOutcome.CORRECT) "통과!" else "정답을 기억해요"
-        else -> "%.1f초".format(
+        !quiz || gate == null -> pluralStringResource(R.plurals.obstacles_dodged, game.dodged, game.dodged)
+        reveal -> stringResource(if (game.outcome == LaneOutcome.CORRECT) R.string.made_it else R.string.remember_the_answer)
+        else -> Seconds.text(
+            strings,
             (gate.x - LaneRunner.JUDGE_X).coerceAtLeast(0.0) / LaneRunner.speed(game.score) / 1000,
         )
     }
     val feedback = when (game.outcome) {
         LaneOutcome.CORRECT ->
-            if (LaneRunner.leveledUp(game)) "정답! 이제 속도 ${LaneRunner.level(game.score) + 1}단계로 빨라져요."
-            else "정답! $answer 길로 통과했어요."
+            if (LaneRunner.leveledUp(game)) stringResource(R.string.correct_speeding_up_to_level, LaneRunner.level(game.score) + 1)
+            else stringResource(R.string.correct_you_went_through_the_lane, checkNotNull(answer))  // 정답 판정은 문제가 있을 때만 난다
         LaneOutcome.WRONG ->
-            if (question != null) "아쉬워요! ${question.a} × ${question.b} = ${question.answer}" else "아쉬워요!"
-        LaneOutcome.HIT -> "쿵! 장애물에 부딪혔어요."
-        null -> if (quiz) "정답 숫자가 있는 길로 옮겨요!" else "위아래로 길을 옮겨 장애물을 피해요."
+            if (question != null) stringResource(R.string.so_close, question.a, question.b, question.answer)
+            else stringResource(R.string.so_close_2)
+        LaneOutcome.HIT -> stringResource(R.string.bonk_you_hit_an_obstacle)
+        null -> stringResource(
+            if (quiz) R.string.move_to_the_lane_with_the_right_number else R.string.switch_lanes_up_and_down_to_dodge_2,
+        )
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -448,7 +469,9 @@ private fun PlayPanel(engine: LaneRunnerEngine, active: Boolean) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "${if (engine.table == null) "전체 구구단" else "${engine.table}단"} · ${if (quiz) "정답 길 찾기" else "장애물 피하기"}",
+                    // 서식만 — 안쪽 문구는 각각 번역 (iOS 와 같음)
+                    "${engine.table?.let { stringResource(R.string.table, it) } ?: stringResource(R.string.all_tables)} · " +
+                        stringResource(if (quiz) R.string.find_the_right_lane else R.string.dodge_obstacles),
                     style = suite(FontWeight.Bold, 12), color = gg.textMuted,
                     maxLines = 1, overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),
@@ -489,7 +512,7 @@ private fun PlayPanel(engine: LaneRunnerEngine, active: Boolean) {
                 }
             } else {
                 Box(Modifier.height(44.dp), contentAlignment = Alignment.Center) {
-                    Text("장애물을 피해요!", style = suite(FontWeight.ExtraBold, 20), color = gg.text)
+                    Text(stringResource(R.string.dodge_the_obstacles), style = suite(FontWeight.ExtraBold, 20), color = gg.text)
                 }
             }
             Text(
@@ -504,7 +527,7 @@ private fun PlayPanel(engine: LaneRunnerEngine, active: Boolean) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 for (lane in 0..2) {
                     LaneRow(
-                        name = LANE_NAMES[lane],
+                        name = stringResource(LANE_NAMES[lane]),
                         value = gate?.values?.get(lane),
                         current = lane == game.lane,
                         correct = reveal && gate?.values?.get(lane) == answer,
@@ -550,14 +573,16 @@ private fun LaneRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(name, style = suite(FontWeight.ExtraBold, 12), color = gg.textMuted, modifier = Modifier.width(40.dp))
+        // 라벨 폭 — 영어 "Bottom"·일본어 "まんなか" 가 40dp 에서 두 줄로 쪼개져 넓히고 한 줄로 고정한다
+        Text(name, style = suite(FontWeight.ExtraBold, 12), color = gg.textMuted, maxLines = 1, softWrap = false,
+            modifier = Modifier.width(52.dp))
         if (value != null) {
             Text("$value", style = suite(FontWeight.ExtraBold, 22), color = gg.text)
         } else {
             Text("·", style = suite(FontWeight.Bold, 16), color = gg.textMuted)
         }
         Spacer(Modifier.weight(1f))
-        if (current) Text("공룡", style = suite(FontWeight.ExtraBold, 11), color = Color(0xFF2B6A4F))
+        if (current) Text(stringResource(R.string.dino), style = suite(FontWeight.ExtraBold, 11), color = Color(0xFF2B6A4F))
     }
 }
 
@@ -575,7 +600,7 @@ private fun MoveButton(up: Boolean, enabled: Boolean, onClick: () -> Unit) {
         ) {
             Icon(
                 if (up) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                contentDescription = if (up) "위 길로 이동" else "아래 길로 이동",
+                contentDescription = stringResource(if (up) R.string.move_to_upper_lane else R.string.move_to_lower_lane),
                 tint = gg.text, modifier = Modifier.size(28.dp),
             )
         }

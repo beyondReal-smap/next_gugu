@@ -14,12 +14,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import site.smap.gugudan.R
 import site.smap.gugudan.core.PremiumConfig
 import site.smap.gugudan.designsystem.*
 
@@ -32,8 +35,10 @@ object MinigameTrial {
     /** 새 판의 체험 문제 수 — 이용권이 있으면 제한 없음(null) */
     fun limit(isPremium: Boolean): Int? = if (isPremium) null else questions
 
-    /** 홈·학습 탭 카드 배지 — 무료 사용자에게만 */
-    fun badge(isPremium: Boolean): String? = if (isPremium) null else "${questions}문제 체험"
+    /** 홈·학습 탭 카드 배지 — 무료 사용자에게만 (앱 언어로 그릴 때마다 읽는다) */
+    @Composable
+    fun badge(isPremium: Boolean): String? =
+        if (isPremium) null else pluralStringResource(R.plurals.free_problems, questions, questions)
 }
 
 /** 시작 전 안내 — 체험이 몇 문제인지 먼저 알려 끝이 갑작스럽지 않게 한다 */
@@ -48,8 +53,8 @@ fun TrialNotice() {
     ) {
         Icon(Icons.Filled.ConfirmationNumber, null, tint = gg.accent, modifier = Modifier.size(16.dp))
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("무료 체험 · ${MinigameTrial.questions}문제", style = suite(FontWeight.ExtraBold, 13), color = gg.text)
-            Text("평생 이용권이 있으면 제한 없이 놀 수 있어요.", style = suite(FontWeight.Medium, 12), color = gg.textMuted)
+            Text(pluralStringResource(R.plurals.free_trial_problems, MinigameTrial.questions, MinigameTrial.questions), style = suite(FontWeight.ExtraBold, 13), color = gg.text)
+            Text(stringResource(R.string.with_the_lifetime_pass_you_can_play_with), style = suite(FontWeight.Medium, 12), color = gg.textMuted)
         }
     }
 }
@@ -60,15 +65,16 @@ fun TrialProgressPill(left: Int) {
     val gg = LocalGG.current
     val total = MinigameTrial.questions
     val current = (total - left + 1).coerceIn(1, total)
+    val description = stringResource(R.string.free_trial_problem_of, total, current)
     Row(
         Modifier.clip(CircleShape).background(gg.accent.copy(alpha = 0.12f))
             .padding(horizontal = 8.dp, vertical = 3.dp)
-            .clearAndSetSemantics { contentDescription = "무료 체험 ${total}문제 중 ${current}번째" },
+            .clearAndSetSemantics { contentDescription = description },
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(Icons.Filled.ConfirmationNumber, null, tint = gg.accent, modifier = Modifier.size(11.dp))
-        Text("체험 $current/$total", style = suite(FontWeight.ExtraBold, 11), color = gg.accent,
+        Text(stringResource(R.string.trial, current, total), style = suite(FontWeight.ExtraBold, 11), color = gg.accent,
             maxLines = 1, softWrap = false)
     }
 }
@@ -80,7 +86,7 @@ fun TrialProgressPill(left: Int) {
 @Composable
 fun TrialEndPanel(correct: Int, onUnlock: () -> Unit, onExit: () -> Unit) {
     val gg = LocalGG.current
-    val lead = if (correct > 0) "${correct}문제를 맞혔어요! " else ""
+    val lead = if (correct > 0) pluralStringResource(R.plurals.you_got_problems_right, correct, correct) else ""
     Column(
         Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -97,9 +103,9 @@ fun TrialEndPanel(correct: Int, onUnlock: () -> Unit, onExit: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Text("무료 체험은 여기까지!", style = suite(FontWeight.ExtraBold, 18), color = gg.text)
+            Text(stringResource(R.string.that_s_the_end_of_the_free_trial), style = suite(FontWeight.ExtraBold, 18), color = gg.text)
             Text(
-                lead + "평생 이용권이 있으면 제한 없이 계속 놀면서 연습할 수 있어요.",
+                lead + stringResource(R.string.with_the_lifetime_pass_you_can_keep),
                 style = suite(FontWeight.Medium, 13), color = gg.textMuted, textAlign = TextAlign.Center,
             )
         }
@@ -108,10 +114,10 @@ fun TrialEndPanel(correct: Int, onUnlock: () -> Unit, onExit: () -> Unit) {
             modifier = Modifier.fillMaxWidth(), onClick = onUnlock,
         ) {
             Icon(Icons.Filled.AutoAwesome, null, Modifier.size(18.dp))
-            Text("평생 이용권 보기")
+            Text(stringResource(R.string.see_lifetime_pass))
         }
         TextButton(onClick = onExit, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-            Text("나가기", style = suite(FontWeight.Bold, 14), color = gg.textMuted)
+            Text(stringResource(R.string.exit), style = suite(FontWeight.Bold, 14), color = gg.textMuted)
         }
     }
 }

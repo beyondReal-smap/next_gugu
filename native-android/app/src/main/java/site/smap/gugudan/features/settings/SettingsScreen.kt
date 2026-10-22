@@ -1,6 +1,7 @@
 package site.smap.gugudan.features.settings
 
 import android.content.Intent
+import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -22,6 +23,7 @@ import androidx.compose.material.icons.filled.Contrast
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FamilyRestroom
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Refresh
@@ -42,6 +44,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.Role
@@ -54,7 +57,10 @@ import androidx.core.net.toUri
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import site.smap.gugudan.BuildConfig
+import site.smap.gugudan.R
+import site.smap.gugudan.core.AppLanguage
 import site.smap.gugudan.core.PremiumConfig
+import site.smap.gugudan.core.PromoVisibility
 import site.smap.gugudan.core.ReminderPlanner
 import site.smap.gugudan.core.Theme
 import site.smap.gugudan.designsystem.*
@@ -62,6 +68,7 @@ import site.smap.gugudan.core.PushCopy
 import site.smap.gugudan.features.reminder.rememberEnableReminder
 import site.smap.gugudan.features.reminder.rememberNotificationAccess
 import site.smap.gugudan.services.Haptics
+import site.smap.gugudan.services.rememberStrings
 import site.smap.gugudan.store.*
 
 // 설정 (iOS SettingsView.swift 이식) — 프로필 톱니바퀴에서 여는 전체 화면.
@@ -81,10 +88,11 @@ fun SettingsScreen(onClose: () -> Unit) {
     val auth = LocalAuth.current
     val sync = LocalSync.current
     val context = LocalContext.current
+    val strings = rememberStrings()
     val scope = rememberCoroutineScope()
 
     var restoring by remember { mutableStateOf(false) }
-    var restoreNotice by remember { mutableStateOf<String?>(null) }
+    var restoreNotice by remember { mutableStateOf<Int?>(null) }   // @StringRes
     var confirmReset by remember { mutableStateOf(false) }
     val enableReminder = rememberEnableReminder { }
     val push = LocalPush.current
@@ -113,14 +121,14 @@ fun SettingsScreen(onClose: () -> Unit) {
     Column(Modifier.fillMaxSize().background(gg.bg).statusBarsPadding()) {
         // 헤더
         Box(Modifier.fillMaxWidth().height(52.dp).padding(horizontal = 8.dp)) {
-            Text("설정", style = suite(FontWeight.ExtraBold, 17), color = gg.text,
+            Text(stringResource(R.string.settings), style = suite(FontWeight.ExtraBold, 17), color = gg.text,
                 modifier = Modifier.align(Alignment.Center).semantics { heading() })
             PressableCard(modifier = Modifier.align(Alignment.CenterEnd), onClick = onClose) {
                 Box(
                     Modifier.height(48.dp).clip(CircleShape).background(gg.surface2).padding(horizontal = 16.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text("완료", style = suite(FontWeight.Bold, 15), color = gg.accent)
+                    Text(stringResource(R.string.done), style = suite(FontWeight.Bold, 15), color = gg.accent)
                 }
             }
         }
@@ -133,14 +141,14 @@ fun SettingsScreen(onClose: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             // 학습
-            SettingsGroup("학습") {
+            SettingsGroup(stringResource(R.string.settings_group_learning)) {
                 Column(Modifier.padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SettingsLabel(Icons.Filled.TrackChanges, "하루 목표",
-                        "하루에 맞힐 정답 수예요. 목표를 채우면 그날 알림은 쉬어요.")
+                    SettingsLabel(Icons.Filled.TrackChanges, stringResource(R.string.daily_goal),
+                        stringResource(R.string.correct_answers_to_aim_for_each_day))
                     ChoiceChips(
                         options = DAILY_GOAL_OPTIONS,
                         selected = game.state.dailyGoal,
-                        label = { "${it}개" },
+                        label = { strings.plural(R.plurals.answers, it, it) },
                         modifier = Modifier.padding(start = 36.dp),
                     ) { goal ->
                         game.setDailyGoal(goal)
@@ -149,30 +157,40 @@ fun SettingsScreen(onClose: () -> Unit) {
                 }
                 SettingsDivider()
                 ToggleRow(
-                    Icons.Filled.RecordVoiceOver, "문제 읽어주기",
-                    "새 문제가 나오면 선생님 목소리로 읽어 줘요.",
+                    Icons.Filled.RecordVoiceOver, stringResource(R.string.read_problems_aloud),
+                    stringResource(R.string.reads_each_new_problem_aloud),
                     checked = prefs.readAloud,
                 ) { prefs.updateReadAloud(it) }
             }
 
             // 화면
-            SettingsGroup("화면") {
+            SettingsGroup(stringResource(R.string.display)) {
                 Column(Modifier.padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SettingsLabel(Icons.Filled.Contrast, "테마", null)
+                    SettingsLabel(Icons.Filled.Contrast, stringResource(R.string.theme), null)
                     ChoiceChips(
                         options = listOf(Theme.SYSTEM, Theme.LIGHT, Theme.DARK),
                         selected = theme.theme,
-                        label = { ThemeStore.label(it) },
+                        label = { strings.get(ThemeStore.labelRes(it)) },
                         modifier = Modifier.padding(start = 36.dp),
                     ) { theme.set(it) }
+                }
+                // 앱 언어는 시스템 설정 > 앱 > 구구 어드벤처 > 언어에서 바꾼다 (Android 13+ 앱별 언어, iOS 와 같은 UX).
+                // 바꾸면 시스템이 Activity 를 다시 만든다. 12 이하는 기기 언어를 따르므로 행을 두지 않는다
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    SettingsDivider()
+                    LinkRow(Icons.Filled.Language, stringResource(R.string.language), AppLanguage.current.nativeName) {
+                        context.startActivity(
+                            Intent(Settings.ACTION_APP_LOCALE_SETTINGS, "package:${context.packageName}".toUri())
+                        )
+                    }
                 }
             }
 
             // 소리와 진동
-            SettingsGroup("소리와 진동") {
-                ToggleRow(Icons.AutoMirrored.Filled.VolumeUp, "효과음", null, prefs.soundOn) { prefs.updateSound(it) }
+            SettingsGroup(stringResource(R.string.sound_haptics)) {
+                ToggleRow(Icons.AutoMirrored.Filled.VolumeUp, stringResource(R.string.sound_effects), null, prefs.soundOn) { prefs.updateSound(it) }
                 SettingsDivider()
-                ToggleRow(Icons.Filled.Vibration, "진동", "버튼을 누르거나 정답을 맞힐 때 톡 울려요.", prefs.hapticsOn) {
+                ToggleRow(Icons.Filled.Vibration, stringResource(R.string.vibration), stringResource(R.string.a_light_buzz_when_you_tap_a_button_or), prefs.hapticsOn) {
                     prefs.updateHaptics(it)
                 }
             }
@@ -182,15 +200,15 @@ fun SettingsScreen(onClose: () -> Unit) {
                 Modifier.onGloballyPositioned { notificationsY = it.positionInParent().y.toInt() },
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                SettingsGroup("알림") {
+                SettingsGroup(stringResource(R.string.notifications)) {
                     // 기존 사용자 1회 안내 — 공지 알림이 꺼져 있고 아직 닫지 않았을 때만 (공지를 켜거나 닫으면 다시 안 보인다)
                     if (push.settings.showsNoticeHint) {
                         NoticeHintRow(onDismiss = { push.dismissNoticeHint() })
                         SettingsDivider()
                     }
                     ToggleRow(
-                        Icons.Filled.Notifications, "학습 알림",
-                        "하루 한 번, 오늘의 구구단을 알려 드려요. 밤에는 보내지 않아요.",
+                        Icons.Filled.Notifications, stringResource(R.string.practice_reminder),
+                        stringResource(R.string.once_a_day_we_ll_remind_you_about_today),
                         reminder.settings.enabled,
                     ) { on -> if (on) enableReminder(reminder.settings.hour) else reminder.disable() }
                     if (reminder.settings.enabled) {
@@ -203,14 +221,14 @@ fun SettingsScreen(onClose: () -> Unit) {
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             Icon(Icons.Filled.Schedule, null, tint = gg.textMuted, modifier = Modifier.size(20.dp))
-                            Text("알림 시각", style = suite(FontWeight.Bold, 15), color = gg.text, modifier = Modifier.weight(1f))
-                            HourStepButton(Icons.Filled.Remove, "한 시간 앞당기기",
+                            Text(stringResource(R.string.reminder_time), style = suite(FontWeight.Bold, 15), color = gg.text, modifier = Modifier.weight(1f))
+                            HourStepButton(Icons.Filled.Remove, stringResource(R.string.s_1_hour_earlier),
                                 enabled = hour > ReminderPlanner.ALLOWED_HOURS.first) {
                                 reminder.setHour(hour - 1, game.state)
                             }
                             Text(ReminderPlanner.hourLabel(hour), style = suite(FontWeight.Bold, 14),
                                 color = gg.accent, textAlign = TextAlign.Center, modifier = Modifier.widthIn(min = 64.dp))
-                            HourStepButton(Icons.Filled.Add, "한 시간 늦추기",
+                            HourStepButton(Icons.Filled.Add, stringResource(R.string.s_1_hour_later),
                                 enabled = hour < ReminderPlanner.ALLOWED_HOURS.last) {
                                 reminder.setHour(hour + 1, game.state)
                             }
@@ -218,8 +236,8 @@ fun SettingsScreen(onClose: () -> Unit) {
                     }
                     SettingsDivider()
                     ToggleRow(
-                        Icons.Filled.Campaign, "공지 알림",
-                        "업데이트·점검 같은 중요한 소식을 알려 드려요.",
+                        Icons.Filled.Campaign, stringResource(R.string.announcements),
+                        stringResource(R.string.important_news_such_as_updates_and),
                         push.settings.serviceOptIn,
                     ) { on ->
                         if (!on) push.setService(false)
@@ -229,9 +247,9 @@ fun SettingsScreen(onClose: () -> Unit) {
                     }
                     SettingsDivider()
                     ToggleRow(
-                        Icons.Filled.FamilyRestroom, "보호자 학습 소식",
-                        if (learningEligible) "매주 학습 리포트가 준비되면 알려 드려요."
-                        else "이메일을 연결하고 기록 보관을 켜면 받을 수 있어요.",
+                        Icons.Filled.FamilyRestroom, stringResource(R.string.weekly_progress_for_parents),
+                        if (learningEligible) stringResource(R.string.we_ll_let_you_know_when_the_weekly)
+                        else stringResource(R.string.available_after_you_link_an_email_and),
                         checked = learningEligible && push.settings.learningOptIn,
                         enabled = learningEligible,
                     ) { on ->
@@ -240,41 +258,44 @@ fun SettingsScreen(onClose: () -> Unit) {
                             if (allowed) push.setLearning(true) else push.markDeniedBySystem()
                         }
                     }
-                    SettingsDivider()
-                    val consentDate = PushCopy.localDate(push.settings.marketingOptInAt, ZoneId.systemDefault())
-                    ToggleRow(
-                        Icons.Filled.CardGiftcard, "이벤트·혜택 알림 (광고)",
-                        if (push.settings.marketingOptIn && consentDate != null) PushCopy.consentSubtitle(consentDate)
-                        else PushCopy.MARKETING_OFF_SUBTITLE,
-                        checked = push.settings.marketingOptIn,
-                        enabled = !marketingBusy,
-                    ) { on ->
-                        if (on) {
-                            notificationAccess { allowed ->
-                                if (allowed) marketingStep = MarketingStep.GATE else push.markDeniedBySystem()
-                            }
-                        } else {
-                            // 끄기는 즉시 — 서버 기록이 실패해도 대기열에 두고 기기 날짜로 결과를 알린다
-                            marketingBusy = true
-                            scope.launch {
-                                val done = push.revokeMarketing()
-                                marketingBusy = false
-                                marketingResult = PushCopy.REVOKED_TITLE to PushCopy.revokedMessage(done.date, done.sender)
+                    // 광고 토글은 한국 Play 결제 국가에만 보인다 — 이미 켜 둔 사람에게는 끌 수 있게 계속 보인다 (iOS 와 같다)
+                    if (PromoVisibility.showsToggle(premium.billingCountry, push.settings.marketingOptIn)) {
+                        SettingsDivider()
+                        val consentDate = PushCopy.localDate(push.settings.marketingOptInAt, ZoneId.systemDefault())
+                        ToggleRow(
+                            Icons.Filled.CardGiftcard, stringResource(R.string.events_offers_promotional),
+                            if (push.settings.marketingOptIn && consentDate != null) PushCopy.consentSubtitle(strings, consentDate)
+                            else PushCopy.marketingOffSubtitle(strings),
+                            checked = push.settings.marketingOptIn,
+                            enabled = !marketingBusy,
+                        ) { on ->
+                            if (on) {
+                                notificationAccess { allowed ->
+                                    if (allowed) marketingStep = MarketingStep.GATE else push.markDeniedBySystem()
+                                }
+                            } else {
+                                // 끄기는 즉시 — 서버 기록이 실패해도 대기열에 두고 기기 날짜로 결과를 알린다
+                                marketingBusy = true
+                                scope.launch {
+                                    val done = push.revokeMarketing()
+                                    marketingBusy = false
+                                    marketingResult = PushCopy.revokedTitle(strings) to PushCopy.revokedMessage(strings, done.date)
+                                }
                             }
                         }
                     }
                 }
                 Text(
-                    "알림을 꺼도 모든 기능을 그대로 쓸 수 있어요.",
+                    stringResource(R.string.all_features_work_even_with),
                     style = suite(FontWeight.Medium, 12), color = gg.textMuted,
                 )
                 // 앱에서는 켰지만 시스템 설정에서 꺼진 경우 — 앱이 대신 켤 수 없어 설정으로 안내한다
                 if (reminder.deniedBySystem || push.deniedBySystem) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("휴대폰 설정에서 구구 어드벤처 알림이 꺼져 있어요.",
+                        Text(stringResource(R.string.gugu_adventure_notifications_are_turned),
                             style = suite(FontWeight.Medium, 12), color = gg.warning, modifier = Modifier.weight(1f))
                         Text(
-                            "설정 열기", style = suite(FontWeight.Bold, 12), color = gg.accent,
+                            stringResource(R.string.open_settings), style = suite(FontWeight.Bold, 12), color = gg.accent,
                             modifier = Modifier.heightIn(min = 44.dp).wrapContentHeight().clickable {
                                 Haptics.impactLight()
                                 context.startActivity(
@@ -292,7 +313,7 @@ fun SettingsScreen(onClose: () -> Unit) {
 
             // 이용권
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                SettingsGroup("이용권") {
+                SettingsGroup(stringResource(R.string.purchases)) {
                     if (premium.isPremium) {
                         Row(
                             Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
@@ -300,24 +321,25 @@ fun SettingsScreen(onClose: () -> Unit) {
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(Icons.Filled.AutoAwesome, null, tint = gg.accent, modifier = Modifier.size(20.dp))
-                            Text("평생 이용권", style = suite(FontWeight.Bold, 15), color = gg.text, modifier = Modifier.weight(1f))
+                            Text(stringResource(R.string.lifetime_pass), style = suite(FontWeight.Bold, 15), color = gg.text, modifier = Modifier.weight(1f))
                             Box(Modifier.clip(CircleShape).background(gg.accent.copy(alpha = 0.12f))
                                 .padding(horizontal = 10.dp, vertical = 4.dp)) {
-                                Text("이용 중", style = suite(FontWeight.ExtraBold, 12), color = gg.accent)
+                                Text(stringResource(R.string.active), style = suite(FontWeight.ExtraBold, 12), color = gg.accent)
                             }
                         }
                     } else {
-                        LinkRow(Icons.Filled.AutoAwesome, "평생 이용권 · 커피 한 잔 값", premium.price) { premium.openPaywall() }
+                        LinkRow(Icons.Filled.AutoAwesome, stringResource(R.string.lifetime_pass_the_price_of_a_coffee), premium.price) { premium.openPaywall() }
                     }
                     SettingsDivider()
-                    LinkRow(Icons.Filled.Refresh, "구매 복원", if (restoring) "확인 중…" else null) {
+                    LinkRow(Icons.Filled.Refresh, stringResource(R.string.restore_purchases),
+                        if (restoring) stringResource(R.string.checking) else null) {
                         if (!restoring) {
                             restoring = true
                             restoreNotice = null
                             premium.restore { ok ->
                                 restoring = false
-                                restoreNotice = if (ok) "구매를 확인했어요. 기록 보관을 켜는 중이에요."
-                                                else "복원할 구매 내역이 없어요."
+                                restoreNotice = if (ok) R.string.purchase_confirmed_turning_on_record
+                                                else R.string.no_purchases_to_restore
                                 // 이미 보유한 상품은 새 구매 플로우가 뜨지 않으므로, 복원 경로에서도
                                 // 서버 구매 등록과 보호자 권한을 시도한다 (PaywallScreen 과 동일).
                                 if (ok) scope.launch { sync.enableGuardianSync(auth, premium.lastPurchaseToken) }
@@ -325,23 +347,24 @@ fun SettingsScreen(onClose: () -> Unit) {
                         }
                     }
                     SettingsDivider()
-                    LinkRow(Icons.Filled.Description, "이용약관", null) { open(PremiumConfig.Legal.TERMS) }
+                    LinkRow(Icons.Filled.Description, stringResource(R.string.terms_of_use), null) { open(PremiumConfig.Legal.TERMS) }
                     SettingsDivider()
-                    LinkRow(Icons.Filled.VerifiedUser, "개인정보처리방침", null) { open(PremiumConfig.Legal.PRIVACY) }
+                    LinkRow(Icons.Filled.VerifiedUser, stringResource(R.string.privacy_policy), null) { open(PremiumConfig.Legal.PRIVACY) }
                 }
-                restoreNotice?.let { Text(it, style = suite(FontWeight.Medium, 12), color = gg.textMuted) }
+                restoreNotice?.let { Text(stringResource(it), style = suite(FontWeight.Medium, 12), color = gg.textMuted) }
             }
 
             // 앱 정보
-            SettingsGroup("앱 정보") {
+            SettingsGroup(stringResource(R.string.about)) {
+                val versionDescription = stringResource(R.string.version_build_description, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE)
                 Row(
                     Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp)
-                        .clearAndSetSemantics { contentDescription = "버전 ${BuildConfig.VERSION_NAME}, 빌드 ${BuildConfig.VERSION_CODE}" },
+                        .clearAndSetSemantics { contentDescription = versionDescription },
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(Icons.Filled.Info, null, tint = gg.textMuted, modifier = Modifier.size(20.dp))
-                    Text("버전", style = suite(FontWeight.Bold, 15), color = gg.text, modifier = Modifier.weight(1f))
+                    Text(stringResource(R.string.version), style = suite(FontWeight.Bold, 15), color = gg.text, modifier = Modifier.weight(1f))
                     Text("${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                         style = suite(FontWeight.Bold, 14), color = gg.textMuted)
                 }
@@ -351,17 +374,17 @@ fun SettingsScreen(onClose: () -> Unit) {
             if (!confirmReset) {
                 GGButton(variant = GGButtonVariant.GHOST, onClick = { confirmReset = true }) {
                     Icon(Icons.Filled.Refresh, null, Modifier.size(16.dp))
-                    Text("학습 기록 초기화", color = gg.danger)
+                    Text(stringResource(R.string.reset_learning_records), color = gg.danger)
                 }
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("레벨·별·업적·기록이 모두 처음으로 돌아가요. 되돌릴 수 없어요.",
+                    Text(stringResource(R.string.levels_stars_achievements_and_records),
                         style = suite(FontWeight.Bold, 13), color = gg.text)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         GGButton(variant = GGButtonVariant.SURFACE, modifier = Modifier.weight(1f),
-                            onClick = { confirmReset = false }) { Text("취소") }
+                            onClick = { confirmReset = false }) { Text(stringResource(R.string.cancel)) }
                         GGButton(variant = GGButtonVariant.DANGER, modifier = Modifier.weight(1f),
-                            onClick = { game.resetProgress(); confirmReset = false }) { Text("초기화 확인") }
+                            onClick = { game.resetProgress(); confirmReset = false }) { Text(stringResource(R.string.confirm_reset)) }
                     }
                 }
             }
@@ -385,8 +408,8 @@ fun SettingsScreen(onClose: () -> Unit) {
                     marketingStep = MarketingStep.NONE
                     marketingResult = when (result) {
                         is PushStore.MarketingResult.Recorded ->
-                            PushCopy.GRANTED_TITLE to PushCopy.grantedMessage(result.date, result.sender)
-                        PushStore.MarketingResult.Failed -> null to PushCopy.FAILED_MESSAGE
+                            PushCopy.grantedTitle(strings) to PushCopy.grantedMessage(strings, result.date)
+                        PushStore.MarketingResult.Failed -> null to PushCopy.failedMessage(strings)
                     }
                 }
             },
@@ -414,6 +437,7 @@ private fun SettingsGroup(title: String, content: @Composable ColumnScope.() -> 
 @Composable
 private fun NoticeHintRow(onDismiss: () -> Unit) {
     val gg = LocalGG.current
+    val dismissLabel = stringResource(R.string.dismiss)
     Row(
         Modifier.fillMaxWidth().background(gg.accent.copy(alpha = 0.08f))
             .padding(start = 20.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
@@ -422,14 +446,14 @@ private fun NoticeHintRow(onDismiss: () -> Unit) {
     ) {
         Icon(Icons.Filled.AutoAwesome, null, tint = gg.accent, modifier = Modifier.size(20.dp))
         Text(
-            "새 기능: 공지 알림을 켜면 업데이트·점검 소식을 받을 수 있어요.",
+            stringResource(R.string.new_turn_on_announcements_to_hear_about),
             style = suite(FontWeight.Bold, 13), color = gg.text, modifier = Modifier.weight(1f),
         )
         // 보이는 아이콘은 18dp, 누르는 영역은 48dp
         Box(
             Modifier.size(48.dp).clip(CircleShape)
                 .clickable(role = Role.Button) { Haptics.impactLight(); onDismiss() }
-                .semantics { contentDescription = "안내 닫기" },
+                .semantics { contentDescription = dismissLabel },
             contentAlignment = Alignment.Center,
         ) {
             Icon(Icons.Filled.Close, null, tint = gg.textMuted, modifier = Modifier.size(18.dp))

@@ -1,7 +1,10 @@
 package site.smap.gugudan.core
 
+import site.smap.gugudan.R
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
+import java.time.format.TextStyle
+import java.util.Locale
 
 // 보호자 주간 리포트 (iOS Core/WeeklyReport.swift 이식) — GameState.dayLog(최근 56일 링버퍼)로
 // 최근 7일을 요약한다. 서버 없이 기기 기록만으로 만든다 (웹 lib/report/weekly.ts 대응).
@@ -37,23 +40,25 @@ data class WeeklyReport(
     val correctDelta: Int get() = correct - prevCorrect
 
     /** 보호자에게 건네는 한마디 — 이번 주 기록에서 가장 도움이 될 행동 하나를 고른다 */
-    val parentTip: String get() {
-        if (solved == 0) return "이번 주는 아직 기록이 없어요. 하루 5분, 한 판부터 함께 시작해 보세요."
+    fun parentTip(strings: Strings): String {
+        if (solved == 0) return strings.get(R.string.no_activity_yet_this_week_start_together)
         val miss = topMisses.firstOrNull()
         val p = miss?.let { Problems.parseKey(it.key) }
         if (miss != null && miss.count >= 2 && p != null) {
-            return "자주 헷갈리는 문제는 ${p.a} × ${KoreanReading.withCopula(p.b)}. ${p.a}단 표를 소리 내어 함께 외워 보세요."
+            // 한국어는 식 끝에 받침 맞춘 서술격 조사("7 × 8이에요")를 붙인다 — 다른 언어는 식만
+            val fact = if (strings.language == AppLanguage.KO) "${p.a} × ${KoreanReading.withCopula(p.b)}" else "${p.a} × ${p.b}"
+            return strings.get(R.string.the_trickiest_one_this_week_is_try, fact, p.a)
         }
-        if (activeDays < 3) return "짧게라도 매일 하는 습관이 가장 중요해요. 학습 알림을 켜 두면 도움이 돼요."
+        if (activeDays < 3) return strings.get(R.string.a_short_daily_habit_matters_most_turning)
         val acc = accuracy
-        if (acc != null && acc >= 90) return "정확도가 아주 좋아요! 60초 챌린지로 속도에도 도전해 보세요."
-        return "꾸준히 하고 있어요. 취약 문제 복습으로 헷갈리는 문제를 정리해 보세요."
+        if (acc != null && acc >= 90) return strings.get(R.string.great_accuracy_try_the_60_second)
+        return strings.get(R.string.nice_consistency_use_review_weak_spots)
     }
 
     companion object {
         const val SPAN = 7
         const val TOP_MISS_LIMIT = 3
-        private val WEEKDAY_LABELS = listOf("월", "화", "수", "목", "금", "토", "일")   // ISO: 월=1 … 일=7
+        private val WEEKDAY_LABELS = listOf("월", "화", "수", "목", "금", "토", "일")   // ISO: 월=1 … 일=7  // i18n:skip
 
         /** today 를 마지막 날로 하는 최근 7일 리포트 */
         fun build(dayLog: List<DayLogEntry>, today: String): WeeklyReport {
@@ -98,7 +103,19 @@ data class WeeklyReport(
         /** "2026-09-29" 를 days 만큼 옮긴 날짜 */
         fun shift(date: String, days: Int): String = Commit.todayStr(parse(date).plusDays(days.toLong()))
 
-        /** 요일 한 글자 — "2026-09-29" → "화" */
-        fun weekdayLabel(date: String): String = WEEKDAY_LABELS[parse(date).dayOfWeek.value - 1]
+        /** 요일 한 글자 — "2026-09-29" → "화" (en "T", ja "火"). 한국어는 기존 표 그대로, 그 밖은 그 언어의 가장 짧은 요일 */
+        fun weekdayLabel(
+            date: String,
+            language: AppLanguage = AppLanguage.current,
+            locale: Locale = AppLanguage.formatLocale,
+        ): String {
+            val day = parse(date).dayOfWeek
+            if (language == AppLanguage.KO) return WEEKDAY_LABELS[day.value - 1]
+            return day.getDisplayName(TextStyle.NARROW_STANDALONE, locale)
+        }
+
+        /** 요일 전체 이름 (화면 낭독용) — "화요일" / "Tuesday" / "火曜日" (iOS weekdayName 과 같다) */
+        fun weekdayName(date: String, locale: Locale = AppLanguage.formatLocale): String =
+            parse(date).dayOfWeek.getDisplayName(TextStyle.FULL_STANDALONE, locale)
     }
 }

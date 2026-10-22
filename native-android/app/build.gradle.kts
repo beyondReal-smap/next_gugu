@@ -41,8 +41,8 @@ android {
         applicationId = "site.smap.gugudan"
         minSdk = 28          // SceneView(Filament) 요구 — 기기 커버리지 ~97%
         targetSdk = 36
-        versionCode = 23     // vc23: 2.5.0 — FCM 원격 푸시(공지·보호자 학습 소식·이벤트 알림)
-        versionName = "2.5.0"
+        versionCode = 24     // vc24: 2.6.0 — 영어·일본어(화면·선생님 음성·앱별 언어)
+        versionName = "2.6.0"
 
         buildConfigField("String", "SUPABASE_HOST", "\"${supabaseProp("SUPABASE_HOST")}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${supabaseProp("SUPABASE_ANON_KEY")}\"")
@@ -60,6 +60,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            // 의사 현지화(en-XA 길게·ar-XB 오른쪽→왼쪽) — 영어 길이 넘침 점검용, 출시 빌드에는 없다
+            isPseudoLocalesEnabled = true
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -79,9 +83,20 @@ android {
         compose = true
         buildConfig = true
     }
-    // 낭독 음성(assets/voice/*.m4a)은 압축하지 않는다 — openFd 로 바로 재생하려면 비압축이어야 한다
+    // 낭독 음성(assets/voice/<언어>/*.m4a)은 압축하지 않는다 — openFd 로 바로 재생하려면 비압축이어야 한다
     androidResources {
         noCompress += "m4a"
+        // 앱 언어는 ko·en·ja 셋 — 라이브러리의 다른 언어 리소스를 빼고, Android 13+ 앱별 언어 목록도 이 셋만
+        // (기본 values/ 는 영어 = res/resources.properties)
+        localeFilters += listOf("en", "ko", "ja")
+        generateLocaleConfig = true
+    }
+    // 언어 분할을 끈다 — 켜 두면 Play 가 기기 언어 리소스만 설치해, 앱별 언어를 다른 언어로 고르면
+    // 그 언어 문자열이 없어 영어로 폴백한다. 문자열 세 언어는 수십 KB 라 비용이 작다
+    bundle {
+        language {
+            enableSplit = false
+        }
     }
 }
 

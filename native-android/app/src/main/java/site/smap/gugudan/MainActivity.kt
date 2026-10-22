@@ -34,6 +34,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import site.smap.gugudan.designsystem.GuguTheme
@@ -50,6 +51,7 @@ import site.smap.gugudan.features.basket.BasketScreen
 import site.smap.gugudan.features.lanerunner.LaneRunnerScreen
 import site.smap.gugudan.features.runner.RunnerScreen
 import site.smap.gugudan.features.session.SessionScreen
+import site.smap.gugudan.services.AndroidStrings
 import site.smap.gugudan.services.Haptics
 import site.smap.gugudan.services.LearningIdentityStore
 import site.smap.gugudan.services.LearningOutboxStore
@@ -88,6 +90,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // 앱 언어 — 앱별 언어를 바꾸면 Activity 가 다시 만들어지며 여기서 다시 정한다
+        AndroidStrings.updateLanguage(this)
 
         // DEBUG 테스트 훅 — adb 인스트루먼트 없이 시스템 프로퍼티로 주입
         // 예) adb shell setprop debug.gugu.premium 1
@@ -106,7 +110,7 @@ class MainActivity : ComponentActivity() {
         val theme = ThemeStore(persistence)
         val prefs = PrefsStore(persistence)
         val router = Router().also { this.router = it }
-        val auth = AuthStore(persistence, lifecycleScope)
+        val auth = AuthStore(persistence, lifecycleScope, AndroidStrings(this))
         val sync = SyncStore(
             LearningIdentityStore(persistence), LearningOutboxStore(persistence), lifecycleScope,
         )
@@ -396,9 +400,9 @@ private fun MainTabs() {
                 Modifier.fillMaxWidth().navigationBarsPadding(),
                 horizontalArrangement = Arrangement.SpaceEvenly,
             ) {
-                TabItem(Icons.Filled.Home, "홈", router.tab == AppTab.HOME) { router.tab = AppTab.HOME }
-                TabItem(Icons.Filled.School, "학습", router.tab == AppTab.LEARN) { router.tab = AppTab.LEARN }
-                TabItem(Icons.Filled.Person, "프로필", router.tab == AppTab.PROFILE) { router.tab = AppTab.PROFILE }
+                TabItem(Icons.Filled.Home, stringResource(R.string.home), router.tab == AppTab.HOME) { router.tab = AppTab.HOME }
+                TabItem(Icons.Filled.School, stringResource(R.string.learn), router.tab == AppTab.LEARN) { router.tab = AppTab.LEARN }
+                TabItem(Icons.Filled.Person, stringResource(R.string.profile), router.tab == AppTab.PROFILE) { router.tab = AppTab.PROFILE }
             }
         }
     }

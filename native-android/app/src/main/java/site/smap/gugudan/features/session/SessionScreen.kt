@@ -1,9 +1,11 @@
 package site.smap.gugudan.features.session
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -29,6 +31,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -41,14 +45,17 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import site.smap.gugudan.R
+import site.smap.gugudan.core.AppLanguage
 import site.smap.gugudan.core.GameMode
-import site.smap.gugudan.core.KoreanReading
+import site.smap.gugudan.core.SpokenMath
 import site.smap.gugudan.core.VoiceLines
 import site.smap.gugudan.core.ModeKind
 import site.smap.gugudan.designsystem.*
 import site.smap.gugudan.features.home.GaugeBar
 import site.smap.gugudan.services.Haptics
 import site.smap.gugudan.services.Speech
+import site.smap.gugudan.services.rememberStrings
 import site.smap.gugudan.store.LocalAuth
 import site.smap.gugudan.store.LocalGame
 import site.smap.gugudan.store.LocalPrefs
@@ -142,7 +149,7 @@ private fun SessionPlayView(engine: SessionEngine, onExit: () -> Unit) {
                 ) {
                     PressableCard(onClick = { requestExit() }) {
                         Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
-                            Icon(Icons.Filled.Close, "그만하기", tint = gg.textMuted, modifier = Modifier.size(22.dp))
+                            Icon(Icons.Filled.Close, stringResource(R.string.quit), tint = gg.textMuted, modifier = Modifier.size(22.dp))
                         }
                     }
                     when (engine.modeKind) {
@@ -153,10 +160,11 @@ private fun SessionPlayView(engine: SessionEngine, onExit: () -> Unit) {
                             if (engine.mode == GameMode.TIME_ATTACK) {
                                 SpeedTimer(engine)
                             } else {
+                                val progressLabel = stringResource(R.string.problem_of, engine.total, engine.idx + 1)
                                 Text("${engine.idx + 1}/${engine.total}",
                                     style = suite(FontWeight.Bold, 14), color = gg.textMuted,
                                     modifier = Modifier.semantics {
-                                        contentDescription = "${engine.total}문제 중 ${engine.idx + 1}번째"
+                                        contentDescription = progressLabel
                                     })
                             }
                         }
@@ -178,7 +186,7 @@ private fun SessionPlayView(engine: SessionEngine, onExit: () -> Unit) {
                         Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
                             Icon(
                                 if (prefs.readAloud) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
-                                if (prefs.readAloud) "문제 읽어주기 끄기" else "문제 읽어주기 켜기",
+                                stringResource(if (prefs.readAloud) R.string.turn_off_read_aloud else R.string.turn_on_read_aloud),
                                 tint = if (prefs.readAloud) gg.accent else gg.textMuted,
                                 modifier = Modifier.size(20.dp),
                             )
@@ -190,10 +198,11 @@ private fun SessionPlayView(engine: SessionEngine, onExit: () -> Unit) {
                 // 점수(무제한) + 콤보
                 Box(Modifier.fillMaxWidth().height(28.dp)) {
                     if (engine.modeKind != ModeKind.FIXED) {
+                        val scoreLabel = pluralStringResource(R.plurals.correct_answers, engine.score, engine.score)
                         Row(
                             Modifier.align(Alignment.CenterStart).clip(CircleShape)
                                 .background(gg.surface2).padding(horizontal = 10.dp, vertical = 5.dp)
-                                .clearAndSetSemantics { contentDescription = "맞힌 문제 ${engine.score}개" },
+                                .clearAndSetSemantics { contentDescription = scoreLabel },
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -208,7 +217,7 @@ private fun SessionPlayView(engine: SessionEngine, onExit: () -> Unit) {
                     ) {
                         Pill(bg = gg.danger.copy(alpha = 0.15f), fg = gg.danger) {
                             Icon(Icons.Filled.LocalFireDepartment, null, Modifier.size(14.dp))
-                            Text("${engine.combo} 콤보")
+                            Text(stringResource(R.string.combo, engine.combo))
                         }
                     }
                 }
@@ -221,13 +230,17 @@ private fun SessionPlayView(engine: SessionEngine, onExit: () -> Unit) {
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Box(Modifier.height(52.dp), contentAlignment = Alignment.BottomCenter) {
-                            androidx.compose.animation.AnimatedVisibility(engine.feedback != null, enter = fadeIn(), exit = fadeOut()) {
-                                val correct = engine.feedback == AnswerFeedback.CORRECT
-                                Icon(
-                                    if (correct) Icons.Filled.CheckCircle else Icons.Filled.Cancel, null,
-                                    tint = if (correct) gg.success else gg.danger,
-                                    modifier = Modifier.padding(bottom = 12.dp).size(32.dp),
-                                )
+                            // 사라지는 동안에도 그 판정을 그린다 — AnimatedVisibility 는 fade-out 중에 지금 값(다음 문제 = null)으로
+                            // 다시 그려 정답 ✓ 가 ✗ 로 바뀌어 보였다. AnimatedContent 는 나가는 쪽에 이전 값을 넘긴다
+                            AnimatedContent(engine.feedback, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "feedback") { fb ->
+                                if (fb != null) {
+                                    val correct = fb == AnswerFeedback.CORRECT
+                                    Icon(
+                                        if (correct) Icons.Filled.CheckCircle else Icons.Filled.Cancel, null,
+                                        tint = if (correct) gg.success else gg.danger,
+                                        modifier = Modifier.padding(bottom = 12.dp).size(32.dp),
+                                    )
+                                }
                             }
                         }
                         Equation(engine)
@@ -245,15 +258,16 @@ private fun SessionPlayView(engine: SessionEngine, onExit: () -> Unit) {
                             }
                         }
                     }
-                    val hint = engine.coachHint
+                    val hint = engine.coachHint(rememberStrings())
                     if (hint != null && engine.feedback == null) {
+                        val hintLabel = stringResource(R.string.hint, hint.title, hint.scaffold)
                         Row(
                             Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(bottom = 4.dp)
                                 .clip(RoundedCornerShape(14.dp))
                                 .background(gg.warning.copy(alpha = 0.12f))
                                 .border(1.dp, gg.warning.copy(alpha = 0.25f), RoundedCornerShape(14.dp))
                                 .padding(horizontal = 14.dp, vertical = 10.dp)
-                                .clearAndSetSemantics { contentDescription = "힌트, ${hint.title}, ${hint.scaffold}" },
+                                .clearAndSetSemantics { contentDescription = hintLabel },
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -282,10 +296,12 @@ private fun SessionPlayView(engine: SessionEngine, onExit: () -> Unit) {
 
             ConfirmSheet(
                 visible = confirmExit,
-                title = "그만할까요?",
-                message = "지금까지 푼 ${engine.answeredCount}문제는 기록돼요.",
-                cancelLabel = "계속하기",
-                confirmLabel = "그만하기",
+                title = stringResource(R.string.want_to_stop),
+                message = pluralStringResource(
+                    R.plurals.the_problems_you_ve_solved_so_far_will, engine.answeredCount, engine.answeredCount,
+                ),
+                cancelLabel = stringResource(R.string.keep_going),
+                confirmLabel = stringResource(R.string.quit),
                 onCancel = {
                     confirmExit = false
                     engine.resume()
@@ -341,32 +357,32 @@ private fun Equation(engine: SessionEngine) {
         }
     }
     val stateText = when (engine.feedback) {
-        AnswerFeedback.CORRECT -> "정답"
-        AnswerFeedback.WRONG -> "오답. ${wrongExplanation(engine)}"
-        null -> if (engine.input.isEmpty()) "" else "입력 ${engine.input}"
+        AnswerFeedback.CORRECT -> stringResource(R.string.correct)
+        AnswerFeedback.WRONG -> stringResource(R.string.wrong, wrongExplanation(engine))
+        null -> if (engine.input.isEmpty()) "" else stringResource(R.string.entered, engine.input)
     }
     Text(
         text,
         style = suite(FontWeight.ExtraBold, 52),
         maxLines = 1, softWrap = false,
         modifier = Modifier.clearAndSetSemantics {
-            contentDescription = KoreanReading.question(p, engine.mode, st)
+            contentDescription = SpokenMath.question(p, engine.mode, st)
             stateDescription = stateText
         },
     )
 }
 
+@Composable
 private fun wrongExplanation(engine: SessionEngine): String {
     val p = engine.problem
     val answer = p.a * p.b
     val st = engine.statement
     if (engine.mode == GameMode.TRUEFALSE && st != null) {
-        return if (st.isTrue) "맞는 식이었어요 — ${p.a} × ${p.b} = $answer"
-        else "${p.a} × ${p.b} = $answer — 틀린 식이에요"
+        return if (st.isTrue) stringResource(R.string.it_was_true, p.a, p.b, answer)
+        else stringResource(R.string.that_s_wrong, p.a, p.b, answer)
     }
     val expected = if (engine.mode == GameMode.MISSING) p.b else answer
-    return engine.lastGiven?.let { KoreanReading.notButIs(it, expected) }
-        ?: "정답은 ${KoreanReading.withCopula(expected)}"
+    return engine.lastGiven?.let { SpokenMath.notButIs(it, expected) } ?: SpokenMath.answerIs(expected)
 }
 
 // MARK: 진행 위젯
@@ -394,8 +410,9 @@ private fun CountdownTimer(engine: SessionEngine, limitMs: Int, modifier: Modifi
     }
     val sec = ((left + 999) / 1000).toInt()
     val urgent = sec <= 10
+    val secondsLabel = pluralStringResource(R.plurals.seconds_left, sec, sec)
     Row(
-        modifier.clearAndSetSemantics { contentDescription = "남은 시간 ${sec}초" },
+        modifier.clearAndSetSemantics { contentDescription = secondsLabel },
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -409,8 +426,9 @@ private fun CountdownTimer(engine: SessionEngine, limitMs: Int, modifier: Modifi
 @Composable
 private fun HeartsView(lives: Int, max: Int) {
     val gg = LocalGG.current
+    val heartsLabel = pluralStringResource(R.plurals.hearts_left, lives, lives)
     Row(
-        Modifier.clearAndSetSemantics { contentDescription = "남은 하트 ${lives}개" },
+        Modifier.clearAndSetSemantics { contentDescription = heartsLabel },
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         repeat(max) { i ->
@@ -454,7 +472,7 @@ fun Keypad(onInput: (Int) -> Unit, onDelete: () -> Unit, onSubmit: () -> Unit, c
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             key(Modifier.weight(1f), onDelete) {
-                Icon(Icons.AutoMirrored.Filled.Backspace, "지우기", tint = gg.textMuted, modifier = Modifier.size(22.dp))
+                Icon(Icons.AutoMirrored.Filled.Backspace, stringResource(R.string.delete), tint = gg.textMuted, modifier = Modifier.size(22.dp))
             }
             key(Modifier.weight(1f), { onInput(0) }) {
                 Text("0", style = suite(FontWeight.Bold, 24), color = gg.text)
@@ -469,7 +487,7 @@ fun Keypad(onInput: (Int) -> Unit, onDelete: () -> Unit, onSubmit: () -> Unit, c
                         .background(if (canSubmit) gg.accent else gg.accent.copy(alpha = 0.4f)),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text("확인", style = suite(FontWeight.Bold, 18), color = gg.accentFg)
+                    Text(stringResource(R.string.ok_2), style = suite(FontWeight.Bold, 18), color = gg.accentFg)
                 }
             }
         }
@@ -478,13 +496,22 @@ fun Keypad(onInput: (Int) -> Unit, onDelete: () -> Unit, onSubmit: () -> Unit, c
 
 // MARK: OX 패드 (iOS OxPad.swift 이식)
 
+/** 고른 쪽 기호 — 한국어 O/X, 일본어 ○/×, 영어 ✓/✗ (iOS OxPad.mark) */
+fun oxMark(isTrue: Boolean): String = when (AppLanguage.current) {
+    AppLanguage.KO -> if (isTrue) "O" else "X"
+    AppLanguage.JA -> if (isTrue) "○" else "×"
+    AppLanguage.EN -> if (isTrue) "✓" else "✗"
+}
+
 @Composable
 fun OxPad(onAnswer: (Boolean) -> Unit) {
     val gg = LocalGG.current
+    val trueLabel = stringResource(R.string.true_the_equation_is_right)
+    val falseLabel = stringResource(R.string.false_the_equation_is_wrong)
 
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         PressableCard(
-            modifier = Modifier.weight(1f).clearAndSetSemantics { contentDescription = "맞아요, 맞는 식" },
+            modifier = Modifier.weight(1f).clearAndSetSemantics { contentDescription = trueLabel },
             onClick = { onAnswer(true) },
         ) {
             Column(
@@ -493,12 +520,17 @@ fun OxPad(onAnswer: (Boolean) -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Box(Modifier.size(44.dp).border(5.dp, gg.success, CircleShape))
-                Text("맞아요", style = suite(FontWeight.ExtraBold, 14), color = gg.success)
+                // 영어권은 O/X 관습이 없어 ✓/✗ 로 보인다 (iOS 와 같음)
+                if (AppLanguage.current == AppLanguage.EN) {
+                    Icon(Icons.Filled.Check, null, tint = gg.success, modifier = Modifier.size(48.dp))
+                } else {
+                    Box(Modifier.size(44.dp).border(5.dp, gg.success, CircleShape))
+                }
+                Text(stringResource(R.string.true_label), style = suite(FontWeight.ExtraBold, 14), color = gg.success)
             }
         }
         PressableCard(
-            modifier = Modifier.weight(1f).clearAndSetSemantics { contentDescription = "아니에요, 틀린 식" },
+            modifier = Modifier.weight(1f).clearAndSetSemantics { contentDescription = falseLabel },
             onClick = { onAnswer(false) },
         ) {
             Column(
@@ -508,7 +540,7 @@ fun OxPad(onAnswer: (Boolean) -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Icon(Icons.Filled.Close, null, tint = gg.danger, modifier = Modifier.size(48.dp))
-                Text("아니에요", style = suite(FontWeight.ExtraBold, 14), color = gg.danger)
+                Text(stringResource(R.string.false_label), style = suite(FontWeight.ExtraBold, 14), color = gg.danger)
             }
         }
     }

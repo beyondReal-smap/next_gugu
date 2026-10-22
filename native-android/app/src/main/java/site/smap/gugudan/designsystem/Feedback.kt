@@ -19,9 +19,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import site.smap.gugudan.R
 import site.smap.gugudan.core.Achievements
 import site.smap.gugudan.core.Level
 import site.smap.gugudan.core.adventure.AdvAchievements
@@ -55,10 +57,10 @@ fun achievementIcon(key: String): ImageVector = when (key) {
     else -> Icons.Filled.Star
 }
 
-/** 업적 id → (이름, 아이콘) — 코어/어드벤처 통합 조회 */
-fun achievementInfo(id: String): Pair<String, ImageVector>? {
-    Achievements.get(id)?.let { return it.name to achievementIcon(it.icon) }
-    AdvAchievements.get(id)?.let { return it.name to achievementIcon(it.icon) }
+/** 업적 id → (이름 리소스, 아이콘) — 코어/어드벤처 통합 조회 */
+fun achievementInfo(id: String): Pair<Int, ImageVector>? {
+    Achievements.get(id)?.let { return it.nameRes to achievementIcon(it.icon) }
+    AdvAchievements.get(id)?.let { return it.nameRes to achievementIcon(it.icon) }
     return null
 }
 
@@ -131,9 +133,9 @@ fun LevelUpOverlay(show: Boolean, level: Int, onClose: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Icon(Icons.Filled.AutoAwesome, null, tint = gg.warning, modifier = Modifier.size(44.dp))
-            Text("레벨 업!", style = suite(FontWeight.ExtraBold, 28), color = gg.text)
+            Text(stringResource(R.string.level_up), style = suite(FontWeight.ExtraBold, 28), color = gg.text)
             Text("Lv.$level", style = suite(FontWeight.Black, 48), color = gg.accent)
-            Text(Level.title(level), style = suite(FontWeight.Bold, 15), color = gg.textMuted)
+            Text(stringResource(Level.titleRes(level)), style = suite(FontWeight.Bold, 15), color = gg.textMuted)
         }
     }
 }
@@ -165,8 +167,8 @@ fun AchievementToast(ids: List<String>, modifier: Modifier = Modifier) {
                         Icon(icon, null, tint = gg.warning, modifier = Modifier.size(20.dp))
                     }
                     Column {
-                        Text("업적 달성", style = suite(FontWeight.Bold, 11), color = gg.textMuted)
-                        Text(name, style = suite(FontWeight.ExtraBold, 15), color = gg.text)
+                        Text(stringResource(R.string.achievement_unlocked), style = suite(FontWeight.Bold, 11), color = gg.textMuted)
+                        Text(stringResource(name), style = suite(FontWeight.ExtraBold, 15), color = gg.text)
                     }
                 }
             }

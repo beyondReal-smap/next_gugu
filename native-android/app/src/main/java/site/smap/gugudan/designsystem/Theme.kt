@@ -11,6 +11,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import site.smap.gugudan.R
+import site.smap.gugudan.core.AppLanguage
 import site.smap.gugudan.core.Theme as AppTheme
 
 // 디자인 토큰 — iOS Theme.swift / globals.css 팔레트 이식 (라이트/다크 명시 선택)
@@ -71,8 +72,22 @@ val Suite = FontFamily(
     Font(R.font.suite_heavy, FontWeight.Black),
 )
 
+// 일본어 폰트(M PLUS Rounded 1c, OFL 서브셋 — tools/i18n/subset_ja_font.py) — SUITE 에는 가나·한자 글리프가 없다.
+// 둥근 글꼴이라 브랜드 톤에 맞고 iOS 와 같은 서브셋이다. M+ 에 SemiBold 가 없어 Bold 로 맞춘다 (Theme.swift 와 같음)
+val MPlusRounded = FontFamily(
+    Font(R.font.mplusrounded1c_light, FontWeight.Light),
+    Font(R.font.mplusrounded1c_regular, FontWeight.Normal),
+    Font(R.font.mplusrounded1c_medium, FontWeight.Medium),
+    Font(R.font.mplusrounded1c_bold, FontWeight.SemiBold),
+    Font(R.font.mplusrounded1c_bold, FontWeight.Bold),
+    Font(R.font.mplusrounded1c_extrabold, FontWeight.ExtraBold),
+    Font(R.font.mplusrounded1c_black, FontWeight.Black),
+)
+
+/** 앱 언어에 맞는 글꼴 — 화면은 언어가 바뀌면 Activity 째 다시 그려지므로 그때 다시 고른다 */
 fun suite(weight: FontWeight, size: Int) = TextStyle(
-    fontFamily = Suite, fontWeight = weight, fontSize = size.sp,
+    fontFamily = if (AppLanguage.current == AppLanguage.JA) MPlusRounded else Suite,
+    fontWeight = weight, fontSize = size.sp,
 )
 
 /** hex 문자열(#rrggbb) → Color (어드벤처 NPC/테마 색용) */

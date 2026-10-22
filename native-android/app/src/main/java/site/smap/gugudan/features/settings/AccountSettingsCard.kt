@@ -24,11 +24,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import site.smap.gugudan.R
 import site.smap.gugudan.designsystem.*
 import site.smap.gugudan.services.Haptics
 import site.smap.gugudan.store.AuthStore
@@ -59,7 +62,7 @@ fun AccountSettingsCard(showsAccountManagement: Boolean = true) {
     var signingOut by remember { mutableStateOf(false) }
     var confirmDeleteAccount by remember { mutableStateOf(false) }
     var deletingAccount by remember { mutableStateOf(false) }
-    var deleteNotice by remember { mutableStateOf<String?>(null) }
+    var deleteNotice by remember { mutableStateOf<Int?>(null) }   // @StringRes
 
     if (auth.state is AuthStore.State.Disabled) return
 
@@ -107,7 +110,7 @@ fun AccountSettingsCard(showsAccountManagement: Boolean = true) {
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Filled.Shield, null, tint = gg.accent, modifier = Modifier.size(16.dp))
-            Text("기록 지키기", style = suite(FontWeight.ExtraBold, 15), color = gg.text)
+            Text(stringResource(R.string.protect_your_records), style = suite(FontWeight.ExtraBold, 15), color = gg.text)
         }
         val promotion = auth.promotion
         val authState = auth.state
@@ -146,35 +149,35 @@ fun AccountSettingsCard(showsAccountManagement: Boolean = true) {
                 }
                 AccountRow(
                     Icons.Filled.Error, gg.warning,
-                    "다시 로그인해 주세요",
-                    "로그인이 만료됐어요. 그동안 공부한 기록은 기기에 쌓아 두었다가 다시 로그인하면 올려요.",
+                    stringResource(R.string.please_sign_in_again),
+                    stringResource(R.string.your_sign_in_has_expired_practice),
                 )
                 EmailEntry(
-                    intro = "보호자 이메일로 받은 6자리 코드를 넣으면 다시 로그인돼요.",
+                    intro = stringResource(R.string.enter_the_6_digit_code_sent_to_the),
                     hint = null,
                     email = email,
                     onEmailChange = { email = it },
                     sending = promotion is AuthStore.Promotion.Sending,
                     onSubmit = requestCode,
                 )
-                if (showsAccountManagement) signOutControl("이 기기에서 로그아웃")
+                if (showsAccountManagement) signOutControl(stringResource(R.string.sign_out_on_this_device))
             }
             auth.isPermanent -> {
                 AccountRow(
                     Icons.Filled.VerifiedUser, gg.success,
-                    auth.email?.let { "$it 로 로그인돼 있어요" } ?: "계정이 연결돼 있어요",
+                    auth.email?.let { stringResource(R.string.signed_in_as, it) } ?: stringResource(R.string.account_linked),
                     if (premium.isPremium) {
-                        "다른 기기에서도 이 이메일로 로그인하면 이용권과 학습 기록을 이어서 쓸 수 있어요."
+                        stringResource(R.string.sign_in_with_this_email_on_another)
                     } else {
-                        "다른 기기에서도 이 이메일로 로그인할 수 있어요. 학습 기록 보관은 이용권 사용자에게 켜져요."
+                        stringResource(R.string.you_can_sign_in_with_this_email_on_other)
                     },
                 )
-                Text("별·레벨·코인은 이 기기에만 저장돼요.", style = suite(FontWeight.Medium, 12), color = gg.textMuted)
-                if (showsAccountManagement) signOutControl("로그아웃")
+                Text(stringResource(R.string.stars_levels_and_coins_are_saved_only_on), style = suite(FontWeight.Medium, 12), color = gg.textMuted)
+                if (showsAccountManagement) signOutControl(stringResource(R.string.sign_out))
             }
             else -> EmailEntry(
-                intro = "보호자 이메일로 이용권과 기록을 지켜요. 앱을 다시 설치하거나 기기를 바꿔도 같은 이메일로 로그인하면 이어서 쓸 수 있어요. 비밀번호는 필요 없어요.",
-                hint = "이미 쓰던 이메일이 있으면 그 주소를 넣어 주세요.",
+                intro = stringResource(R.string.keep_your_lifetime_pass_and_records_safe),
+                hint = stringResource(R.string.if_you_ve_used_an_email_before_please),
                 email = email,
                 onEmailChange = { email = it },
                 sending = promotion is AuthStore.Promotion.Sending,
@@ -184,7 +187,7 @@ fun AccountSettingsCard(showsAccountManagement: Boolean = true) {
         // 귀속 후보가 여럿이면 어느 기록에 이어 붙일지 고르게 한다
         (sync.state as? SyncStore.State.NeedsLearnerChoice)?.let { choice ->
             if (choice.candidates.isNotEmpty()) {
-                Text("이어서 쓸 기록을 골라 주세요", style = suite(FontWeight.ExtraBold, 13), color = gg.text)
+                Text(stringResource(R.string.choose_which_records_to_continue_with), style = suite(FontWeight.ExtraBold, 13), color = gg.text)
                 choice.candidates.forEach { candidate ->
                     PressableCard(onClick = { scope.launch { sync.chooseLearner(candidate, auth) } }) {
                         Row(
@@ -197,7 +200,7 @@ fun AccountSettingsCard(showsAccountManagement: Boolean = true) {
                             Icon(Icons.Filled.History, null, tint = gg.accent, modifier = Modifier.size(16.dp))
                             Column(Modifier.weight(1f)) {
                                 Text(candidate.displayName, style = suite(FontWeight.ExtraBold, 13), color = gg.text)
-                                Text("마지막 학습 ${candidate.updatedAt.take(10)}",
+                                Text(stringResource(R.string.last_practiced, candidate.updatedAt.take(10)),
                                     style = suite(FontWeight.Medium, 11), color = gg.textMuted)
                             }
                             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null,
@@ -210,34 +213,34 @@ fun AccountSettingsCard(showsAccountManagement: Boolean = true) {
 
         // 보호자 검증 전이면 왜 보관이 꺼져 있는지 알려 준다
         (sync.state as? SyncStore.State.WaitingForGuardian)?.let {
-            Text(it.message, style = suite(FontWeight.Medium, 12), color = gg.textMuted)
+            Text(stringResource(it.messageRes), style = suite(FontWeight.Medium, 12), color = gg.textMuted)
         }
 
         (promotion as? AuthStore.Promotion.Failed)?.let { WarningText(it.message) }
 
-        if (sync.restoreFailed) WarningText("학습 기록을 불러오지 못했어요. 다음에 다시 시도할게요.")
+        if (sync.restoreFailed) WarningText(stringResource(R.string.couldn_t_load_learning_records_we_ll_try))
 
         if (showsAccountManagement) {
             // 계정 삭제 — 되돌릴 수 없으므로 「기록 초기화」와 같은 2단 확인을 둔다
             Box(Modifier.fillMaxWidth().height(1.dp).background(gg.border))
 
             deleteNotice?.let {
-                Text(it, style = suite(FontWeight.Medium, 12), color = gg.textMuted)
+                Text(stringResource(it), style = suite(FontWeight.Medium, 12), color = gg.textMuted)
             }
 
             if (auth.needsReauth) {
                 // 삭제 요청엔 유효한 로그인이 필요하다
                 Text(
-                    "계정 삭제는 다시 로그인한 뒤에 할 수 있어요.",
+                    stringResource(R.string.you_can_delete_your_account_after),
                     style = suite(FontWeight.Medium, 12), color = gg.textMuted,
                 )
             } else if (confirmDeleteAccount) {
                 Text(
-                    "계정과 서버에 보관된 학습 기록을 지웁니다. 되돌릴 수 없어요.",
+                    stringResource(R.string.this_deletes_your_account_and_the),
                     style = suite(FontWeight.Bold, 13), color = gg.text,
                 )
                 Text(
-                    "기기에 있는 기록과 이용권은 그대로예요. 이용권은 「구매 복원」으로 다시 쓸 수 있어요.",
+                    stringResource(R.string.records_and_your_lifetime_pass_on_this),
                     style = suite(FontWeight.Medium, 12), color = gg.textMuted,
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -245,7 +248,7 @@ fun AccountSettingsCard(showsAccountManagement: Boolean = true) {
                         onClick = { confirmDeleteAccount = false },
                         variant = GGButtonVariant.SURFACE,
                         modifier = Modifier.weight(1f),
-                    ) { Text("취소", style = suite(FontWeight.Bold, 14), color = gg.text) }
+                    ) { Text(stringResource(R.string.cancel), style = suite(FontWeight.Bold, 14), color = gg.text) }
                     GGButton(
                         onClick = {
                             if (!deletingAccount) {
@@ -262,9 +265,9 @@ fun AccountSettingsCard(showsAccountManagement: Boolean = true) {
                                     confirmDeleteAccount = false
                                     if (ok) email = ""
                                     deleteNotice = if (ok) {
-                                        "계정과 서버에 보관된 학습 기록을 지웠어요."
+                                        R.string.your_account_and_the_learning_records
                                     } else {
-                                        "계정을 삭제하지 못했어요. 잠시 후 다시 시도해 주세요."
+                                        R.string.couldn_t_delete_your_account_please_try
                                     }
                                 }
                             }
@@ -273,7 +276,7 @@ fun AccountSettingsCard(showsAccountManagement: Boolean = true) {
                         modifier = Modifier.weight(1f),
                     ) {
                         Text(
-                            if (deletingAccount) "삭제 중…" else "삭제 확인",
+                            if (deletingAccount) stringResource(R.string.deleting) else stringResource(R.string.confirm_delete),
                             style = suite(FontWeight.Bold, 14), color = gg.accentFg,
                         )
                     }
@@ -292,7 +295,7 @@ fun AccountSettingsCard(showsAccountManagement: Boolean = true) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(Icons.Filled.PersonRemove, null, tint = gg.danger, modifier = Modifier.size(18.dp))
-                    Text("계정 삭제", style = suite(FontWeight.Bold, 13), color = gg.danger)
+                    Text(stringResource(R.string.delete_account), style = suite(FontWeight.Bold, 13), color = gg.danger)
                 }
             }
         }
@@ -328,12 +331,12 @@ private fun EmailEntry(
         OutlinedTextField(
             value = email, onValueChange = onEmailChange,
             textStyle = suite(FontWeight.Medium, 15),
-            placeholder = { Text("보호자 이메일", style = suite(FontWeight.Medium, 15)) },
+            placeholder = { Text(stringResource(R.string.parent_s_email), style = suite(FontWeight.Medium, 15)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             singleLine = true, colors = ggTextFieldColors(), modifier = Modifier.fillMaxWidth(),
         )
         GGButton(variant = GGButtonVariant.PRIMARY, size = GGButtonSize.MD, onClick = onSubmit) {
-            Text(if (sending) "보내는 중…" else "확인 코드 받기")
+            Text(if (sending) stringResource(R.string.sending) else stringResource(R.string.get_code))
         }
     }
 }
@@ -356,25 +359,25 @@ private fun CodeEntry(
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         when (purpose) {
             AuthStore.CodePurpose.LINK ->
-                Text("$email 로 6자리 확인 코드를 보냈어요.", style = suite(FontWeight.Medium, 13), color = gg.textMuted)
+                Text(stringResource(R.string.we_sent_a_6_digit_code_to, email), style = suite(FontWeight.Medium, 13), color = gg.textMuted)
             AuthStore.CodePurpose.SIGN_IN -> {
                 Text(
-                    "$email 은 이미 쓰던 계정이에요. 메일로 받은 6자리 코드를 넣으면 그 계정으로 로그인해요.",
+                    stringResource(R.string.already_has_an_account_enter_the_6_digit, email),
                     style = suite(FontWeight.Medium, 13), color = gg.textMuted,
                 )
                 Text(
-                    "이 기기의 별·레벨·코인은 그대로 두고, 계정의 이용권과 학습 기록을 불러와요.",
+                    stringResource(R.string.stars_levels_and_coins_on_this_device),
                     style = suite(FontWeight.Medium, 12), color = gg.textMuted,
                 )
                 if (pendingCount > 0) {
-                    WarningText("다른 계정으로 로그인하면 아직 서버에 올리지 못한 학습 기록 ${pendingCount}개는 서버에 남지 않아요.")
+                    WarningText(pluralStringResource(R.plurals.if_you_sign_in_to_a_different_account, pendingCount, pendingCount))
                 }
             }
         }
         OutlinedTextField(
             value = code, onValueChange = onCodeChange,
             textStyle = suite(FontWeight.ExtraBold, 20),
-            placeholder = { Text("확인 코드", style = suite(FontWeight.ExtraBold, 20)) },
+            placeholder = { Text(stringResource(R.string.verification_code), style = suite(FontWeight.ExtraBold, 20)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
             singleLine = true, colors = ggTextFieldColors(), modifier = Modifier.fillMaxWidth(),
         )
@@ -382,16 +385,16 @@ private fun CodeEntry(
         GGButton(variant = GGButtonVariant.PRIMARY, size = GGButtonSize.MD, onClick = onConfirm) {
             Text(
                 when {
-                    verifying -> "확인 중…"
-                    purpose == AuthStore.CodePurpose.SIGN_IN -> "로그인"
-                    else -> "연결 완료하기"
+                    verifying -> stringResource(R.string.checking)
+                    purpose == AuthStore.CodePurpose.SIGN_IN -> stringResource(R.string.sign_in)
+                    else -> stringResource(R.string.finish_linking)
                 }
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
             PressableCard(onClick = onReset) {
                 Box(Modifier.height(44.dp), contentAlignment = Alignment.Center) {
-                    Text("주소 다시 입력", style = suite(FontWeight.Bold, 12), color = gg.textMuted)
+                    Text(stringResource(R.string.re_enter_address), style = suite(FontWeight.Bold, 12), color = gg.textMuted)
                 }
             }
             ResendButton(lastCodeSentAt, onResend)
@@ -438,7 +441,8 @@ private fun ResendButton(lastCodeSentAt: Long?, onResend: () -> Unit) {
     PressableCard(enabled = remaining <= 0, onClick = onResend) {
         Box(Modifier.height(44.dp), contentAlignment = Alignment.Center) {
             Text(
-                if (remaining > 0) "코드 다시 보내기 (${remaining}초)" else "코드 다시 보내기",
+                if (remaining > 0) pluralStringResource(R.plurals.resend_code_s, remaining, remaining)
+                else stringResource(R.string.resend_code),
                 style = suite(FontWeight.Bold, 12), color = gg.textMuted,
             )
         }
@@ -459,27 +463,27 @@ private fun SignOutControl(
     val gg = LocalGG.current
     if (confirming) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("로그아웃할까요?", style = suite(FontWeight.Bold, 13), color = gg.text)
+            Text(stringResource(R.string.sign_out_2), style = suite(FontWeight.Bold, 13), color = gg.text)
             Text(
-                "이 기기의 별·레벨·코인과 이 기기에서 산 이용권은 그대로예요. 계정으로 받은 이용권과 학습 기록 보관은 다시 로그인하면 돌아와요.",
+                stringResource(R.string.stars_levels_coins_and_passes_bought_on),
                 style = suite(FontWeight.Medium, 12), color = gg.textMuted,
             )
             if (pendingCount > 0) {
-                WarningText("아직 서버에 올리지 못한 학습 기록 ${pendingCount}개는 로그아웃하면 서버에 남지 않아요.")
+                WarningText(pluralStringResource(R.plurals.practice_records_not_yet_uploaded_won_t, pendingCount, pendingCount))
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 GGButton(
                     onClick = onCancel,
                     variant = GGButtonVariant.SURFACE,
                     modifier = Modifier.weight(1f),
-                ) { Text("취소", style = suite(FontWeight.Bold, 14), color = gg.text) }
+                ) { Text(stringResource(R.string.cancel), style = suite(FontWeight.Bold, 14), color = gg.text) }
                 GGButton(
                     onClick = onConfirm,
                     variant = GGButtonVariant.DANGER,
                     modifier = Modifier.weight(1f),
                 ) {
                     Text(
-                        if (signingOut) "로그아웃 중…" else "로그아웃",
+                        if (signingOut) stringResource(R.string.signing_out) else stringResource(R.string.sign_out),
                         style = suite(FontWeight.Bold, 14), color = gg.accentFg,
                     )
                 }

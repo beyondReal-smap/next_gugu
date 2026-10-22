@@ -1,0 +1,20 @@
+{
+  "레벨 %lld, %@, 다음 레벨까지 %lld XP": {
+    "name": "level_summary_a11y",
+    "en": "Level %1$lld, %2$@, %3$lld XP to next level",
+    "ja": "レベル%1$lld、%2$@、つぎの レベルまで %3$lld XP",
+    "comment": "프로필 레벨 카드 TalkBack 낭독 — %1 레벨 숫자, %2 레벨 칭호, %3 다음 레벨까지 남은 XP (iOS 는 카드 글자를 합쳐 읽어 키가 없다)"
+  },
+  "최고 기록 없음": {
+    "name": "no_best_score_yet",
+    "en": "Best: none yet",
+    "ja": "さいこう きろく なし",
+    "comment": "프로필 최고 기록 카드 TalkBack 낭독 — 모드 이름 뒤에 붙는다. 기록이 있으면 \"최고 기록 %lld점\"(Best: %lld points)을 쓴다"
+  },
+  "소리로 듣기": {
+    "name": "hear_it_action",
+    "en": "Hear it",
+    "ja": "音で きく",
+    "comment": "구구단 표 한 줄의 TalkBack 동작 이름 — \"두 번 탭하여 …\" 뒤에 붙는다 (iOS 힌트 \"눌러서 소리로 듣기\"에 대응)"
+  }
+}

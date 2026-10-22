@@ -25,12 +25,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import site.smap.gugudan.R
 import site.smap.gugudan.designsystem.*
 import site.smap.gugudan.services.Haptics
 import site.smap.gugudan.store.LocalGame
@@ -45,9 +45,12 @@ fun OnboardingScreen() {
     val game = LocalGame.current
 
     val points = listOf(
-        Point(Icons.Filled.TrendingUp, "레벨업", "정답마다 XP를 모아 레벨을 올려요"),
-        Point(Icons.Filled.LocalFireDepartment, "스트릭", "매일 학습하면 연속 기록이 쌓여요"),
-        Point(Icons.Filled.Star, "마스터리", "단별로 별을 모아 완전 정복해요"),
+        Point(Icons.Filled.TrendingUp, stringResource(R.string.level_up_2),
+            stringResource(R.string.earn_xp_for_every_correct_answer_and)),
+        Point(Icons.Filled.LocalFireDepartment, stringResource(R.string.streak),
+            stringResource(R.string.practice_every_day_to_grow_your_streak)),
+        Point(Icons.Filled.Star, stringResource(R.string.mastery),
+            stringResource(R.string.collect_stars_on_each_table_to_master)),
     )
 
     Column(
@@ -59,21 +62,18 @@ fun OnboardingScreen() {
             Spacer(Modifier.height(24.dp))
             Pill(bg = gg.accent.copy(alpha = 0.15f), fg = gg.accent) {
                 Icon(Icons.Filled.AutoAwesome, null, Modifier.size(14.dp))
-                Text("매일 1분 구구단")
+                Text(stringResource(R.string.times_tables_1_minute_a_day))
             }
             Spacer(Modifier.height(12.dp))
+            // 제목 한 문장 — 언어마다 어순이 달라 조각으로 붙이지 않고, ** 로 감싼 부분만 강조색을 입힌다 (iOS 와 같은 문자열)
             Text(
-                buildAnnotatedString {
-                    append("구구단,\n게임처럼\n")
-                    withStyle(SpanStyle(color = gg.accent)) { append("재미있게") }
-                    append(" 배워요")
-                },
+                emphasized(stringResource(R.string.times_tables_made_fun_like_a_game), SpanStyle(color = gg.accent)),
                 style = suite(FontWeight.ExtraBold, 38).copy(lineHeight = 46.sp),
                 color = gg.text,
             )
             Spacer(Modifier.height(12.dp))
             Text(
-                "레벨 · 스트릭 · 마스터리를 모으며 자연스럽게 구구단을 익혀요.",
+                stringResource(R.string.earn_levels_streaks_and_mastery_as_you),
                 style = suite(FontWeight.Medium, 15), color = gg.textMuted,
             )
         }
@@ -104,7 +104,7 @@ fun OnboardingScreen() {
             Haptics.impactMedium()
             game.setOnboarded(true)
         }) {
-            Text("시작하기")
+            Text(stringResource(R.string.get_started))
         }
     }
 }
