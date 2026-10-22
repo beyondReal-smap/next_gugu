@@ -7,10 +7,11 @@
 - /api/mcp: 구구단 학습 콘텐츠를 AI에 제공하는 읽기 전용 MCP 서버 (mcp_server.py)
   cloudflared 라우팅이 gugu.smap.site/api/* → 이 프로세스라, 별도 인프라 없이 공개된다.
 """
+import asyncio
 import json
 import logging
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Literal, Optional
 
@@ -40,6 +41,8 @@ from learning import error_detail, router as learning_router  # noqa: E402
 from adaptive import router as adaptive_router  # noqa: E402
 from coach import router as coach_router  # noqa: E402
 from reports import router as reports_router  # noqa: E402
+from push import router as push_router  # noqa: E402
+import fcm  # noqa: E402
 import llm_client  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -103,6 +106,7 @@ app.include_router(learning_router)
 app.include_router(adaptive_router)
 app.include_router(coach_router)
 app.include_router(reports_router)
+app.include_router(push_router)
 app.mount(MCP_MOUNT_PATH, mcp_http_app)
 
 
@@ -132,10 +136,41 @@ def health_live():
     return {"status": "ok", "service": "gugu-api"}
 
 
-@app.get("/api/health/ready")
-def health_ready():
+# 매시 5분 cron — 2시간 넘게 성공 기록이 없으면 멈춘 것으로 본다
+PUSH_CRON_STALE_AFTER = timedelta(hours=2)
+# deploy.sh 가 ready 를 curl --max-time 3 으로 확인한다 — 참고 정보 조회가 그 시간을 먹지 않게 한다
+PUSH_CRON_LOOKUP_TIMEOUT_SECONDS = 1.5
+
+
+async def push_cron_status() -> str:
+    """준비 판정에는 넣지 않는 참고 정보 — 푸시 배치(gugu-push-cron)가 살아 있는지."""
     try:
-        check_database()
+        raw = await asyncio.wait_for(
+            supabase_admin.call_rpc("gugu_push_last_job_run", {}),
+            timeout=PUSH_CRON_LOOKUP_TIMEOUT_SECONDS,
+        )
+    except (supabase_admin.SupabaseDataError, httpx.HTTPError, TimeoutError):
+        # 판정에 넣지 않는 정보라 준비 상태를 실패시키지 않는다. 원인은 call_rpc 가 로그로 남긴다
+        log.warning("준비 상태 참고 정보 조회 실패: push_cron")
+        return "unavailable"
+    last = raw.get("lastFinishedAt")
+    if not isinstance(last, str):
+        return "stale"
+    try:
+        finished_at = datetime.fromisoformat(last)
+    except ValueError:
+        log.warning("push_cron 응답 형식 오류")
+        return "unavailable"
+    if finished_at.tzinfo is None:
+        return "unavailable"
+    return "ok" if datetime.now(timezone.utc) - finished_at <= PUSH_CRON_STALE_AFTER else "stale"
+
+
+@app.get("/api/health/ready")
+async def health_ready():
+    try:
+        # pymysql 은 블로킹이라 이벤트 루프 밖에서 돈다
+        await asyncio.to_thread(check_database)
     except DatabaseHealthError as exc:
         log.warning("준비 상태 확인 실패: database")
         raise HTTPException(
@@ -149,6 +184,8 @@ def health_ready():
             "settings": "ok",
             "database": "ok",
             "coach": "enabled" if llm_client.is_enabled() else "disabled_no_api_key",
+            "push": "enabled" if fcm.is_configured() else "disabled_no_config",
+            "push_cron": await push_cron_status(),
         },
     }
 

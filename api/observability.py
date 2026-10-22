@@ -31,6 +31,14 @@ def mask_identifier(value: str | None) -> str:
     return f"sha256:{digest}"
 
 
+def mask_email(value: str | None) -> str:
+    """운영자 출력용 — 앞 1자와 도메인만 남긴다(예: h***@gmail.com)."""
+    if not value or "@" not in value:
+        return "-"
+    local, _, domain = value.strip().partition("@")
+    return f"{local[:1]}***@{domain}" if local else f"***@{domain}"
+
+
 def _request_id(request: Request) -> str:
     incoming = request.headers.get("X-Request-ID", "")
     if _REQUEST_ID_RE.fullmatch(incoming):

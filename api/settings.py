@@ -38,6 +38,9 @@ class Settings(BaseModel):
     coach_llm_base_url: AnyHttpUrl = "https://api.openai.com/v1"
     coach_llm_timeout_seconds: float = Field(default=4.0, ge=1.0, le=15.0)
     coach_daily_quota: int = Field(default=30, ge=1, le=1000)
+    # 원격 푸시(FCM HTTP v1). 둘 다 없으면 푸시 발송만 꺼지고 앱 기동은 정상이다(fcm.PushUnavailable)
+    firebase_project_id: Optional[str] = None
+    firebase_service_account_json: Optional[Path] = None
     cors_origins: tuple[str, ...] = (
         "https://localhost",
         "capacitor://localhost",
@@ -93,10 +96,27 @@ class Settings(BaseModel):
             raise ValueError("빈 문자열일 수 없습니다")
         return value.strip()
 
-    @field_validator("google_service_account_json", mode="before")
+    @field_validator("google_service_account_json", "firebase_service_account_json", mode="before")
     @classmethod
     def normalize_optional_path(cls, value: object) -> object:
         return None if value in (None, "") else value
+
+    @field_validator("firebase_project_id", mode="before")
+    @classmethod
+    def normalize_firebase_project_id(cls, value: object) -> object:
+        if value in (None, ""):
+            return None
+        if not isinstance(value, str) or not re.fullmatch(r"[a-z][a-z0-9-]{4,28}[a-z0-9]", value.strip()):
+            raise ValueError("Firebase 프로젝트 ID 형식이 아닙니다 (소문자·숫자·하이픈 6~30자)")
+        return value.strip()
+
+    @field_validator("firebase_service_account_json")
+    @classmethod
+    def validate_firebase_service_account_path(cls, value: Optional[Path]) -> Optional[Path]:
+        # pm2 작업 디렉터리와 무관하게 같은 파일을 가리키도록 절대 경로만 받는다(~ 는 펼쳐지지 않는다)
+        if value is not None and not value.is_absolute():
+            raise ValueError("절대 경로여야 합니다 (~ 대신 /home/... 형태)")
+        return value
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -121,6 +141,10 @@ class Settings(BaseModel):
     def validate_coach_llm(self) -> "Settings":
         if self.coach_llm_api_key is not None and self.coach_llm_model is None:
             raise ValueError("COACH_LLM_API_KEY가 있으면 COACH_LLM_MODEL도 필요합니다")
+        if (self.firebase_project_id is None) != (self.firebase_service_account_json is None):
+            raise ValueError(
+                "FIREBASE_PROJECT_ID와 FIREBASE_SERVICE_ACCOUNT_JSON은 함께 설정하거나 함께 비워야 합니다"
+            )
         return self
 
 
@@ -146,6 +170,8 @@ _ENV_BY_FIELD = {
     "coach_llm_timeout_seconds": "COACH_LLM_TIMEOUT_SECONDS",
     "coach_daily_quota": "COACH_DAILY_QUOTA",
     "cors_origins": "CORS_ORIGINS",
+    "firebase_project_id": "FIREBASE_PROJECT_ID",
+    "firebase_service_account_json": "FIREBASE_SERVICE_ACCOUNT_JSON",
 }
 
 
