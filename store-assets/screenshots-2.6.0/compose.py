@@ -29,7 +29,8 @@ COPY = {
         "session": ("A teacher reads aloud", "Every problem, read aloud · even offline"),
         "table": ("See it, hear it, learn it", "Tips for every table, plus Listen & Learn"),
         "minigame": ("Run, jump, multiply", "Gugu Jump · Lanes · Basket"),
-        "learn": ("6 game modes", "From Speed Run to True or False"),
+        "learn": ("Pick a table, play now", "Today's pick and every table from 2 to 9"),
+        "pop": ("Pop the right balloons", "Burst only the answers, then beat the boss"),
         "report": ("See the progress", "Weekly reports show the trickiest problems"),
     },
     "ja": {
@@ -39,7 +40,8 @@ COPY = {
         "session": ("先生が読み上げる", "問題を声で聞ける・オフラインでもOK"),
         "table": ("見て、聞いて、おぼえる", "「ににんが し」伝統の唱え方を先生の声で"),
         "minigame": ("走って解く九九", "ジャンプ・レーン・バスケットで体を動かそう"),
-        "learn": ("6つのゲームモード", "スピードランから○×クイズまで"),
+        "learn": ("段をえらんで すぐスタート", "きょうのおすすめと 2〜9の段が ひと目で"),
+        "pop": ("ふうせんをパン！で九九", "ミッションに あう数だけ わって ボスをたおそう"),
         "report": ("成長が目に見える", "週間レポートでよく間違える問題もひと目で"),
     },
 }
@@ -58,8 +60,10 @@ SLIDES = {
                     bg=("#FCD34D", "#F59E0B"), dark=True, glyphs="7×★"),
     "minigame": dict(title="달리며 푸는 구구단", sub="점프 · 레인 · 바구니, 움직이며 놀아요",
                      bg=("#2DD4BF", "#0F766E"), glyphs="×5?"),
-    "learn":   dict(title="6가지 게임 모드", sub="스피드런부터 OX 퀴즈까지",
+    "learn":   dict(title="단 고르고 바로 시작", sub="오늘 추천 단부터 2~9단까지 한눈에",
                     bg=("#FDE68A", "#FBBF24"), dark=True, glyphs="60×"),
+    "pop":     dict(title="풍선 팡팡, 구구단!", sub="미션에 맞는 풍선만 터뜨리고 보스를 물리쳐요",
+                    bg=("#38BDF8", "#2563EB"), glyphs="★×8"),
     "report":  dict(title="성장이 눈에 보여요", sub="주간 리포트로 자주 틀린 문제까지 한눈에",
                     bg=("#334155", "#0F172A"), glyphs="★17"),
 }
@@ -68,23 +72,26 @@ SETS_ALL = {
     # 출력명: (캔버스, 원본폴더, [(순번-이름, 원본파일, 슬라이드)], 기기 종류)
     "ios-phone": ((1320, 2868), "ios", [
         ("01-home", "01-home", "home"), ("02-world", "02-world", "world"), ("03-battle", "03-battle", "battle"),
-        ("04-read-aloud", "04-session", "session"), ("05-table", "05-table", "table"),
-        ("06-minigame", "07-minigame", "minigame"), ("07-modes", "06-learn", "learn"), ("08-report", "07-report", "report"),
+        ("04-pop", "09-pop", "pop"), ("05-read-aloud", "04-session", "session"), ("06-table", "05-table", "table"),
+        ("07-learn", "06-learn", "learn"), ("08-minigame", "07-minigame", "minigame"), ("09-report", "07-report", "report"),
     ], "phone"),
     "ios-ipad": ((2064, 2752), "ipad", [
         ("01-home", "01-home", "home"), ("02-world", "02-world", "world"), ("03-battle", "02b-battle", "battle"),
-        ("04-read-aloud", "03-session", "session"), ("05-table", "05-table", "table"), ("06-report", "06-report", "report"),
+        ("04-pop", "07-pop", "pop"), ("05-read-aloud", "03-session", "session"), ("06-table", "05-table", "table"),
+        ("07-report", "06-report", "report"),
     ], "tablet"),
+    # Play 폰은 최대 8장 — 2.7.0 부터 미니게임 장 대신 구구 팡팡
     "play-phone": ((1080, 2400), "android", [
-        ("01-home", "01-home", "home"), ("02-battle", "03-battle", "battle"), ("03-read-aloud", "04-session", "session"),
-        ("04-table", "05-table", "table"), ("05-minigame", "07-minigame", "minigame"), ("06-world", "02-world", "world"),
-        ("07-modes", "06-learn", "learn"), ("08-report", "08-report", "report"),
+        ("01-home", "01-home", "home"), ("02-battle", "03-battle", "battle"), ("03-pop", "09-pop", "pop"),
+        ("04-read-aloud", "04-session", "session"), ("05-table", "05-table", "table"), ("06-world", "02-world", "world"),
+        ("07-learn", "06-learn", "learn"), ("08-report", "08-report", "report"),
     ], "android"),
 }
 # Play 태블릿 — 7형·10형 같은 그림 (Android 태블릿 에뮬레이터 실캡처, 장면은 iPad 세트와 같음)
 _PLAY_TABLET = [
     ("01-home", "01-home", "home"), ("02-world", "02-world", "world"), ("03-battle", "02b-battle", "battle"),
-    ("04-read-aloud", "03-session", "session"), ("05-table", "05-table", "table"), ("06-report", "06-report", "report"),
+    ("04-pop", "07-pop", "pop"), ("05-read-aloud", "03-session", "session"), ("06-table", "05-table", "table"),
+    ("07-report", "06-report", "report"),
 ]
 SETS_ALL["play-tablet-7"] = ((1600, 2560), "android-tablet", _PLAY_TABLET, "tablet")
 SETS_ALL["play-tablet-10"] = ((1600, 2560), "android-tablet", _PLAY_TABLET, "tablet")

@@ -29,8 +29,10 @@ SLIDES = {
                     bg=("#FCD34D", "#F59E0B"), dark=True, glyphs="7×★"),
     "minigame": dict(title="달리며 푸는 구구단", sub="점프 · 레인 · 바구니, 움직이며 놀아요",
                      bg=("#2DD4BF", "#0F766E"), glyphs="×5?"),
-    "learn":   dict(title="6가지 게임 모드", sub="스피드런부터 OX 퀴즈까지",
+    "learn":   dict(title="단 고르고 바로 시작", sub="오늘 추천 단부터 2~9단까지 한눈에",
                     bg=("#FDE68A", "#FBBF24"), dark=True, glyphs="60×"),
+    "pop":     dict(title="풍선 팡팡, 구구단!", sub="미션에 맞는 풍선만 터뜨리고 보스를 물리쳐요",
+                    bg=("#38BDF8", "#2563EB"), glyphs="★×8"),
     "report":  dict(title="성장이 눈에 보여요", sub="주간 리포트로 자주 틀린 문제까지 한눈에",
                     bg=("#334155", "#0F172A"), glyphs="★17"),
 }
@@ -39,17 +41,19 @@ SETS = {
     # 출력명: (캔버스, 원본폴더, [(순번-이름, 원본파일, 슬라이드)], 기기 종류)
     "ios-phone": ((1320, 2868), "ios", [
         ("01-home", "01-home", "home"), ("02-world", "02-world", "world"), ("03-battle", "03-battle", "battle"),
-        ("04-read-aloud", "04-session", "session"), ("05-table", "05-table", "table"),
-        ("06-minigame", "07-minigame", "minigame"), ("07-modes", "06-learn", "learn"), ("08-report", "07-report", "report"),
+        ("04-pop", "09-pop", "pop"), ("05-read-aloud", "04-session", "session"), ("06-table", "05-table", "table"),
+        ("07-learn", "06-learn", "learn"), ("08-minigame", "07-minigame", "minigame"), ("09-report", "07-report", "report"),
     ], "phone"),
     "ios-ipad": ((2064, 2752), "ipad", [
         ("01-home", "01-home", "home"), ("02-world", "02-world", "world"), ("03-battle", "02b-battle", "battle"),
-        ("04-read-aloud", "03-session", "session"), ("05-table", "05-table", "table"), ("06-report", "06-report", "report"),
+        ("04-pop", "07-pop", "pop"), ("05-read-aloud", "03-session", "session"), ("06-table", "05-table", "table"),
+        ("07-report", "06-report", "report"),
     ], "tablet"),
+    # Play 폰은 최대 8장 — 2.7.0 부터 미니게임 장 대신 구구 팡팡
     "play-phone": ((1080, 2400), "android", [
-        ("01-home", "01-home", "home"), ("02-battle", "03-battle", "battle"), ("03-read-aloud", "04-session", "session"),
-        ("04-table", "05-table", "table"), ("05-minigame", "07-minigame", "minigame"), ("06-world", "02-world", "world"),
-        ("07-modes", "06-learn", "learn"), ("08-report", "08-report", "report"),
+        ("01-home", "01-home", "home"), ("02-battle", "03-battle", "battle"), ("03-pop", "09-pop", "pop"),
+        ("04-read-aloud", "04-session", "session"), ("05-table", "05-table", "table"), ("06-world", "02-world", "world"),
+        ("07-learn", "06-learn", "learn"), ("08-report", "08-report", "report"),
     ], "android"),
 }
 
