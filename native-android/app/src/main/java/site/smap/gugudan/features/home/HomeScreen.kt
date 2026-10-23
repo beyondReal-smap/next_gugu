@@ -17,8 +17,6 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Extension
-import androidx.compose.material.icons.filled.ShoppingBasket
-import androidx.compose.material.icons.filled.ViewStream
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Lock
@@ -26,6 +24,7 @@ import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Scale
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.TrackChanges
 import androidx.compose.material3.Icon
@@ -65,14 +64,13 @@ import site.smap.gugudan.core.Strings
 import site.smap.gugudan.core.adventure.AdvProgress
 import site.smap.gugudan.core.adventure.World
 import site.smap.gugudan.designsystem.*
-import site.smap.gugudan.features.paywall.MinigameTrial
+import site.smap.gugudan.features.learn.RecommendCard
 import site.smap.gugudan.services.rememberStrings
 import site.smap.gugudan.store.*
 
 // 홈 (iOS HomeView 이식)
 
-// 놀이 방식별 묶음 (웹 /play 구성과 동일) — 세션 모드는 전체 랜덤으로 바로 시작한다
-private val LEARN_MODES = listOf(GameMode.MISSING, GameMode.TRUEFALSE)
+// 기록 도전 묶음 — 원래 단 없이 시작하는 모드라 전체 랜덤으로 바로 시작한다
 private val RECORD_MODES = listOf(GameMode.TIME_ATTACK, GameMode.CHALLENGE, GameMode.SURVIVAL)
 
 fun modeIcon(mode: GameMode): ImageVector = when (mode) {
@@ -232,21 +230,11 @@ fun HomeScreen() {
             )
         }
 
-        // 차근차근 배우기
+        // 오늘 추천 단 — 예전 '차근차근 배우기' 묶음(학습/빈칸/OX)을 대신한다. 단별 연습 방식은 학습 탭 단 시트에서 고른다
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            GroupHeader(Icons.AutoMirrored.Filled.MenuBook, stringResource(R.string.learn_step_by_step),
-                stringResource(R.string.learn_how_it_works_no_time_limit), gg.accent)
-            val practiceTotal = Modes.def(GameMode.PRACTICE).total
-            ModeRow(
-                icon = modeIcon(GameMode.PRACTICE), tint = ModeStyle.tint(GameMode.PRACTICE),
-                name = stringResource(Modes.def(GameMode.PRACTICE).nameRes),
-                tagline = stringResource(R.string.pick_any_table_and_go_step_by_step),
-                meta = pluralStringResource(R.plurals.problems_pick_a_table, practiceTotal, practiceTotal), locked = false,
-                onClick = { router.tab = AppTab.LEARN },
-            )
-            LEARN_MODES.forEach { mode ->
-                SessionModeRow(mode) { if (premium.gate(mode)) session.start(mode, null) }
-            }
+            GroupHeader(Icons.Filled.Star, stringResource(R.string.today_s_table),
+                stringResource(R.string.one_table_at_a_time_in_roadmap_order), gg.accent)
+            RecommendCard()
         }
 
         // 기록 도전
@@ -260,26 +248,16 @@ fun HomeScreen() {
 
         // 직접 움직이며 놀기
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            GroupHeader(Icons.Filled.DirectionsRun, stringResource(R.string.move_play),
-                stringResource(R.string.run_dodge_and_catch_the_answers), GGColors.emerald)
-            GameCard(
-                title = stringResource(R.string.gugu_basket), badge = MinigameTrial.badge(premium.isPremium) ?: stringResource(R.string.new_mode),
-                desc = stringResource(R.string.move_left_and_right_to_catch_the_right),
-                icon = Icons.Filled.ShoppingBasket, iconBg = Color(0xFF794124), iconFg = Color(0xFFFFE7A3),
-                tint = gg.warning, onClick = { router.basketOpen = true },
-            )
-            GameCard(
-                title = stringResource(R.string.gugu_jump), badge = MinigameTrial.badge(premium.isPremium),
-                desc = stringResource(R.string.pick_the_right_answer_and_hop_over_the),
-                icon = Icons.Filled.DirectionsRun, iconBg = Color(0xFF153F35), iconFg = Color(0xFFDBEF9E),
-                tint = GGColors.emerald, onClick = { router.runnerOpen = true },
-            )
-            GameCard(
-                title = stringResource(R.string.gugu_lanes), badge = MinigameTrial.badge(premium.isPremium) ?: stringResource(R.string.new_mode),
-                desc = stringResource(R.string.switch_lanes_to_dodge_then_zip_into_the),
-                icon = Icons.Filled.ViewStream, iconBg = Color(0xFF153F35), iconFg = Color(0xFFDBEF9E),
-                tint = GGColors.emerald, onClick = { router.laneOpen = true },
-            )
+            GroupHeader(Icons.Filled.DirectionsRun, stringResource(R.string.move_and_play),
+                stringResource(R.string.pop_catch_and_run_for_answers), GGColors.emerald)
+            Minigame.entries.forEach { g ->
+                GameCard(
+                    title = stringResource(Minigames.nameRes(g)), badge = Minigames.badge(g, premium.isPremium),
+                    desc = stringResource(Minigames.descRes(g)),
+                    icon = Minigames.icon(g), iconBg = Minigames.iconBg(g), iconFg = Minigames.iconFg(g),
+                    tint = Minigames.tint(g), onClick = { router.openMinigame(g) },
+                )
+            }
         }
 
         // 모험
@@ -448,8 +426,8 @@ private fun ModeRow(
     }
 }
 
-/** 카드에 적는 규칙 요약 (문제 수 / 제한 시간 / 하트) */
-private fun modeMeta(strings: Strings, mode: GameMode): String {
+/** 카드에 적는 규칙 요약 (문제 수 / 제한 시간 / 하트) — 학습 탭 단 시트 행 낭독에도 쓴다 */
+fun modeMeta(strings: Strings, mode: GameMode): String {
     val def = Modes.def(mode)
     def.timeLimitMs?.let { if (def.kind == ModeKind.TIMED) return strings.plural(R.plurals.sec_limit, it / 1000, it / 1000) }
     def.lives?.let { if (def.kind == ModeKind.LIVES) return strings.plural(R.plurals.hearts, it, it) }

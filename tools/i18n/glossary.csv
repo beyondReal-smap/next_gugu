@@ -30,6 +30,10 @@ OX 퀴즈,True or False,○×クイズ,en 버튼은 ✓/✗
 구구 점프,Gugu Jump,九九ジャンプ,미니게임
 구구 레인,Gugu Lanes,九九レーン,미니게임
 구구 바구니,Gugu Basket,九九バスケット,미니게임
+구구 팡팡,Gugu Pop,九九ポップ,미니게임 (2.7.0) — ja 이름 원어민 검수 필요(needs_review)
+섞어서,Mixed,ミックス,학습 탭 단 지도 9번째 칸·미니게임 단 칩 (2~9단 전체)
+차근차근 (모드 이름),Step by step,じっくり,2.7.0 모드 이름 "학습"에서 변경 (내부 id practice)
+웨이브 / 짝꿍 보스,wave / pair boss,ウェーブ / ペアボス,구구 팡팡
 업적,achievement,じっせき,보호자 화면은 実績
 로그인 / 로그아웃,Sign in / Sign out,ログイン / ログアウト,Apple 표기
 정확도,accuracy,正かいりつ,

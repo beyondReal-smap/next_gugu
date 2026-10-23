@@ -118,6 +118,11 @@ object Sound {
         tone(1046.5, 0.0, 0.08, triangle = true, gain = 0.1)
         tone(1318.5, 0.06, 0.12, triangle = true, gain = 0.09)
     }
+    /** 구구 팡팡 — 풍선이 터지는 짧은 소리 */
+    fun pop() {
+        tone(1174.66, 0.0, 0.05, triangle = true, gain = 0.09)  // D6
+        tone(1567.98, 0.03, 0.06, gain = 0.06)                  // G6 (iOS Sound.pop 과 같음)
+    }
     fun levelUp() {
         listOf(523.25, 659.25, 783.99, 1046.5).forEachIndexed { i, f ->
             tone(f, i * 0.09, 0.18, triangle = true, gain = 0.12)

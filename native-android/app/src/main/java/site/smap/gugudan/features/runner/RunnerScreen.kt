@@ -70,6 +70,7 @@ import site.smap.gugudan.services.Haptics
 import site.smap.gugudan.services.Persistence
 import site.smap.gugudan.services.rememberStrings
 import site.smap.gugudan.store.LocalPremium
+import site.smap.gugudan.store.MinigameStart
 
 // 구구 점프 화면 (RunnerScreen.tsx / iOS RunnerView 이식)
 // 보기 3개 중 정답을 고르면 자동으로 점프한다. 틀리거나 시간이 지나면 하트가 하나 줄어든다.
@@ -86,10 +87,17 @@ private val HEART_ON = Color(0xFFF3A88C)
 private val HEART_OFF = Color(0xFF6C897B)
 
 @Composable
-fun RunnerScreen(onExit: () -> Unit) {
+fun RunnerScreen(start: MinigameStart, onExit: () -> Unit) {
     val gg = LocalGG.current
     val context = LocalContext.current
-    val engine = remember { RunnerEngine(Persistence(context.applicationContext)) }
+    // 단 시트·'섞어서' 시트에서 열면 그 단을 골라 둔 채로, 홈에서 열면 게임 기본값으로 준비한다
+    val engine = remember {
+        val persistence = Persistence(context.applicationContext)
+        when (start) {
+            MinigameStart.Default -> RunnerEngine(persistence)
+            is MinigameStart.Table -> RunnerEngine(persistence, initialTable = start.table)
+        }
+    }
     // 시스템 뒤로가기 — 달리는 중이면 일시정지(실수로 판을 날리지 않게), 멈춰 있거나 끝났으면 홈으로
     BackHandler {
         if (engine.game.phase == RunnerPhase.RUNNING) engine.pause() else onExit()

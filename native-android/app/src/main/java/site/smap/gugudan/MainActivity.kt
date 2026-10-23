@@ -49,6 +49,7 @@ import site.smap.gugudan.features.paywall.PaywallScreen
 import site.smap.gugudan.features.profile.ProfileScreen
 import site.smap.gugudan.features.basket.BasketScreen
 import site.smap.gugudan.features.lanerunner.LaneRunnerScreen
+import site.smap.gugudan.features.pop.PopScreen
 import site.smap.gugudan.features.runner.RunnerScreen
 import site.smap.gugudan.features.session.SessionScreen
 import site.smap.gugudan.services.AndroidStrings
@@ -286,7 +287,8 @@ fun RootScreen() {
     val router = LocalRouter.current
 
     // 세션·미니게임·어드벤처 진행 중에는 원격 알림을 소리·배너 없이 목록에만 둔다
-    val playing = session.active != null || adventure.open || router.runnerOpen || router.laneOpen || router.basketOpen
+    val playing = session.active != null || adventure.open || router.runnerOpen || router.laneOpen || router.basketOpen ||
+        router.popOpen
     LaunchedEffect(playing) { RemotePush.playing = playing }
     // 알림으로 들어온 이동 — 온보딩을 마치고 진행 중인 세션·미니게임·어드벤처가 끝난 뒤에 적용한다 (그 전에는 보관)
     val pendingRoute = router.pendingRoute
@@ -331,7 +333,7 @@ fun RootScreen() {
                 enter = slideInVertically(initialOffsetY = { it / 4 }) + fadeIn(),
                 exit = slideOutVertically(targetOffsetY = { it / 4 }) + fadeOut(),
             ) {
-                RunnerScreen(onExit = { router.runnerOpen = false })
+                RunnerScreen(start = router.minigameStart, onExit = { router.runnerOpen = false })
             }
 
             // 구구 레인 오버레이
@@ -340,7 +342,7 @@ fun RootScreen() {
                 enter = slideInVertically(initialOffsetY = { it / 4 }) + fadeIn(),
                 exit = slideOutVertically(targetOffsetY = { it / 4 }) + fadeOut(),
             ) {
-                LaneRunnerScreen(onExit = { router.laneOpen = false })
+                LaneRunnerScreen(start = router.minigameStart, onExit = { router.laneOpen = false })
             }
 
             // 구구 바구니 오버레이
@@ -349,7 +351,16 @@ fun RootScreen() {
                 enter = slideInVertically(initialOffsetY = { it / 4 }) + fadeIn(),
                 exit = slideOutVertically(targetOffsetY = { it / 4 }) + fadeOut(),
             ) {
-                BasketScreen(onExit = { router.basketOpen = false })
+                BasketScreen(start = router.minigameStart, onExit = { router.basketOpen = false })
+            }
+
+            // 구구 팡팡 오버레이
+            AnimatedVisibility(
+                visible = router.popOpen,
+                enter = slideInVertically(initialOffsetY = { it / 4 }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it / 4 }) + fadeOut(),
+            ) {
+                PopScreen(start = router.minigameStart, onExit = { router.popOpen = false })
             }
 
             // 설정 오버레이 (프로필 톱니바퀴)

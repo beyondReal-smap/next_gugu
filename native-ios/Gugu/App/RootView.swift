@@ -100,7 +100,7 @@ struct RootView: View {
 
     /// 세션·미니게임·어드벤처 진행 중 — 알림 이동을 미루고, 포그라운드 공지는 목록에만 둔다
     private var isImmersive: Bool {
-        session.active != nil || adventure.open || router.runnerOpen || router.laneOpen || router.basketOpen
+        session.active != nil || adventure.open || router.minigame != nil
     }
 
     /// 보관한 알림 이동을 지금 적용해도 되는지 — 온보딩 전·진행 중·페이월이 떠 있으면 기다린다
@@ -184,26 +184,12 @@ struct RootView: View {
                 )) {
                     AdventureView { adventure.closeAdventure() }
                 }
-                // 구구 점프 오버레이
-                .fullScreenCover(isPresented: Binding(
-                    get: { router.runnerOpen },
-                    set: { router.runnerOpen = $0 }
-                )) {
-                    RunnerView { router.runnerOpen = false }
-                }
-                // 구구 레인 오버레이
-                .fullScreenCover(isPresented: Binding(
-                    get: { router.laneOpen },
-                    set: { router.laneOpen = $0 }
-                )) {
-                    LaneRunnerView { router.laneOpen = false }
-                }
-                // 구구 바구니 오버레이
-                .fullScreenCover(isPresented: Binding(
-                    get: { router.basketOpen },
-                    set: { router.basketOpen = $0 }
-                )) {
-                    BasketView { router.basketOpen = false }
+                // 미니게임 오버레이 (팡팡·바구니·점프·레인) — 고른 단을 엔진 시작 단으로 넘긴다
+                .fullScreenCover(item: Binding(
+                    get: { router.minigame },
+                    set: { router.minigame = $0 }
+                )) { launch in
+                    minigameView(launch)
                 }
                 // 페이월 오버레이
                 .sheet(isPresented: Binding(
@@ -212,6 +198,21 @@ struct RootView: View {
                 )) {
                     PaywallView()
                 }
+        }
+    }
+}
+
+// MARK: - 미니게임
+
+extension RootView {
+    @ViewBuilder
+    fileprivate func minigameView(_ launch: MinigameLaunch) -> some View {
+        let exit = { router.minigame = nil }
+        switch launch.game {
+        case .pop: PopView(start: launch.start, onExit: exit)
+        case .basket: BasketView(start: launch.start, onExit: exit)
+        case .jump: RunnerView(start: launch.start, onExit: exit)
+        case .lane: LaneRunnerView(start: launch.start, onExit: exit)
         }
     }
 }

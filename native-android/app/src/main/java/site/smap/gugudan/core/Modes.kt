@@ -25,7 +25,7 @@ data class ModeDef(
 object Modes {
     val all: Map<GameMode, ModeDef> = mapOf(
         GameMode.PRACTICE to ModeDef(
-            GameMode.PRACTICE, R.string.mode_practice_name, R.string.step_by_step_basics,
+            GameMode.PRACTICE, R.string.mode_practice_name, R.string.slow_and_steady,
             R.string.no_pressure_one_at_a_time_missed,
             ModeKind.FIXED, 10, null, null, supportsTable = true, scored = false, xpBonus = 0),
         GameMode.TIME_ATTACK to ModeDef(
@@ -62,4 +62,7 @@ object Modes {
     )
 
     fun def(mode: GameMode): ModeDef = all.getValue(mode)
+
+    /** 단 시트에 보여 줄 모드 — table null('섞어서')이면 list 전체, 단을 골랐으면 단을 지원하는 모드만 (순서는 list 그대로) */
+    fun options(table: Int?): List<ModeDef> = if (table == null) list else list.filter { it.supportsTable }
 }

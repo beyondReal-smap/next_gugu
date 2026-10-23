@@ -61,6 +61,8 @@ class Persistence(context: Context) {
         const val RUNNER_BEST_KEY = "gugu.runner.best.v1"
         const val LANE_BEST_KEY = "gugu.lane.best.v1"
         const val BASKET_BEST_KEY = "gugu.basket.best.v1"
+        /** 구구 팡팡 단별 최고 점수 ({"all"|"2"…"9": 점수}, 키는 Pop.bestKey) */
+        const val POP_BEST_KEY = "gugu.pop.best.v1"
 
         /** 익명 계정 세션 (토큰 — 앱 전용 저장소) */
         const val AUTH_SESSION_KEY = "gugu.auth.session.v1"

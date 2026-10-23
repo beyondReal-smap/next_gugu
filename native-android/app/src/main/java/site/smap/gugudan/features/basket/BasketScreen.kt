@@ -66,6 +66,7 @@ import site.smap.gugudan.services.Haptics
 import site.smap.gugudan.services.Persistence
 import site.smap.gugudan.services.rememberStrings
 import site.smap.gugudan.store.LocalPremium
+import site.smap.gugudan.store.MinigameStart
 
 // 구구 바구니 화면 (BasketScreen.tsx / iOS BasketView 이식)
 // 무대를 좌우로 끌거나 방향 버튼을 눌러 바구니를 옮겨 정답 열매를 받는다.
@@ -80,10 +81,17 @@ private val PAUSE_BG = Color(0xFFFFF8E9)
 private val CONTROL_BG = Color(0xFFF6E8C9)
 
 @Composable
-fun BasketScreen(onExit: () -> Unit) {
+fun BasketScreen(start: MinigameStart, onExit: () -> Unit) {
     val gg = LocalGG.current
     val context = LocalContext.current
-    val engine = remember { BasketEngine(Persistence(context.applicationContext)) }
+    // 단 시트·'섞어서' 시트에서 열면 그 단을 골라 둔 채로, 홈에서 열면 게임 기본값으로 준비한다
+    val engine = remember {
+        val persistence = Persistence(context.applicationContext)
+        when (start) {
+            MinigameStart.Default -> BasketEngine(persistence)
+            is MinigameStart.Table -> BasketEngine(persistence, initialTable = start.table)
+        }
+    }
     // 시스템 뒤로가기 — 달리는 중이면 일시정지(실수로 판을 날리지 않게), 멈춰 있거나 끝났으면 홈으로
     BackHandler {
         if (engine.game.phase == RunnerPhase.RUNNING) engine.pause() else onExit()

@@ -18,22 +18,27 @@ import site.smap.gugudan.services.Sound
 // 구구 레인 진행 상태 관리 (iOS LaneRunnerEngine 이식)
 // 게임 규칙은 core/LaneRunner.kt 순수 함수가 담당하고, 여기서는 프레임 반영과 기록 저장만 맡는다.
 
-class LaneRunnerEngine(private val persistence: Persistence) {
-    var game: LaneRunnerState by mutableStateOf(LaneRunner.create(null, RunnerPhase.READY))
+/** initialTable: 처음 골라 둘 단 (null = 전체). 학습 탭 단 시트처럼 단을 정해 열 때 넘기고, 생략하면 기본값 */
+class LaneRunnerEngine(private val persistence: Persistence, initialTable: Int? = DEFAULT_TABLE) {
+    var game: LaneRunnerState by mutableStateOf(LaneRunner.create(initialTable, RunnerPhase.READY))
         private set
     var bests: Map<String, Int> by mutableStateOf(emptyMap())
         private set
 
     /** 선택한 단 (null = 전체) */
-    var table: Int? by mutableStateOf(null)
+    var table: Int? by mutableStateOf(initialTable)
 
     private val json = Json { ignoreUnknownKeys = true }
 
     companion object {
         val TABLES = (Problems.MIN_TABLE..Problems.MAX_TABLE).toList()
+
+        /** 시작 단 기본값 — 단을 정하지 않고 열면 전체 */
+        val DEFAULT_TABLE: Int? = null
     }
 
     init {
+        require(initialTable == null || initialTable in TABLES) { "단 범위 밖: $initialTable" }
         bests = loadBests()
     }
 

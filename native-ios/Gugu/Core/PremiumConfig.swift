@@ -17,6 +17,9 @@ enum PremiumConfig {
     /// 움직이며 놀기(점프·레인·바구니) 무료 체험 문제 수 — 이만큼 풀면 게임을 멈추고 결제 화면으로 안내한다
     static let minigameTrialQuestions = 3
 
+    /// 구구 팡팡 무료 체험 웨이브 수 — 첫 웨이브를 깨면 판을 멈추고 결제 화면으로 안내한다 (PopState.trialLeft 단위가 웨이브)
+    static let popTrialWaves = 1
+
     /// 법적 고지 링크 (페이월·프로필에서 사용, Apple 심사 필수) — 앱 언어별 문서.
     /// 한국어는 기존 주소 그대로, 영어·일본어는 /en/·/ja/ 아래 (해외 법령 조항을 보강한 별도 문서)
     enum Legal {

@@ -18,9 +18,14 @@ final class LaneRunnerEngine {
     /// 표시용 — 단 선택 목록
     static let tables = Array(Problems.minTable...Problems.maxTable)
 
-    init() {
-        self.table = nil
-        self.game = LaneRunner.create(table: nil, phase: .ready)
+    /// 시작 단 기본값 — 단을 정하지 않고 열면 전체
+    static let defaultTable: Int? = nil
+
+    /// table: 처음 골라 둘 단 (nil = 전체). 학습 탭 단 시트처럼 단을 정해 열 때 넘기고, 생략하면 기본값
+    init(table: Int? = LaneRunnerEngine.defaultTable) {
+        precondition(table.map(LaneRunnerEngine.tables.contains) ?? true, "단 범위 밖: \(table!)")
+        self.table = table
+        self.game = LaneRunner.create(table: table, phase: .ready)
         self.bests = LaneRunnerEngine.loadBests()
     }
 

@@ -15,7 +15,8 @@ final class CoreLocalizationTests: XCTestCase {
     }
 
     func testModeNames() {
-        XCTAssertEqual(Modes.def(.practice).name, expected(ko: "학습", en: "Practice", ja: "れんしゅう"))
+        // 2.7.0 모드 이름 "학습" → "차근차근" (탭 이름과 겹침 해소, 내부 id practice 유지)
+        XCTAssertEqual(Modes.def(.practice).name, expected(ko: "차근차근", en: "Step by step", ja: "じっくり"))
         XCTAssertEqual(Modes.def(.truefalse).name, expected(ko: "OX 퀴즈", en: "True or False", ja: "○×クイズ"))
     }
 

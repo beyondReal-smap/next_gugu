@@ -439,6 +439,28 @@
         }
       }
     },
+    "%@, 잠김, 평생 이용권 필요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "%@, locked, Lifetime Pass needed"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "%@、ロック中、買い切りパスが ひつよう"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@, 잠김, 평생 이용권 필요"
+          }
+        }
+      }
+    },
     "%@, 진행 중" : {
       "localizations" : {
         "en" : {
@@ -457,6 +479,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@, 진행 중"
+          }
+        }
+      }
+    },
+    "%@, 최고 %lld점" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "needs_review",
+                  "value" : "%1$@, best %2$lld point"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "needs_review",
+                  "value" : "%1$@, best %2$lld points"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "%1$@、さいこう %2$lldてん"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@, 최고 %2$lld점"
           }
         }
       }
@@ -740,6 +796,28 @@
         }
       }
     },
+    "%lld개 중 %lld개" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "%2$lld of %1$lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "%1$lldこ中 %2$lldこ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld개 중 %2$lld개"
+          }
+        }
+      }
+    },
     "%lld개를 넘었어요. 정답을 익히면 다음엔 더 멀리!" : {
       "localizations" : {
         "en" : {
@@ -792,50 +870,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld단"
-          }
-        }
-      }
-    },
-    "%lld단 %@ 시작, 별 %lld개" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start %2$@, %1$lld times table, stars: %3$lld"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "%1$lldのだん %2$@ スタート、ほし %3$lldこ"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld단 %2$@ 시작, 별 %3$lld개"
-          }
-        }
-      }
-    },
-    "%lld단 %@ 시작, 별 %lld개, 추천" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start %2$@, %1$lld times table, stars: %3$lld, recommended"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "%1$lldのだん %2$@ スタート、ほし %3$lldこ、おすすめ"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%1$lld단 %2$@ 시작, 별 %3$lld개, 추천"
           }
         }
       }
@@ -950,6 +984,28 @@
         }
       }
     },
+    "%lld단 정답만 팡!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Pop only the %lld times table!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "%lldのだんの こたえだけ パン！"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld단 정답만 팡!"
+          }
+        }
+      }
+    },
     "%lld단 최고" : {
       "localizations" : {
         "en" : {
@@ -968,28 +1024,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld단 최고"
-          }
-        }
-      }
-    },
-    "%lld단 표 보기" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "View the %lld times table"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "%lldのだんの ひょうを 見る"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld단 표 보기"
           }
         }
       }
@@ -1016,6 +1050,28 @@
         }
       }
     },
+    "%lld단, 별 %lld개, 추천" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "%1$lld times table, stars: %2$lld, recommended"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "%1$lldのだん、ほし %2$lldこ、おすすめ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld단, 별 %2$lld개, 추천"
+          }
+        }
+      }
+    },
     "%lld단으로 승부하자!" : {
       "comment" : "일반 주민 인사말 — %lld 는 단",
       "localizations" : {
@@ -1035,6 +1091,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld단으로 승부하자!"
+          }
+        }
+      }
+    },
+    "%lld단으로 시작해요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Starts with the %lld times table"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "%lldのだんで はじめるよ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld단으로 시작해요"
           }
         }
       }
@@ -1091,40 +1169,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld문제"
-          }
-        }
-      }
-    },
-    "%lld문제 · 단 선택" : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "needs_review",
-                  "value" : "%lld problem · pick a table"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "needs_review",
-                  "value" : "%lld problems · pick a table"
-                }
-              }
-            }
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "%lldもん · だんを えらぶ"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld문제 · 단 선택"
           }
         }
       }
@@ -1524,6 +1568,40 @@
         }
       }
     },
+    "%lld점!" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "needs_review",
+                  "value" : "%lld point!"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "needs_review",
+                  "value" : "%lld points!"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "%lldてん！"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld점!"
+          }
+        }
+      }
+    },
     "%lld초 안에 못 풀면 반격당해요!" : {
       "localizations" : {
         "en" : {
@@ -1588,6 +1666,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld초 제한"
+          }
+        }
+      }
+    },
+    "%lld콤보" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Combo %lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "%lldコンボ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld콤보"
           }
         }
       }
@@ -2457,19 +2557,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "Practice"
+            "value" : "Step by step"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "れんしゅう"
+            "value" : "じっくり"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "학습"
+            "value" : "차근차근"
           }
         }
       }
@@ -3129,6 +3229,28 @@
         }
       }
     },
+    "곱해서 %lld 만들기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Multiply to make %lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "かけて %lld を つくろう"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "곱해서 %lld 만들기"
+          }
+        }
+      }
+    },
     "공룡" : {
       "localizations" : {
         "en" : {
@@ -3396,40 +3518,6 @@
         }
       }
     },
-    "구구 점프 · 레인 · 바구니 (무료는 %lld문제 체험)" : {
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "needs_review",
-                  "value" : "Gugu Jump · Lanes · Basket (free: try %lld problem)"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "needs_review",
-                  "value" : "Gugu Jump · Lanes · Basket (free: try %lld problems)"
-                }
-              }
-            }
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "九九ジャンプ・レーン・バスケット（無料版は%lld問のおためし）"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "구구 점프 · 레인 · 바구니 (무료는 %lld문제 체험)"
-          }
-        }
-      }
-    },
     "구구 점프 무대" : {
       "localizations" : {
         "en" : {
@@ -3448,6 +3536,84 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "구구 점프 무대"
+          }
+        }
+      }
+    },
+    "구구 팡팡" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Gugu Pop"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "九九ポップ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "구구 팡팡"
+          }
+        }
+      }
+    },
+    "구구 팡팡 · 바구니 · 점프 · 레인 (무료는 팡팡 첫 웨이브, 나머지 %lld문제 체험)" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "needs_review",
+                  "value" : "Gugu Pop · Basket · Jump · Lanes (free: Pop's first wave, others %lld problem)"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "needs_review",
+                  "value" : "Gugu Pop · Basket · Jump · Lanes (free: Pop's first wave, others %lld problems)"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "九九ポップ · バスケット · ジャンプ · レーン（むりょうは ポップの さいしょの ウェーブ、ほかは %lldもん おためし）"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "구구 팡팡 · 바구니 · 점프 · 레인 (무료는 팡팡 첫 웨이브, 나머지 %lld문제 체험)"
+          }
+        }
+      }
+    },
+    "구구 팡팡 놀이 영역" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Gugu Pop play area"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "九九ポップの あそぶ ところ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "구구 팡팡 놀이 영역"
           }
         }
       }
@@ -3586,6 +3752,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "구구단 정복자"
+          }
+        }
+      }
+    },
+    "구구단 표를 보고 소리로 외워요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "See the table and learn it by ear"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "九九の ひょうを 見て、音で おぼえよう"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "구구단 표를 보고 소리로 외워요"
           }
         }
       }
@@ -3923,28 +4111,6 @@
         }
       }
     },
-    "길을 바꿔 피하고 정답 길로" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Switch lanes to dodge, find the answer"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "みちを かえて よけて、正かいの みちへ"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "길을 바꿔 피하고 정답 길로"
-          }
-        }
-      }
-    },
     "길을 바꿔 피하고, 정답 길로 쏙!" : {
       "localizations" : {
         "en" : {
@@ -4100,6 +4266,28 @@
         }
       }
     },
+    "나의 최고 기록이에요!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "That's your best score!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "じぶんの さいこう きろくだよ！"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "나의 최고 기록이에요!"
+          }
+        }
+      }
+    },
     "나중에 할게요" : {
       "localizations" : {
         "en" : {
@@ -4231,28 +4419,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "내 선택 %@"
-          }
-        }
-      }
-    },
-    "내 최고 기록" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "My best"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "自分の さいこうきろく"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "내 최고 기록"
           }
         }
       }
@@ -4460,6 +4626,28 @@
         }
       }
     },
+    "눌러서 바로 시작" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Tap to start right away"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "タップで すぐ スタート"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "눌러서 바로 시작"
+          }
+        }
+      }
+    },
     "눌러서 소리로 듣기" : {
       "localizations" : {
         "en" : {
@@ -4482,6 +4670,50 @@
         }
       }
     },
+    "눌러서 연습 방법 고르기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Tap to choose how to practice"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "タップで れんしゅうの しかたを えらぶ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "눌러서 연습 방법 고르기"
+          }
+        }
+      }
+    },
+    "눌러서 평생 이용권 보기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Tap to see the Lifetime Pass"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "タップで 買い切りパスを 見る"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "눌러서 평생 이용권 보기"
+          }
+        }
+      }
+    },
     "눌러서 하루 목표 바꾸기" : {
       "localizations" : {
         "en" : {
@@ -4500,6 +4732,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "눌러서 하루 목표 바꾸기"
+          }
+        }
+      }
+    },
+    "느려졌어요!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Slow motion!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ゆっくりに なったよ！"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "느려졌어요!"
           }
         }
       }
@@ -4828,6 +5082,28 @@
         }
       }
     },
+    "다시 팡팡" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Pop again"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "もういちど ポップ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다시 팡팡"
+          }
+        }
+      }
+    },
     "다음엔 받아봐요! 정답은 %lld" : {
       "localizations" : {
         "en" : {
@@ -4894,12 +5170,12 @@
         }
       }
     },
-    "단 선택" : {
+    "단 고르기" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "Pick a table"
+            "value" : "Choose a table"
           }
         },
         "ja" : {
@@ -4911,7 +5187,7 @@
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "단 선택"
+            "value" : "단 고르기"
           }
         }
       }
@@ -4960,6 +5236,28 @@
         }
       }
     },
+    "단을 누르면 연습 방법을 고를 수 있어요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Tap a table to choose how to practice"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "だんを タップすると れんしゅうの しかたを えらべるよ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "단을 누르면 연습 방법을 고를 수 있어요"
+          }
+        }
+      }
+    },
     "닫기" : {
       "localizations" : {
         "en" : {
@@ -4978,28 +5276,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "닫기"
-          }
-        }
-      }
-    },
-    "달리고, 피하고, 정답을 받아요" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Run, dodge, and catch the answers"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "走って、よけて、正かいを キャッチ"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "달리고, 피하고, 정답을 받아요"
           }
         }
       }
@@ -5293,28 +5569,6 @@
         }
       }
     },
-    "도전 시작" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Start challenge"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "チャレンジ スタート"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "도전 시작"
-          }
-        }
-      }
-    },
     "동의하고 켜기" : {
       "comment" : "알림 설정 문구",
       "localizations" : {
@@ -5380,6 +5634,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "두더지 두두"
+          }
+        }
+      }
+    },
+    "뒤로" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Back"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "もどる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "뒤로"
           }
         }
       }
@@ -5827,6 +6103,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "로그인하지 않아도 같은 Apple 계정에서는 「구매 복원」으로 되살릴 수 있어요."
+          }
+        }
+      }
+    },
+    "로드맵 순서대로 한 단씩" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "One table at a time, in roadmap order"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "じゅんばんに ひとつずつ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "로드맵 순서대로 한 단씩"
           }
         }
       }
@@ -6303,6 +6601,28 @@
         }
       }
     },
+    "모든 단 별 3개! %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "3 stars on every table! %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ぜんぶの だんで ほし3こ！ %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "모든 단 별 3개! %@"
+          }
+        }
+      }
+    },
     "모든 모드와 3D 어드벤처 · 한 번 구매로 계속" : {
       "localizations" : {
         "en" : {
@@ -6603,6 +6923,28 @@
         }
       }
     },
+    "무료 체험 · 첫 웨이브" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Free trial · first wave"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "おためし · さいしょの ウェーブ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "무료 체험 · 첫 웨이브"
+          }
+        }
+      }
+    },
     "무료 체험은 여기까지!" : {
       "localizations" : {
         "en" : {
@@ -6710,6 +7052,72 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "물개 살살"
+          }
+        }
+      }
+    },
+    "물리친 보스" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Bosses beaten"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "たおした ボス"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "물리친 보스"
+          }
+        }
+      }
+    },
+    "미션에 맞는 숫자 풍선만 팡!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Pop only the number balloons that fit the mission!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ミッションに あう 数の ふうせんだけ パン！"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미션에 맞는 숫자 풍선만 팡!"
+          }
+        }
+      }
+    },
+    "미션에 맞는 풍선만 팡!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Pop only the balloons that fit the mission!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ミッションに あう ふうせんだけ パン！"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "미션에 맞는 풍선만 팡!"
           }
         }
       }
@@ -7436,6 +7844,40 @@
         }
       }
     },
+    "보스 방패 %lld개 남음" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "needs_review",
+                  "value" : "%lld boss shield left"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "needs_review",
+                  "value" : "%lld boss shields left"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ボスの たて のこり %lldこ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "보스 방패 %lld개 남음"
+          }
+        }
+      }
+    },
     "보스 사냥꾼" : {
       "comment" : "어드벤처 업적 이름",
       "localizations" : {
@@ -8129,6 +8571,28 @@
         }
       }
     },
+    "새 게임" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "New game"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "新しい ゲーム"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새 게임"
+          }
+        }
+      }
+    },
     "새 기능: 공지 알림을 켜면 업데이트·점검 소식을 받을 수 있어요." : {
       "comment" : "알림 설정 문구",
       "localizations" : {
@@ -8215,28 +8679,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "새 기록!"
-          }
-        }
-      }
-    },
-    "새 모드" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "New mode"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "新モード"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "새 모드"
           }
         }
       }
@@ -8396,6 +8838,72 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "서바이벌에서 20문제 생존"
+          }
+        }
+      }
+    },
+    "섞어서" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Mixed"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ミックス"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "섞어서"
+          }
+        }
+      }
+    },
+    "섞어서 시작해요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Starts with mixed tables"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ミックスで はじめるよ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "섞어서 시작해요"
+          }
+        }
+      }
+    },
+    "섞어서, 2~9단 골고루" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Mixed, tables 2–9 evenly"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ミックス、2〜9のだんを まんべんなく"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "섞어서, 2~9단 골고루"
           }
         }
       }
@@ -8781,6 +9289,28 @@
         }
       }
     },
+    "숫자 풍선이 내려와요. 미션에 맞는 풍선만 눌러 터뜨려요. 정답 풍선이 지붕에 닿으면 하트가 하나 줄어요. 다른 풍선을 눌러도 하트는 그대로예요!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Number balloons float down. Tap only the ones that fit the mission to pop them. If a right balloon reaches the roofs, you lose a heart. Tapping other balloons doesn't cost a heart!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "数の ふうせんが おりてくるよ。ミッションに あう ふうせんだけ タップして わろう。正かいの ふうせんが やねに つくと ハートが ひとつ へるよ。ほかの ふうせんを タップしても ハートは へらないよ！"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "숫자 풍선이 내려와요. 미션에 맞는 풍선만 눌러 터뜨려요. 정답 풍선이 지붕에 닿으면 하트가 하나 줄어요. 다른 풍선을 눌러도 하트는 그대로예요!"
+          }
+        }
+      }
+    },
     "숫자를 먼저 눌러 주세요" : {
       "localizations" : {
         "en" : {
@@ -9029,28 +9559,6 @@
         }
       }
     },
-    "시간 제한 없이 원리부터" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Learn how it works, no time limit"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "時間せいげん なしで しくみから"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "시간 제한 없이 원리부터"
-          }
-        }
-      }
-    },
     "시간 초과! 정답은 %lld — %@의 반격!" : {
       "localizations" : {
         "en" : {
@@ -9203,6 +9711,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "신사 모자"
+          }
+        }
+      }
+    },
+    "실시간 게임이라 화면을 보며 풍선을 눌러요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "A real-time game — watch the screen and tap balloons"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "リアルタイムの ゲームだよ。画面を 見ながら ふうせんを タップしてね"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "실시간 게임이라 화면을 보며 풍선을 눌러요"
           }
         }
       }
@@ -9801,6 +10331,28 @@
         }
       }
     },
+    "어떻게 연습할까요?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "How do you want to practice?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "どうやって れんしゅうする？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "어떻게 연습할까요?"
+          }
+        }
+      }
+    },
     "언어" : {
       "localizations" : {
         "en" : {
@@ -10202,6 +10754,72 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "오늘 목표까지 정답 %lld개 남았어요."
+          }
+        }
+      }
+    },
+    "오늘 추천" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Today's pick"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "きょうの おすすめ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오늘 추천"
+          }
+        }
+      }
+    },
+    "오늘 추천 %@, %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Today's pick: %1$@, %2$@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "きょうの おすすめ %1$@、%2$@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오늘 추천 %1$@, %2$@"
+          }
+        }
+      }
+    },
+    "오늘 추천 단" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Today's table"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "きょうの おすすめの だん"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "오늘 추천 단"
           }
         }
       }
@@ -10645,6 +11263,28 @@
         }
       }
     },
+    "움직이며 놀기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Move and play"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "体を うごかして あそぼう"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "움직이며 놀기"
+          }
+        }
+      }
+    },
     "움직이며 놀기 무제한" : {
       "localizations" : {
         "en" : {
@@ -10663,50 +11303,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "움직이며 놀기 무제한"
-          }
-        }
-      }
-    },
-    "움직이며 연습하기" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Practice on the move"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "うごいて れんしゅう"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "움직이며 연습하기"
-          }
-        }
-      }
-    },
-    "원하는 단을 골라 또박또박" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pick any table and go step by step"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "すきな だんを えらんで じっくり"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "원하는 단을 골라 또박또박"
           }
         }
       }
@@ -10774,6 +11370,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "월드에서 대결"
+          }
+        }
+      }
+    },
+    "웨이브" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Wave"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ウェーブ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "웨이브"
+          }
+        }
+      }
+    },
+    "웨이브 %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Wave %lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ウェーブ %lld"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "웨이브 %lld"
           }
         }
       }
@@ -11331,6 +11971,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이어서 쓸 기록을 골라 주세요"
+          }
+        }
+      }
+    },
+    "이어서 팡팡" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Keep popping"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "つづけて ポップ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이어서 팡팡"
           }
         }
       }
@@ -11901,28 +12563,6 @@
         }
       }
     },
-    "전체 랜덤" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Random mix"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "ぜんぶ ランダム"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "전체 랜덤"
-          }
-        }
-      }
-    },
     "전체 최고" : {
       "localizations" : {
         "en" : {
@@ -11986,6 +12626,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "점"
+          }
+        }
+      }
+    },
+    "점수 %lld점" : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "needs_review",
+                  "value" : "Score: %lld point"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "needs_review",
+                  "value" : "Score: %lld points"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "とくてん %lldてん"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "점수 %lld점"
           }
         }
       }
@@ -12312,28 +12986,6 @@
         }
       }
     },
-    "정답 열매를 바구니로 쏙" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Catch the right fruit in your basket"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "正かいの 木のみを かごで キャッチ"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "정답 열매를 바구니로 쏙"
-          }
-        }
-      }
-    },
     "정답! %lld 길로 통과했어요." : {
       "localizations" : {
         "en" : {
@@ -12440,28 +13092,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "정답을 고르면 폴짝! 장애물을 넘어요."
-          }
-        }
-      }
-    },
-    "정답을 골라 장애물 넘기" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Pick answers to jump obstacles"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "正かいを えらんで じゃまものを とびこえる"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "정답을 골라 장애물 넘기"
           }
         }
       }
@@ -13036,28 +13666,6 @@
         }
       }
     },
-    "직접 움직이며 놀기" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Move & Play"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "うごいて あそぼう"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "직접 움직이며 놀기"
-          }
-        }
-      }
-    },
     "진동" : {
       "localizations" : {
         "en" : {
@@ -13124,6 +13732,72 @@
         }
       }
     },
+    "짝꿍 %lld 고름" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Picked %lld for the pair"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ペアに %lld を えらんだ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "짝꿍 %lld 고름"
+          }
+        }
+      }
+    },
+    "짝꿍 두 개를 차례로 팡!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Pop a pair, one after the other!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ペアを ひとつずつ じゅんばんに パン！"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "짝꿍 두 개를 차례로 팡!"
+          }
+        }
+      }
+    },
+    "짝꿍 보스 등장!" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Pair boss is here!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ペアボス とうじょう！"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "짝꿍 보스 등장!"
+          }
+        }
+      }
+    },
     "짧게라도 매일 하는 습관이 가장 중요해요. 학습 알림을 켜 두면 도움이 돼요." : {
       "comment" : "주간 리포트 보호자 팁",
       "localizations" : {
@@ -13143,51 +13817,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "짧게라도 매일 하는 습관이 가장 중요해요. 학습 알림을 켜 두면 도움이 돼요."
-          }
-        }
-      }
-    },
-    "차근차근 기본기" : {
-      "comment" : "모드 카드 한 줄 소개 — 짧게",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Step-by-step basics"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "じっくり きほん"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "차근차근 기본기"
-          }
-        }
-      }
-    },
-    "차근차근 배우기" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Learn step by step"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "じっくり まなぼう"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "차근차근 배우기"
           }
         }
       }
@@ -13233,6 +13862,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "처음으로 정답을 맞혔어요"
+          }
+        }
+      }
+    },
+    "천천히 또박또박" : {
+      "comment" : "모드 카드 한 줄 소개 — 짧게",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Slow and steady"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ゆっくり ていねいに"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "천천히 또박또박"
           }
         }
       }
@@ -13306,6 +13958,28 @@
         }
       }
     },
+    "첫 웨이브 체험" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "First wave free"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "1ウェーブ おためし"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "첫 웨이브 체험"
+          }
+        }
+      }
+    },
     "첫 정답" : {
       "comment" : "업적 이름",
       "localizations" : {
@@ -13370,6 +14044,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "체험 %1$lld/%2$lld"
+          }
+        }
+      }
+    },
+    "체험 웨이브" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Trial wave"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "おためし ウェーブ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "체험 웨이브"
           }
         }
       }
@@ -13720,28 +14416,6 @@
         }
       }
     },
-    "추천 순서 %@단 · 책 버튼을 누르면 표를 볼 수 있어요" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Suggested order: %@ · Tap a book to see its chart"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "おすすめ：%@のだん · 本を おすと ひょうが 見られるよ"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "추천 순서 %@단 · 책 버튼을 누르면 표를 볼 수 있어요"
-          }
-        }
-      }
-    },
     "출생연도를 다시 확인해 주세요." : {
       "comment" : "알림 설정 문구",
       "localizations" : {
@@ -13978,6 +14652,50 @@
         }
       }
     },
+    "터뜨리고, 받고, 달리며 정답을 찾아요" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Pop, catch, and run for answers"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "わって、キャッチして、走ろう"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "터뜨리고, 받고, 달리며 정답을 찾아요"
+          }
+        }
+      }
+    },
+    "터뜨린 풍선" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Balloons popped"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "わった ふうせん"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "터뜨린 풍선"
+          }
+        }
+      }
+    },
     "테마" : {
       "localizations" : {
         "en" : {
@@ -14019,6 +14737,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "토끼 로로"
+          }
+        }
+      }
+    },
+    "토끼와 다시 팡팡 해 볼까요?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Pop again with the bunny?"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "うさぎと もういちど ポップする？"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "토끼와 다시 팡팡 해 볼까요?"
           }
         }
       }
@@ -14176,6 +14916,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "파도처럼 밀려오는 4단을 견뎌봐라!"
+          }
+        }
+      }
+    },
+    "팡팡 시작" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Start popping"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ポップ スタート"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "팡팡 시작"
           }
         }
       }
@@ -14424,6 +15186,28 @@
         }
       }
     },
+    "표·외우기" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "See & learn"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ひょう · おぼえる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "표·외우기"
+          }
+        }
+      }
+    },
     "푼 문제는 기록되지만 승패는 남지 않아요." : {
       "localizations" : {
         "en" : {
@@ -14464,6 +15248,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "푼 시간"
+          }
+        }
+      }
+    },
+    "풍선 %lld개를 팡! " : {
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "needs_review",
+                  "value" : "You popped %lld balloon! "
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "needs_review",
+                  "value" : "You popped %lld balloons! "
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ふうせんを %lldこ パン！ "
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "풍선 %lld개를 팡! "
           }
         }
       }
@@ -14665,6 +15483,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "하트 %lld개"
+          }
+        }
+      }
+    },
+    "하트 3개 · 3번째 웨이브마다 짝꿍 보스가 나와요. 단별 최고 기록은 이 기기에 저장돼요." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "3 hearts · A pair boss appears every 3rd wave. Best scores for each table are saved on this device."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ハート3こ · 3ウェーブごとに ペアボスが 出るよ。だんごとの さいこう きろくは この きかいに ほぞんされるよ。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "하트 3개 · 3번째 웨이브마다 짝꿍 보스가 나와요. 단별 최고 기록은 이 기기에 저장돼요."
           }
         }
       }

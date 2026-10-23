@@ -41,9 +41,11 @@ object MinigameTrial {
         if (isPremium) null else pluralStringResource(R.plurals.free_problems, questions, questions)
 }
 
-/** 시작 전 안내 — 체험이 몇 문제인지 먼저 알려 끝이 갑작스럽지 않게 한다 */
+/** 시작 전 안내 — 체험이 몇 문제인지 먼저 알려 끝이 갑작스럽지 않게 한다. title 은 체험 단위가 다른 게임(팡팡 = 웨이브)이 바꿔 넣는다 */
 @Composable
-fun TrialNotice() {
+fun TrialNotice(
+    title: String = pluralStringResource(R.plurals.free_trial_problems, MinigameTrial.questions, MinigameTrial.questions),
+) {
     val gg = LocalGG.current
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(gg.accent.copy(alpha = 0.08f))
@@ -53,7 +55,7 @@ fun TrialNotice() {
     ) {
         Icon(Icons.Filled.ConfirmationNumber, null, tint = gg.accent, modifier = Modifier.size(16.dp))
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(pluralStringResource(R.plurals.free_trial_problems, MinigameTrial.questions, MinigameTrial.questions), style = suite(FontWeight.ExtraBold, 13), color = gg.text)
+            Text(title, style = suite(FontWeight.ExtraBold, 13), color = gg.text)
             Text(stringResource(R.string.with_the_lifetime_pass_you_can_play_with), style = suite(FontWeight.Medium, 12), color = gg.textMuted)
         }
     }
@@ -84,9 +86,15 @@ fun TrialProgressPill(left: Int) {
  * "다시 하기"는 두지 않는다: 체험을 이어 붙여 계속 노는 흐름을 막기 위해서다(대표님 결정).
  */
 @Composable
-fun TrialEndPanel(correct: Int, onUnlock: () -> Unit, onExit: () -> Unit) {
+fun TrialEndPanel(
+    correct: Int,
+    onUnlock: () -> Unit,
+    onExit: () -> Unit,
+    /** 앞 문장 — 체험 단위가 다른 게임(팡팡 = 터뜨린 풍선)이 바꿔 넣는다. correct 가 0 이면 쓰지 않는다 */
+    lead: @Composable (Int) -> String = { pluralStringResource(R.plurals.you_got_problems_right, it, it) },
+) {
     val gg = LocalGG.current
-    val lead = if (correct > 0) pluralStringResource(R.plurals.you_got_problems_right, correct, correct) else ""
+    val leadText = if (correct > 0) lead(correct) else ""
     Column(
         Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -105,7 +113,7 @@ fun TrialEndPanel(correct: Int, onUnlock: () -> Unit, onExit: () -> Unit) {
         ) {
             Text(stringResource(R.string.that_s_the_end_of_the_free_trial), style = suite(FontWeight.ExtraBold, 18), color = gg.text)
             Text(
-                lead + stringResource(R.string.with_the_lifetime_pass_you_can_keep),
+                leadText + stringResource(R.string.with_the_lifetime_pass_you_can_keep),
                 style = suite(FontWeight.Medium, 13), color = gg.textMuted, textAlign = TextAlign.Center,
             )
         }

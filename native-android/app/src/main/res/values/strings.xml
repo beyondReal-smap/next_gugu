@@ -63,9 +63,11 @@
     <!-- 알림 설정 문구 -->
     <string name="available_after_you_link_an_email_and">Available after you link an email and turn on record backup.</string>
     <string name="avg_speed">Avg. speed</string>
+    <string name="back">Back</string>
     <string name="back_to_practice">Back to Practice</string>
     <string name="back_to_region_map">Back to region map</string>
     <string name="back_to_the_world">Back to the world</string>
+    <string name="balloons_popped">Balloons popped</string>
     <string name="battle">Battle</string>
     <string name="battle_again">Battle again</string>
     <!-- 모드 카드 한 줄 소개 — 짧게 -->
@@ -94,6 +96,10 @@
         <item quantity="one">Best: %d point</item>
         <item quantity="other">Best: %d points</item>
     </plurals>
+    <plurals name="best_points_2">
+        <item quantity="one">%1$s, best %2$d point</item>
+        <item quantity="other">%1$s, best %2$d points</item>
+    </plurals>
     <plurals name="best_pts">
         <item quantity="one">Best %1$d pt · %2$s</item>
         <item quantity="other">Best %1$d pts · %2$s</item>
@@ -107,6 +113,11 @@
     <string name="boss_battle">Boss Battle</string>
     <!-- 어드벤처 업적 이름 -->
     <string name="boss_hunter">Boss Hunter</string>
+    <plurals name="boss_shields_left">
+        <item quantity="one">%d boss shield left</item>
+        <item quantity="other">%d boss shields left</item>
+    </plurals>
+    <string name="bosses_beaten">Bosses beaten</string>
     <string name="bottom">Bottom</string>
     <!-- 어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지) -->
     <string name="button_the_mushroom_kid">Button the Mushroom Kid</string>
@@ -117,10 +128,10 @@
     <string name="care_for_a_taste_of_my_boiling_hot_8">Care for a taste of my boiling-hot 8 times table?</string>
     <string name="catch_again">Catch again</string>
     <string name="catch_it_next_time_the_answer_is">Catch it next time! The answer is %d</string>
-    <string name="catch_the_right_fruit_in_your_basket">Catch the right fruit in your basket</string>
     <string name="challenge_about_five_rounds_to_reach_it">Challenge — about five rounds to reach it</string>
     <string name="change_goal">Change goal</string>
     <string name="checking">Checking…</string>
+    <string name="choose_a_table">Choose a table</string>
     <string name="choose_how_many_correct_answers_to_aim">Choose how many correct answers to aim for each day. Once you reach the goal, practice reminders take the rest of the day off.</string>
     <string name="choose_which_records_to_continue_with">Choose which records to continue with</string>
     <string name="cleared">%s cleared!</string>
@@ -135,6 +146,7 @@
     <string name="combo">Combo %d</string>
     <!-- 업적 이름 -->
     <string name="combo_10">Combo 10</string>
+    <string name="combo_2">Combo %d</string>
     <!-- 업적 이름 -->
     <string name="combo_20">Combo 20</string>
     <string name="coming_in">Coming in %s</string>
@@ -266,6 +278,7 @@
     </plurals>
     <!-- 어드벤처 업적 이름 -->
     <string name="first_victory">First Victory</string>
+    <string name="first_wave_free">First wave free</string>
     <!-- 어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지) -->
     <string name="flicker_the_fire_sprite">Flicker the Fire Sprite</string>
     <string name="focus_problems">Focus Problems</string>
@@ -309,11 +322,13 @@
     <string name="gugu_adventure_notifications_are_turned">Gugu Adventure notifications are turned off in the Settings app.</string>
     <string name="gugu_basket">Gugu Basket</string>
     <string name="gugu_jump">Gugu Jump</string>
-    <plurals name="gugu_jump_lanes_basket_free_try_problems">
-        <item quantity="one">Gugu Jump · Lanes · Basket (free: try %d problem)</item>
-        <item quantity="other">Gugu Jump · Lanes · Basket (free: try %d problems)</item>
-    </plurals>
     <string name="gugu_lanes">Gugu Lanes</string>
+    <string name="gugu_pop">Gugu Pop</string>
+    <plurals name="gugu_pop_basket_jump_lanes_free_pop_s">
+        <item quantity="one">Gugu Pop · Basket · Jump · Lanes (free: Pop\'s first wave, others %d problem)</item>
+        <item quantity="other">Gugu Pop · Basket · Jump · Lanes (free: Pop\'s first wave, others %d problems)</item>
+    </plurals>
+    <string name="gugu_pop_play_area">Gugu Pop play area</string>
     <!-- 어드벤처 업적 이름 -->
     <string name="halfway_there">Halfway There</string>
     <!-- 모드 선택 시 하단 설명 -->
@@ -344,6 +359,7 @@
         <item quantity="other">How about a round today? Your goal is %d correct answers.</item>
     </plurals>
     <string name="how_do_you_want_to_play">How do you want to play?</string>
+    <string name="how_do_you_want_to_practice">How do you want to practice?</string>
     <!-- 모드 선택 시 하단 설명 -->
     <string name="how_many_can_you_solve_in_60_seconds_go">How many can you solve in 60 seconds? Go for your best score!</string>
     <!-- 어드벤처 대결 방식 이름 -->
@@ -381,6 +397,7 @@
     <string name="keep_battling">Keep battling</string>
     <string name="keep_catching">Keep catching</string>
     <string name="keep_going">Keep going</string>
+    <string name="keep_popping">Keep popping</string>
     <string name="keep_running">Keep running</string>
     <string name="keep_running_2">Keep running</string>
     <string name="keep_running_when_you_re_ready">Keep running when you\'re ready.</string>
@@ -400,8 +417,6 @@
     <!-- 어드벤처 지역 이름 -->
     <string name="lava_volcano">Lava Volcano</string>
     <string name="learn">Learn</string>
-    <string name="learn_how_it_works_no_time_limit">Learn how it works, no time limit</string>
-    <string name="learn_step_by_step">Learn step by step</string>
     <string name="learn_times_tables_by_switching_lanes">Learn times tables by switching lanes</string>
     <string name="learn_times_tables_on_the_run">Learn times tables on the run</string>
     <!-- 설정 기록 보관 안내 -->
@@ -430,6 +445,7 @@
     <string name="link_an_email_first_to_turn_on_record">Link an email first to turn on record backup.</string>
     <string name="listen_learn">Listen &amp; Learn</string>
     <string name="locked">Locked</string>
+    <string name="locked_lifetime_pass_needed">%s, locked, Lifetime Pass needed</string>
     <!-- 어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지) -->
     <string name="luna_the_sorceress">Luna the Sorceress</string>
     <string name="made_it">Made it!</string>
@@ -455,20 +471,22 @@
     </plurals>
     <!-- 모드 이름 -->
     <string name="missing_number">Missing Number</string>
+    <string name="mix_tables">Mixed</string>
+    <string name="mixed_tables_2_9_evenly">Mixed, tables 2–9 evenly</string>
     <!-- 업적 이름 -->
     <string name="mode_explorer">Mode Explorer</string>
     <!-- 모드 이름 — 단을 골라 천천히 푸는 연습 모드 (학습 탭 이름과 다름) -->
-    <string name="mode_practice_name">Practice</string>
+    <string name="mode_practice_name">Step by step</string>
     <plurals name="more_correct_answers_to_go">
         <item quantity="one">%d more correct answer to go!</item>
         <item quantity="other">%d more correct answers to go!</item>
     </plurals>
     <!-- 어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지) -->
     <string name="mossbeard_sage_of_the_forest">Mossbeard, Sage of the Forest</string>
+    <string name="move_and_play">Move and play</string>
     <string name="move_basket_left">Move basket left</string>
     <string name="move_basket_right">Move basket right</string>
     <string name="move_left_and_right_to_catch_the_right">Move left and right to catch the right fruit!</string>
-    <string name="move_play">Move &amp; Play</string>
     <string name="move_the_basket_to_catch_the_right">Move the basket to catch the right-answer fruit. Catch a wrong fruit or miss one and you lose a heart. Start slow with the 2 times table!</string>
     <string name="move_the_basket_under_the_right_fruit">Move the basket under the right fruit!</string>
     <string name="move_to_lower_lane">Move to lower lane</string>
@@ -481,12 +499,11 @@
     <!-- 어드벤처 지역 이름 -->
     <string name="mushroom_forest">Mushroom Forest</string>
     <string name="my_answer">My answer: %d</string>
-    <string name="my_best">My best</string>
     <string name="my_character">My character</string>
     <!-- OX 퀴즈에서 아이가 고른 기호 -->
     <string name="my_pick">My pick: %s</string>
     <string name="new_best">New best!</string>
-    <string name="new_mode">New mode</string>
+    <string name="new_game">New game</string>
     <string name="new_personal_best">New personal best!</string>
     <string name="new_record">New record! 🏆</string>
     <string name="new_record_2">New record!</string>
@@ -519,6 +536,7 @@
     </plurals>
     <string name="notifications">Notifications</string>
     <string name="notifications_are_off_you_can_turn_on">Notifications are off. You can turn on Gugu Adventure notifications in the Settings app.</string>
+    <string name="number_balloons_float_down_tap_only_the">Number balloons float down. Tap only the ones that fit the mission to pop them. If a right balloon reaches the roofs, you lose a heart. Tapping other balloons doesn\'t cost a heart!</string>
     <!-- 레벨 칭호 -->
     <string name="number_strategist">Number Strategist</string>
     <string name="obstacle">%1$s · Obstacle %2$d</string>
@@ -528,6 +546,7 @@
         <item quantity="one">%d obstacle dodged</item>
         <item quantity="other">%d obstacles dodged</item>
     </plurals>
+    <string name="of">%2$d of %1$d</string>
     <string name="often_missed">Often missed</string>
     <string name="ok">OK</string>
     <string name="ok_2">OK</string>
@@ -536,6 +555,7 @@
     <string name="once_this_is_confirmed_as_a_parent">Once this is confirmed as a parent account, records are stored safely.</string>
     <string name="one_more_time_can_you_go_farther">One more time — can you go farther?</string>
     <string name="one_payment_unlocks_every_feature_for">One payment unlocks every feature for life</string>
+    <string name="one_table_at_a_time_in_roadmap_order">One table at a time, in roadmap order</string>
     <string name="one_time">· one-time</string>
     <!-- 모드 카드 한 줄 소개 — 짧게 -->
     <string name="only_3_chances">Only 3 chances</string>
@@ -545,6 +565,7 @@
     <string name="out_of_time">Out of time. %1$d × %2$d = %3$d</string>
     <string name="overall_best">Overall best</string>
     <string name="owned">Owned</string>
+    <string name="pair_boss_is_here">Pair boss is here!</string>
     <!-- 알림 설정 문구 -->
     <string name="parent_check">Parent check</string>
     <string name="parent_s_email">Parent\'s email</string>
@@ -560,12 +581,10 @@
     <!-- 업적 이름 -->
     <string name="perfect_week">Perfect Week</string>
     <string name="pick">Pick</string>
-    <string name="pick_a_table">Pick a table</string>
-    <string name="pick_answers_to_jump_obstacles">Pick answers to jump obstacles</string>
-    <string name="pick_any_table_and_go_step_by_step">Pick any table and go step by step</string>
     <string name="pick_the_right_answer_and_hop_over_the">Pick the right answer and hop! Over the obstacle.</string>
     <string name="pick_the_right_answer_before_the">Pick the right answer before the obstacle reaches you!</string>
     <string name="pick_the_right_answer_from_3_choices">Pick the right answer from 3 choices. Miss one or run out of time and you lose a heart.</string>
+    <string name="picked_for_the_pair">Picked %d for the pair</string>
     <!-- 어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지) -->
     <string name="pinchy_the_crab">Pinchy the Crab</string>
     <!-- 어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지) -->
@@ -579,9 +598,24 @@
     <string name="please_sign_in_again">Please sign in again</string>
     <string name="please_verify_with_a_parent_s_email">Please verify with a parent\'s email</string>
     <string name="plop_you_caught_the_right_fruit">Plop! You caught the right fruit!</string>
+    <plurals name="points">
+        <item quantity="one">%d point!</item>
+        <item quantity="other">%d points!</item>
+    </plurals>
+    <string name="pop_a_pair_one_after_the_other">Pop a pair, one after the other!</string>
+    <string name="pop_again">Pop again</string>
+    <string name="pop_again_with_the_bunny">Pop again with the bunny?</string>
+    <string name="pop_catch_and_run_for_answers">Pop, catch, and run for answers</string>
+    <string name="pop_mission_multiples">Pop only the %d times table!</string>
+    <string name="pop_mission_pair">Multiply to make %d</string>
+    <string name="pop_only_the_number_balloons_that_fit">Pop only the number balloons that fit the mission!</string>
+    <string name="pop_ready_title">Pop only the balloons that fit the mission!</string>
+    <string name="pop_slow">Slow motion!</string>
+    <string name="pop_start">Start popping</string>
+    <string name="pop_trial_first_wave">Free trial · first wave</string>
+    <string name="pop_wave">Wave %d</string>
     <string name="portal">Portal</string>
     <string name="practice_every_day_to_grow_your_streak">Practice every day to grow your streak</string>
-    <string name="practice_on_the_move">Practice on the move</string>
     <plurals name="practice_records_not_yet_uploaded_won_t">
         <item quantity="one">%d practice record not yet uploaded won\'t be kept on the server if you sign out.</item>
         <item quantity="other">%d practice records not yet uploaded won\'t be kept on the server if you sign out.</item>
@@ -607,10 +641,6 @@
         <item quantity="one">%d problem</item>
         <item quantity="other">%d problems</item>
     </plurals>
-    <plurals name="problems_pick_a_table">
-        <item quantity="one">%d problem · pick a table</item>
-        <item quantity="other">%d problems · pick a table</item>
-    </plurals>
     <string name="problems_to_review">Problems to review</string>
     <string name="processing">Processing…</string>
     <string name="profile">Profile</string>
@@ -633,7 +663,6 @@
     <string name="quit_this_battle">Quit this battle?</string>
     <string name="rage">Rage</string>
     <string name="random_mix">%s · Random mix</string>
-    <string name="random_mix_2">Random mix</string>
     <string name="re_enter_address">Re-enter address</string>
     <!-- 업적 설명 -->
     <string name="reached_level_15">Reached level 15</string>
@@ -680,7 +709,6 @@
     <!-- 상점 캐릭터 색 이름 -->
     <string name="rose">Rose</string>
     <string name="run_again">Run again</string>
-    <string name="run_dodge_and_catch_the_answers">Run, dodge, and catch the answers</string>
     <string name="running_m">Running · %dm</string>
     <!-- 업적 이름 -->
     <string name="s_100_club">100 Club</string>
@@ -697,9 +725,11 @@
     <string name="s_21">“%s”</string>
     <!-- 업적 이름 -->
     <string name="s_3_day_streak">3-Day Streak</string>
+    <string name="s_3_hearts_a_pair_boss_appears_every_3rd">3 hearts · A pair boss appears every 3rd wave. Best scores for each table are saved on this device.</string>
     <string name="s_3_hearts_it_gets_a_little_faster_every_3">3 hearts · It gets a little faster every 3 correct answers. Best scores for each table are saved on this device.</string>
     <!-- 업적 설명 -->
     <string name="s_3_stars_on_every_table">3 stars on every table</string>
+    <string name="s_3_stars_on_every_table_2">3 stars on every table! %s</string>
     <!-- 업적 이름 -->
     <string name="s_500_club">500 Club</string>
     <!-- 업적 설명 -->
@@ -714,6 +744,10 @@
     <string name="sandy_the_fox">Sandy the Fox</string>
     <!-- 어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지) -->
     <string name="scorch_king_of_the_desert">Scorch, King of the Desert</string>
+    <plurals name="score_points">
+        <item quantity="one">Score: %d point</item>
+        <item quantity="other">Score: %d points</item>
+    </plurals>
     <!-- 업적 설명 -->
     <string name="scored_15_in_the_60_second_challenge">Scored 15 in the 60-Second Challenge</string>
     <plurals name="sec_limit">
@@ -748,6 +782,8 @@
     <string name="sky">Sky</string>
     <!-- 어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지) -->
     <string name="slick_the_seal">Slick the Seal</string>
+    <!-- 모드 카드 한 줄 소개 — 짧게 -->
+    <string name="slow_and_steady">Slow and steady</string>
     <!-- 어드벤처 지역 이름 -->
     <string name="snowflake_fields">Snowflake Fields</string>
     <!-- 어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지) -->
@@ -788,20 +824,16 @@
     <string name="stars_levels_coins_and_passes_bought_on">Stars, levels, coins, and passes bought on this device stay as they are. Passes from your account and record backup come back when you sign in again.</string>
     <string name="start_battle">Start battle!</string>
     <string name="start_catching">Start catching</string>
-    <string name="start_challenge">Start challenge</string>
     <string name="start_review">Start review</string>
     <string name="start_running">Start running</string>
-    <string name="start_times_table_stars">Start %2$s, %1$d times table, stars: %3$d</string>
-    <string name="start_times_table_stars_recommended">Start %2$s, %1$d times table, stars: %3$d, recommended</string>
-    <!-- 모드 카드 한 줄 소개 — 짧게 -->
-    <string name="step_by_step_basics">Step-by-step basics</string>
+    <string name="starts_with_mixed_tables">Starts with mixed tables</string>
+    <string name="starts_with_the_times_table">Starts with the %d times table</string>
     <string name="stop">Stop</string>
     <!-- 상점 모자 이름 -->
     <string name="straw_hat">Straw Hat</string>
     <string name="streak">Streak</string>
     <string name="strikes_back">%1$s — %2$s strikes back!</string>
     <string name="style_shop">Style Shop</string>
-    <string name="suggested_order_tap_a_book_to_see_its">Suggested order: %s · Tap a book to see its chart</string>
     <!-- 어드벤처 지역 이름 -->
     <string name="sunset_desert">Sunset Desert</string>
     <!-- 모드 이름 -->
@@ -813,7 +845,6 @@
     <!-- 암산 힌트 제목 — 3 × 2 를 2 × 3 처럼 -->
     <string name="swap_the_order_and_add_it_twice">Swap the order and add it twice</string>
     <string name="swipe_up_or_down_or_use_the_buttons_to">Swipe up or down, or use the ▲▼ buttons to change lanes.</string>
-    <string name="switch_lanes_to_dodge_find_the_answer">Switch lanes to dodge, find the answer</string>
     <string name="switch_lanes_to_dodge_then_zip_into_the">Switch lanes to dodge, then zip into the answer!</string>
     <string name="switch_lanes_up_and_down_to_dodge">Switch lanes up and down to dodge obstacles. When a problem appears, go into the lane with the right answer. Bump into something or pick wrong and you lose a heart.</string>
     <string name="switch_lanes_up_and_down_to_dodge_2">Switch lanes up and down to dodge obstacles.</string>
@@ -822,6 +853,7 @@
     <string name="table">Table %d</string>
     <!-- 3D 월드 주민 머리 위 이름표 — 이름 · n단 -->
     <string name="table_2">%1$s · Table %2$d</string>
+    <string name="table_and_recite">See &amp; learn</string>
     <string name="table_best">Table %d best</string>
     <string name="table_is_now_open">%1$s (Table %2$d) is now open!</string>
     <string name="table_mastery">Table %d mastery</string>
@@ -831,12 +863,14 @@
     <string name="table_to_practice_while_running">Table to practice while running</string>
     <string name="table_trick">Table %1$d trick · %2$s</string>
     <string name="taking_a_break">Taking a break</string>
+    <string name="tap_a_table_to_choose_how_to_practice">Tap a table to choose how to practice</string>
     <string name="tap_to_see_goals">Tap to see goals</string>
     <string name="terms_of_use">Terms of Use</string>
     <string name="that_s_ok">That\'s OK! %1$d × %2$d = %3$d</string>
     <string name="that_s_ok_learn_the_answers_and_try">That\'s OK — learn the answers and try again</string>
     <string name="that_s_the_end_of_the_free_trial">That\'s the end of the free trial!</string>
     <string name="that_s_wrong">%1$d × %2$d = %3$d — that\'s wrong</string>
+    <string name="that_s_your_best_score">That\'s your best score!</string>
     <!-- 암산 힌트 제목 — 3단 -->
     <string name="the_2s_plus_one_more">The 2s, plus one more</string>
     <!-- 암산 힌트 제목 — 6단 -->
@@ -879,6 +913,7 @@
     <!-- 레벨 칭호 -->
     <string name="times_table_runner">Times Table Runner</string>
     <string name="times_table_stars">%1$d times table, stars: %2$d</string>
+    <string name="times_table_stars_recommended">%1$d times table, stars: %2$d, recommended</string>
     <string name="times_tables_1_minute_a_day">Times tables, 1 minute a day</string>
     <!-- 온보딩 제목 — ** 사이는 강조색, 줄바꿈 위치도 언어에 맞게 -->
     <string name="times_tables_made_fun_like_a_game">Times tables,\nmade **fun**\nlike a game</string>
@@ -889,8 +924,11 @@
     <string name="today_s_goal">Today\'s Goal</string>
     <string name="today_s_goal_of_correct">Today\'s goal: %2$d of %1$d correct</string>
     <string name="today_s_little_adventure">Today\'s little adventure</string>
+    <string name="today_s_pick">Today\'s pick: %1$s, %2$s</string>
+    <string name="today_s_table">Today\'s table</string>
     <!-- 학습 알림 제목 -->
     <string name="today_s_times_tables">Today\'s times tables</string>
+    <string name="todays_pick">Today\'s pick</string>
     <string name="too_many_requests_please_try_again_in_a">Too many requests. Please try again in a moment.</string>
     <string name="top">Top</string>
     <!-- 상점 모자 이름 -->
@@ -898,6 +936,7 @@
     <!-- 어드벤처 업적 이름 -->
     <string name="total_conquest">Total Conquest</string>
     <string name="trial">Trial %1$d/%2$d</string>
+    <string name="trial_wave">Trial wave</string>
     <!-- OX 퀴즈 버튼 — 식이 맞다 -->
     <string name="true_label">True</string>
     <!-- 모드 이름 -->
@@ -920,7 +959,6 @@
     <string name="version_build_description">Version %1$s, build %2$d</string>
     <string name="vibration">Vibration</string>
     <string name="victory">Victory! 🎉</string>
-    <string name="view_the_times_table">View the %d times table</string>
     <!-- 상점 캐릭터 색 이름 -->
     <string name="violet">Violet</string>
     <!-- 어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지) -->
@@ -931,6 +969,7 @@
     <string name="want_to_stop">Want to stop?</string>
     <!-- 학습 알림 본문 — %@ 는 식(7 × 8) -->
     <string name="want_to_try_again">Want to try %s again?</string>
+    <string name="wave">Wave</string>
     <!-- 어드벤처 지역 이름 -->
     <string name="wave_beach">Wave Beach</string>
     <!-- 알림 설정 문구 -->
@@ -984,6 +1023,10 @@
     <plurals name="you_passed_correct_lanes_learn_the">
         <item quantity="one">You passed %d correct lane. Learn the answers and go even farther next time!</item>
         <item quantity="other">You passed %d correct lanes. Learn the answers and go even farther next time!</item>
+    </plurals>
+    <plurals name="you_popped_balloons">
+        <item quantity="one">"You popped %d balloon! "</item>
+        <item quantity="other">"You popped %d balloons! "</item>
     </plurals>
     <!-- 학습 알림 본문 — 첫 %lld 는 연속 일수, 둘째는 오늘 하면 되는 일수 -->
     <string name="you_re_on_a_day_streak_play_today_to">You\'re on a %1$d-day streak! Play today to make it %2$d days.</string>

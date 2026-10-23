@@ -2,13 +2,15 @@ import SwiftUI
 
 // 구구단 표 보기 — 연습 전에 한 단 전체를 눈과 귀로 익힌다.
 // "소리로 외우기"는 전통 구구단 읽기("칠 팔은 오십육")로 한 줄씩 읽고, 읽는 줄을 강조한다.
+// 2.7.0 부터 단 시트(PracticeSheet)의 안쪽 단계 '표·외우기'로 쓴다 — 닫기 대신 뒤로 가기.
 
 struct TableSheet: View {
     let table: Int
     var onPractice: () -> Void
+    /// 단 시트(어떻게 연습할까요?)로 돌아가기
+    var onBack: () -> Void
 
     @Environment(GameStore.self) private var game
-    @Environment(\.dismiss) private var dismiss
 
     private var speech: Speech { Speech.shared }
     private var tip: CoachHint { Hints.tableTip(table) }
@@ -33,13 +35,22 @@ struct TableSheet: View {
         }
         .readableWidth(560)
         .background(Color.gg.bg.ignoresSafeArea())
-        .presentationDetents([.large])
-        .presentationDragIndicator(.visible)
         .onDisappear { speech.stop() }
     }
 
     private var header: some View {
-        HStack(alignment: .center) {
+        HStack(alignment: .center, spacing: 8) {
+            Button {
+                Haptics.impact(.light)
+                speech.stop()
+                onBack()
+            } label: {
+                Image(systemName: "chevron.left").font(.system(size: 17, weight: .bold)).foregroundStyle(Color.gg.textMuted)
+                    .frame(width: 36, height: 36)
+                    .background(Color.gg.surface2, in: Circle())
+                    .frame(width: 44, height: 44)
+            }
+            .accessibilityLabel("뒤로")
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
                     Text("\(table)").font(.suite(.extrabold, 34)).foregroundStyle(Color.gg.text).monospacedDigit()
@@ -50,18 +61,8 @@ struct TableSheet: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("\(table)단, 별 \(stars)개")
             Spacer()
-            Button {
-                Haptics.impact(.light)
-                dismiss()
-            } label: {
-                Image(systemName: "xmark").font(.system(size: 15, weight: .bold)).foregroundStyle(Color.gg.textMuted)
-                    .frame(width: 36, height: 36)
-                    .background(Color.gg.surface2, in: Circle())
-                    .frame(width: 44, height: 44)
-            }
-            .accessibilityLabel("닫기")
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 12)
         .padding(.top, 24)
         .padding(.bottom, 12)
     }

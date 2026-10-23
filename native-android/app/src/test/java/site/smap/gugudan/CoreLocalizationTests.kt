@@ -32,7 +32,8 @@ class CoreLocalizationTests {
     private fun all(id: Int, vararg args: Any) = Triple(ko.get(id, *args), en.get(id, *args), ja.get(id, *args))
 
     @Test fun modeNames() {
-        assertEquals(Triple("학습", "Practice", "れんしゅう"), all(Modes.def(GameMode.PRACTICE).nameRes))
+        // 2.7.0 모드 이름 "학습" → "차근차근" (탭 이름과 겹침 해소, 내부 id practice 유지 — iOS CoreLocalizationTests 와 같음)
+        assertEquals(Triple("차근차근", "Step by step", "じっくり"), all(Modes.def(GameMode.PRACTICE).nameRes))
         assertEquals(Triple("OX 퀴즈", "True or False", "○×クイズ"), all(Modes.def(GameMode.TRUEFALSE).nameRes))
     }
 

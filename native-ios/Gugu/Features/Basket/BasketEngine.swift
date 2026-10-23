@@ -23,9 +23,14 @@ final class BasketEngine {
     /// 방향 버튼을 누르고 있을 때의 이동 속도(px/ms) — 웹과 동일
     private static let holdSpeed: Double = 0.28
 
-    init() {
-        self.table = 2
-        self.game = Basket.create(table: 2, phase: .ready)
+    /// 시작 단 기본값 — 단을 정하지 않고 열면 2단부터 천천히
+    static let defaultTable: Int? = 2
+
+    /// table: 처음 골라 둘 단 (nil = 전체). 학습 탭 단 시트처럼 단을 정해 열 때 넘기고, 생략하면 기본값
+    init(table: Int? = BasketEngine.defaultTable) {
+        precondition(table.map(BasketEngine.tables.contains) ?? true, "단 범위 밖: \(table!)")
+        self.table = table
+        self.game = Basket.create(table: table, phase: .ready)
         self.bests = BasketEngine.loadBests()
     }
 

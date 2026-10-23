@@ -7,11 +7,17 @@ import SwiftUI
 struct BasketView: View {
     var onExit: () -> Void
 
-    @State private var engine = BasketEngine()
+    @State private var engine: BasketEngine
     @State private var paywallOpen = false
     @Environment(PremiumStore.self) private var premium
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// start: 처음 골라 둘 단 — 학습 탭 단 시트에서 열면 그 단, 홈에서 열면 엔진 기본값
+    init(start: MinigameStart = .standard, onExit: @escaping () -> Void) {
+        self.onExit = onExit
+        _engine = State(initialValue: BasketEngine(table: start.table(defaultTable: BasketEngine.defaultTable)))
+    }
 
     private var game: BasketState { engine.game }
     private var ready: Bool { game.phase == .ready }

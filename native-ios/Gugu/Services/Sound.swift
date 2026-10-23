@@ -116,6 +116,11 @@ final class Sound {
     }
 
     func tap()      { tone(330, at: 0, dur: 0.04, type: .sine, gain: 0.05) }
+    /// 구구 팡팡 풍선 터짐 — 짧고 높은 '퐁' (1초에 여러 번 울려도 거슬리지 않게 짧게)
+    func pop() {
+        tone(1174.66, at: 0, dur: 0.05, type: .triangle, gain: 0.09)  // D6
+        tone(1567.98, at: 0.03, dur: 0.06, type: .sine, gain: 0.06)   // G6
+    }
     func correct() {
         tone(587.33, at: 0, dur: 0.09, gain: 0.12)   // D5
         tone(880, at: 0.07, dur: 0.12, gain: 0.1)    // A5

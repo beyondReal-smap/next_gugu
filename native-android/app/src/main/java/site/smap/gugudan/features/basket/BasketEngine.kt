@@ -18,14 +18,15 @@ import site.smap.gugudan.services.Sound
 // 구구 바구니 진행 상태 관리 (iOS BasketEngine 이식)
 // 게임 규칙은 core/Basket.kt 순수 함수가 담당하고, 여기서는 프레임 반영과 기록 저장만 맡는다.
 
-class BasketEngine(private val persistence: Persistence) {
-    var game: BasketState by mutableStateOf(Basket.create(2, RunnerPhase.READY))
+/** initialTable: 처음 골라 둘 단 (null = 전체). 학습 탭 단 시트처럼 단을 정해 열 때 넘기고, 생략하면 기본값 */
+class BasketEngine(private val persistence: Persistence, initialTable: Int? = DEFAULT_TABLE) {
+    var game: BasketState by mutableStateOf(Basket.create(initialTable, RunnerPhase.READY))
         private set
     var bests: Map<String, Int> by mutableStateOf(emptyMap())
         private set
 
     /** 선택한 단 (null = 전체). 처음에는 2단부터 천천히. */
-    var table: Int? by mutableStateOf(2)
+    var table: Int? by mutableStateOf(initialTable)
 
     /** 방향 버튼을 누르고 있는 동안의 이동 방향 (-1 왼쪽 / 1 오른쪽 / 0 정지) */
     var direction: Int by mutableStateOf(0)
@@ -35,11 +36,15 @@ class BasketEngine(private val persistence: Persistence) {
     companion object {
         val TABLES = (Problems.MIN_TABLE..Problems.MAX_TABLE).toList()
 
+        /** 시작 단 기본값 — 단을 정하지 않고 열면 2단부터 천천히 */
+        val DEFAULT_TABLE: Int? = 2
+
         /** 방향 버튼을 누르고 있을 때의 이동 속도(px/ms) — 웹과 동일 */
         private const val HOLD_SPEED = 0.28
     }
 
     init {
+        require(initialTable == null || initialTable in TABLES) { "단 범위 밖: $initialTable" }
         bests = loadBests()
     }
 

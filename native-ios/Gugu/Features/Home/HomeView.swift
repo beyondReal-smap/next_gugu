@@ -10,8 +10,8 @@ struct HomeView: View {
     @Environment(Router.self) private var router
     @State private var showGoalSheet = false
 
-    // 놀이 방식별 묶음 (웹 /play 구성과 동일) — 세션 모드는 전체 랜덤으로 바로 시작한다
-    private let learnModes: [GameMode] = [.missing, .truefalse]
+    // 놀이 방식별 묶음 — 기록 도전 모드는 전체 랜덤으로 바로 시작한다.
+    // 단을 고르는 모드(차근차근·빈칸·OX)는 학습 탭 단 시트로 모으고, 홈에는 오늘 추천 단 카드만 둔다 (2.7.0)
     private let recordModes: [GameMode] = [.timeAttack, .challenge, .survival]
 
     private var goalPct: Double {
@@ -28,7 +28,7 @@ struct HomeView: View {
                 quickStartButton
                 if weakCount > 0 { weakReview }
                 modesHeader
-                learnGroup
+                recommendGroup
                 recordGroup
                 playGroup
                 adventureGroup
@@ -165,20 +165,11 @@ struct HomeView: View {
         }
     }
 
-    // 차근차근 배우기 — 시간 제한 없이 원리부터
-    private var learnGroup: some View {
+    // 오늘 추천 단 — 학습 탭 맨 위와 같은 카드 (누르면 그 단 차근차근 바로 시작)
+    private var recommendGroup: some View {
         VStack(alignment: .leading, spacing: 8) {
-            groupHeader("book.fill", String(localized: "차근차근 배우기"), String(localized: "시간 제한 없이 원리부터"), .gg.accent)
-            Button {
-                Haptics.impact(.light)
-                router.tab = .learn
-            } label: {
-                modeRowLabel(icon: ModeStyle.icon(.practice), tint: ModeStyle.tint(.practice),
-                             name: Modes.def(.practice).name, tagline: String(localized: "원하는 단을 골라 또박또박"),
-                             meta: String(localized: "\(Modes.def(.practice).total)문제 · 단 선택"), locked: false)
-            }
-            .buttonStyle(PressScaleStyle())
-            ForEach(learnModes, id: \.self) { sessionModeRow($0) }
+            groupHeader("star.fill", String(localized: "오늘 추천 단"), String(localized: "로드맵 순서대로 한 단씩"), .gg.accent)
+            RecommendCard()
         }
     }
 
@@ -190,28 +181,14 @@ struct HomeView: View {
         }
     }
 
-    // 직접 움직이며 놀기 — 달리기·받기 미니게임
+    // 움직이며 놀기 — 팡팡·바구니·점프·레인 (순서·문구는 Minigame 정의 하나를 학습 탭 단 시트와 같이 쓴다)
     private var playGroup: some View {
         VStack(alignment: .leading, spacing: 8) {
-            groupHeader("figure.run", String(localized: "직접 움직이며 놀기"), String(localized: "달리고, 피하고, 정답을 받아요"), .gg.emerald)
-            gameCard(
-                title: String(localized: "구구 바구니"), badge: MinigameTrial.badge(isPremium: premium.isPremium) ?? String(localized: "새 모드"),
-                desc: String(localized: "좌우로 움직여 정답 열매를 쏙 받아요!"),
-                icon: "basket.fill", iconBg: Color(hex: "#794124"), iconFg: Color(hex: "#ffe7a3"),
-                tint: Color.gg.warning
-            ) { router.basketOpen = true }
-            gameCard(
-                title: String(localized: "구구 점프"), badge: MinigameTrial.badge(isPremium: premium.isPremium),
-                desc: String(localized: "정답을 고르면 폴짝! 장애물을 넘어요."),
-                icon: "figure.run", iconBg: Color(hex: "#153f35"), iconFg: Color(hex: "#dbef9e"),
-                tint: Color.gg.emerald
-            ) { router.runnerOpen = true }
-            gameCard(
-                title: String(localized: "구구 레인"), badge: MinigameTrial.badge(isPremium: premium.isPremium) ?? String(localized: "새 모드"),
-                desc: String(localized: "길을 바꿔 피하고, 정답 길로 쏙!"),
-                icon: "rectangle.split.1x2.fill", iconBg: Color(hex: "#153f35"), iconFg: Color(hex: "#dbef9e"),
-                tint: Color.gg.emerald
-            ) { router.laneOpen = true }
+            groupHeader("figure.run", String(localized: "움직이며 놀기"), String(localized: "터뜨리고, 받고, 달리며 정답을 찾아요"), .gg.emerald)
+            ForEach(Minigame.allCases) { g in
+                gameCard(title: g.title, badge: g.badge(isPremium: premium.isPremium), desc: g.desc,
+                         icon: g.icon, iconBg: g.iconBg, iconFg: g.iconFg, tint: g.tint) { router.open(g) }
+            }
         }
     }
 
@@ -222,7 +199,7 @@ struct HomeView: View {
         }
     }
 
-    /// 러너·레인·바구니 진입 카드
+    /// 미니게임 진입 카드
     private func gameCard(
         title: String, badge: String?, desc: String,
         icon: String, iconBg: Color, iconFg: Color, tint: Color,
@@ -275,7 +252,7 @@ struct HomeView: View {
         } label: {
             modeRowLabel(
                 icon: ModeStyle.icon(id), tint: ModeStyle.tint(id), name: m.name, tagline: m.tagline,
-                meta: best > 0 ? String(localized: "최고 \(best)점 · \(modeMeta(id))") : String(localized: "\(modeMeta(id)) · 전체 랜덤"),
+                meta: best > 0 ? String(localized: "최고 \(best)점 · \(ModeStyle.meta(id))") : String(localized: "\(ModeStyle.meta(id)) · 전체 랜덤"),
                 locked: locked
             )
         }
@@ -307,14 +284,6 @@ struct HomeView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.gg.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color.gg.border, lineWidth: 1))
-    }
-
-    /// 카드에 적는 규칙 요약 (문제 수 / 제한 시간 / 하트)
-    private func modeMeta(_ id: GameMode) -> String {
-        let m = Modes.def(id)
-        if m.kind == .timed, let limit = m.timeLimitMs { return String(localized: "\(limit / 1000)초 제한") }
-        if m.kind == .lives, let lives = m.lives { return String(localized: "하트 \(lives)개") }
-        return String(localized: "\(m.total)문제")
     }
 
     // MARK: 어드벤처 히어로

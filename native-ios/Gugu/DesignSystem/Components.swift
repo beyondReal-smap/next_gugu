@@ -149,6 +149,13 @@ enum ModeStyle {
         case .adventure: return .gg.indigo
         }
     }
+    /// 카드에 적는 규칙 요약 (문제 수 / 제한 시간 / 하트) — 홈 모드 카드·학습 탭 단 시트 공통
+    static func meta(_ mode: GameMode) -> String {
+        let m = Modes.def(mode)
+        if m.kind == .timed, let limit = m.timeLimitMs { return String(localized: "\(limit / 1000)초 제한") }
+        if m.kind == .lives, let lives = m.lives { return String(localized: "하트 \(lives)개") }
+        return String(localized: "\(m.total)문제")
+    }
 }
 
 // MARK: - ChoiceChips

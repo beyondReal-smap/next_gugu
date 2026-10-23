@@ -68,6 +68,7 @@ import site.smap.gugudan.services.Haptics
 import site.smap.gugudan.services.Persistence
 import site.smap.gugudan.services.rememberStrings
 import site.smap.gugudan.store.LocalPremium
+import site.smap.gugudan.store.MinigameStart
 import kotlin.math.abs
 
 // 구구 레인 화면 (LaneRunnerScreen.tsx / iOS LaneRunnerView 이식)
@@ -90,10 +91,17 @@ private val LANE_NAMES = listOf(R.string.top, R.string.middle, R.string.bottom)
 private const val SWIPE_PX = 28f
 
 @Composable
-fun LaneRunnerScreen(onExit: () -> Unit) {
+fun LaneRunnerScreen(start: MinigameStart, onExit: () -> Unit) {
     val gg = LocalGG.current
     val context = LocalContext.current
-    val engine = remember { LaneRunnerEngine(Persistence(context.applicationContext)) }
+    // 단 시트·'섞어서' 시트에서 열면 그 단을 골라 둔 채로, 홈에서 열면 게임 기본값으로 준비한다
+    val engine = remember {
+        val persistence = Persistence(context.applicationContext)
+        when (start) {
+            MinigameStart.Default -> LaneRunnerEngine(persistence)
+            is MinigameStart.Table -> LaneRunnerEngine(persistence, initialTable = start.table)
+        }
+    }
     // 시스템 뒤로가기 — 달리는 중이면 일시정지(실수로 판을 날리지 않게), 멈춰 있거나 끝났으면 홈으로
     BackHandler {
         if (engine.game.phase == RunnerPhase.RUNNING) engine.pause() else onExit()

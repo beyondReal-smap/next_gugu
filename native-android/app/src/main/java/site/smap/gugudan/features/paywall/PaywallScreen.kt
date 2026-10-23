@@ -77,7 +77,7 @@ fun PaywallScreen(onDismiss: () -> Unit) {
         Benefit(Icons.Filled.Bolt, stringResource(R.string.unlock_all_game_modes),
             stringResource(R.string.s_60_second_challenge_survival_missing)),
         Benefit(Icons.Filled.DirectionsRun, stringResource(R.string.unlimited_move_and_play_games),
-            pluralStringResource(R.plurals.gugu_jump_lanes_basket_free_try_problems,
+            pluralStringResource(R.plurals.gugu_pop_basket_jump_lanes_free_pop_s,
                 PremiumConfig.MINIGAME_TRIAL_QUESTIONS, PremiumConfig.MINIGAME_TRIAL_QUESTIONS)),
         Benefit(Icons.Filled.AllInclusive, stringResource(R.string.pay_once_keep_forever),
             stringResource(R.string.no_extra_charges_all_updates_included)),

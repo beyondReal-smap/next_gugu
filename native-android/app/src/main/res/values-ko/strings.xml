@@ -44,9 +44,11 @@
     <string name="any_number_times_1_is_just_that_number">어떤 수에 1을 곱하면 그 수 그대로예요</string>
     <string name="available_after_you_link_an_email_and">이메일을 연결하고 기록 보관을 켜면 받을 수 있어요.</string>
     <string name="avg_speed">평균 속도</string>
+    <string name="back">뒤로</string>
     <string name="back_to_practice">학습 모드로 돌아가기</string>
     <string name="back_to_region_map">지역 지도로 돌아가기</string>
     <string name="back_to_the_world">월드로 돌아가기</string>
+    <string name="balloons_popped">터뜨린 풍선</string>
     <string name="battle">대결하기</string>
     <string name="battle_again">다시 대결하기</string>
     <string name="battle_in_the_world">월드에서 대결</string>
@@ -68,6 +70,9 @@
     <plurals name="best_points">
         <item quantity="other">최고 기록 %d점</item>
     </plurals>
+    <plurals name="best_points_2">
+        <item quantity="other">%1$s, 최고 %2$d점</item>
+    </plurals>
     <plurals name="best_pts">
         <item quantity="other">최고 %1$d점 · %2$s</item>
     </plurals>
@@ -79,6 +84,10 @@
     <string name="boss_2">보스!</string>
     <string name="boss_battle">보스 대결</string>
     <string name="boss_hunter">보스 사냥꾼</string>
+    <plurals name="boss_shields_left">
+        <item quantity="other">보스 방패 %d개 남음</item>
+    </plurals>
+    <string name="bosses_beaten">물리친 보스</string>
     <string name="bottom">아래</string>
     <string name="button_the_mushroom_kid">버섯돌이 뽀삐</string>
     <string name="can_you_withstand_the_4_times_table">파도처럼 밀려오는 4단을 견뎌봐라!</string>
@@ -86,10 +95,10 @@
     <string name="care_for_a_taste_of_my_boiling_hot_8">펄펄 끓는 8단 맛 좀 볼래?</string>
     <string name="catch_again">다시 받기</string>
     <string name="catch_it_next_time_the_answer_is">다음엔 받아봐요! 정답은 %d</string>
-    <string name="catch_the_right_fruit_in_your_basket">정답 열매를 바구니로 쏙</string>
     <string name="challenge_about_five_rounds_to_reach_it">도전 — 다섯 판쯤이면 채워요</string>
     <string name="change_goal">목표 바꾸기</string>
     <string name="checking">확인 중…</string>
+    <string name="choose_a_table">단 고르기</string>
     <string name="choose_how_many_correct_answers_to_aim">하루에 맞힐 정답 수를 골라요. 목표를 채우면 그날 학습 알림은 쉬어요.</string>
     <string name="choose_which_records_to_continue_with">이어서 쓸 기록을 골라 주세요</string>
     <string name="cleared">%s 클리어!</string>
@@ -101,6 +110,7 @@
     <string name="colors_hats">색상 · 모자</string>
     <string name="combo">%d 콤보</string>
     <string name="combo_10">콤보 10</string>
+    <string name="combo_2">%d콤보</string>
     <string name="combo_20">콤보 20</string>
     <string name="coming_in">%s에서 구현 예정</string>
     <string name="complete">%s 완료</string>
@@ -199,6 +209,7 @@
         <item quantity="other">먼저 %d문제를 맞히면 승리!</item>
     </plurals>
     <string name="first_victory">첫 승리</string>
+    <string name="first_wave_free">첫 웨이브 체험</string>
     <string name="flicker_the_fire_sprite">불꽃정령 화르</string>
     <string name="focus_problems">집중 공략 문제</string>
     <string name="for_about_the_price_of_a_coffee_build">커피 한 잔 값으로,\n아이의 구구단 실력을</string>
@@ -230,10 +241,12 @@
     <string name="gugu_adventure_notifications_are_turned">설정 앱에서 구구 어드벤처 알림이 꺼져 있어요.</string>
     <string name="gugu_basket">구구 바구니</string>
     <string name="gugu_jump">구구 점프</string>
-    <plurals name="gugu_jump_lanes_basket_free_try_problems">
-        <item quantity="other">구구 점프 · 레인 · 바구니 (무료는 %d문제 체험)</item>
-    </plurals>
     <string name="gugu_lanes">구구 레인</string>
+    <string name="gugu_pop">구구 팡팡</string>
+    <plurals name="gugu_pop_basket_jump_lanes_free_pop_s">
+        <item quantity="other">구구 팡팡 · 바구니 · 점프 · 레인 (무료는 팡팡 첫 웨이브, 나머지 %d문제 체험)</item>
+    </plurals>
+    <string name="gugu_pop_play_area">구구 팡팡 놀이 영역</string>
     <string name="halfway_there">절반의 정복</string>
     <string name="hang_on_with_3_lives_you_lose_a_heart">목숨 3개로 버티기! 틀릴 때마다 하트가 하나씩 사라져요.</string>
     <string name="hard_about_three_rounds_to_reach_it">열심히 — 세 판쯤이면 채워요</string>
@@ -255,6 +268,7 @@
         <item quantity="other">오늘도 한 판 어때요? 목표는 정답 %d개예요.</item>
     </plurals>
     <string name="how_do_you_want_to_play">어떻게 놀아볼까요?</string>
+    <string name="how_do_you_want_to_practice">어떻게 연습할까요?</string>
     <string name="how_many_can_you_solve_in_60_seconds_go">60초 동안 몇 문제나 풀 수 있을까요? 최고 기록에 도전!</string>
     <string name="hp_battle">체력전</string>
     <string name="i_m_the_boss_of_this_area_ready_for_the">이 지역의 보스다. %d단, 각오는 됐지?</string>
@@ -280,6 +294,7 @@
     <string name="keep_battling">계속 싸우기</string>
     <string name="keep_catching">이어서 받기</string>
     <string name="keep_going">계속하기</string>
+    <string name="keep_popping">이어서 팡팡</string>
     <string name="keep_running">계속 달리기</string>
     <string name="keep_running_2">이어서 달리기</string>
     <string name="keep_running_when_you_re_ready">준비되면 이어서 달려요.</string>
@@ -295,8 +310,6 @@
     <string name="lava_chief_bubbleboil">용암대장 부글</string>
     <string name="lava_volcano">용암 화산</string>
     <string name="learn">학습</string>
-    <string name="learn_how_it_works_no_time_limit">시간 제한 없이 원리부터</string>
-    <string name="learn_step_by_step">차근차근 배우기</string>
     <string name="learn_times_tables_by_switching_lanes">길을 바꾸며 배우는 구구단</string>
     <string name="learn_times_tables_on_the_run">달리며 배우는 구구단</string>
     <string name="learning_records_from_a_child_s_account">아이 계정의 학습 기록은 서버에 올리지 않아요.</string>
@@ -317,6 +330,7 @@
     <string name="link_an_email_first_to_turn_on_record">이메일을 먼저 연결하면 기록 보관을 켤 수 있어요.</string>
     <string name="listen_learn">소리로 외우기</string>
     <string name="locked">잠겨 있어요</string>
+    <string name="locked_lifetime_pass_needed">%s, 잠김, 평생 이용권 필요</string>
     <string name="luna_the_sorceress">마법사 루나</string>
     <string name="made_it">통과!</string>
     <string name="mastered_a_times_table_earned_a_star">한 단을 마스터(별 획득)</string>
@@ -334,16 +348,18 @@
         <item quantity="other">%d번</item>
     </plurals>
     <string name="missing_number">빈칸 추리</string>
+    <string name="mix_tables">섞어서</string>
+    <string name="mixed_tables_2_9_evenly">섞어서, 2~9단 골고루</string>
     <string name="mode_explorer">모드 탐험가</string>
-    <string name="mode_practice_name">학습</string>
+    <string name="mode_practice_name">차근차근</string>
     <plurals name="more_correct_answers_to_go">
         <item quantity="other">정답 %d개 더 풀면 달성!</item>
     </plurals>
     <string name="mossbeard_sage_of_the_forest">숲의 현자 무무</string>
+    <string name="move_and_play">움직이며 놀기</string>
     <string name="move_basket_left">바구니 왼쪽으로</string>
     <string name="move_basket_right">바구니 오른쪽으로</string>
     <string name="move_left_and_right_to_catch_the_right">좌우로 움직여 정답 열매를 쏙 받아요!</string>
-    <string name="move_play">직접 움직이며 놀기</string>
     <string name="move_the_basket_to_catch_the_right">바구니를 직접 움직여 정답 열매를 받아요. 다른 열매를 받거나 놓치면 하트가 하나 줄어요. 처음에는 2단부터 천천히!</string>
     <string name="move_the_basket_under_the_right_fruit">정답 열매 아래로 바구니를 옮겨요!</string>
     <string name="move_to_lower_lane">아래 길로 이동</string>
@@ -353,11 +369,10 @@
     <string name="multiplication_in_reverse_find_the">곱셈을 거꾸로! 빈칸의 수를 찾으면 XP 보너스가 커요.</string>
     <string name="mushroom_forest">버섯 숲</string>
     <string name="my_answer">내 답 %d</string>
-    <string name="my_best">내 최고 기록</string>
     <string name="my_character">내 캐릭터</string>
     <string name="my_pick">내 선택 %s</string>
     <string name="new_best">새 기록!</string>
-    <string name="new_mode">새 모드</string>
+    <string name="new_game">새 게임</string>
     <string name="new_personal_best">나의 최고 기록을 달성했어요!</string>
     <string name="new_record">신기록 달성! 🏆</string>
     <string name="new_record_2">신기록!</string>
@@ -383,6 +398,7 @@
     </plurals>
     <string name="notifications">알림</string>
     <string name="notifications_are_off_you_can_turn_on">알림이 꺼져 있어요. 설정 앱에서 구구 어드벤처 알림을 켤 수 있어요.</string>
+    <string name="number_balloons_float_down_tap_only_the">숫자 풍선이 내려와요. 미션에 맞는 풍선만 눌러 터뜨려요. 정답 풍선이 지붕에 닿으면 하트가 하나 줄어요. 다른 풍선을 눌러도 하트는 그대로예요!</string>
     <string name="number_strategist">숫자 전략가</string>
     <string name="obstacle">%1$s · %2$d번째 장애물</string>
     <string name="obstacles_cleared">넘은 장애물</string>
@@ -390,6 +406,7 @@
     <plurals name="obstacles_dodged">
         <item quantity="other">피한 장애물 %d개</item>
     </plurals>
+    <string name="of">%1$d개 중 %2$d개</string>
     <string name="often_missed">자주 틀린 문제</string>
     <string name="ok">좋아요</string>
     <string name="ok_2">확인</string>
@@ -397,6 +414,7 @@
     <string name="once_this_is_confirmed_as_a_parent">보호자 계정으로 확인되면 기록을 안전하게 보관해요.</string>
     <string name="one_more_time_can_you_go_farther">한 번 더, 더 멀리 가볼까요?</string>
     <string name="one_payment_unlocks_every_feature_for">딱 한 번 결제로 모든 기능을 평생 이용해요</string>
+    <string name="one_table_at_a_time_in_roadmap_order">로드맵 순서대로 한 단씩</string>
     <string name="one_time">· 딱 한 번</string>
     <string name="only_3_chances">기회는 단 3번</string>
     <string name="open_settings">설정 열기</string>
@@ -404,6 +422,7 @@
     <string name="out_of_time">시간이 다 됐어요. %1$d × %2$d = %3$d</string>
     <string name="overall_best">전체 최고</string>
     <string name="owned">보유</string>
+    <string name="pair_boss_is_here">짝꿍 보스 등장!</string>
     <string name="parent_check">보호자 확인</string>
     <string name="parent_s_email">보호자 이메일</string>
     <string name="pause">일시정지</string>
@@ -414,12 +433,10 @@
     <string name="perfect_month">한 달 개근</string>
     <string name="perfect_week">일주일 개근</string>
     <string name="pick">추천</string>
-    <string name="pick_a_table">단 선택</string>
-    <string name="pick_answers_to_jump_obstacles">정답을 골라 장애물 넘기</string>
-    <string name="pick_any_table_and_go_step_by_step">원하는 단을 골라 또박또박</string>
     <string name="pick_the_right_answer_and_hop_over_the">정답을 고르면 폴짝! 장애물을 넘어요.</string>
     <string name="pick_the_right_answer_before_the">장애물이 오기 전에 정답을 골라요!</string>
     <string name="pick_the_right_answer_from_3_choices">보기 3개 중 정답을 골라요. 틀리거나 시간이 지나면 하트가 하나 줄어요.</string>
+    <string name="picked_for_the_pair">짝꿍 %d 고름</string>
     <string name="pinchy_the_crab">게 집게</string>
     <string name="pip_the_frog">개구리 팝팝</string>
     <string name="play_again">한 판 더</string>
@@ -429,9 +446,23 @@
     <string name="please_sign_in_again">다시 로그인해 주세요</string>
     <string name="please_verify_with_a_parent_s_email">보호자 이메일로 확인해 주세요</string>
     <string name="plop_you_caught_the_right_fruit">쏙! 정답 열매를 받았어요!</string>
+    <plurals name="points">
+        <item quantity="other">%d점!</item>
+    </plurals>
+    <string name="pop_a_pair_one_after_the_other">짝꿍 두 개를 차례로 팡!</string>
+    <string name="pop_again">다시 팡팡</string>
+    <string name="pop_again_with_the_bunny">토끼와 다시 팡팡 해 볼까요?</string>
+    <string name="pop_catch_and_run_for_answers">터뜨리고, 받고, 달리며 정답을 찾아요</string>
+    <string name="pop_mission_multiples">%d단 정답만 팡!</string>
+    <string name="pop_mission_pair">곱해서 %d 만들기</string>
+    <string name="pop_only_the_number_balloons_that_fit">미션에 맞는 숫자 풍선만 팡!</string>
+    <string name="pop_ready_title">미션에 맞는 풍선만 팡!</string>
+    <string name="pop_slow">느려졌어요!</string>
+    <string name="pop_start">팡팡 시작</string>
+    <string name="pop_trial_first_wave">무료 체험 · 첫 웨이브</string>
+    <string name="pop_wave">웨이브 %d</string>
     <string name="portal">포털</string>
     <string name="practice_every_day_to_grow_your_streak">매일 학습하면 연속 기록이 쌓여요</string>
-    <string name="practice_on_the_move">움직이며 연습하기</string>
     <plurals name="practice_records_not_yet_uploaded_won_t">
         <item quantity="other">아직 서버에 올리지 못한 학습 기록 %d개는 로그아웃하면 서버에 남지 않아요.</item>
     </plurals>
@@ -449,9 +480,6 @@
     <string name="problem_of">%1$d문제 중 %2$d번째</string>
     <plurals name="problems">
         <item quantity="other">%d문제</item>
-    </plurals>
-    <plurals name="problems_pick_a_table">
-        <item quantity="other">%d문제 · 단 선택</item>
     </plurals>
     <string name="problems_to_review">다시 볼 문제</string>
     <string name="processing">처리 중…</string>
@@ -473,7 +501,6 @@
     <string name="quit_this_battle">대결을 그만할까요?</string>
     <string name="rage">분노</string>
     <string name="random_mix">%s · 전체 랜덤</string>
-    <string name="random_mix_2">전체 랜덤</string>
     <string name="re_enter_address">주소 다시 입력</string>
     <string name="reached_level_15">레벨 15 도달</string>
     <string name="reached_level_5">레벨 5 도달</string>
@@ -509,7 +536,6 @@
     <string name="right_wrong">맞으면 O, 틀리면 X</string>
     <string name="rose">로즈</string>
     <string name="run_again">다시 달리기</string>
-    <string name="run_dodge_and_catch_the_answers">달리고, 피하고, 정답을 받아요</string>
     <string name="running_m">%dm 달리는 중</string>
     <string name="s_100_club">백 문제 돌파</string>
     <string name="s_100_correct_answers_in_total">누적 100문제 정답</string>
@@ -520,8 +546,10 @@
     <string name="s_20_correct_in_a_row">20연속 정답 달성</string>
     <string name="s_21">“%s”</string>
     <string name="s_3_day_streak">3일 연속</string>
+    <string name="s_3_hearts_a_pair_boss_appears_every_3rd">하트 3개 · 3번째 웨이브마다 짝꿍 보스가 나와요. 단별 최고 기록은 이 기기에 저장돼요.</string>
     <string name="s_3_hearts_it_gets_a_little_faster_every_3">하트 3개 · 정답 3개마다 조금씩 빨라져요. 단별 최고 기록은 이 기기에 저장돼요.</string>
     <string name="s_3_stars_on_every_table">모든 단 별 3개</string>
+    <string name="s_3_stars_on_every_table_2">모든 단 별 3개! %s</string>
     <string name="s_500_club">오백 문제 돌파</string>
     <string name="s_500_correct_answers_in_total">누적 500문제 정답</string>
     <string name="s_60_second_challenge">60초 챌린지</string>
@@ -530,6 +558,9 @@
     <string name="same_as_last_week">지난주와 같아요</string>
     <string name="sandy_the_fox">여우 사샤</string>
     <string name="scorch_king_of_the_desert">사막의 왕 카오</string>
+    <plurals name="score_points">
+        <item quantity="other">점수 %d점</item>
+    </plurals>
     <string name="scored_15_in_the_60_second_challenge">60초 챌린지에서 15점 달성</string>
     <plurals name="sec_limit">
         <item quantity="other">%d초 제한</item>
@@ -555,6 +586,7 @@
     <string name="skip_count_by_5s">5씩 뛰어 세기</string>
     <string name="sky">하늘</string>
     <string name="slick_the_seal">물개 살살</string>
+    <string name="slow_and_steady">천천히 또박또박</string>
     <string name="snowflake_fields">눈꽃 설원</string>
     <string name="snowy_the_hare">눈토끼 하양</string>
     <string name="so_close">아쉬워요! %1$d × %2$d = %3$d</string>
@@ -582,25 +614,21 @@
     <string name="stars_levels_coins_and_passes_bought_on">이 기기의 별·레벨·코인과 이 기기에서 산 이용권은 그대로예요. 계정으로 받은 이용권과 학습 기록 보관은 다시 로그인하면 돌아와요.</string>
     <string name="start_battle">대결 시작!</string>
     <string name="start_catching">열매 받기 시작</string>
-    <string name="start_challenge">도전 시작</string>
     <string name="start_review">복습 시작</string>
     <string name="start_running">달리기 시작</string>
-    <string name="start_times_table_stars">%1$d단 %2$s 시작, 별 %3$d개</string>
-    <string name="start_times_table_stars_recommended">%1$d단 %2$s 시작, 별 %3$d개, 추천</string>
-    <string name="step_by_step_basics">차근차근 기본기</string>
+    <string name="starts_with_mixed_tables">섞어서 시작해요</string>
+    <string name="starts_with_the_times_table">%d단으로 시작해요</string>
     <string name="stop">멈추기</string>
     <string name="straw_hat">밀짚모자</string>
     <string name="streak">스트릭</string>
     <string name="strikes_back">%1$s — %2$s의 반격!</string>
     <string name="style_shop">꾸미기 상점</string>
-    <string name="suggested_order_tap_a_book_to_see_its">추천 순서 %s단 · 책 버튼을 누르면 표를 볼 수 있어요</string>
     <string name="sunset_desert">노을 사막</string>
     <string name="survival">서바이벌</string>
     <string name="survived_20_problems_in_survival">서바이벌에서 20문제 생존</string>
     <string name="survivor">생존왕</string>
     <string name="swap_the_order_and_add_it_twice">순서를 바꿔 두 번 더하기</string>
     <string name="swipe_up_or_down_or_use_the_buttons_to">화면을 위아래로 밀거나 ▲▼ 버튼으로 길을 옮겨요.</string>
-    <string name="switch_lanes_to_dodge_find_the_answer">길을 바꿔 피하고 정답 길로</string>
     <string name="switch_lanes_to_dodge_then_zip_into_the">길을 바꿔 피하고, 정답 길로 쏙!</string>
     <string name="switch_lanes_up_and_down_to_dodge">위아래로 길을 옮겨 장애물을 피하고, 문제가 나오면 정답 숫자가 적힌 길로 들어가요. 부딪히거나 틀리면 하트가 하나 줄어요.</string>
     <string name="switch_lanes_up_and_down_to_dodge_2">위아래로 길을 옮겨 장애물을 피해요.</string>
@@ -608,6 +636,7 @@
     <string name="system">기기 설정</string>
     <string name="table">%d단</string>
     <string name="table_2">%1$s · %2$d단</string>
+    <string name="table_and_recite">표·외우기</string>
     <string name="table_best">%d단 최고</string>
     <string name="table_is_now_open">%1$s(%2$d단)이 열렸어요!</string>
     <string name="table_mastery">%d단 마스터리</string>
@@ -617,12 +646,14 @@
     <string name="table_to_practice_while_running">달리면서 연습할 단</string>
     <string name="table_trick">%1$d단 비법 · %2$s</string>
     <string name="taking_a_break">잠깐 쉬어가요</string>
+    <string name="tap_a_table_to_choose_how_to_practice">단을 누르면 연습 방법을 고를 수 있어요</string>
     <string name="tap_to_see_goals">눌러서 목표 보기</string>
     <string name="terms_of_use">이용약관</string>
     <string name="that_s_ok">괜찮아요! %1$d × %2$d = %3$d</string>
     <string name="that_s_ok_learn_the_answers_and_try">괜찮아요, 답을 익히고 다시 도전해요</string>
     <string name="that_s_the_end_of_the_free_trial">무료 체험은 여기까지!</string>
     <string name="that_s_wrong">%1$d × %2$d = %3$d — 틀린 식이에요</string>
+    <string name="that_s_your_best_score">나의 최고 기록이에요!</string>
     <string name="the_2s_plus_one_more">2단에 한 번 더 더하기</string>
     <string name="the_5s_plus_one_more">5단에 한 번 더 더하기</string>
     <string name="the_bunny_s_little_orchard">토끼의 작은 과수원</string>
@@ -652,6 +683,7 @@
     <string name="times_table_legend">구구단 레전드</string>
     <string name="times_table_runner">구구단 러너</string>
     <string name="times_table_stars">%1$d단, 별 %2$d개</string>
+    <string name="times_table_stars_recommended">%1$d단, 별 %2$d개, 추천</string>
     <string name="times_tables_1_minute_a_day">매일 1분 구구단</string>
     <string name="times_tables_made_fun_like_a_game">구구단,\n게임처럼\n**재미있게** 배워요</string>
     <string name="tip_for_parents">보호자 한마디. %s</string>
@@ -660,12 +692,16 @@
     <string name="today_s_goal">오늘의 목표</string>
     <string name="today_s_goal_of_correct">오늘의 목표, 정답 %1$d개 중 %2$d개</string>
     <string name="today_s_little_adventure">오늘의 작은 모험</string>
+    <string name="today_s_pick">오늘 추천 %1$s, %2$s</string>
+    <string name="today_s_table">오늘 추천 단</string>
     <string name="today_s_times_tables">오늘의 구구단</string>
+    <string name="todays_pick">오늘 추천</string>
     <string name="too_many_requests_please_try_again_in_a">요청이 많아요. 잠시 뒤 다시 시도해 주세요.</string>
     <string name="top">위</string>
     <string name="top_hat">신사 모자</string>
     <string name="total_conquest">완전 정복</string>
     <string name="trial">체험 %1$d/%2$d</string>
+    <string name="trial_wave">체험 웨이브</string>
     <string name="true_label">맞아요</string>
     <string name="true_or_false">OX 퀴즈</string>
     <string name="true_the_equation_is_right">맞아요, 맞는 식</string>
@@ -684,13 +720,13 @@
     <string name="version_build_description">버전 %1$s, 빌드 %2$d</string>
     <string name="vibration">진동</string>
     <string name="victory">승리! 🎉</string>
-    <string name="view_the_times_table">%d단 표 보기</string>
     <string name="violet">바이올렛</string>
     <string name="waddles_the_penguin">펭귄 핑핑</string>
     <string name="want_a_reminder_at_this_time_tomorrow">내일도 이 시간에 알려드릴까요?</string>
     <string name="want_out_of_the_swamp_recite_the_7_times">늪에서 빠져나가고 싶다면 7단을 외워라!</string>
     <string name="want_to_stop">그만할까요?</string>
     <string name="want_to_try_again">%s, 다시 도전해 볼까요?</string>
+    <string name="wave">웨이브</string>
     <string name="wave_beach">파도 해변</string>
     <string name="we_can_t_process_this_right_now_please">지금은 처리할 수 없어요. 잠시 후 다시 시도해 주세요.</string>
     <string name="we_just_sent_a_verification_email_please">확인 메일을 방금 보냈어요. 잠시 뒤 다시 시도해 주세요.</string>
@@ -728,6 +764,9 @@
     <string name="you_need_to_sign_in_again">다시 로그인이 필요해요</string>
     <plurals name="you_passed_correct_lanes_learn_the">
         <item quantity="other">정답 길을 %d개 지났어요. 정답을 익히면 다음엔 더 멀리!</item>
+    </plurals>
+    <plurals name="you_popped_balloons">
+        <item quantity="other">"풍선 %d개를 팡! "</item>
     </plurals>
     <string name="you_re_on_a_day_streak_play_today_to">%1$d일 연속 중이에요! 오늘도 한 판 하면 %2$d일째예요.</string>
     <string name="you_reached_today_s_goal">🎉 오늘의 목표를 달성했어요!</string>

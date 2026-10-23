@@ -44,9 +44,11 @@
     <string name="any_number_times_1_is_just_that_number">どんな 数に 1を かけても その数の ままだよ</string>
     <string name="available_after_you_link_an_email_and">メールを連携して記録の保存をオンにすると受け取れます。</string>
     <string name="avg_speed">へいきん スピード</string>
+    <string name="back">もどる</string>
     <string name="back_to_practice">れんしゅうに もどる</string>
     <string name="back_to_region_map">ちいきの ちずに もどる</string>
     <string name="back_to_the_world">ワールドに もどる</string>
+    <string name="balloons_popped">わった ふうせん</string>
     <string name="battle">しょうぶする</string>
     <string name="battle_again">もういちど しょうぶ</string>
     <string name="battle_in_the_world">ワールドで しょうぶ</string>
@@ -68,6 +70,9 @@
     <plurals name="best_points">
         <item quantity="other">さいこう きろく %dてん</item>
     </plurals>
+    <plurals name="best_points_2">
+        <item quantity="other">%1$s、さいこう %2$dてん</item>
+    </plurals>
     <plurals name="best_pts">
         <item quantity="other">さいこう %1$dてん · %2$s</item>
     </plurals>
@@ -79,6 +84,10 @@
     <string name="boss_2">ボス！</string>
     <string name="boss_battle">ボスせん</string>
     <string name="boss_hunter">ボスハンター</string>
+    <plurals name="boss_shields_left">
+        <item quantity="other">ボスの たて のこり %dこ</item>
+    </plurals>
+    <string name="bosses_beaten">たおした ボス</string>
     <string name="bottom">下</string>
     <string name="button_the_mushroom_kid">きのこっこ ポコ</string>
     <string name="can_you_withstand_the_4_times_table">なみのように おしよせる 4のだんに たえてみよ！</string>
@@ -86,10 +95,10 @@
     <string name="care_for_a_taste_of_my_boiling_hot_8">グツグツ にえたぎる 8のだん、あじわってみるか？</string>
     <string name="catch_again">もういちど キャッチ</string>
     <string name="catch_it_next_time_the_answer_is">つぎは キャッチしよう！ 答えは %d</string>
-    <string name="catch_the_right_fruit_in_your_basket">正かいの 木のみを かごで キャッチ</string>
     <string name="challenge_about_five_rounds_to_reach_it">チャレンジ — 5回くらいで たっせい</string>
     <string name="change_goal">もくひょうを かえる</string>
     <string name="checking">確認中…</string>
+    <string name="choose_a_table">だんを えらぶ</string>
     <string name="choose_how_many_correct_answers_to_aim">1日に 正かいする 数を えらぼう。もくひょうを たっせいすると、その日の 学習リマインダーは お休みだよ。</string>
     <string name="choose_which_records_to_continue_with">引き続き使う記録を選んでください</string>
     <string name="cleared">%s クリア！</string>
@@ -101,6 +110,7 @@
     <string name="colors_hats">色 · ぼうし</string>
     <string name="combo">%dコンボ</string>
     <string name="combo_10">コンボ10</string>
+    <string name="combo_2">%dコンボ</string>
     <string name="combo_20">コンボ20</string>
     <string name="coming_in">%sで実装予定</string>
     <string name="complete">%s かんりょう</string>
@@ -199,6 +209,7 @@
         <item quantity="other">先に %dもん 正かいしたら かち！</item>
     </plurals>
     <string name="first_victory">はじめての しょうり</string>
+    <string name="first_wave_free">1ウェーブ おためし</string>
     <string name="flicker_the_fire_sprite">ほのおの せいれい メラ</string>
     <string name="focus_problems">とっくん もんだい</string>
     <string name="for_about_the_price_of_a_coffee_build">コーヒー1杯分の価格で、\nお子さまの九九の力を育てる</string>
@@ -230,10 +241,12 @@
     <string name="gugu_adventure_notifications_are_turned">設定アプリで九九アドベンチャーの通知がオフになっています。</string>
     <string name="gugu_basket">九九バスケット</string>
     <string name="gugu_jump">九九ジャンプ</string>
-    <plurals name="gugu_jump_lanes_basket_free_try_problems">
-        <item quantity="other">九九ジャンプ・レーン・バスケット（無料版は%d問のおためし）</item>
-    </plurals>
     <string name="gugu_lanes">九九レーン</string>
+    <string name="gugu_pop">九九ポップ</string>
+    <plurals name="gugu_pop_basket_jump_lanes_free_pop_s">
+        <item quantity="other">九九ポップ · バスケット · ジャンプ · レーン（むりょうは ポップの さいしょの ウェーブ、ほかは %dもん おためし）</item>
+    </plurals>
+    <string name="gugu_pop_play_area">九九ポップの あそぶ ところ</string>
     <string name="halfway_there">はんぶん せいふく</string>
     <string name="hang_on_with_3_lives_you_lose_a_heart">ライフ3つで がんばろう！まちがえるたびに ハートが 1つ へるよ。</string>
     <string name="hard_about_three_rounds_to_reach_it">がんばる — 3回くらいで たっせい</string>
@@ -255,6 +268,7 @@
         <item quantity="other">きょうも 1回 どう？ もくひょうは %dもん 正かいだよ。</item>
     </plurals>
     <string name="how_do_you_want_to_play">どうやって あそぶ？</string>
+    <string name="how_do_you_want_to_practice">どうやって れんしゅうする？</string>
     <string name="how_many_can_you_solve_in_60_seconds_go">60びょうで 何もん とけるかな？ さいこうきろくに ちょうせん！</string>
     <string name="hp_battle">たいりょくせん</string>
     <string name="i_m_the_boss_of_this_area_ready_for_the">この ちいきの ボスだ。%dのだん、かくごは いいか？</string>
@@ -280,6 +294,7 @@
     <string name="keep_battling">しょうぶを つづける</string>
     <string name="keep_catching">つづけて キャッチ</string>
     <string name="keep_going">つづける</string>
+    <string name="keep_popping">つづけて ポップ</string>
     <string name="keep_running">つづけて 走る</string>
     <string name="keep_running_2">つづけて 走る</string>
     <string name="keep_running_when_you_re_ready">じゅんびが できたら つづけて 走ろう。</string>
@@ -295,8 +310,6 @@
     <string name="lava_chief_bubbleboil">マグマたいしょう グツグツ</string>
     <string name="lava_volcano">マグマ火山</string>
     <string name="learn">がくしゅう</string>
-    <string name="learn_how_it_works_no_time_limit">時間せいげん なしで しくみから</string>
-    <string name="learn_step_by_step">じっくり まなぼう</string>
     <string name="learn_times_tables_by_switching_lanes">みちを かえて まなぶ 九九</string>
     <string name="learn_times_tables_on_the_run">走って まなぶ 九九</string>
     <string name="learning_records_from_a_child_s_account">お子さまのアカウントの学習記録はサーバーに送りません。</string>
@@ -317,6 +330,7 @@
     <string name="link_an_email_first_to_turn_on_record">先にメールを連携すると、記録の保存をオンにできます。</string>
     <string name="listen_learn">声で おぼえる</string>
     <string name="locked">ロック中</string>
+    <string name="locked_lifetime_pass_needed">%s、ロック中、買い切りパスが ひつよう</string>
     <string name="luna_the_sorceress">まほうつかいの ルナ</string>
     <string name="made_it">つうか！</string>
     <string name="mastered_a_times_table_earned_a_star">1つの だんを マスター（ほしを ゲット）</string>
@@ -334,16 +348,18 @@
         <item quantity="other">%d回</item>
     </plurals>
     <string name="missing_number">あなうめ</string>
+    <string name="mix_tables">ミックス</string>
+    <string name="mixed_tables_2_9_evenly">ミックス、2〜9のだんを まんべんなく</string>
     <string name="mode_explorer">モードたんけんか</string>
-    <string name="mode_practice_name">れんしゅう</string>
+    <string name="mode_practice_name">じっくり</string>
     <plurals name="more_correct_answers_to_go">
         <item quantity="other">あと %dもんで たっせい！</item>
     </plurals>
     <string name="mossbeard_sage_of_the_forest">森の けんじゃ モスじい</string>
+    <string name="move_and_play">体を うごかして あそぼう</string>
     <string name="move_basket_left">かごを 左へ</string>
     <string name="move_basket_right">かごを 右へ</string>
     <string name="move_left_and_right_to_catch_the_right">左右に うごいて 正かいの 木のみを キャッチ！</string>
-    <string name="move_play">うごいて あそぼう</string>
     <string name="move_the_basket_to_catch_the_right">かごを うごかして 正かいの くだものを キャッチ！ ちがう くだものを とったり、おとしたり すると ハートが 1つ へるよ。さいしょは 2のだんから ゆっくり！</string>
     <string name="move_the_basket_under_the_right_fruit">正かいの 木のみの 下へ かごを うごかそう！</string>
     <string name="move_to_lower_lane">下の みちへ</string>
@@ -353,11 +369,10 @@
     <string name="multiplication_in_reverse_find_the">かけ算を ぎゃくから！あなの 数を 見つけると XPボーナスが 大きいよ。</string>
     <string name="mushroom_forest">きのこの森</string>
     <string name="my_answer">自分の 答え %d</string>
-    <string name="my_best">自分の さいこうきろく</string>
     <string name="my_character">自分の キャラクター</string>
     <string name="my_pick">えらんだのは %s</string>
     <string name="new_best">ベスト こうしん！</string>
-    <string name="new_mode">新モード</string>
+    <string name="new_game">新しい ゲーム</string>
     <string name="new_personal_best">自分の さいこうきろくを こうしん！</string>
     <string name="new_record">新きろく たっせい！🏆</string>
     <string name="new_record_2">新きろく！</string>
@@ -383,6 +398,7 @@
     </plurals>
     <string name="notifications">通知</string>
     <string name="notifications_are_off_you_can_turn_on">通知がオフになっています。設定アプリで九九アドベンチャーの通知をオンにできます。</string>
+    <string name="number_balloons_float_down_tap_only_the">数の ふうせんが おりてくるよ。ミッションに あう ふうせんだけ タップして わろう。正かいの ふうせんが やねに つくと ハートが ひとつ へるよ。ほかの ふうせんを タップしても ハートは へらないよ！</string>
     <string name="number_strategist">数のさくせんか</string>
     <string name="obstacle">%1$s · %2$dこ目の じゃまもの</string>
     <string name="obstacles_cleared">こえた かず</string>
@@ -390,6 +406,7 @@
     <plurals name="obstacles_dodged">
         <item quantity="other">よけた じゃまもの %dこ</item>
     </plurals>
+    <string name="of">%1$dこ中 %2$dこ</string>
     <string name="often_missed">よく間違える問題</string>
     <string name="ok">OK</string>
     <string name="ok_2">OK</string>
@@ -397,6 +414,7 @@
     <string name="once_this_is_confirmed_as_a_parent">保護者のアカウントと確認できたら、記録を安全に保存します。</string>
     <string name="one_more_time_can_you_go_farther">もう1回、もっと 先まで 行ってみる？</string>
     <string name="one_payment_unlocks_every_feature_for">一度のお支払いで、すべての機能をずっと使えます</string>
+    <string name="one_table_at_a_time_in_roadmap_order">じゅんばんに ひとつずつ</string>
     <string name="one_time">· 1回のみ</string>
     <string name="only_3_chances">チャンスは 3回だけ</string>
     <string name="open_settings">設定を開く</string>
@@ -404,6 +422,7 @@
     <string name="out_of_time">時間ぎれ。%1$d × %2$d = %3$d</string>
     <string name="overall_best">さいこう</string>
     <string name="owned">もってる</string>
+    <string name="pair_boss_is_here">ペアボス とうじょう！</string>
     <string name="parent_check">保護者の確認</string>
     <string name="parent_s_email">保護者のメールアドレス</string>
     <string name="pause">いちじていし</string>
@@ -414,12 +433,10 @@
     <string name="perfect_month">1か月 かいきん</string>
     <string name="perfect_week">1しゅうかん かいきん</string>
     <string name="pick">おすすめ</string>
-    <string name="pick_a_table">だんを えらぶ</string>
-    <string name="pick_answers_to_jump_obstacles">正かいを えらんで じゃまものを とびこえる</string>
-    <string name="pick_any_table_and_go_step_by_step">すきな だんを えらんで じっくり</string>
     <string name="pick_the_right_answer_and_hop_over_the">正かいを えらぶと ぴょん！ じゃまものを とびこえるよ。</string>
     <string name="pick_the_right_answer_before_the">じゃまものが 来る前に 正かいを えらぼう！</string>
     <string name="pick_the_right_answer_from_3_choices">3つの 中から 正かいを えらんでね。まちがえたり 時間ぎれに なると ハートが 1つ へるよ。</string>
+    <string name="picked_for_the_pair">ペアに %d を えらんだ</string>
     <string name="pinchy_the_crab">かにの チョッキン</string>
     <string name="pip_the_frog">かえるの ケロ</string>
     <string name="play_again">もう1回</string>
@@ -429,9 +446,23 @@
     <string name="please_sign_in_again">もう一度ログインしてください</string>
     <string name="please_verify_with_a_parent_s_email">保護者のメールアドレスで確認してください</string>
     <string name="plop_you_caught_the_right_fruit">ポン！正かいの くだものを キャッチ！</string>
+    <plurals name="points">
+        <item quantity="other">%dてん！</item>
+    </plurals>
+    <string name="pop_a_pair_one_after_the_other">ペアを ひとつずつ じゅんばんに パン！</string>
+    <string name="pop_again">もういちど ポップ</string>
+    <string name="pop_again_with_the_bunny">うさぎと もういちど ポップする？</string>
+    <string name="pop_catch_and_run_for_answers">わって、キャッチして、走ろう</string>
+    <string name="pop_mission_multiples">%dのだんの こたえだけ パン！</string>
+    <string name="pop_mission_pair">かけて %d を つくろう</string>
+    <string name="pop_only_the_number_balloons_that_fit">ミッションに あう 数の ふうせんだけ パン！</string>
+    <string name="pop_ready_title">ミッションに あう ふうせんだけ パン！</string>
+    <string name="pop_slow">ゆっくりに なったよ！</string>
+    <string name="pop_start">ポップ スタート</string>
+    <string name="pop_trial_first_wave">おためし · さいしょの ウェーブ</string>
+    <string name="pop_wave">ウェーブ %d</string>
     <string name="portal">ポータル</string>
     <string name="practice_every_day_to_grow_your_streak">毎日 れんしゅうすると れんぞくきろくが のびるよ</string>
-    <string name="practice_on_the_move">うごいて れんしゅう</string>
     <plurals name="practice_records_not_yet_uploaded_won_t">
         <item quantity="other">まだサーバーに送信していない学習記録%d件は、ログアウトするとサーバーに残りません。</item>
     </plurals>
@@ -449,9 +480,6 @@
     <string name="problem_of">%1$dもん中 %2$dもん目</string>
     <plurals name="problems">
         <item quantity="other">%dもん</item>
-    </plurals>
-    <plurals name="problems_pick_a_table">
-        <item quantity="other">%dもん · だんを えらぶ</item>
     </plurals>
     <string name="problems_to_review">見なおす もんだい</string>
     <string name="processing">処理中…</string>
@@ -473,7 +501,6 @@
     <string name="quit_this_battle">しょうぶを やめる？</string>
     <string name="rage">いかり</string>
     <string name="random_mix">%s · ぜんぶ ランダム</string>
-    <string name="random_mix_2">ぜんぶ ランダム</string>
     <string name="re_enter_address">アドレスを入力し直す</string>
     <string name="reached_level_15">レベル15に とうたつ</string>
     <string name="reached_level_5">レベル5に とうたつ</string>
@@ -509,7 +536,6 @@
     <string name="right_wrong">あってたら○、ちがったら×</string>
     <string name="rose">ローズ</string>
     <string name="run_again">もういちど 走る</string>
-    <string name="run_dodge_and_catch_the_answers">走って、よけて、正かいを キャッチ</string>
     <string name="running_m">%dm 走ってるよ</string>
     <string name="s_100_club">100もん とっぱ</string>
     <string name="s_100_correct_answers_in_total">ぜんぶで 100もん 正かい</string>
@@ -520,8 +546,10 @@
     <string name="s_20_correct_in_a_row">20もん れんぞく 正かい</string>
     <string name="s_21">「%s」</string>
     <string name="s_3_day_streak">3日れんぞく</string>
+    <string name="s_3_hearts_a_pair_boss_appears_every_3rd">ハート3こ · 3ウェーブごとに ペアボスが 出るよ。だんごとの さいこう きろくは この きかいに ほぞんされるよ。</string>
     <string name="s_3_hearts_it_gets_a_little_faster_every_3">ハート3つ · 3もん 正かいするごとに 少しずつ はやくなるよ。だんごとの さいこう きろくは この きかいに ほぞんされるよ。</string>
     <string name="s_3_stars_on_every_table">ぜんぶの だんで ほし3つ</string>
+    <string name="s_3_stars_on_every_table_2">ぜんぶの だんで ほし3こ！ %s</string>
     <string name="s_500_club">500もん とっぱ</string>
     <string name="s_500_correct_answers_in_total">ぜんぶで 500もん 正かい</string>
     <string name="s_60_second_challenge">60びょうチャレンジ</string>
@@ -530,6 +558,9 @@
     <string name="same_as_last_week">先週と同じです</string>
     <string name="sandy_the_fox">きつねの コン</string>
     <string name="scorch_king_of_the_desert">さばくの王 ギラン</string>
+    <plurals name="score_points">
+        <item quantity="other">とくてん %dてん</item>
+    </plurals>
     <string name="scored_15_in_the_60_second_challenge">60びょうチャレンジで 15てん</string>
     <plurals name="sec_limit">
         <item quantity="other">%dびょう せいげん</item>
@@ -555,6 +586,7 @@
     <string name="skip_count_by_5s">5とびで かぞえる</string>
     <string name="sky">そらいろ</string>
     <string name="slick_the_seal">あざらしの スルリ</string>
+    <string name="slow_and_steady">ゆっくり ていねいに</string>
     <string name="snowflake_fields">ゆきの はらっぱ</string>
     <string name="snowy_the_hare">ゆきうさぎの シロ</string>
     <string name="so_close">おしい！%1$d × %2$d = %3$d</string>
@@ -582,25 +614,21 @@
     <string name="stars_levels_coins_and_passes_bought_on">この端末のほし・レベル・コインと、この端末で購入したパスはそのまま残ります。アカウントで受け取ったパスと記録の保存は、もう一度ログインすると戻ります。</string>
     <string name="start_battle">しょうぶ スタート！</string>
     <string name="start_catching">キャッチ スタート</string>
-    <string name="start_challenge">チャレンジ スタート</string>
     <string name="start_review">ふくしゅう スタート</string>
     <string name="start_running">走りだす</string>
-    <string name="start_times_table_stars">%1$dのだん %2$s スタート、ほし %3$dこ</string>
-    <string name="start_times_table_stars_recommended">%1$dのだん %2$s スタート、ほし %3$dこ、おすすめ</string>
-    <string name="step_by_step_basics">じっくり きほん</string>
+    <string name="starts_with_mixed_tables">ミックスで はじめるよ</string>
+    <string name="starts_with_the_times_table">%dのだんで はじめるよ</string>
     <string name="stop">ストップ</string>
     <string name="straw_hat">むぎわらぼうし</string>
     <string name="streak">れんぞくきろく</string>
     <string name="strikes_back">%1$s — %2$sの はんげき！</string>
     <string name="style_shop">きせかえショップ</string>
-    <string name="suggested_order_tap_a_book_to_see_its">おすすめ：%sのだん · 本を おすと ひょうが 見られるよ</string>
     <string name="sunset_desert">ゆうやけさばく</string>
     <string name="survival">サバイバル</string>
     <string name="survived_20_problems_in_survival">サバイバルで 20もん 生きのこった</string>
     <string name="survivor">サバイバルの王</string>
     <string name="swap_the_order_and_add_it_twice">じゅんばんを かえて 2回 たす</string>
     <string name="swipe_up_or_down_or_use_the_buttons_to">がめんを 上下に スワイプするか、▲▼ボタンで みちを うつろう。</string>
-    <string name="switch_lanes_to_dodge_find_the_answer">みちを かえて よけて、正かいの みちへ</string>
     <string name="switch_lanes_to_dodge_then_zip_into_the">みちを かえて よけて、正かいの みちへ スイッ！</string>
     <string name="switch_lanes_up_and_down_to_dodge">上下に みちを かえて じゃまものを よけよう。もんだいが 出たら 正かいの 数字の みちに 入ってね。ぶつかったり まちがえたり すると ハートが 1つ へるよ。</string>
     <string name="switch_lanes_up_and_down_to_dodge_2">上下に みちを かえて じゃまものを よけよう。</string>
@@ -608,6 +636,7 @@
     <string name="system">端末の設定</string>
     <string name="table">%dのだん</string>
     <string name="table_2">%1$s · %2$dのだん</string>
+    <string name="table_and_recite">ひょう · おぼえる</string>
     <string name="table_best">%dのだん さいこう</string>
     <string name="table_is_now_open">%1$s（%2$dのだん）が ひらいたよ！</string>
     <string name="table_mastery">%dのだん マスター</string>
@@ -617,12 +646,14 @@
     <string name="table_to_practice_while_running">はしりながら れんしゅうする だん</string>
     <string name="table_trick">%1$dのだんの コツ · %2$s</string>
     <string name="taking_a_break">ちょっと ひとやすみ</string>
+    <string name="tap_a_table_to_choose_how_to_practice">だんを タップすると れんしゅうの しかたを えらべるよ</string>
     <string name="tap_to_see_goals">タップして もくひょうを 見る</string>
     <string name="terms_of_use">利用規約</string>
     <string name="that_s_ok">だいじょうぶ！ %1$d × %2$d = %3$d</string>
     <string name="that_s_ok_learn_the_answers_and_try">だいじょうぶ。答えを おぼえて また ちょうせんしよう</string>
     <string name="that_s_the_end_of_the_free_trial">おためしは ここまで！</string>
     <string name="that_s_wrong">%1$d × %2$d = %3$d — まちがった しきだよ</string>
+    <string name="that_s_your_best_score">じぶんの さいこう きろくだよ！</string>
     <string name="the_2s_plus_one_more">2のだんに もう1回 たす</string>
     <string name="the_5s_plus_one_more">5のだんに もう1回 たす</string>
     <string name="the_bunny_s_little_orchard">うさぎの 小さな かじゅえん</string>
@@ -652,6 +683,7 @@
     <string name="times_table_legend">九九レジェンド</string>
     <string name="times_table_runner">九九ランナー</string>
     <string name="times_table_stars">%1$dのだん、ほし %2$dこ</string>
+    <string name="times_table_stars_recommended">%1$dのだん、ほし %2$dこ、おすすめ</string>
     <string name="times_tables_1_minute_a_day">1日1分の 九九</string>
     <string name="times_tables_made_fun_like_a_game">九九を\nゲームみたいに\n**たのしく** まなぼう</string>
     <string name="tip_for_parents">保護者へのひとこと。%s</string>
@@ -660,12 +692,16 @@
     <string name="today_s_goal">きょうの もくひょう</string>
     <string name="today_s_goal_of_correct">きょうの もくひょう、正かい %1$dもん中 %2$dもん</string>
     <string name="today_s_little_adventure">きょうの 小さな ぼうけん</string>
+    <string name="today_s_pick">きょうの おすすめ %1$s、%2$s</string>
+    <string name="today_s_table">きょうの おすすめの だん</string>
     <string name="today_s_times_tables">きょうの 九九</string>
+    <string name="todays_pick">きょうの おすすめ</string>
     <string name="too_many_requests_please_try_again_in_a">リクエストが多すぎます。しばらくしてからもう一度お試しください。</string>
     <string name="top">上</string>
     <string name="top_hat">シルクハット</string>
     <string name="total_conquest">かんぜんせいふく</string>
     <string name="trial">おためし %1$d/%2$d</string>
+    <string name="trial_wave">おためし ウェーブ</string>
     <string name="true_label">あってる</string>
     <string name="true_or_false">○×クイズ</string>
     <string name="true_the_equation_is_right">あってる、正しい しき</string>
@@ -684,13 +720,13 @@
     <string name="version_build_description">バージョン %1$s、ビルド %2$d</string>
     <string name="vibration">バイブレーション</string>
     <string name="victory">しょうり！🎉</string>
-    <string name="view_the_times_table">%dのだんの ひょうを 見る</string>
     <string name="violet">バイオレット</string>
     <string name="waddles_the_penguin">ペンギンの ペタ</string>
     <string name="want_a_reminder_at_this_time_tomorrow">あしたも この時間に お知らせしましょうか？</string>
     <string name="want_out_of_the_swamp_recite_the_7_times">ぬまから 出たければ 7のだんを となえてみよ！</string>
     <string name="want_to_stop">やめる？</string>
     <string name="want_to_try_again">%s、もういちど ちょうせんしてみる？</string>
+    <string name="wave">ウェーブ</string>
     <string name="wave_beach">なみうちビーチ</string>
     <string name="we_can_t_process_this_right_now_please">ただいま処理できません。しばらくしてからもう一度お試しください。</string>
     <string name="we_just_sent_a_verification_email_please">確認メールを送信したばかりです。しばらくしてからもう一度お試しください。</string>
@@ -728,6 +764,9 @@
     <string name="you_need_to_sign_in_again">もう一度ログインが必要です</string>
     <plurals name="you_passed_correct_lanes_learn_the">
         <item quantity="other">正かいの みちを %dこ 通ったよ。正かいを おぼえたら つぎは もっと 先へ！</item>
+    </plurals>
+    <plurals name="you_popped_balloons">
+        <item quantity="other">"ふうせんを %dこ パン！ "</item>
     </plurals>
     <string name="you_re_on_a_day_streak_play_today_to">%1$d日 れんぞく中！きょうも 1回 あそぶと %2$d日目だよ。</string>
     <string name="you_reached_today_s_goal">🎉 きょうの もくひょうを たっせいしたよ！</string>

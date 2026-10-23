@@ -182,6 +182,18 @@ class ThemeStore(private val persistence: Persistence) {
 
 enum class AppTab { HOME, LEARN, PROFILE }
 
+/** 움직이며 놀기 게임 — 선언 순서가 홈·단 시트·'섞어서' 시트의 표시 순서다 */
+enum class Minigame { POP, BASKET, RUNNER, LANE }
+
+/**
+ * 미니게임 시작 단. "단을 안 정함(게임 기본값)"과 "섞어서(null)"를 구분해야 해서 Int? 하나로 두지 않는다.
+ * Table(null) = 섞어서, Table(7) = 7단.
+ */
+sealed class MinigameStart {
+    data object Default : MinigameStart()
+    data class Table(val table: Int?) : MinigameStart()
+}
+
 class Router {
     var tab: AppTab by mutableStateOf(AppTab.HOME)
 
@@ -193,6 +205,24 @@ class Router {
 
     /** 구구 바구니 전체화면 오버레이 */
     var basketOpen: Boolean by mutableStateOf(false)
+
+    /** 구구 팡팡 전체화면 오버레이 */
+    var popOpen: Boolean by mutableStateOf(false)
+
+    /** 미니게임을 열 때 미리 골라 둘 단 — 홈 진입은 게임 기본값, 단 시트·'섞어서' 시트 진입은 그 단 */
+    var minigameStart: MinigameStart by mutableStateOf(MinigameStart.Default)
+        private set
+
+    /** 미니게임 오버레이를 연다. 시작 단을 함께 바꿔 이전 진입의 단이 남지 않게 한다 */
+    fun openMinigame(game: Minigame, start: MinigameStart = MinigameStart.Default) {
+        minigameStart = start
+        when (game) {
+            Minigame.POP -> popOpen = true
+            Minigame.BASKET -> basketOpen = true
+            Minigame.RUNNER -> runnerOpen = true
+            Minigame.LANE -> laneOpen = true
+        }
+    }
 
     /** 설정 화면 (프로필 톱니바퀴) */
     var settingsOpen: Boolean by mutableStateOf(false)

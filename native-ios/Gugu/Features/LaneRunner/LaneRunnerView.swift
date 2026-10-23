@@ -7,13 +7,19 @@ import SwiftUI
 struct LaneRunnerView: View {
     var onExit: () -> Void
 
-    @State private var engine = LaneRunnerEngine()
+    @State private var engine: LaneRunnerEngine
     /// 한 번의 제스처는 한 칸만 이동한다
     @State private var swipeHandled = false
     @State private var paywallOpen = false
     @Environment(PremiumStore.self) private var premium
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    /// start: 처음 골라 둘 단 — 학습 탭 단 시트에서 열면 그 단, 홈에서 열면 엔진 기본값
+    init(start: MinigameStart = .standard, onExit: @escaping () -> Void) {
+        self.onExit = onExit
+        _engine = State(initialValue: LaneRunnerEngine(table: start.table(defaultTable: LaneRunnerEngine.defaultTable)))
+    }
 
     private static let laneNames = [String(localized: "위"), String(localized: "가운데"), String(localized: "아래")]
     /// 스와이프로 인정하는 세로 이동 거리
