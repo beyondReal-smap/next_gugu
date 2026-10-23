@@ -1,3 +1,3 @@
-Gugu Adventure now speaks English and Japanese!
-• The whole app, plus a friendly teacher's voice that reads every problem aloud
-• On Android 13 and later, pick the app language in Settings > Apps > Gugu Adventure > Language
+• New game: Gugu Pop! Pop only the right number balloons, and beat the boss balloon with multiplication pairs.
+• A brand-new Learn tab: pick a table first, then choose how to practice and start right away.
+• The "Practice" mode is now called "Step by step".

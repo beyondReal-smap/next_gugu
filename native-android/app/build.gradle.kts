@@ -41,8 +41,8 @@ android {
         applicationId = "site.smap.gugudan"
         minSdk = 28          // SceneView(Filament) 요구 — 기기 커버리지 ~97%
         targetSdk = 36
-        versionCode = 24     // vc24: 2.6.0 — 영어·일본어(화면·선생님 음성·앱별 언어)
-        versionName = "2.6.0"
+        versionCode = 25     // vc25: 2.7.0 — 학습 탭 '단 먼저' 개편, 새 게임 구구 팡팡
+        versionName = "2.7.0"
 
         buildConfigField("String", "SUPABASE_HOST", "\"${supabaseProp("SUPABASE_HOST")}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${supabaseProp("SUPABASE_ANON_KEY")}\"")
