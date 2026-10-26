@@ -1,7 +1,7 @@
 """구구단 콘텐츠 MCP 서버 — AI 클라이언트가 바로 쓸 수 있는 형태로 학습 데이터를 제공한다.
 
 읽기 전용·인증 없음. main.py에서 /api/mcp 에 마운트되어
-https://gugu.smap.site/api/mcp/ (streamable HTTP)로 공개된다.
+https://gugu.aiagnt.kr/api/mcp/ (streamable HTTP)로 공개된다.
 
 데이터 원천은 web·api 공용 단일 소스인 ../content/*.json 이다.
 facts.json은 `node content/build.mjs` 생성물이며, 낭독·난이도 규칙은 그쪽에만 있다
@@ -21,7 +21,7 @@ from pydantic import BaseModel, Field
 log = logging.getLogger("gugu-api")
 
 CONTENT_DIR = Path(__file__).resolve().parent.parent / "content"
-SITE_URL = "https://gugu.smap.site"
+SITE_URL = "https://gugu.aiagnt.kr"
 
 MIN_TABLE, MAX_TABLE = 2, 9
 MIN_B, MAX_B = 1, 9

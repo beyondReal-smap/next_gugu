@@ -5,7 +5,7 @@
 - 검증 성공 시 MariaDB(gugu.purchases)에 기록
 - Supabase JWT(Bearer) 동반 시 구매를 계정에 연결 → 웹·타 기기에서 프리미엄 인식
 - /api/mcp: 구구단 학습 콘텐츠를 AI에 제공하는 읽기 전용 MCP 서버 (mcp_server.py)
-  cloudflared 라우팅이 gugu.smap.site/api/* → 이 프로세스라, 별도 인프라 없이 공개된다.
+  cloudflared 라우팅이 gugu.aiagnt.kr/api/* → 이 프로세스라, 별도 인프라 없이 공개된다.
 """
 import asyncio
 import json
@@ -68,7 +68,7 @@ mcp_http_app = mcp_server.mcp.streamable_http_app(
     # DNS rebinding 보호는 "로컬호스트에서 도는 MCP 서버를 악성 웹페이지가 피해자 브라우저를 통해
     # 호출하는 것"을 막는 장치다. 이 엔드포인트는 공개 인터넷에 있고 인증 없이 누구나 읽을 수 있는
     # 콘텐츠만 내보내므로 rebinding으로 얻을 것이 없다. 반대로 켜 두면 cloudflared를 거쳐 들어온
-    # Host(gugu.smap.site)가 기본 허용값(127.0.0.1)과 달라 모든 요청이 421로 막힌다.
+    # Host(gugu.aiagnt.kr)가 기본 허용값(127.0.0.1)과 달라 모든 요청이 421로 막힌다.
     transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False),
 )
 

@@ -2,11 +2,11 @@ import Foundation
 
 // 학습 원장 API 클라이언트 (lib/api/learning.ts 의 네트워크 부분 이식).
 //
-// 주의: gugu.smap.site 는 Cloudflare 뒤에 있고 기본 User-Agent 로 호출하면
+// 주의: gugu.aiagnt.kr 는 Cloudflare 뒤에 있고 기본 User-Agent 로 호출하면
 // 봇 차단(HTTP 403, error 1010)에 걸린다. 앱을 식별하는 UA 를 반드시 붙인다.
 
 enum LearningApi {
-    static let base = "https://gugu.smap.site/api"
+    static let base = "https://gugu.aiagnt.kr/api"
 
     /// Cloudflare 봇 차단을 피하기 위한 앱 식별 UA
     static var userAgent: String {

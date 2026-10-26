@@ -7,7 +7,7 @@ enum PremiumConfig {
     static let productID = "site.smap.next.premium"
 
     /// 자체 영수증 검증 서버 (P5에서 서버 vs StoreKit2 온디바이스 최종 결정)
-    static let validatorURL = "https://gugu.smap.site/api/iap/cdv-validate"
+    static let validatorURL = "https://gugu.aiagnt.kr/api/iap/cdv-validate"
 
     /// 프리미엄 전용 게임 모드 — 학습/스피드런은 무료 유지
     static let premiumModes: Set<GameMode> = [.challenge, .survival, .missing, .truefalse]
@@ -28,7 +28,7 @@ enum PremiumConfig {
         static let deleteAccount = url("delete-account")
 
         static func url(_ page: String, language: AppLanguage = .current) -> String {
-            let base = "https://gugu.smap.site"
+            let base = "https://gugu.aiagnt.kr"
             return language == .ko ? "\(base)/\(page)" : "\(base)/\(language.rawValue)/\(page)"
         }
     }

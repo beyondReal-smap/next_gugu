@@ -195,8 +195,8 @@ class CoreLocalizationTests {
     }
 
     @Test fun legalUrlsPerLanguage() {
-        assertEquals("https://gugu.smap.site/terms", PremiumConfig.Legal.url("terms", AppLanguage.KO))
-        assertEquals("https://gugu.smap.site/en/privacy", PremiumConfig.Legal.url("privacy", AppLanguage.EN))
-        assertEquals("https://gugu.smap.site/ja/delete-account", PremiumConfig.Legal.url("delete-account", AppLanguage.JA))
+        assertEquals("https://gugu.aiagnt.kr/terms", PremiumConfig.Legal.url("terms", AppLanguage.KO))
+        assertEquals("https://gugu.aiagnt.kr/en/privacy", PremiumConfig.Legal.url("privacy", AppLanguage.EN))
+        assertEquals("https://gugu.aiagnt.kr/ja/delete-account", PremiumConfig.Legal.url("delete-account", AppLanguage.JA))
     }
 }

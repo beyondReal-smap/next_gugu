@@ -2,7 +2,7 @@
 
 구구 어드벤처 백엔드 — 인앱결제 검증 · 학습 원장 · 공개 MCP 서버.
 
-`https://gugu.smap.site/api/*` → cloudflared → 이 프로세스(127.0.0.1:5106, pm2 `gugu-api`).
+`https://gugu.aiagnt.kr/api/*` → cloudflared → 이 프로세스(127.0.0.1:5106, pm2 `gugu-api`).
 
 ## 원본은 이 저장소다
 

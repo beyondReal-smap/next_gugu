@@ -22,7 +22,7 @@ import java.net.URL
 
 // 학습 원장 API 클라이언트 (iOS LearningApi 이식).
 //
-// 주의: gugu.smap.site 는 Cloudflare 뒤에 있고 기본 User-Agent 로 호출하면
+// 주의: gugu.aiagnt.kr 는 Cloudflare 뒤에 있고 기본 User-Agent 로 호출하면
 // 봇 차단(HTTP 403, error 1010)에 걸린다. 앱을 식별하는 UA 를 반드시 붙인다.
 
 @kotlinx.serialization.Serializable
@@ -75,7 +75,7 @@ sealed class LearningApiException(message: String) : IOException(message) {
 }
 
 object LearningApi {
-    const val BASE = "https://gugu.smap.site/api"
+    const val BASE = "https://gugu.aiagnt.kr/api"
 
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 

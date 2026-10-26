@@ -7,9 +7,9 @@
 - **모델**: **단건 결제 ₩4,400 평생 이용권** (정기 결제 아님, 1회 구매로 영구 해제)
 - **상품 ID**: `site.smap.next.premium` — iOS 비소모성(Non-Consumable) / Android 1회성 인앱 상품
 - **결제 플러그인**: cordova-plugin-purchase v13 (iOS StoreKit / Android Billing 9 통합)
-- **영수증 검증**: 앱 → `https://gugu.smap.site/api/iap/verify` (FastAPI) → Apple/Google 서버에 재확인 → MariaDB `gugu.purchases` 기록
+- **영수증 검증**: 앱 → `https://gugu.aiagnt.kr/api/iap/verify` (FastAPI) → Apple/Google 서버에 재확인 → MariaDB `gugu.purchases` 기록
 - **무료 경계**: 학습·스피드런·전체랜덤·단선택 = 무료 / 3D 어드벤처·60초 챌린지·서바이벌·빈칸 추리·OX 퀴즈 = 프리미엄
-- **웹(gugu.smap.site)**: 자동 데모 모드 — 프리미엄 진입 시 "앱에서 구매" 안내
+- **웹(gugu.aiagnt.kr)**: 자동 데모 모드 — 프리미엄 진입 시 "앱에서 구매" 안내
 
 ## 서버 구성 (구축 완료 ✅)
 
@@ -17,7 +17,7 @@
 |---|---|
 | 위치 | aws `~/smap/smap_gugu/api` (FastAPI + uv) |
 | 프로세스 | pm2 `gugu-api` (127.0.0.1:5106) |
-| 라우팅 | Cloudflare Tunnel: `gugu.smap.site/api/*` → 5106, 나머지 → 5104(정적 웹) |
+| 라우팅 | Cloudflare Tunnel: `gugu.aiagnt.kr/api/*` → 5106, 나머지 → 5104(정적 웹) |
 | DB | MariaDB `gugu.purchases` (계정 gugu@localhost, 비번은 서버 `api/.env`) |
 | 엔드포인트 | `GET /api/health`, `POST /api/iap/cdv-validate`(플러그인 validator), `POST /api/iap/verify`(수동) |
 | iOS 검증 | Apple verifyReceipt — 프로덕션→샌드박스(21007) 폴백, **별도 키 불필요** |
@@ -58,9 +58,9 @@
 
 | 용도 | URL |
 |---|---|
-| 이용약관 | https://gugu.smap.site/terms |
-| 개인정보처리방침 | https://gugu.smap.site/privacy — 양 스토어 등록 시 입력 |
-| 데이터 삭제 안내 | https://gugu.smap.site/delete-account — Play 데이터 보안 폼에 입력 |
+| 이용약관 | https://gugu.aiagnt.kr/terms |
+| 개인정보처리방침 | https://gugu.aiagnt.kr/privacy — 양 스토어 등록 시 입력 |
+| 데이터 삭제 안내 | https://gugu.aiagnt.kr/delete-account — Play 데이터 보안 폼에 입력 |
 
 ## 5. 테스트
 

@@ -44,9 +44,9 @@ final class LocalizationTests: XCTestCase {
 
     /// 법적 문서는 언어별 주소 — 한국어는 기존 주소(심사·Android 와 같음)를 바꾸지 않는다
     func testLegalLinksPerLanguage() {
-        XCTAssertEqual(PremiumConfig.Legal.url("privacy", language: .ko), "https://gugu.smap.site/privacy")
-        XCTAssertEqual(PremiumConfig.Legal.url("privacy", language: .en), "https://gugu.smap.site/en/privacy")
-        XCTAssertEqual(PremiumConfig.Legal.url("terms", language: .ja), "https://gugu.smap.site/ja/terms")
+        XCTAssertEqual(PremiumConfig.Legal.url("privacy", language: .ko), "https://gugu.aiagnt.kr/privacy")
+        XCTAssertEqual(PremiumConfig.Legal.url("privacy", language: .en), "https://gugu.aiagnt.kr/en/privacy")
+        XCTAssertEqual(PremiumConfig.Legal.url("terms", language: .ja), "https://gugu.aiagnt.kr/ja/terms")
     }
 
     func testJapaneseFontsExistOnDevice() {

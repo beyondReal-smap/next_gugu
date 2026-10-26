@@ -26,7 +26,7 @@ object PremiumConfig {
         val DELETE_ACCOUNT: String get() = url("delete-account")
 
         fun url(page: String, language: AppLanguage = AppLanguage.current): String {
-            val base = "https://gugu.smap.site"
+            val base = "https://gugu.aiagnt.kr"
             return if (language == AppLanguage.KO) "$base/$page" else "$base/${language.code}/$page"
         }
     }
