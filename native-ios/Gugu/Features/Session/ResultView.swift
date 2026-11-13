@@ -1,4 +1,5 @@
 import SwiftUI
+import StoreKit
 
 // 세션 결과 화면 (ResultScreen.tsx 이식)
 
@@ -12,6 +13,7 @@ struct ResultView: View {
     @Environment(PushStore.self) private var push
     @Environment(AuthStore.self) private var auth
     @Environment(PremiumStore.self) private var premium
+    @Environment(\.requestReview) private var requestReview
     @State private var confetti = 0
     @State private var levelUp = false
     @State private var reminderBusy = false
@@ -152,7 +154,24 @@ struct ResultView: View {
             if commit.leveledUp {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { levelUp = true }
             }
+            askReviewIfEarned()
         }
+    }
+
+    /// 잘 해낸 판이 끝났을 때 앱 평가를 요청한다 (조건은 ReviewPolicy).
+    /// 알림 권유 카드·레벨업 연출과 겹치면 이번 판은 건너뛴다 — 한 화면에 요청이 둘 이상 뜨지 않게
+    private func askReviewIfEarned() {
+        if reminder.shouldOfferAfterSession || commit.leveledUp { return }
+        let moment = ReviewMoment(partial: result.partial, accuracy: accuracy, isNewBest: commit.isNewBest,
+                                  improvedStars: commit.improvedStars, goalReached: commit.goalReached)
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
+        let log = Persistence.load(ReviewPromptLog.self, key: ReviewPolicy.storageKey) ?? ReviewPromptLog()
+        let now = Date()
+        guard ReviewPolicy.shouldAsk(moment: moment, state: game.state, log: log, appVersion: version, now: now) else { return }
+        // 시스템이 실제로 띄웠는지는 알 수 없다(연간 3회 제한 등) — 요청한 사실을 먼저 남겨 같은 버전에서 반복하지 않는다
+        Persistence.save(ReviewPolicy.recordAsk(log, appVersion: version, now: now), key: ReviewPolicy.storageKey)
+        // 결과·축하 효과를 먼저 보여 준 뒤에 띄운다
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { requestReview() }
     }
 
     private func scoreHero(_ score: Int) -> some View {

@@ -282,6 +282,7 @@
     <!-- 어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지) -->
     <string name="flicker_the_fire_sprite">Flicker the Fire Sprite</string>
     <string name="focus_problems">Focus Problems</string>
+    <string name="for_a_single_500_yen_coin_build_your">For a single 500-yen coin,\nbuild your child\'s times-table skills</string>
     <string name="for_about_the_price_of_a_coffee_build">For about the price of a coffee,\nbuild your child\'s times-table skills</string>
     <plurals name="free_problems">
         <item quantity="one">%d free problem</item>
@@ -394,6 +395,7 @@
         <item quantity="other">Just %d more correct answers to reach today\'s goal.</item>
     </plurals>
     <string name="just_once_every_feature_for_life">Just %s, once — every feature, for life</string>
+    <string name="just_one_500_yen_coin">🪙 Just one 500-yen coin</string>
     <string name="keep_battling">Keep battling</string>
     <string name="keep_catching">Keep catching</string>
     <string name="keep_going">Keep going</string>
@@ -436,6 +438,7 @@
     <string name="level_up_2">Level Up</string>
     <string name="levels_stars_achievements_and_records">Levels, stars, achievements and records will all be reset. This can\'t be undone.</string>
     <string name="lifetime_pass">Lifetime Pass</string>
+    <string name="lifetime_pass_just_one_500_yen_coin">Lifetime Pass · just one 500-yen coin</string>
     <string name="lifetime_pass_the_price_of_a_coffee">Lifetime Pass · the price of a coffee</string>
     <string name="lifetime_pass_unlocked">Lifetime Pass unlocked 🎉</string>
     <string name="light">Light</string>

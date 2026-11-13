@@ -1,5 +1,13 @@
 package site.smap.gugudan.features.session
 
+import android.app.Activity
+import androidx.compose.ui.platform.LocalContext
+import site.smap.gugudan.BuildConfig
+import site.smap.gugudan.core.ReviewMoment
+import site.smap.gugudan.core.ReviewPolicy
+import site.smap.gugudan.core.ReviewPromptLog
+import site.smap.gugudan.services.InAppReview
+import site.smap.gugudan.services.Persistence
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -92,6 +100,25 @@ fun ResultView(engine: SessionEngine, done: SessionDone, onClose: () -> Unit) {
     LaunchedEffect(Unit) {
         if (accuracy >= 80 || commit.isNewBest) confetti += 1
         if (commit.leveledUp) { delay(600); levelUp = true }
+    }
+
+    // 잘 해낸 판이 끝났을 때 앱 평가를 요청한다 (조건은 ReviewPolicy, iOS 와 같다).
+    // 알림 권유 카드·레벨업 연출과 겹치면 이번 판은 건너뛴다 — 한 화면에 요청이 둘 이상 뜨지 않게
+    val context = LocalContext.current
+    LaunchedEffect(Unit) {
+        if (reminder.shouldOfferAfterSession || commit.leveledUp) return@LaunchedEffect
+        val activity = context as? Activity ?: return@LaunchedEffect
+        val persistence = Persistence(context.applicationContext)
+        val moment = ReviewMoment(partial = result.partial, accuracy = accuracy, isNewBest = commit.isNewBest,
+                                  improvedStars = commit.improvedStars, goalReached = commit.goalReached)
+        val log = persistence.loadReviewLog() ?: ReviewPromptLog()
+        val now = System.currentTimeMillis()
+        if (!ReviewPolicy.shouldAsk(moment, game.state, log, BuildConfig.VERSION_NAME, now)) return@LaunchedEffect
+        // Play 가 카드를 실제로 띄웠는지는 알 수 없다(할당량) — 요청한 사실을 먼저 남겨 같은 버전에서 반복하지 않는다
+        persistence.saveReviewLog(ReviewPolicy.recordAsk(log, BuildConfig.VERSION_NAME, now))
+        // 결과·축하 효과를 먼저 보여 준 뒤에 띄운다
+        delay(1500)
+        InAppReview.request(activity)
     }
 
     Box(Modifier.fillMaxSize()) {

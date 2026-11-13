@@ -20,6 +20,13 @@ enum PremiumConfig {
     /// 구구 팡팡 무료 체험 웨이브 수 — 첫 웨이브를 깨면 판을 멈추고 결제 화면으로 안내한다 (PopState.trialLeft 단위가 웨이브)
     static let popTrialWaves = 1
 
+    /// 일본 스토어 가격이 정확히 ¥500(500엔 동전 하나)인가 — 맞으면 "커피 한 잔 값" 대신 "ワンコイン(동전 하나)" 문구를 쓴다.
+    /// 일본에서는 500엔 동전 한 닢 가격을 ワンコイン이라 부르며, 부담 없는 가격을 뜻하는 관용 표현으로 쓴다.
+    /// Apple 가격 자동 조정(환율·세율)으로 금액이 바뀌면 문구가 거짓이 되므로 실제 스토어 가격으로 판단한다
+    static func isOneCoinPrice(_ price: Decimal, currencyCode: String) -> Bool {
+        currencyCode == "JPY" && price == 500
+    }
+
     /// 법적 고지 링크 (페이월·프로필에서 사용, Apple 심사 필수) — 앱 언어별 문서.
     /// 한국어는 기존 주소 그대로, 영어·일본어는 /en/·/ja/ 아래 (해외 법령 조항을 보강한 별도 문서)
     enum Legal {

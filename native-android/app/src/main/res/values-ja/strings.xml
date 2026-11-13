@@ -212,6 +212,7 @@
     <string name="first_wave_free">1ウェーブ おためし</string>
     <string name="flicker_the_fire_sprite">ほのおの せいれい メラ</string>
     <string name="focus_problems">とっくん もんだい</string>
+    <string name="for_a_single_500_yen_coin_build_your">ワンコインで、\nお子さまの九九の力を育てる</string>
     <string name="for_about_the_price_of_a_coffee_build">コーヒー1杯分の価格で、\nお子さまの九九の力を育てる</string>
     <plurals name="free_problems">
         <item quantity="other">%dもん おためし</item>
@@ -291,6 +292,7 @@
         <item quantity="other">きょうの もくひょうまで あと %dもん！</item>
     </plurals>
     <string name="just_once_every_feature_for_life">一度だけ %s で、すべての機能をずっと使えます</string>
+    <string name="just_one_500_yen_coin">🪙 ワンコイン</string>
     <string name="keep_battling">しょうぶを つづける</string>
     <string name="keep_catching">つづけて キャッチ</string>
     <string name="keep_going">つづける</string>
@@ -323,6 +325,7 @@
     <string name="level_up_2">レベルアップ</string>
     <string name="levels_stars_achievements_and_records">レベル・ほし・実績・記録がすべて最初の状態に戻ります。元に戻すことはできません。</string>
     <string name="lifetime_pass">買い切りパス</string>
+    <string name="lifetime_pass_just_one_500_yen_coin">買い切りパス · ワンコイン</string>
     <string name="lifetime_pass_the_price_of_a_coffee">買い切りパス · コーヒー1杯分の価格</string>
     <string name="lifetime_pass_unlocked">買い切りパスが使えるようになりました 🎉</string>
     <string name="light">ライト</string>
@@ -392,7 +395,7 @@
     <string name="no_streak_yet_let_s_start_today">れんぞくきろくは まだ ないよ。きょう はじめよう</string>
     <string name="no_thanks">けっこうです</string>
     <string name="normal_about_two_rounds_to_reach_it">ふつう — 2回くらいで たっせい</string>
-    <string name="not_a_subscription_buy_once_and_you_re">定期購入ではありません — 一度買えばそれでおしまい！</string>
+    <string name="not_a_subscription_buy_once_and_you_re">定期購入ではありません — 一度買えば、ずっと使えます！</string>
     <plurals name="not_enough_star_pieces_you_need">
         <item quantity="other">ほしのかけらが たりないよ — ⭐%dこ ひつよう</item>
     </plurals>

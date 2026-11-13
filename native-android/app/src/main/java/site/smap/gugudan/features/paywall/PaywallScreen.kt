@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Coffee
+import androidx.compose.material.icons.filled.CurrencyYen
 import androidx.compose.material.icons.filled.DirectionsRun
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material3.CircularProgressIndicator
@@ -123,10 +124,13 @@ fun PaywallScreen(onDismiss: () -> Unit) {
                 .background(Brush.linearGradient(listOf(Color(0xFFFBBF24), Color(0xFFF97316)))),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(Icons.Filled.Coffee, null, tint = Color.White, modifier = Modifier.size(32.dp))
+            // 일본 ¥500 이면 "ワンコイン"(500엔 동전 하나) 비유로 바꾼다 — 일본에서 커피 비유보다 바로 와닿는 가격 표현 (iOS 와 같다)
+            Icon(if (premium.isOneCoinPrice) Icons.Filled.CurrencyYen else Icons.Filled.Coffee, null,
+                tint = Color.White, modifier = Modifier.size(32.dp))
         }
         Spacer(Modifier.height(12.dp))
-        Text(stringResource(R.string.for_about_the_price_of_a_coffee_build),
+        Text(stringResource(if (premium.isOneCoinPrice) R.string.for_a_single_500_yen_coin_build_your
+                            else R.string.for_about_the_price_of_a_coffee_build),
             style = suite(FontWeight.ExtraBold, 24).copy(lineHeight = 32.sp),
             color = gg.text, textAlign = TextAlign.Center)
         Spacer(Modifier.height(8.dp))
@@ -187,7 +191,7 @@ fun PaywallScreen(onDismiss: () -> Unit) {
                     .clip(CircleShape).background(Color(0xFFFBBF24))
                     .padding(horizontal = 12.dp, vertical = 5.dp)
             ) {
-                Text(stringResource(R.string.price_of_a_coffee), style = suite(FontWeight.ExtraBold, 11), color = Color(0xFF78350F))
+                Text(stringResource(if (premium.isOneCoinPrice) R.string.just_one_500_yen_coin else R.string.price_of_a_coffee), style = suite(FontWeight.ExtraBold, 11), color = Color(0xFF78350F))
             }
         }
         Spacer(Modifier.height(16.dp))

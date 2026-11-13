@@ -1279,9 +1279,6 @@
         }
       }
     },
-    "%lld/24" : {
-      "shouldTranslate" : false
-    },
     "%lldm 달리는 중" : {
       "localizations" : {
         "en" : {
@@ -3940,6 +3937,46 @@
     },
     "50" : {
       "shouldTranslate" : false
+    },
+    "500엔 동전 하나로,\n아이의 구구단 실력을" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "For a single 500-yen coin,\nbuild your child's times-table skills"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "सिर्फ़ 500 येन के एक सिक्के में,\nबच्चे को पहाड़ों में माहिर बनाएँ"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Cukup satu koin 500 yen,\ntingkatkan kemampuan perkalian anak"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ワンコインで、\nお子さまの九九の力を育てる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "500엔 동전 하나로,\n아이의 구구단 실력을"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Chỉ bằng một đồng xu 500 yên,\ngiúp con giỏi bảng nhân hơn"
+          }
+        }
+      }
     },
     "5단과 2단 더하기" : {
       "comment" : "암산 힌트 제목 — 7단",
@@ -23392,7 +23429,7 @@
         "ja" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "定期購入ではありません — 一度買えばそれでおしまい！"
+            "value" : "定期購入ではありません — 一度買えば、ずっと使えます！"
           }
         },
         "ko" : {
@@ -27745,6 +27782,46 @@
         }
       }
     },
+    "평생 이용권 · 500엔 동전 하나" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Lifetime Pass · just one 500-yen coin"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "आजीवन पास · बस 500 येन का एक सिक्का"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Akses Seumur Hidup · cukup satu koin 500 yen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "買い切りパス · ワンコイン"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "평생 이용권 · 500엔 동전 하나"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Vé trọn đời · Chỉ một đồng xu 500 yên"
+          }
+        }
+      }
+    },
     "평생 이용권 · 커피 한 잔 값" : {
       "localizations" : {
         "en" : {
@@ -30013,6 +30090,46 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "🎉 Bạn đã đạt mục tiêu hôm nay!"
+          }
+        }
+      }
+    },
+    "🪙 500엔 동전 하나" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "🪙 Just one 500-yen coin"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "🪙 बस 500 येन का एक सिक्का"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "🪙 Cukup satu koin 500 yen"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "🪙 ワンコイン"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🪙 500엔 동전 하나"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "🪙 Chỉ một đồng xu 500 yên"
           }
         }
       }

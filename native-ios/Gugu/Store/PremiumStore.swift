@@ -22,6 +22,12 @@ final class PremiumStore {
     /// 고정 원화 값을 대신 보여 주면 해외 스토어에서 실제와 다른 통화·금액이 보이므로 쓰지 않는다
     var price: String? { product?.displayPrice }
 
+    /// 현재 스토어 가격이 ¥500(ワンコイン)인가 — 상품을 받기 전에는 false (기본 문구를 쓴다)
+    var isOneCoinPrice: Bool {
+        guard let product else { return false }
+        return PremiumConfig.isOneCoinPrice(product.price, currencyCode: product.priceFormatStyle.currencyCode)
+    }
+
     private var updatesTask: Task<Void, Never>?
     /// 상품 조회가 동시에 두 번 나가지 않게 한다 — 시작 시 조회와 페이월 진입 조회가 겹칠 수 있다
     @ObservationIgnored private var isLoadingProducts = false

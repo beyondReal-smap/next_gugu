@@ -212,6 +212,7 @@
     <string name="first_wave_free">첫 웨이브 체험</string>
     <string name="flicker_the_fire_sprite">불꽃정령 화르</string>
     <string name="focus_problems">집중 공략 문제</string>
+    <string name="for_a_single_500_yen_coin_build_your">500엔 동전 하나로,\n아이의 구구단 실력을</string>
     <string name="for_about_the_price_of_a_coffee_build">커피 한 잔 값으로,\n아이의 구구단 실력을</string>
     <plurals name="free_problems">
         <item quantity="other">%d문제 체험</item>
@@ -291,6 +292,7 @@
         <item quantity="other">오늘 목표까지 정답 %d개 남았어요.</item>
     </plurals>
     <string name="just_once_every_feature_for_life">딱 한 번 %s — 모든 기능을 평생 이용해요</string>
+    <string name="just_one_500_yen_coin">🪙 500엔 동전 하나</string>
     <string name="keep_battling">계속 싸우기</string>
     <string name="keep_catching">이어서 받기</string>
     <string name="keep_going">계속하기</string>
@@ -323,6 +325,7 @@
     <string name="level_up_2">레벨업</string>
     <string name="levels_stars_achievements_and_records">레벨·별·업적·기록이 모두 처음으로 돌아가요. 되돌릴 수 없어요.</string>
     <string name="lifetime_pass">평생 이용권</string>
+    <string name="lifetime_pass_just_one_500_yen_coin">평생 이용권 · 500엔 동전 하나</string>
     <string name="lifetime_pass_the_price_of_a_coffee">평생 이용권 · 커피 한 잔 값</string>
     <string name="lifetime_pass_unlocked">평생 이용권이 열렸어요 🎉</string>
     <string name="light">라이트</string>

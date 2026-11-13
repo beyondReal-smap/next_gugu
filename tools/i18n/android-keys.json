@@ -42,7 +42,6 @@
   "%lld%%": "s_12",
   "%lld/%lld": "s_13",
   "%lld/%lld XP": "xp",
-  "%lld/24": "s_24",
   "%lldm 달리는 중": "running_m",
   "%llds": "s_14",
   "%lld개": "answers",
@@ -102,6 +101,7 @@
   "3일 연속 학습": "practiced_3_days_in_a_row",
   "4단을 두 배로": "double_the_4s",
   "50": "s_50",
+  "500엔 동전 하나로,\n아이의 구구단 실력을": "for_a_single_500_yen_coin_build_your",
   "5단과 2단 더하기": "add_the_5s_and_the_2s",
   "5단에 한 번 더 더하기": "the_5s_plus_one_more",
   "5씩 %lld번 세어 봐요": "count_by_5s_times",
@@ -532,6 +532,7 @@
   "이 기기에서 로그아웃": "sign_out_on_this_device",
   "이 기기의 별·레벨·코인과 이 기기에서 산 이용권은 그대로예요. 계정으로 받은 이용권과 학습 기록 보관은 다시 로그인하면 돌아와요.": "stars_levels_coins_and_passes_bought_on",
   "이 기기의 별·레벨·코인은 그대로 두고, 계정의 이용권과 학습 기록을 불러와요.": "stars_levels_and_coins_on_this_device",
+  "이 언어의 음성을 사용할 수 없습니다. 기기의 음성 설정을 확인해 주세요.": "speech_unavailable",
   "이 이메일 주소는 쓸 수 없어요. 다른 주소를 넣어 주세요.": "this_email_address_can_t_be_used_please",
   "이 이메일로 만든 계정이 없어요. 주소를 확인해 주세요.": "there_s_no_account_for_this_email_please",
   "이 지역의 보스다. %lld단, 각오는 됐지?": "i_m_the_boss_of_this_area_ready_for_the",
@@ -681,6 +682,7 @@
   "펭귄 핑핑": "waddles_the_penguin",
   "평균 속도": "avg_speed",
   "평생 이용권": "lifetime_pass",
+  "평생 이용권 · 500엔 동전 하나": "lifetime_pass_just_one_500_yen_coin",
   "평생 이용권 · 커피 한 잔 값": "lifetime_pass_the_price_of_a_coffee",
   "평생 이용권 보기": "see_lifetime_pass",
   "평생 이용권 시작하기": "get_lifetime_pass",
@@ -735,5 +737,5 @@
   "힌트, %@, %@": "hint",
   "🎉": "s_22",
   "🎉 오늘의 목표를 달성했어요!": "you_reached_today_s_goal",
-  "이 언어의 음성을 사용할 수 없습니다. 기기의 음성 설정을 확인해 주세요.": "speech_unavailable"
+  "🪙 500엔 동전 하나": "just_one_500_yen_coin"
 }

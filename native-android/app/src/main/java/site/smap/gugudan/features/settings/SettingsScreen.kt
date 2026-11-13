@@ -330,7 +330,10 @@ fun SettingsScreen(onClose: () -> Unit) {
                             }
                         }
                     } else {
-                        LinkRow(Icons.Filled.AutoAwesome, stringResource(R.string.lifetime_pass_the_price_of_a_coffee), premium.price) { premium.openPaywall() }
+                        LinkRow(Icons.Filled.AutoAwesome,
+                            stringResource(if (premium.isOneCoinPrice) R.string.lifetime_pass_just_one_500_yen_coin
+                                           else R.string.lifetime_pass_the_price_of_a_coffee),
+                            premium.price) { premium.openPaywall() }
                     }
                     SettingsDivider()
                     LinkRow(Icons.Filled.Refresh, stringResource(R.string.restore_purchases),

@@ -212,6 +212,7 @@
     <string name="first_wave_free">Gelombang pertama gratis</string>
     <string name="flicker_the_fire_sprite">Bara si Roh Api</string>
     <string name="focus_problems">Soal Fokus</string>
+    <string name="for_a_single_500_yen_coin_build_your">Cukup satu koin 500 yen,\ntingkatkan kemampuan perkalian anak</string>
     <string name="for_about_the_price_of_a_coffee_build">Seharga secangkir kopi,\ntingkatkan kemampuan perkalian anak</string>
     <plurals name="free_problems">
         <item quantity="other">Coba %d soal gratis</item>
@@ -291,6 +292,7 @@
         <item quantity="other">Tinggal %d jawaban benar untuk target hari ini.</item>
     </plurals>
     <string name="just_once_every_feature_for_life">Sekali bayar %s — semua fitur seumur hidup</string>
+    <string name="just_one_500_yen_coin">🪙 Cukup satu koin 500 yen</string>
     <string name="keep_battling">Lanjut bertanding</string>
     <string name="keep_catching">Lanjut menangkap</string>
     <string name="keep_going">Lanjutkan</string>
@@ -323,6 +325,7 @@
     <string name="level_up_2">Naik Level</string>
     <string name="levels_stars_achievements_and_records">Level, bintang, pencapaian, dan catatan akan direset. Tindakan ini tidak bisa dibatalkan.</string>
     <string name="lifetime_pass">Akses Seumur Hidup</string>
+    <string name="lifetime_pass_just_one_500_yen_coin">Akses Seumur Hidup · cukup satu koin 500 yen</string>
     <string name="lifetime_pass_the_price_of_a_coffee">Akses Seumur Hidup · seharga secangkir kopi</string>
     <string name="lifetime_pass_unlocked">Akses Seumur Hidup terbuka 🎉</string>
     <string name="light">Terang</string>

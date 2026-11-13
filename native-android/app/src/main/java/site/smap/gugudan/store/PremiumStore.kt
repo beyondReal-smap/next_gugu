@@ -57,6 +57,9 @@ class PremiumStore(
      *  고정 원화 폴백을 두면 해외에서 상품을 불러오기 전 원화가 보인다 */
     var price: String? by mutableStateOf(null)
         private set
+    /** 현재 스토어 가격이 ¥500(ワンコイン)인가 — 상품을 받기 전에는 false (기본 문구를 쓴다, iOS 와 같다) */
+    var isOneCoinPrice: Boolean by mutableStateOf(false)
+        private set
     /** Play 결제 국가(ISO 3166-1 alpha-2, 예: "KR") — 광고 알림 토글 노출 판정(PromoVisibility)에 쓴다. 모르면 null */
     var billingCountry: String? by mutableStateOf(null)
         private set
@@ -146,7 +149,10 @@ class PremiumStore(
                 val products = productDetailsResult.productDetailsList
                 if (result.responseCode == BillingClient.BillingResponseCode.OK && products.isNotEmpty()) {
                     productDetails = products.first()
-                    productDetails?.oneTimePurchaseOfferDetails?.formattedPrice?.let { price = it }
+                    productDetails?.oneTimePurchaseOfferDetails?.let { offer ->
+                        price = offer.formattedPrice
+                        isOneCoinPrice = PremiumConfig.isOneCoinPrice(offer.priceAmountMicros, offer.priceCurrencyCode)
+                    }
                     storeReady = true
                 } else {
                     Log.w("Premium", "상품 조회 실패: ${result.debugMessage}")

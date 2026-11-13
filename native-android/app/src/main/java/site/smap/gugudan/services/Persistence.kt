@@ -8,6 +8,7 @@ import site.smap.gugudan.BuildConfig
 import site.smap.gugudan.core.GameState
 import site.smap.gugudan.core.PushRegistrationState
 import site.smap.gugudan.core.PushSettings
+import site.smap.gugudan.core.ReviewPromptLog
 import site.smap.gugudan.core.adventure.AdventureProgress
 import java.io.File
 import java.io.IOException
@@ -74,6 +75,8 @@ class Persistence(context: Context) {
         const val LEARNING_OUTBOX_KEY = "gugu.learning.outbox.v1"
         /** 학습 알림 설정 (켜짐·시각·권유 여부) */
         const val REMINDER_KEY = "gugu.reminder.v1"
+        /** 앱 평가 요청 이력 (마지막 요청 시각·버전) — iOS 와 같은 키 */
+        const val REVIEW_KEY = "gugu.review.v1"
 
         /** 원격 푸시 — 푸시 전용 설치 식별자(UUID). 학습 installId 와 달리 계정이 바뀌어도 유지한다 */
         const val PUSH_INSTALL_KEY = "gugu.push.install.v1"
@@ -124,6 +127,13 @@ class Persistence(context: Context) {
 
     fun savePushSettings(settings: PushSettings) =
         putString(PUSH_SETTINGS_KEY, json.encodeToString(PushSettings.serializer(), settings))
+
+    fun loadReviewLog(): ReviewPromptLog? = decodeOrNull(REVIEW_KEY) {
+        json.decodeFromString(ReviewPromptLog.serializer(), it)
+    }
+
+    fun saveReviewLog(log: ReviewPromptLog) =
+        putString(REVIEW_KEY, json.encodeToString(ReviewPromptLog.serializer(), log))
 
     fun loadPushState(): PushRegistrationState? = decodeOrNull(PUSH_STATE_KEY) {
         json.decodeFromString(PushRegistrationState.serializer(), it)

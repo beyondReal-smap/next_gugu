@@ -128,7 +128,8 @@ struct PaywallView: View {
 
     private var hero: some View {
         VStack(spacing: 12) {
-            Image(systemName: "cup.and.saucer.fill")
+            // 일본 ¥500 이면 "ワンコイン"(500엔 동전 하나) 비유로 바꾼다 — 일본에서 커피 비유보다 바로 와닿는 가격 표현
+            Image(systemName: premium.isOneCoinPrice ? "yensign.circle.fill" : "cup.and.saucer.fill")
                 .font(.system(size: 32, weight: .semibold)).foregroundStyle(.white)
                 .frame(width: 64, height: 64)
                 .background(
@@ -136,7 +137,13 @@ struct PaywallView: View {
                                    startPoint: .topLeading, endPoint: .bottomTrailing),
                     in: RoundedRectangle(cornerRadius: 24, style: .continuous))
                 .shadow(color: Color(hex: "#f97316").opacity(0.3), radius: 12, y: 6)
-            Text("커피 한 잔 값으로,\n아이의 구구단 실력을")
+            Group {
+                if premium.isOneCoinPrice {
+                    Text("500엔 동전 하나로,\n아이의 구구단 실력을")
+                } else {
+                    Text("커피 한 잔 값으로,\n아이의 구구단 실력을")
+                }
+            }
                 .font(.suite(.extrabold, 24)).foregroundStyle(Color.gg.text)
                 .multilineTextAlignment(.center)
             Group {
@@ -190,7 +197,14 @@ struct PaywallView: View {
         .background(Color.gg.accent.opacity(0.08), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Color.gg.accent, lineWidth: 2))
         .overlay(alignment: .top) {
-            Text("☕ 커피 한 잔 값").font(.suite(.extrabold, 11)).foregroundStyle(Color(hex: "#78350f"))
+            Group {
+                if premium.isOneCoinPrice {
+                    Text("🪙 500엔 동전 하나")
+                } else {
+                    Text("☕ 커피 한 잔 값")
+                }
+            }
+                .font(.suite(.extrabold, 11)).foregroundStyle(Color(hex: "#78350f"))
                 .padding(.horizontal, 12).padding(.vertical, 5)
                 .background(Color(hex: "#fbbf24"), in: Capsule())
                 .offset(y: -12)

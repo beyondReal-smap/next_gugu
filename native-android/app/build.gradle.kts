@@ -41,8 +41,8 @@ android {
         applicationId = "site.smap.gugudan"
         minSdk = 28          // SceneView(Filament) 요구 — 기기 커버리지 ~97%
         targetSdk = 36
-        versionCode = 27     // vc27: 2.8.0 — 19단과 추가 언어 지원
-        versionName = "2.8.0"
+        versionCode = 28     // vc28: 2.8.1 — 앱 평가 요청, 일본 ¥500 결제 문구
+        versionName = "2.8.1"
 
         buildConfigField("String", "SUPABASE_HOST", "\"${supabaseProp("SUPABASE_HOST")}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${supabaseProp("SUPABASE_ANON_KEY")}\"")
@@ -136,6 +136,8 @@ dependencies {
     // 학습 알림 예약 — 재부팅 후에도 예약이 유지되고 절전(Doze)을 존중한다
     implementation("androidx.work:work-runtime-ktx:2.10.1")
     implementation("com.android.billingclient:billing-ktx:8.0.0")
+    // 앱 평가 요청 — Play In-App Review (ReviewPolicy 가 시점을 정한다, iOS requestReview 대응)
+    implementation("com.google.android.play:review:2.0.2")
     implementation("io.github.sceneview:sceneview:4.24.0")
     // 원격 푸시(FCM) — Messaging 만 쓴다. Analytics 는 넣지 않는다 (게스트 개인정보 미수집 방침)
     implementation(platform("com.google.firebase:firebase-bom:34.19.0"))

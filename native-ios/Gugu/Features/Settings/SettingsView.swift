@@ -346,7 +346,10 @@ struct SettingsView: View {
                     }
                     .padding(.horizontal, 20).padding(.vertical, 16)
                 } else {
-                    LinkRow(icon: "sparkles", title: String(localized: "평생 이용권 · 커피 한 잔 값"), value: premium.price) {
+                    LinkRow(icon: "sparkles",
+                            title: premium.isOneCoinPrice ? String(localized: "평생 이용권 · 500엔 동전 하나")
+                                                          : String(localized: "평생 이용권 · 커피 한 잔 값"),
+                            value: premium.price) {
                         showPaywall = true
                     }
                 }

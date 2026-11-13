@@ -212,6 +212,7 @@
     <string name="first_wave_free">पहली लहर मुफ़्त</string>
     <string name="flicker_the_fire_sprite">धधक अग्नि आत्मा</string>
     <string name="focus_problems">ध्यान देने वाले सवाल</string>
+    <string name="for_a_single_500_yen_coin_build_your">सिर्फ़ 500 येन के एक सिक्के में,\nबच्चे को पहाड़ों में माहिर बनाएँ</string>
     <string name="for_about_the_price_of_a_coffee_build">एक कप कॉफ़ी की कीमत में,\nबच्चे को पहाड़ों में माहिर बनाएँ</string>
     <plurals name="free_problems">
         <item quantity="other">%d सवाल मुफ़्त आज़माएँ</item>
@@ -291,6 +292,7 @@
         <item quantity="other">आज के लक्ष्य के लिए %d सही जवाब बाकी हैं।</item>
     </plurals>
     <string name="just_once_every_feature_for_life">बस एक बार %s — सभी सुविधाएँ हमेशा के लिए</string>
+    <string name="just_one_500_yen_coin">🪙 बस 500 येन का एक सिक्का</string>
     <string name="keep_battling">मुकाबला जारी रखें</string>
     <string name="keep_catching">पकड़ना जारी रखें</string>
     <string name="keep_going">आगे बढ़ें</string>
@@ -323,6 +325,7 @@
     <string name="level_up_2">स्तर बढ़ा</string>
     <string name="levels_stars_achievements_and_records">स्तर, तारे, उपलब्धियाँ और रिकॉर्ड सब फिर से शुरू होंगे। इसे वापस नहीं किया जा सकता।</string>
     <string name="lifetime_pass">आजीवन पास</string>
+    <string name="lifetime_pass_just_one_500_yen_coin">आजीवन पास · बस 500 येन का एक सिक्का</string>
     <string name="lifetime_pass_the_price_of_a_coffee">आजीवन पास · एक कप कॉफ़ी की कीमत</string>
     <string name="lifetime_pass_unlocked">आजीवन पास खुल गया 🎉</string>
     <string name="light">हल्का</string>

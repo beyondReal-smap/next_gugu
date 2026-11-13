@@ -212,6 +212,7 @@
     <string name="first_wave_free">Chơi thử đợt đầu</string>
     <string name="flicker_the_fire_sprite">Tinh linh lửa Bùng Bùng</string>
     <string name="focus_problems">Câu cần tập trung luyện</string>
+    <string name="for_a_single_500_yen_coin_build_your">Chỉ bằng một đồng xu 500 yên,\ngiúp con giỏi bảng nhân hơn</string>
     <string name="for_about_the_price_of_a_coffee_build">Chỉ bằng giá một ly cà phê,\ngiúp con giỏi bảng nhân hơn</string>
     <plurals name="free_problems">
         <item quantity="other">Chơi thử %d câu</item>
@@ -291,6 +292,7 @@
         <item quantity="other">Còn %d câu đúng để đạt mục tiêu hôm nay.</item>
     </plurals>
     <string name="just_once_every_feature_for_life">Chỉ %s một lần — dùng mọi tính năng trọn đời</string>
+    <string name="just_one_500_yen_coin">🪙 Chỉ một đồng xu 500 yên</string>
     <string name="keep_battling">Tiếp tục đấu</string>
     <string name="keep_catching">Tiếp tục hứng</string>
     <string name="keep_going">Tiếp tục</string>
@@ -323,6 +325,7 @@
     <string name="level_up_2">Lên cấp</string>
     <string name="levels_stars_achievements_and_records">Cấp độ, sao, thành tích và lịch sử sẽ về ban đầu. Không thể hoàn tác.</string>
     <string name="lifetime_pass">Vé trọn đời</string>
+    <string name="lifetime_pass_just_one_500_yen_coin">Vé trọn đời · Chỉ một đồng xu 500 yên</string>
     <string name="lifetime_pass_the_price_of_a_coffee">Vé trọn đời · Chỉ bằng giá một ly cà phê</string>
     <string name="lifetime_pass_unlocked">Đã mở Vé trọn đời 🎉</string>
     <string name="light">Sáng</string>
