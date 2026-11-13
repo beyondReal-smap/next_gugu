@@ -10,9 +10,10 @@ enum EnglishReading {
                                "seventeen", "eighteen", "nineteen"]
     private static let tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
 
-    /// 기수 (0~99) — 56 → "fifty-six", 40 → "forty", 13 → "thirteen"
+    /// 기수 (0~999) — 56 → "fifty-six", 40 → "forty", 13 → "thirteen"
     static func cardinal(_ n: Int) -> String {
-        precondition((0..<100).contains(n), "읽을 수 없는 수: \(n)")
+        precondition((0..<1000).contains(n), "읽을 수 없는 수: \(n)")
+        if n >= 100 { return ones[n / 100] + " hundred" + (n % 100 == 0 ? "" : " " + cardinal(n % 100)) }
         if n < 20 { return ones[n] }
         let unit = n % 10
         return tens[n / 10] + (unit == 0 ? "" : "-" + ones[unit])

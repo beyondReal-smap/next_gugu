@@ -78,7 +78,7 @@ fun LearnScreen() {
                 modifier = Modifier.weight(1f).semantics { heading() })
             Pill(bg = gg.warning.copy(alpha = 0.12f), fg = gg.warning) {
                 Icon(Icons.Filled.EmojiEvents, null, Modifier.size(14.dp))
-                Text("$totalStars/24")
+                Text("$totalStars/${tables.size * 3}")
             }
         }
 

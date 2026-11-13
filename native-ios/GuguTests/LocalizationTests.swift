@@ -6,6 +6,35 @@ import UIKit
 /// 스킴 기본 실행은 한국어(language: ko)이고, 다른 언어는 `xcodebuild test -testLanguage fr|en|ja` 로 돌려
 /// 실제 번들 언어 선택(개발 지역 en 폴백 포함)을 확인한다.
 final class LocalizationTests: XCTestCase {
+    func testNewLanguagesHaveCompiledResources() throws {
+        for code in ["hi", "vi", "id"] {
+            XCTAssertEqual(AppLanguage.resolve([code + "-" + (code == "hi" ? "IN" : code.uppercased())]).rawValue, code)
+            let path = try XCTUnwrap(Bundle.main.path(forResource: "Localizable", ofType: "strings", inDirectory: nil, forLocalization: code))
+            let data = try Data(contentsOf: URL(fileURLWithPath: path))
+            let strings = try XCTUnwrap(PropertyListSerialization.propertyList(from: data, format: nil) as? [String: String])
+            XCTAssertNotNil(strings["학습"])
+            XCTAssertNotEqual(strings["학습"], "학습")
+        }
+    }
+
+    func testReadAloudIsLimitedToRecordedPackLanguages() {
+        XCTAssertEqual(AppLanguage.allCases.filter(\.supportsReadAloud), [.ko, .en, .ja])
+    }
+
+    func testUnsupportedLanguageCannotStartSpeech() throws {
+        guard !AppLanguage.current.supportsReadAloud else {
+            throw XCTSkip("hi·vi·id 실행에서 낭독 차단을 확인합니다")
+        }
+        let speech = Speech.shared
+        speech.speak(VoiceLines.chant(19, 19))
+        XCTAssertFalse(speech.isSpeaking)
+        XCTAssertNil(speech.speakingKey)
+        XCTAssertNil(speech.errorMessage)
+        speech.speak([VoiceLines.chant(2, 1), VoiceLines.chant(19, 19)])
+        XCTAssertFalse(speech.isSpeaking)
+        XCTAssertNil(speech.speakingKey)
+    }
+
     func testResolvePicksFirstSupportedLanguage() {
         XCTAssertEqual(AppLanguage.resolve(["ko"]), .ko)
         XCTAssertEqual(AppLanguage.resolve(["ja-JP"]), .ja)
@@ -29,7 +58,7 @@ final class LocalizationTests: XCTestCase {
     }
 
     func testBundleDeclaresAllLanguages() {
-        XCTAssertEqual(Set(Bundle.main.localizations).intersection(["ko", "en", "ja"]), ["ko", "en", "ja"])
+        XCTAssertEqual(Set(Bundle.main.localizations).intersection(["ko", "en", "ja", "hi", "vi", "id"]), ["ko", "en", "ja", "hi", "vi", "id"])
         XCTAssertEqual(Bundle.main.developmentLocalization, "en")
     }
 

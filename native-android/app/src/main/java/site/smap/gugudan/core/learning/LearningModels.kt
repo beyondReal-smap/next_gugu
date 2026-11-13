@@ -27,10 +27,10 @@ data class LearningEvent(
     val deviceId: String,
     val sessionId: String,
     val sequenceNo: Int,
-    /** "2x3" ~ "9x9" */
+    /** "2x3" ~ "19x19" */
     val factId: String,
     val mode: LearningMode,
-    /** 문항의 단 (2~9) 또는 null */
+    /** 문항의 단 (2~19) 또는 null */
     val tableNo: Int?,
     val submittedAnswer: GivenAnswer,
     val correct: Boolean,
@@ -122,11 +122,11 @@ class LearningValidationException(val field: String) :
 object LearningContract {
     const val CONTENT_VERSION = "1.0.0"
 
-    /** factId 계약 — 2~9단 × 1~9 */
+    /** factId 계약 — 2~19단 × 1~19 */
     const val MIN_TABLE = 2
-    const val MAX_TABLE = 9
+    const val MAX_TABLE = 19
     const val MIN_MULTIPLIER = 1
-    const val MAX_MULTIPLIER = 9
+    const val MAX_MULTIPLIER = 19
 
     /** 서버가 받는 응답 시간 상한 */
     const val MAX_RESPONSE_MS = 600_000
@@ -140,7 +140,7 @@ object LearningContract {
     // 8-4-4-4-12, 버전 1~8, variant 8/9/a/b
     private val UUID_RE =
         Regex("^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$", RegexOption.IGNORE_CASE)
-    private val FACT_RE = Regex("^[2-9]x[1-9]$")
+    private val FACT_RE = Regex("^([2-9]|1[0-9])x([1-9]|1[0-9])$")
     private val CONTENT_VERSION_RE = Regex("^[A-Za-z0-9._-]{1,64}$")
     private val TZ_SUFFIX_RE = Regex("(?:Z|[+-]\\d{2}:\\d{2})$", RegexOption.IGNORE_CASE)
 

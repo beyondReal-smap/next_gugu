@@ -32,7 +32,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 IOS = ROOT / "native-ios"
 CATALOG = IOS / "Gugu/Resources/Localizable.xcstrings"
-LANGS = ("en", "ja")
+LANGS = ("en", "ja", "hi", "vi", "id")
 SIMULATOR_DEST = "generic/platform=iOS Simulator"
 
 

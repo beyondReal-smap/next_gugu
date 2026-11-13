@@ -11,6 +11,18 @@ enum SpokenMath {
         case .ko: return KoreanReading.question(p, mode: mode, statement: statement)
         case .en: return EnglishReading.question(p, mode: mode, statement: statement)
         case .ja: return JapaneseReading.question(p, mode: mode, statement: statement)
+        case .hi:
+            if mode == .missing { return "\(p.a) को किस संख्या से गुणा करने पर \(p.a * p.b) मिलता है?" }
+            if mode == .truefalse, let statement { return "\(p.a) गुणा \(p.b) बराबर \(statement.shown)। सही या गलत?" }
+            return questionLabel(p.a, p.b, language: language)
+        case .vi:
+            if mode == .missing { return "\(p.a) nhân bao nhiêu bằng \(p.a * p.b)?" }
+            if mode == .truefalse, let statement { return "\(p.a) nhân \(p.b) bằng \(statement.shown). Đúng hay sai?" }
+            return questionLabel(p.a, p.b, language: language)
+        case .id:
+            if mode == .missing { return "\(p.a) dikali berapa hasilnya \(p.a * p.b)?" }
+            if mode == .truefalse, let statement { return "\(p.a) kali \(p.b) sama dengan \(statement.shown). Benar atau salah?" }
+            return questionLabel(p.a, p.b, language: language)
         }
     }
 
@@ -18,7 +30,7 @@ enum SpokenMath {
     static func chantText(_ a: Int, _ b: Int, language: AppLanguage = .current) -> String? {
         switch language {
         case .ko: return KoreanReading.chant(a, b)
-        case .en: return nil
+        case .en, .hi, .vi, .id: return nil
         case .ja: return JapaneseReading.chant(a, b)
         }
     }
@@ -29,6 +41,9 @@ enum SpokenMath {
         case .ko: return "\(a) 곱하기 \(KoreanReading.withTopic(b))?"  // i18n:skip
         case .en: return EnglishReading.questionLabel(a, b)
         case .ja: return JapaneseReading.questionLabel(a, b)
+        case .hi: return "\(a) गुणा \(b) कितना होता है?"
+        case .vi: return "\(a) nhân \(b) bằng bao nhiêu?"
+        case .id: return "Berapa \(a) kali \(b)?"
         }
     }
 
@@ -44,6 +59,9 @@ enum SpokenMath {
         case .ko: return "\(a) 곱하기 \(b)"  // i18n:skip
         case .en: return "\(a) times \(b)"
         case .ja: return "\(a) かける \(b)"
+        case .hi: return "\(a) गुणा \(b)"
+        case .vi: return "\(a) nhân \(b)"
+        case .id: return "\(a) kali \(b)"
         }
     }
 
@@ -53,6 +71,9 @@ enum SpokenMath {
         case .ko: return "\(a) 곱하기 \(KoreanReading.withTopic(b)) \(a * b)"  // i18n:skip
         case .en: return EnglishReading.equationLabel(a, b)
         case .ja: return JapaneseReading.equationLabel(a, b)
+        case .hi: return "\(a) गुणा \(b) बराबर \(a * b)"
+        case .vi: return "\(a) nhân \(b) bằng \(a * b)"
+        case .id: return "\(a) kali \(b) sama dengan \(a * b)"
         }
     }
 
@@ -62,6 +83,9 @@ enum SpokenMath {
         case .ko: return "정답은 \(KoreanReading.withCopula(n))"  // i18n:skip
         case .en: return EnglishReading.answerIs(n)
         case .ja: return JapaneseReading.answerIs(n)
+        case .hi: return "उत्तर \(n) है।"
+        case .vi: return "Đáp án là \(n)."
+        case .id: return "Jawabannya \(n)."
         }
     }
 
@@ -71,6 +95,9 @@ enum SpokenMath {
         case .ko: return KoreanReading.notButIs(given: given, answer: answer)
         case .en: return EnglishReading.notButIs(given: given, answer: answer)
         case .ja: return JapaneseReading.notButIs(given: given, answer: answer)
+        case .hi: return "उत्तर \(given) नहीं, \(answer) है।"
+        case .vi: return "Không phải \(given), mà là \(answer)."
+        case .id: return "Bukan \(given), melainkan \(answer)."
         }
     }
 }

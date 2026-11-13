@@ -3,18 +3,27 @@
     "name": "reads_each_new_problem_aloud",
     "en": "A teacher's voice reads each new problem aloud.",
     "ja": "新しい問題が出ると、先生の声で読み上げます。",
-    "comment": "설정 > 문제 읽어주기 부제 — Android 는 미디어 음량으로 재생해 무음 모드와 상관없다 (iOS 는 무음 모드 안내를 덧붙인 문구)"
+    "comment": "설정 > 문제 읽어주기 부제 — Android 는 미디어 음량으로 재생해 무음 모드와 상관없다 (iOS 는 무음 모드 안내를 덧붙인 문구)",
+    "hi": "हर नया सवाल शिक्षक की आवाज़ में सुनाया जाता है।",
+    "vi": "Giọng giáo viên sẽ đọc mỗi câu hỏi mới.",
+    "id": "Suara guru membacakan setiap soal baru."
   },
   "로그인하지 않아도 같은 Google 계정에서는 「구매 복원」으로 되살릴 수 있어요.": {
     "name": "restore_on_same_google_account",
     "en": "Even without signing in, you can recover it with “Restore Purchases” on the same Google Account.",
     "ja": "ログインしていなくても、同じGoogleアカウントなら「購入を復元」で復元できます。",
-    "comment": "결제 직후 로그인 권유 화면 — Play 구매는 Google 계정에 묶인다 (iOS 는 Apple 계정 문구)"
+    "comment": "결제 직후 로그인 권유 화면 — Play 구매는 Google 계정에 묶인다 (iOS 는 Apple 계정 문구)",
+    "hi": "साइन इन किए बिना भी उसी Google खाते से “खरीद बहाल करें” चुनकर पास वापस पा सकते हैं।",
+    "vi": "Dù chưa đăng nhập, bạn vẫn có thể khôi phục bằng “Khôi phục giao dịch mua” với cùng tài khoản Google.",
+    "id": "Tanpa masuk pun, pembelian dapat dipulihkan lewat “Pulihkan Pembelian” dengan akun Google yang sama."
   },
   "버전 %@, 빌드 %lld": {
     "name": "version_build_description",
     "en": "Version %@, build %lld",
     "ja": "バージョン %@、ビルド %lld",
-    "comment": "설정 > 앱 정보 버전 행의 TalkBack 설명 — %@ 는 버전 이름(2.6.0), %lld 는 빌드 번호"
+    "comment": "설정 > 앱 정보 버전 행의 TalkBack 설명 — %@ 는 버전 이름(2.6.0), %lld 는 빌드 번호",
+    "hi": "संस्करण %@, बिल्ड %lld",
+    "vi": "Phiên bản %1$@, bản dựng %2$lld",
+    "id": "Versi %@, build %lld"
   }
 }

@@ -33,6 +33,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import site.smap.gugudan.R
+import site.smap.gugudan.core.AppLanguage
 import site.smap.gugudan.core.Hints
 import site.smap.gugudan.core.Problems
 import site.smap.gugudan.core.SpokenMath
@@ -50,6 +51,7 @@ import site.smap.gugudan.store.LocalGame
 fun TableStudyContent(table: Int, onBack: () -> Unit, onPractice: () -> Unit) {
     val gg = LocalGG.current
     val game = LocalGame.current
+    val supportsReadAloud = AppLanguage.current.supportsReadAloud
     val stars = game.state.tableMastery[table]?.stars ?: 0
     val tip = Hints.tableTip(rememberStrings(), table)
     fun rowKey(b: Int) = VoiceLines.chant(table, b).key
@@ -78,10 +80,14 @@ fun TableStudyContent(table: Int, onBack: () -> Unit, onPractice: () -> Unit) {
                 Modifier.clearAndSetSemantics { contentDescription = headerLabel },
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text("$table", style = suite(FontWeight.ExtraBold, 34), color = gg.text)
-                    Text(stringResource(R.string.times_table), style = suite(FontWeight.Bold, 20), color = gg.textMuted,
-                        modifier = Modifier.padding(bottom = 5.dp, start = 2.dp))
+                if (AppLanguage.current in listOf(AppLanguage.HI, AppLanguage.VI, AppLanguage.ID)) {
+                    Text(stringResource(R.string.table, table), style = suite(FontWeight.ExtraBold, 28), color = gg.text)
+                } else {
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text("$table", style = suite(FontWeight.ExtraBold, 34), color = gg.text)
+                        Text(stringResource(R.string.times_table), style = suite(FontWeight.Bold, 20), color = gg.textMuted,
+                            modifier = Modifier.padding(bottom = 5.dp, start = 2.dp))
+                    }
                 }
                 StarsView(stars, size = 16.dp)
             }
@@ -117,8 +123,11 @@ fun TableStudyContent(table: Int, onBack: () -> Unit, onPractice: () -> Unit) {
                     PressableCard(
                         modifier = Modifier.clearAndSetSemantics {
                             contentDescription = SpokenMath.equationLabel(table, b)
-                            onClick(hearAction) { Speech.speak(VoiceLines.chant(table, b)); true }
+                            if (supportsReadAloud) {
+                                onClick(hearAction) { Speech.speak(VoiceLines.chant(table, b)); true }
+                            }
                         },
+                        enabled = supportsReadAloud,
                         onClick = { Speech.speak(VoiceLines.chant(table, b)) },
                     ) {
                         Row(
@@ -151,16 +160,18 @@ fun TableStudyContent(table: Int, onBack: () -> Unit, onPractice: () -> Unit) {
             Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            GGButton(
-                variant = GGButtonVariant.SURFACE, size = GGButtonSize.LG,
-                modifier = Modifier.weight(1f),
-                onClick = {
-                    if (chanting) Speech.stop()
-                    else Speech.speak((Problems.MIN_B..Problems.MAX_B).map { VoiceLines.chant(table, it) })
-                },
-            ) {
-                Icon(if (chanting) Icons.Filled.Stop else Icons.AutoMirrored.Filled.VolumeUp, null, Modifier.size(20.dp))
-                Text(stringResource(if (chanting) R.string.stop else R.string.listen_learn))
+            if (supportsReadAloud) {
+                GGButton(
+                    variant = GGButtonVariant.SURFACE, size = GGButtonSize.LG,
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        if (chanting) Speech.stop()
+                        else Speech.speak((Problems.MIN_B..Problems.MAX_B).map { VoiceLines.chant(table, it) })
+                    },
+                ) {
+                    Icon(if (chanting) Icons.Filled.Stop else Icons.AutoMirrored.Filled.VolumeUp, null, Modifier.size(20.dp))
+                    Text(stringResource(if (chanting) R.string.stop else R.string.listen_learn))
+                }
             }
             GGButton(
                 variant = GGButtonVariant.PRIMARY, size = GGButtonSize.LG, modifier = Modifier.weight(1f),

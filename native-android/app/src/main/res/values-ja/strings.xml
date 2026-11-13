@@ -31,7 +31,7 @@
     <string name="already_defeated_earn_xp_in_a_practice">もう たおした あいて — れんしゅうしょうぶで XPを かせげるよ</string>
     <string name="already_has_an_account_enter_the_6_digit">%s はすでに使われているアカウントです。メールで届いた6桁のコードを入力すると、そのアカウントでログインします。</string>
     <string name="amber">アンバー</string>
-    <string name="an_even_mix_of_tables_2_9">2〜9のだんを まんべんなく まぜて</string>
+    <string name="an_even_mix_of_tables_2_9">2〜19のだんを まんべんなく まぜて</string>
     <string name="announcements">お知らせ</string>
     <string name="announcements_service_channel">お知らせ・サービス通知</string>
     <string name="answer_before_the_6_times_table_freezes">6のだんが こおりつく前に こたえてごらん！</string>
@@ -334,7 +334,7 @@
     <string name="luna_the_sorceress">まほうつかいの ルナ</string>
     <string name="made_it">つうか！</string>
     <string name="mastered_a_times_table_earned_a_star">1つの だんを マスター（ほしを ゲット）</string>
-    <string name="mastered_every_table_from_2_to_9">2〜9のだんを ぜんぶ マスター</string>
+    <string name="mastered_every_table_from_2_to_9">2〜19のだんを ぜんぶ マスター</string>
     <string name="mastery">マスター</string>
     <string name="math_master">計算マスター</string>
     <string name="maybe_later">あとで</string>
@@ -349,7 +349,7 @@
     </plurals>
     <string name="missing_number">あなうめ</string>
     <string name="mix_tables">ミックス</string>
-    <string name="mixed_tables_2_9_evenly">ミックス、2〜9のだんを まんべんなく</string>
+    <string name="mixed_tables_2_9_evenly">ミックス、2〜19のだんを まんべんなく</string>
     <string name="mode_explorer">モードたんけんか</string>
     <string name="mode_practice_name">じっくり</string>
     <plurals name="more_correct_answers_to_go">
@@ -596,6 +596,7 @@
     <string name="solved_problems_are_saved_but_wins_and">といた もんだいは きろくされるけど、かちまけは のこらないよ。</string>
     <string name="sound_effects">効果音</string>
     <string name="sound_haptics">サウンドと振動</string>
+    <string name="speech_unavailable">この言語の音声を利用できません。端末の音声設定を確認してください。</string>
     <string name="speed">%1$s · スピード%2$d</string>
     <string name="speed_is_your_score_the_faster_you">はやさが とくてん！はやく とくほど XPが ふえるよ。</string>
     <string name="speed_level">スピード %dだんかい</string>

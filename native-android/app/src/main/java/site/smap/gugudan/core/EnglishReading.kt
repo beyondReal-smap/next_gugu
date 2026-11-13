@@ -12,9 +12,10 @@ object EnglishReading {
     )
     private val TENS = listOf("", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety")
 
-    /** 기수 (0~99) — 56 → "fifty-six", 40 → "forty", 13 → "thirteen" */
+    /** 기수 (0~999) — 56 → "fifty-six", 40 → "forty", 13 → "thirteen" */
     fun cardinal(n: Int): String {
-        require(n in 0 until 100) { "읽을 수 없는 수: $n" }
+        require(n in 0 until 1000) { "읽을 수 없는 수: $n" }
+        if (n >= 100) return ONES[n / 100] + " hundred" + if (n % 100 == 0) "" else " " + cardinal(n % 100)
         if (n < 20) return ONES[n]
         val unit = n % 10
         return TENS[n / 10] + if (unit == 0) "" else "-" + ONES[unit]

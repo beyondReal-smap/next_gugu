@@ -6,14 +6,17 @@ import Observation
 // 네트워크를 쓰지 않으므로 지연·호출 비용이 없고, 아이의 데이터가 밖으로 나가지 않는다.
 
 @Observable
-final class Speech: NSObject, AVAudioPlayerDelegate {
+final class Speech: NSObject, AVAudioPlayerDelegate, AVSpeechSynthesizerDelegate {
     static let shared = Speech()
 
     /// 지금 읽고 있는 줄의 키 — 구구단 표에서 읽는 줄을 강조한다
     private(set) var speakingKey: String?
     private(set) var isSpeaking = false
+    private(set) var errorMessage: String?
 
     @ObservationIgnored private var player: AVAudioPlayer?
+    @ObservationIgnored private let synthesizer = AVSpeechSynthesizer()
+    @ObservationIgnored private var utterance: AVSpeechUtterance?
     @ObservationIgnored private var queue: [VoiceLine] = []
     /// stop()/새 낭독이 시작되면 올라간다 — 이전 낭독의 늦은 콜백을 무시하기 위해서다
     @ObservationIgnored private var generation = 0
@@ -23,6 +26,7 @@ final class Speech: NSObject, AVAudioPlayerDelegate {
 
     private override init() {
         super.init()
+        synthesizer.delegate = self
     }
 
     /// 한 줄을 읽는다 — 읽던 것은 끊는다
@@ -33,12 +37,16 @@ final class Speech: NSObject, AVAudioPlayerDelegate {
     /// 여러 줄을 이어 읽는다 — 읽던 것은 끊는다
     func speak(_ lines: [VoiceLine]) {
         stop()
+        errorMessage = nil
+        guard AppLanguage.current.supportsReadAloud else { return }
         queue = lines
         playNext(generation)
     }
 
     func stop() {
         generation += 1
+        utterance = nil
+        synthesizer.stopSpeaking(at: .immediate)
         player?.stop()
         player = nil
         queue = []
@@ -54,6 +62,23 @@ final class Speech: NSObject, AVAudioPlayerDelegate {
             return
         }
         let line = queue.removeFirst()
+        if !VoiceLines.usesRecordedAudio(line) {
+            guard let voice = AVSpeechSynthesisVoice(language: AppLanguage.current.rawValue) else {
+                print("[Speech] 지원 음성 없음:", AppLanguage.current.rawValue)
+                stop()
+                errorMessage = String(localized: "이 언어의 음성을 사용할 수 없습니다. 기기의 음성 설정을 확인해 주세요.")
+                return
+            }
+            activateSession()
+            let next = AVSpeechUtterance(string: line.text)
+            next.voice = voice
+            next.rate = AVSpeechUtteranceDefaultSpeechRate * 0.85
+            utterance = next
+            speakingKey = line.key
+            isSpeaking = true
+            synthesizer.speak(next)
+            return
+        }
         // 음성 파일 누락은 빌드 결함이다 — VoiceLinesTests 가 모든 문장의 파일을 검사한다
         guard let url = Self.url(for: line.key) else {
             assertionFailure("음성 파일 없음: \(line.key)")
@@ -88,6 +113,17 @@ final class Speech: NSObject, AVAudioPlayerDelegate {
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
             print("[Speech] 오디오 세션 설정 실패:", error)
+        }
+    }
+
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish finished: AVSpeechUtterance) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, finished === self.utterance else { return }
+            self.utterance = nil
+            let gen = self.generation
+            DispatchQueue.main.asyncAfter(deadline: .now() + Self.gap) { [weak self] in
+                self?.playNext(gen)
+            }
         }
     }
 

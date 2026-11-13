@@ -13,6 +13,12 @@
 
     <!-- 진행도(gugu.xml)는 백업하되, 기기에 묶인 값(gugu_device.xml: 세션·학습 신원·아웃박스)은 백업·기기 이전에서 뺀다.
          API 28~30 은 fullBackupContent, 31+ 는 dataExtractionRules 를 본다 (minSdk 28 이라 둘 다 필요) -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <application
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"

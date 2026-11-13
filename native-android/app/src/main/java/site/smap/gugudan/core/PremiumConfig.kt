@@ -27,7 +27,11 @@ object PremiumConfig {
 
         fun url(page: String, language: AppLanguage = AppLanguage.current): String {
             val base = "https://gugu.aiagnt.kr"
-            return if (language == AppLanguage.KO) "$base/$page" else "$base/${language.code}/$page"
+            return when (language) {
+                AppLanguage.KO -> "$base/$page"
+                AppLanguage.JA -> "$base/ja/$page"
+                AppLanguage.EN, AppLanguage.HI, AppLanguage.VI, AppLanguage.ID -> "$base/en/$page"
+            }
         }
     }
 }

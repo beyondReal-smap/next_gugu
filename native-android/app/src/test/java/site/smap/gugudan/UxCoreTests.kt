@@ -130,7 +130,8 @@ class UxCoreTests {
 
         // 전부 별이 있으면 가장 적은 단(로드맵 순) — 3단·4단이 1개 → 로드맵상 3이 먼저
         fun m(s: Int) = TableMastery(stars = s, bestAccuracy = 1.0, bestAvgMs = 1000, plays = 1)
-        val mixed = mapOf(2 to m(3), 5 to m(2), 3 to m(1), 4 to m(1), 6 to m(3), 9 to m(3), 7 to m(3), 8 to m(3))
+        val mixed = (10..19).associateWith { m(3) } + mapOf(2 to m(3), 5 to m(2), 3 to m(1), 4 to m(1), 6 to m(3), 9 to m(3), 7 to m(3), 8 to m(3))
+        assertEquals(10, Hints.nextRoadmapTable((2..9).associateWith { m(3) }))
         assertEquals(3, Hints.nextRoadmapTable(mixed))
 
         assertNull(Hints.nextRoadmapTable(Hints.ROADMAP_TABLES.associateWith { m(3) }))

@@ -6,6 +6,26 @@ final class UxCoreTests: XCTestCase {
 
     // MARK: - KoreanReading
 
+    func testExpandedKoreanChantsKeepFactorsDistinct() {
+        let cases = [(3, 19, "삼 곱하기 십구는 오십칠"),
+                     (10, 2, "십 곱하기 이는 이십"),
+                     (9, 10, "구 곱하기 십은 구십"),
+                     (19, 19, "십구 곱하기 십구는 삼백육십일")]
+        for (a, b, expected) in cases {
+            XCTAssertEqual(KoreanReading.chant(a, b), expected)
+            XCTAssertEqual(VoiceLines.chant(a, b, language: .ko).text, expected + ".")
+        }
+        for a in 2...9 {
+            for b in 1...9 {
+                let first = KoreanReading.sino(a)
+                let tail = "\(KoreanReading.topic(KoreanReading.sino(b))) \(KoreanReading.sino(a * b))"
+                XCTAssertEqual(KoreanReading.chant(a, b), "\(first) \(tail)")
+                XCTAssertEqual(VoiceLines.chant(a, b, language: .ko).text,
+                               "\(first)\(b == 2 ? "," : "") \(tail).")
+            }
+        }
+    }
+
     func testSinoNumbers() {
         XCTAssertEqual(KoreanReading.sino(0), "영")
         XCTAssertEqual(KoreanReading.sino(1), "일")
@@ -120,12 +140,14 @@ final class UxCoreTests: XCTestCase {
 
         // 7단만 별이 없다 → 7
         var allButSeven: [Int: TableMastery] = [:]
-        for t in [2, 3, 4, 5, 6, 8, 9] { allButSeven[t] = m1 }
+        for t in (2...19).filter({ $0 != 7 }) { allButSeven[t] = m1 }
         XCTAssertEqual(Hints.nextRoadmapTable(allButSeven), 7)
 
         // 전부 별이 있으면 가장 적은 단(로드맵 순) — 3단·4단이 1개 → 로드맵상 3이 먼저
         func m(_ s: Int) -> TableMastery { TableMastery(stars: s, bestAccuracy: 1, bestAvgMs: 1000, plays: 1) }
-        let mixed: [Int: TableMastery] = [2: m(3), 5: m(2), 3: m(1), 4: m(1), 6: m(3), 9: m(3), 7: m(3), 8: m(3)]
+        var mixed: [Int: TableMastery] = [2: m(3), 5: m(2), 3: m(1), 4: m(1), 6: m(3), 9: m(3), 7: m(3), 8: m(3)]
+        XCTAssertEqual(Hints.nextRoadmapTable(mixed), 10)
+        for t in 10...19 { mixed[t] = m(3) }
         XCTAssertEqual(Hints.nextRoadmapTable(mixed), 3)
 
         var full: [Int: TableMastery] = [:]

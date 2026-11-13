@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import UIKit
 
 // 디자인 토큰 — globals.css의 라이트/다크 팔레트를 동적 컬러로 이식.
 // UIColor dynamic provider로 콜러스킴에 따라 자동 전환(preferredColorScheme가 구동).
@@ -70,6 +71,18 @@ enum SUITE: String {
         }
     }
 
+    var systemWeight: UIFont.Weight {
+        switch self {
+        case .light: return .light
+        case .regular: return .regular
+        case .medium: return .medium
+        case .semibold: return .semibold
+        case .bold: return .bold
+        case .extrabold: return .heavy
+        case .heavy: return .black
+        }
+    }
+
     /// 앱 언어에 맞는 폰트 이름 — .custom 이름으로 지정해야 SUITE 와 똑같이 Dynamic Type 크기 조절을 받는다
     var fontName: String {
         AppLanguage.current == .ja ? japaneseFontName : rawValue
@@ -79,11 +92,17 @@ enum SUITE: String {
 extension Font {
     /// SUITE 커스텀 폰트 — 크기 지정
     static func suite(_ weight: SUITE, _ size: CGFloat) -> Font {
-        .custom(weight.fontName, size: size)
+        if [.hi, .vi, .id].contains(AppLanguage.current) {
+            return Font(UIFontMetrics.default.scaledFont(for: UIFont.systemFont(ofSize: size, weight: weight.systemWeight)))
+        }
+        return .custom(weight.fontName, size: size)
     }
     /// 숫자 강조(고정폭) — SUITE + tabular-nums 느낌은 .monospacedDigit 모디파이어로 보강
     static func suiteNum(_ weight: SUITE, _ size: CGFloat) -> Font {
-        .custom(weight.fontName, size: size)
+        if [.hi, .vi, .id].contains(AppLanguage.current) {
+            return Font(UIFontMetrics.default.scaledFont(for: UIFont.systemFont(ofSize: size, weight: weight.systemWeight)))
+        }
+        return .custom(weight.fontName, size: size)
     }
 }
 

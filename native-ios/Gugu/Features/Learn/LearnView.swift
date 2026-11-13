@@ -67,7 +67,7 @@ struct LearnView: View {
             Spacer()
             Pill(bg: Color.gg.warning.opacity(0.12), fg: .gg.warning) {
                 Image(systemName: "trophy.fill")
-                Text("\(totalStars)/24").monospacedDigit()
+                Text("\(totalStars)/\(tables.count * 3)").monospacedDigit()
             }
         }
     }

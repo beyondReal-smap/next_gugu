@@ -3,30 +3,45 @@
     "name": "going_to_region",
     "en": "Going to %@…",
     "ja": "%@へ いどう中…",
-    "comment": "어드벤처 지역 이동 로딩 문구 — %@ 는 지역 이름 (한국어는 앱이 방향 조사 로/으로를 붙여 넘긴다: \"새싹 들판으로\")"
+    "comment": "어드벤처 지역 이동 로딩 문구 — %@ 는 지역 이름 (한국어는 앱이 방향 조사 로/으로를 붙여 넘긴다: \"새싹 들판으로\")",
+    "hi": "%@ जा रहे हैं…",
+    "vi": "Đang đến %@…",
+    "id": "Menuju %@…"
   },
   "정해진 시간에 오늘의 구구단을 알려드려요": {
     "name": "practice_reminder_channel_description",
     "en": "Reminds you to practice times tables at the time you chose.",
     "ja": "決めた時間に、きょうの九九をお知らせします。",
-    "comment": "Android 시스템 설정의 알림 채널 설명 — 학습 알림 채널"
+    "comment": "Android 시스템 설정의 알림 채널 설명 — 학습 알림 채널",
+    "hi": "चुने हुए समय पर आज के पहाड़ों का अभ्यास याद दिलाएँगे।",
+    "vi": "Nhắc bạn học bảng nhân vào giờ đã chọn.",
+    "id": "Mengingatkan latihan perkalian pada waktu pilihan Anda."
   },
   "공지·서비스 알림": {
     "name": "announcements_service_channel",
     "en": "Announcements & service",
     "ja": "お知らせ・サービス通知",
-    "comment": "Android 시스템 설정의 알림 채널 이름 — 공지·계정 등 서비스 알림 (FCM 기본 채널)"
+    "comment": "Android 시스템 설정의 알림 채널 이름 — 공지·계정 등 서비스 알림 (FCM 기본 채널)",
+    "hi": "घोषणाएँ और सेवा की सूचनाएँ",
+    "vi": "Thông báo chung và dịch vụ",
+    "id": "Pengumuman dan layanan"
   },
   "새 기능·이벤트 소식을 받아요.": {
     "name": "promotion_channel_description",
     "en": "News about new features and events.",
     "ja": "新機能やイベントのお知らせを受け取ります。",
-    "comment": "Android 시스템 설정의 알림 채널 설명 — 이벤트·혜택(광고) 채널"
+    "comment": "Android 시스템 설정의 알림 채널 설명 — 이벤트·혜택(광고) 채널",
+    "hi": "नई सुविधाओं और कार्यक्रमों की खबरें पाएँ।",
+    "vi": "Nhận tin về tính năng mới và sự kiện.",
+    "id": "Kabar fitur baru dan acara."
   },
   "연결에 실패했어요": {
     "name": "connection_failed",
     "en": "Connection failed",
     "ja": "接続できませんでした",
-    "comment": "보호자 이메일 연결·로그인 실패 — 서버가 이유를 알려 주지 않았을 때"
+    "comment": "보호자 이메일 연결·로그인 실패 — 서버가 이유를 알려 주지 않았을 때",
+    "hi": "जुड़ नहीं सके",
+    "vi": "Không kết nối được",
+    "id": "Tidak dapat terhubung"
   }
 }

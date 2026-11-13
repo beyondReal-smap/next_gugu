@@ -18,6 +18,64 @@ import kotlin.test.assertTrue
 
 class CoreTests {
 
+    @Test fun readAloudIsAvailableOnlyForKoreanEnglishAndJapanese() {
+        assertEquals(
+            setOf(AppLanguage.KO, AppLanguage.EN, AppLanguage.JA),
+            AppLanguage.entries.filter { it.supportsReadAloud }.toSet(),
+        )
+        for (language in listOf(AppLanguage.HI, AppLanguage.VI, AppLanguage.ID)) {
+            assertFalse(language.supportsReadAloud)
+        }
+    }
+
+
+    @Test fun newLanguagesReadEveryNineteenTableProblem() {
+        for (code in listOf("hi", "vi", "id")) {
+            val language = AppLanguage.of(code)
+            for (problem in Problems.candidatesAll()) {
+                for (mode in listOf(GameMode.PRACTICE, GameMode.MISSING, GameMode.TRUEFALSE)) {
+                    val line = VoiceLines.question(problem, mode, Statement(problem.a * problem.b, true), language)
+                    assertTrue(line.text.isNotBlank())
+                    assertFalse(VoiceLines.usesRecordedAudio(line, language))
+                }
+                assertTrue(VoiceLines.chant(problem.a, problem.b, language).text.contains((problem.a * problem.b).toString()))
+            }
+        }
+        assertEquals("19 nhân 19 bằng bao nhiêu?", SpokenMath.questionLabel(19, 19, AppLanguage.VI))
+        assertEquals("Berapa 19 kali 19?", SpokenMath.questionLabel(19, 19, AppLanguage.ID))
+        assertEquals("19 गुणा 19 कितना होता है?", SpokenMath.questionLabel(19, 19, AppLanguage.HI))
+        assertTrue(VoiceLines.usesRecordedAudio(VoiceLines.chant(9, 9, AppLanguage.KO), AppLanguage.KO))
+        assertTrue(VoiceLines.usesRecordedAudio(VoiceLines.chant(9, 19, AppLanguage.KO), AppLanguage.KO))
+        assertTrue(VoiceLines.usesRecordedAudio(VoiceLines.chant(9, 19, AppLanguage.JA), AppLanguage.JA))
+        assertTrue(VoiceLines.usesRecordedAudio(VoiceLines.chant(9, 19, AppLanguage.EN), AppLanguage.EN))
+    }
+
+    @Test fun nineteenTimesTableRange() {
+        val pool = Problems.candidatesAll()
+        assertEquals(342, pool.size)
+        assertEquals(Problem(19, 19), pool.last())
+        assertEquals(Problem(19, 19), Problems.parseKey("19x19"))
+        assertNull(Problems.parseKey("20x19"))
+        assertNull(Problems.parseKey("19x20"))
+        assertEquals(19, Problems.candidates(19).size)
+    }
+
+    @Test fun nineteenTimesTableChoicesAndReading() {
+        val question = Runner.question(19, emptyList()) { 0.999 }
+        assertEquals(361, question.answer)
+        assertEquals(3, question.choices.distinct().size)
+        assertTrue(question.choices.all { it in 1..361 })
+        assertEquals("three hundred sixty-one", EnglishReading.cardinal(361))
+        assertEquals("さんびゃくろくじゅういち", JapaneseReading.number(361))
+        assertEquals("じゅうきゅう かける じゅうきゅう は さんびゃくろくじゅういち", JapaneseReading.chant(19, 19))
+        assertTrue(site.smap.gugudan.core.learning.LearningContract.isFactId("19x19"))
+        assertFalse(site.smap.gugudan.core.learning.LearningContract.isFactId("20x19"))
+        assertFalse(site.smap.gugudan.core.learning.LearningContract.isFactId("019x19"))
+        assertTrue(site.smap.gugudan.core.learning.LearningContract.isInFactRange(19, 19))
+        assertEquals(3, sessionAnswerSlotDigits(Problem(19, 19), GameMode.PRACTICE, ""))
+    }
+
+
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
     // MARK: Level / XP
@@ -358,14 +416,14 @@ class CoreTests {
 
     // MARK: Runner (구구 점프)
 
-    /** 보기는 정답 1개 + 서로 다른 오답 2개, 모두 1..81 범위 */
+    /** 보기는 정답 1개 + 서로 다른 오답 2개, 모두 1..361 범위 */
     @Test fun runnerQuestionChoices() {
         repeat(50) {
             val q = Runner.question(null, emptyList())
             assertEquals(3, q.choices.size)
             assertEquals(3, q.choices.distinct().size)
             assertTrue(q.answer in q.choices)
-            q.choices.forEach { assertTrue(it in 1..81, "보기 범위 이탈: $it") }
+            q.choices.forEach { assertTrue(it in 1..361, "보기 범위 이탈: $it") }
         }
         // 단 지정 시 해당 단만 출제
         repeat(20) { assertEquals(7, Runner.question(7, emptyList()).a) }

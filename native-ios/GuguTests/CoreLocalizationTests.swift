@@ -6,70 +6,73 @@ import XCTest
 /// -testLanguage en -testRegion US` / `-testLanguage ja -testRegion JP` 로 돌린다.
 final class CoreLocalizationTests: XCTestCase {
     /// 현재 앱 언어에 해당하는 기대값
-    private func expected(ko: String, en: String, ja: String) -> String {
+    private func expected(ko: String, en: String, ja: String, hi: String, vi: String, id: String) -> String {
         switch AppLanguage.current {
         case .ko: return ko
         case .en: return en
         case .ja: return ja
+        case .hi: return hi
+        case .vi: return vi
+        case .id: return id
         }
     }
 
     func testModeNames() {
         // 2.7.0 모드 이름 "학습" → "차근차근" (탭 이름과 겹침 해소, 내부 id practice 유지)
-        XCTAssertEqual(Modes.def(.practice).name, expected(ko: "차근차근", en: "Step by step", ja: "じっくり"))
-        XCTAssertEqual(Modes.def(.truefalse).name, expected(ko: "OX 퀴즈", en: "True or False", ja: "○×クイズ"))
+        XCTAssertEqual(Modes.def(.practice).name, expected(ko: "차근차근", en: "Step by step", ja: "じっくり", hi: "कदम दर कदम", vi: "Từng bước một", id: "Langkah demi langkah"))
+        XCTAssertEqual(Modes.def(.truefalse).name, expected(ko: "OX 퀴즈", en: "True or False", ja: "○×クイズ", hi: "सही या गलत", vi: "Đúng hay sai", id: "Benar atau Salah"))
     }
 
     func testAchievementAndLevelText() {
         let first = Achievements.get("first_correct")
-        XCTAssertEqual(first?.name, expected(ko: "첫 정답", en: "First Correct", ja: "はじめての 正かい"))
-        XCTAssertEqual(Level.title(1), expected(ko: "구구단 입문자", en: "Times Table Beginner", ja: "九九ビギナー"))
+        XCTAssertEqual(first?.name, expected(ko: "첫 정답", en: "First Correct", ja: "はじめての 正かい", hi: "पहला सही जवाब", vi: "Câu đúng đầu tiên", id: "Jawaban Benar Pertama"))
+        XCTAssertEqual(Level.title(1), expected(ko: "구구단 입문자", en: "Times Table Beginner", ja: "九九ビギナー", hi: "पहाड़ों के नए साथी", vi: "Người mới học bảng nhân", id: "Pemula Perkalian"))
     }
 
     func testWorldNamesAndDefaultGreeting() {
         let meadow = World.region(for: 2)
-        XCTAssertEqual(meadow?.name, expected(ko: "새싹 들판", en: "Sprout Meadow", ja: "ふたばの のはら"))
+        XCTAssertEqual(meadow?.name, expected(ko: "새싹 들판", en: "Sprout Meadow", ja: "ふたばの のはら", hi: "अंकुरों का मैदान", vi: "Cánh đồng Mầm Non", id: "Padang Tunas"))
         XCTAssertEqual(meadow?.npcs.first?.greeting,
-                       expected(ko: "2단으로 승부하자!", en: "Let's battle with the 2 times table!", ja: "2のだんで しょうぶだ！"))
+                       expected(ko: "2단으로 승부하자!", en: "Let's battle with the 2 times table!", ja: "2のだんで しょうぶだ！", hi: "आओ, 2 के पहाड़े से मुकाबला करें!", vi: "Cùng đấu bảng nhân 2 nào!", id: "Ayo bertanding dengan perkalian 2!"))
     }
 
     /// 힌트 제목은 번역되고, 식 부분은 언어와 무관하게 같다
     func testHintTitleTranslatesButMathStays() {
         let hint = Hints.coach(a: 9, b: 7)
-        XCTAssertEqual(hint.title, expected(ko: "10단에서 한 번 빼기", en: "Times 10, take one away", ja: "10のだんから 1回分 ひく"))
+        XCTAssertEqual(hint.title, expected(ko: "10단에서 한 번 빼기", en: "Times 10, take one away", ja: "10のだんから 1回分 ひく", hi: "10 गुना में से एक बार घटाएँ", vi: "Nhân 10 rồi bớt đi một lần", id: "Kalikan 10, kurangi sekali"))
         XCTAssertEqual(hint.scaffold, "70 − 7 = ?")
         XCTAssertEqual(hint.full, "9 × 7 = 70 − 7 = 63")
-        XCTAssertEqual(Hints.coach(a: 4, b: 3).title, expected(ko: "2단을 두 배로", en: "Double the 2s", ja: "2のだんを 2ばいに"))
+        XCTAssertEqual(Hints.coach(a: 4, b: 3).title, expected(ko: "2단을 두 배로", en: "Double the 2s", ja: "2のだんを 2ばいに", hi: "2 के पहाड़े को दोगुना करें", vi: "Gấp đôi bảng nhân 2", id: "Gandakan perkalian 2"))
     }
 
     func testWeekdayAndHourLabels() {
         // 2026-09-29 는 화요일. 영어 시각은 숫자와 AM/PM 사이에 좁은 줄바꿈 없는 공백(U+202F)을 쓴다
-        XCTAssertEqual(WeeklyReport.weekdayLabel("2026-09-29"), expected(ko: "화", en: "T", ja: "火"))
-        XCTAssertEqual(ReminderPlanner.hourLabel(18), expected(ko: "오후 6시", en: "6\u{202F}PM", ja: "18時"))
-        XCTAssertEqual(ReminderPlanner.hourLabel(12), expected(ko: "낮 12시", en: "12\u{202F}PM", ja: "12時"))
+        XCTAssertEqual(WeeklyReport.weekdayLabel("2026-09-29"), expected(ko: "화", en: "T", ja: "火", hi: "मं", vi: "T3", id: "S"))
+        XCTAssertEqual(ReminderPlanner.hourLabel(18), expected(ko: "오후 6시", en: "6\u{202F}PM", ja: "18時", hi: "शाम 6", vi: "18 giờ", id: "18"))
+        XCTAssertEqual(ReminderPlanner.hourLabel(12), expected(ko: "낮 12시", en: "12\u{202F}PM", ja: "12時", hi: "दोप॰ 12", vi: "12 giờ", id: "12"))
     }
 
     func testPushDates() {
         let date = ISO8601DateFormatter().date(from: "2026-10-22T03:00:00Z")!
         let seoul = TimeZone(identifier: "Asia/Seoul")!
         XCTAssertEqual(PushDateText.long(date, timeZone: seoul),
-                       expected(ko: "2026년 10월 22일", en: "October 22, 2026", ja: "2026年10月22日"))
+                       expected(ko: "2026년 10월 22일", en: "October 22, 2026", ja: "2026年10月22日", hi: "22 अक्तूबर 2026", vi: "ngày 22 tháng 10, 2026", id: "22 Oktober 2026"))
     }
 
-    /// 영어만 복수형이 갈린다 — 1개/여러 개
+    /// 영어·힌디어의 단수/복수와 나머지 언어의 수량 문구를 확인한다
     func testEnglishPluralForms() {
         let one = String(localized: "오늘 목표까지 정답 \(1)개 남았어요.")
         let many = String(localized: "오늘 목표까지 정답 \(3)개 남았어요.")
         XCTAssertEqual(one, expected(ko: "오늘 목표까지 정답 1개 남았어요.",
                                      en: "Just 1 more correct answer to reach today's goal.",
-                                     ja: "きょうの もくひょうまで あと 1もん！"))
+                                     ja: "きょうの もくひょうまで あと 1もん！", hi: "आज के लक्ष्य के लिए 1 सही जवाब बाकी है।", vi: "Còn 1 câu đúng để đạt mục tiêu hôm nay.", id: "Tinggal 1 jawaban benar untuk target hari ini."))
         XCTAssertEqual(many, expected(ko: "오늘 목표까지 정답 3개 남았어요.",
                                       en: "Just 3 more correct answers to reach today's goal.",
-                                      ja: "きょうの もくひょうまで あと 3もん！"))
+                                      ja: "きょうの もくひょうまで あと 3もん！", hi: "आज के लक्ष्य के लिए 3 सही जवाब बाकी हैं।", vi: "Còn 3 câu đúng để đạt mục tiêu hôm nay.", id: "Tinggal 3 jawaban benar untuk target hari ini."))
     }
 
     func testReorderedArgumentsKeepMeaning() {
         let tip = String(localized: "\(7)씩 \(3)번 더해 봐요")
-        XCTAssertEqual(tip, expected(ko: "7씩 3번 더해 봐요", en: "Try adding 7, 3 times", ja: "7を 3回 たしてみよう"))
+        XCTAssertEqual(tip, expected(ko: "7씩 3번 더해 봐요", en: "Try adding 7, 3 times", ja: "7を 3回 たしてみよう", hi: "7 को 3 बार जोड़कर देखें", vi: "Thử cộng 7, 3 lần nhé", id: "Coba tambahkan 7 sebanyak 3 kali"))
     }
 }

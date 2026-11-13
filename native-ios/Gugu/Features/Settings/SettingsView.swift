@@ -127,11 +127,13 @@ struct SettingsView: View {
             }
             .padding(.horizontal, 20).padding(.vertical, 16)
 
-            SettingsDivider()
-            ToggleRow(icon: "speaker.wave.2.bubble", title: String(localized: "문제 읽어주기"),
-                      // 효과음과 같은 ambient 세션이라 무음 스위치를 따른다 — 켰는데 안 들리는 이유를 미리 알린다
-                      subtitle: String(localized: "새 문제가 나오면 선생님 목소리로 읽어 줘요. 무음 모드에서는 들리지 않아요."),
-                      isOn: Binding(get: { prefs.readAloud }, set: { prefs.readAloud = $0 }))
+            if AppLanguage.current.supportsReadAloud {
+                SettingsDivider()
+                ToggleRow(icon: "speaker.wave.2.bubble", title: String(localized: "문제 읽어주기"),
+                          // 효과음과 같은 ambient 세션이라 무음 스위치를 따른다 — 켰는데 안 들리는 이유를 미리 알린다
+                          subtitle: String(localized: "새 문제가 나오면 선생님 목소리로 읽어 줘요. 무음 모드에서는 들리지 않아요."),
+                          isOn: Binding(get: { prefs.readAloud }, set: { prefs.readAloud = $0 }))
+            }
         }
     }
 

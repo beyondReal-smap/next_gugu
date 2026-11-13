@@ -8,7 +8,10 @@ import java.util.Locale
 // Android 13+ 앱별 언어를 바꾸면 프로세스는 그대로 두고 Activity 만 다시 만든다 → MainActivity.onCreate 마다 다시 정한다.
 
 enum class AppLanguage(val code: String) {
-    KO("ko"), EN("en"), JA("ja");
+    KO("ko"), EN("en"), JA("ja"), HI("hi"), VI("vi"), ID("id");
+
+    val supportsReadAloud: Boolean
+        get() = this == KO || this == EN || this == JA
 
     /** 그 언어로 쓴 언어 이름 — 어느 언어 화면에서든 자기 언어를 알아볼 수 있게 번역하지 않는다 */
     val nativeName: String
@@ -16,6 +19,9 @@ enum class AppLanguage(val code: String) {
             KO -> "한국어"  // i18n:skip
             EN -> "English"
             JA -> "日本語"
+            HI -> "हिन्दी"
+            VI -> "Tiếng Việt"
+            ID -> "Bahasa Indonesia"
         }
 
     companion object {

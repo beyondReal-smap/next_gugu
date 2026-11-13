@@ -155,12 +155,14 @@ fun SettingsScreen(onClose: () -> Unit) {
                         reminder.reschedule(game.state)
                     }
                 }
-                SettingsDivider()
-                ToggleRow(
-                    Icons.Filled.RecordVoiceOver, stringResource(R.string.read_problems_aloud),
-                    stringResource(R.string.reads_each_new_problem_aloud),
-                    checked = prefs.readAloud,
-                ) { prefs.updateReadAloud(it) }
+                if (AppLanguage.current.supportsReadAloud) {
+                    SettingsDivider()
+                    ToggleRow(
+                        Icons.Filled.RecordVoiceOver, stringResource(R.string.read_problems_aloud),
+                        stringResource(R.string.reads_each_new_problem_aloud),
+                        checked = prefs.readAloud,
+                    ) { prefs.updateReadAloud(it) }
+                }
             }
 
             // 화면

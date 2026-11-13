@@ -79,6 +79,17 @@ class PopTests {
                 }
             }
             if (missions.lastOrNull() != s.mission) missions += s.mission
+            assertTrue(s.hearts in 0..3)
+            for (b in s.balloons) {
+                val boss = s.boss
+                if (boss == null) {
+                    assertTrue(b.value in 1..361)
+                    assertEquals(b.value % s.waveTable == 0 && b.value / s.waveTable in 1..19, b.correct)
+                } else {
+                    assertTrue(b.value in 1..19)
+                    assertEquals((1..19).any { it * b.value == boss.value }, b.correct)
+                }
+            }
             check?.invoke(s)
         }
         record()
@@ -113,6 +124,16 @@ class PopTests {
             over = s.phase == RunnerPhase.OVER, trialLeft = s.trialLeft,
             values = values.take(30), missions = missions,
         )
+        if (policy == Policy.PERFECT) {
+            assertEquals(0, run.wrongTaps)
+            if (run.hearts == 3) {
+                assertEquals(run.pops, run.maxCombo)
+                assertEquals((1..run.pops).sumOf { if (it < 5) 10 else if (it < 10) 20 else 30 }, run.score)
+            }
+        } else if (policy == Policy.LAZY) {
+            assertEquals(0, run.score)
+            assertEquals(0, run.pops)
+        }
         return run to s
     }
 
@@ -132,7 +153,7 @@ class PopTests {
     }
 
     @Test fun mixedWaveTablesFollowRoadmap() {
-        assertEquals(listOf(2, 5, 3, 4, 6, 9, 7, 8, 2), (1..9).map { Pop.waveTable(it, null) })
+        assertEquals(listOf(2, 5, 3, 4, 6, 9, 7, 8) + (10..19) + 2, (1..19).map { Pop.waveTable(it, null) })
         assertEquals(listOf(7, 7, 7, 7), (1..4).map { Pop.waveTable(it, 7) })
     }
 
@@ -140,23 +161,23 @@ class PopTests {
 
     @Test fun distractorPoolForSeven() {
         val pool = Pop.distractorPool(7)
-        assertEquals(listOf(6, 8, 13, 15, 20, 22, 27, 29, 34, 36, 41, 43, 48, 50, 55, 57, 62, 64), pool.near)
-        assertEquals(listOf(12, 16, 18, 24, 30, 32, 40, 54, 72), pool.neighbour)
-        assertEquals(listOf(53, 65), pool.reversal)
+        assertEquals(listOf(6, 8, 13, 15, 20, 22, 27, 29, 34, 36, 41, 43, 48, 50, 55, 57, 62, 64, 69, 71, 76, 78, 83, 85, 90, 92, 97, 99, 104, 106, 111, 113, 118, 120, 125, 127, 132, 134), pool.near)
+        assertEquals(listOf(12, 16, 18, 24, 30, 32, 40, 54, 60, 66, 72, 80, 88, 96, 102, 108, 114, 128, 136, 144, 152), pool.neighbour)
+        assertEquals(listOf(19, 53, 65, 82, 89, 94, 211, 331), pool.reversal)
     }
 
     @Test fun distractorPoolsNeverContainMultiples() {
-        for (t in 2..9) {
+        for (t in 2..19) {
             val pool = Pop.distractorPool(t)
             val all = pool.near + pool.neighbour + pool.reversal + pool.far
             assertEquals(all.size, all.toSet().size, "${t}단: 후보끼리 겹침")
-            assertTrue(all.all { it in 1..81 && it % t != 0 }, "${t}단")
+            assertTrue(all.all { it in 1..361 && it % t != 0 }, "${t}단")
             assertFalse(pool.near.isEmpty() || pool.neighbour.isEmpty() || pool.far.isEmpty(), "${t}단")
         }
     }
 
     @Test fun spawnedBalloonsMatchMission() {
-        for (t in listOf<Int?>(null) + (2..9).toList()) {
+        for (t in listOf<Int?>(null) + (2..19).toList()) {
             for (seed in 1..12) {
                 play(t, seed, 1600, Policy.SLOPPY) { s ->
                     // 보스 작은 풍선은 제곱 짝꿍(6·6)이 있어 같은 수가 둘일 수 있다
@@ -166,10 +187,10 @@ class PopTests {
                     for (b in s.balloons) {
                         if (b.correct) {
                             assertEquals(0, b.value % s.waveTable)
-                            assertTrue(b.value / s.waveTable in 1..9)
+                            assertTrue(b.value / s.waveTable in 1..19)
                         } else {
                             assertTrue(b.value % s.waveTable != 0, "오답에 배수: ${b.value} / ${s.waveTable}단")
-                            assertTrue(b.value in 1..81)
+                            assertTrue(b.value in 1..361)
                         }
                     }
                 }
@@ -188,15 +209,23 @@ class PopTests {
     // 짝꿍 보스
 
     @Test fun pairs() {
-        assertEquals(listOf(PopPair(4, 9), PopPair(6, 6)), Pop.pairs(36))
-        assertEquals(listOf(PopPair(3, 8), PopPair(4, 6)), Pop.pairs(24))
+        assertEquals(listOf(PopPair(2, 18), PopPair(3, 12), PopPair(4, 9), PopPair(6, 6)), Pop.pairs(36))
+        assertEquals(listOf(PopPair(2, 12), PopPair(3, 8), PopPair(4, 6)), Pop.pairs(24))
         assertEquals(listOf(PopPair(1, 8), PopPair(2, 4)), Pop.pairs(8))
         assertEquals(listOf(PopPair(9, 9)), Pop.pairs(81))
-        assertEquals(emptyList(), Pop.pairs(11))
+        assertEquals(listOf(PopPair(1, 11)), Pop.pairs(11))
+        assertEquals(listOf(PopPair(19, 19)), Pop.pairs(361))
+        assertEquals(emptyList(), Pop.pairs(23))
+    }
+
+    @Test fun pairsCoverAllProducts() {
+        val expected = (1..19).flatMap { a -> (maxOf(a, 2)..19).map { b -> PopPair(a, b) } }
+            .groupBy { it.a * it.b }
+        for (n in 1..361) assertEquals(expected[n].orEmpty(), Pop.pairs(n), "곱 $n")
     }
 
     @Test fun bossAlwaysHasCompletablePair() {
-        for (t in 2..9) {
+        for (t in 2..19) {
             val random = rng(t * 31)
             repeat(40) {
                 val target = Pop.bossTarget(t, random)
@@ -440,12 +469,12 @@ class PopTests {
         val (run, _) = play(7, 42, 2400, Policy.PERFECT)
         assertEquals(
             Run(
-                score = 1580, wave = 10, hearts = 3, maxCombo = 57, pops = 57, wrongTaps = 0, bossesDefeated = 3,
+                score = 1640, wave = 10, hearts = 3, maxCombo = 59, pops = 59, wrongTaps = 0, bossesDefeated = 3,
                 over = false, trialLeft = null,
-                values = listOf(21, 68, 14, 49, 7, 56, 58, 23, 14, 51, 42, 21, 65, 22, 40, 53, 28, 8, 28, 72, 49, 21, 3, 4, 7, 2, 7, 8, 5, 2),
+                values = listOf(35, 289, 28, 98, 7, 119, 244, 150, 28, 228, 91, 42, 89, 43, 102, 19, 63, 20, 49, 136, 98, 42, 1, 7, 19, 14, 8, 11, 3, 18),
                 missions = listOf(
-                    PopMission.Multiples(7), PopMission.PairBoss(49), PopMission.Multiples(7), PopMission.PairBoss(49),
-                    PopMission.Multiples(7), PopMission.PairBoss(28), PopMission.Multiples(7),
+                    PopMission.Multiples(7), PopMission.PairBoss(98), PopMission.Multiples(7), PopMission.PairBoss(77),
+                    PopMission.Multiples(7), PopMission.PairBoss(49), PopMission.Multiples(7),
                 ),
             ),
             run,
@@ -456,13 +485,13 @@ class PopTests {
         val (run, _) = play(null, 2026, 2400, Policy.SLOPPY)
         assertEquals(
             Run(
-                score = 650, wave = 10, hearts = 3, maxCombo = 9, pops = 54, wrongTaps = 46, bossesDefeated = 3,
+                score = 610, wave = 10, hearts = 3, maxCombo = 7, pops = 55, wrongTaps = 45, bossesDefeated = 3,
                 over = false, trialLeft = null,
-                values = listOf(25, 47, 4, 49, 12, 4, 69, 18, 6, 10, 35, 15, 51, 18, 10, 54, 30, 42, 30, 52, 6, 45, 9, 4, 6, 2, 7, 1, 8, 8),
+                values = listOf(75, 177, 8, 183, 22, 8, 295, 36, 12, 18, 65, 35, 53, 28, 20, 108, 60, 78, 55, 57, 11, 90, 17, 15, 1, 9, 14, 19, 18, 15),
                 missions = listOf(
-                    PopMission.Multiples(2), PopMission.Multiples(5), PopMission.PairBoss(9), PopMission.Multiples(4),
-                    PopMission.Multiples(6), PopMission.PairBoss(54), PopMission.Multiples(7), PopMission.Multiples(8),
-                    PopMission.PairBoss(6), PopMission.Multiples(5),
+                    PopMission.Multiples(2), PopMission.Multiples(5), PopMission.PairBoss(15), PopMission.Multiples(4),
+                    PopMission.Multiples(6), PopMission.PairBoss(135), PopMission.Multiples(7), PopMission.Multiples(8),
+                    PopMission.PairBoss(190), PopMission.Multiples(11),
                 ),
             ),
             run,
@@ -475,7 +504,7 @@ class PopTests {
             Run(
                 score = 0, wave = 1, hearts = 0, maxCombo = 0, pops = 0, wrongTaps = 0, bossesDefeated = 0,
                 over = true, trialLeft = null,
-                values = listOf(59, 27, 36, 52, 54, 72, 81),
+                values = listOf(273, 54, 63, 256, 99, 153, 144),
                 missions = listOf(PopMission.Multiples(9)),
             ),
             run,

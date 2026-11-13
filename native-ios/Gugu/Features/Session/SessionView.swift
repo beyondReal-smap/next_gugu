@@ -39,6 +39,11 @@ struct SessionView: View {
             }
         }
         .onDisappear { Speech.shared.stop() }
+        .safeAreaInset(edge: .bottom) {
+            if let message = Speech.shared.errorMessage {
+                Text(message).font(.footnote).foregroundStyle(Color.gg.danger).padding()
+            }
+        }
     }
 }
 
@@ -118,7 +123,7 @@ private struct SessionPlayView: View {
 
     private func readQuestion() {
         // 확인 시트가 떠 있는 동안 넘어온 문제는 시트 뒤에서 읽지 않는다 — 재개할 때 읽는다
-        guard prefs.readAloud, engine.pausedAt == nil else { return }
+        guard AppLanguage.current.supportsReadAloud, prefs.readAloud, engine.pausedAt == nil else { return }
         readSerial = engine.problemSerial
         Speech.shared.speak(VoiceLines.question(engine.problem, mode: engine.mode, statement: engine.statement))
     }
@@ -152,7 +157,9 @@ private struct SessionPlayView: View {
                 Spacer()
                 HeartsView(lives: engine.lives, max: engine.maxLives)
             }
-            readAloudToggle
+            if AppLanguage.current.supportsReadAloud {
+                readAloudToggle
+            }
         }
         .frame(height: 44)
         .padding(.bottom, 8)

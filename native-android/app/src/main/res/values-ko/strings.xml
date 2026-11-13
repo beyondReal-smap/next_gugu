@@ -31,7 +31,7 @@
     <string name="already_defeated_earn_xp_in_a_practice">이미 격파한 상대 — 연습 대결로 XP를 벌 수 있어요</string>
     <string name="already_has_an_account_enter_the_6_digit">%s 은 이미 쓰던 계정이에요. 메일로 받은 6자리 코드를 넣으면 그 계정으로 로그인해요.</string>
     <string name="amber">앰버</string>
-    <string name="an_even_mix_of_tables_2_9">2~9단을 골고루 섞어서</string>
+    <string name="an_even_mix_of_tables_2_9">2~19단을 골고루 섞어서</string>
     <string name="announcements">공지 알림</string>
     <string name="announcements_service_channel">공지·서비스 알림</string>
     <string name="answer_before_the_6_times_table_freezes">6단이 얼어붙기 전에 답해 보시지!</string>
@@ -334,7 +334,7 @@
     <string name="luna_the_sorceress">마법사 루나</string>
     <string name="made_it">통과!</string>
     <string name="mastered_a_times_table_earned_a_star">한 단을 마스터(별 획득)</string>
-    <string name="mastered_every_table_from_2_to_9">2~9단 모두 마스터</string>
+    <string name="mastered_every_table_from_2_to_9">2~19단 모두 마스터</string>
     <string name="mastery">마스터리</string>
     <string name="math_master">연산 마스터</string>
     <string name="maybe_later">나중에 할게요</string>
@@ -349,7 +349,7 @@
     </plurals>
     <string name="missing_number">빈칸 추리</string>
     <string name="mix_tables">섞어서</string>
-    <string name="mixed_tables_2_9_evenly">섞어서, 2~9단 골고루</string>
+    <string name="mixed_tables_2_9_evenly">섞어서, 2~19단 골고루</string>
     <string name="mode_explorer">모드 탐험가</string>
     <string name="mode_practice_name">차근차근</string>
     <plurals name="more_correct_answers_to_go">
@@ -596,6 +596,7 @@
     <string name="solved_problems_are_saved_but_wins_and">푼 문제는 기록되지만 승패는 남지 않아요.</string>
     <string name="sound_effects">효과음</string>
     <string name="sound_haptics">소리와 진동</string>
+    <string name="speech_unavailable">이 언어의 음성을 사용할 수 없습니다. 기기의 음성 설정을 확인해 주세요.</string>
     <string name="speed">%1$s · %2$d단계</string>
     <string name="speed_is_your_score_the_faster_you">속도가 곧 점수! 빠르게 풀수록 XP가 올라가요.</string>
     <string name="speed_level">속도 %d단계</string>

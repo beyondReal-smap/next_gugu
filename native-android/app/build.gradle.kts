@@ -41,8 +41,8 @@ android {
         applicationId = "site.smap.gugudan"
         minSdk = 28          // SceneView(Filament) 요구 — 기기 커버리지 ~97%
         targetSdk = 36
-        versionCode = 26     // vc26: 2.7.1 — 서비스 도메인 gugu.aiagnt.kr 이전
-        versionName = "2.7.1"
+        versionCode = 27     // vc27: 2.8.0 — 19단과 추가 언어 지원
+        versionName = "2.8.0"
 
         buildConfigField("String", "SUPABASE_HOST", "\"${supabaseProp("SUPABASE_HOST")}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${supabaseProp("SUPABASE_ANON_KEY")}\"")
@@ -88,7 +88,7 @@ android {
         noCompress += "m4a"
         // 앱 언어는 ko·en·ja 셋 — 라이브러리의 다른 언어 리소스를 빼고, Android 13+ 앱별 언어 목록도 이 셋만
         // (기본 values/ 는 영어 = res/resources.properties)
-        localeFilters += listOf("en", "ko", "ja")
+        localeFilters += listOf("en", "ko", "ja", "hi", "vi", "in")
         generateLocaleConfig = true
     }
     // 언어 분할을 끈다 — 켜 두면 Play 가 기기 언어 리소스만 설치해, 앱별 언어를 다른 언어로 고르면

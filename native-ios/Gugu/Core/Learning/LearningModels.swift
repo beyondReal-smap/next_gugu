@@ -15,10 +15,10 @@ struct LearningEvent: Codable, Equatable, Identifiable {
     var deviceId: String
     var sessionId: String
     var sequenceNo: Int
-    /// "2x3" ~ "9x9"
+    /// "2x3" ~ "19x19"
     var factId: String
     var mode: LearningMode
-    /// 문항의 단 (2~9) 또는 nil
+    /// 문항의 단 (2~19) 또는 nil
     var tableNo: Int?
     var submittedAnswer: GivenAnswer
     var correct: Bool
@@ -114,11 +114,11 @@ enum LearningValidationError: LocalizedError, Equatable {
 
 enum LearningContract {
     static let contentVersion = "1.0.0"
-    /// factId 계약 — 2~9단 × 1~9
+    /// factId 계약 — 2~19단 × 1~19
     static let minTable = 2
-    static let maxTable = 9
+    static let maxTable = 19
     static let minMultiplier = 1
-    static let maxMultiplier = 9
+    static let maxMultiplier = 19
     /// 서버가 받는 응답 시간 상한
     static let maxResponseMs = 600_000
     /// 서버 Field(ge=0, le=10_000)
@@ -133,7 +133,7 @@ enum LearningContract {
     }
 
     static func isFactId(_ value: String) -> Bool {
-        value.range(of: "^[2-9]x[1-9]$", options: .regularExpression) != nil
+        value.range(of: "^([2-9]|1[0-9])x([1-9]|1[0-9])$", options: .regularExpression) != nil
     }
 
     static func factId(a: Int, b: Int) -> String { "\(a)x\(b)" }

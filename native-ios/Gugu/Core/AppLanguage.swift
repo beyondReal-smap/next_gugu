@@ -6,7 +6,9 @@ import Foundation
 // iOS 설정에서 앱별 언어를 바꾸면 시스템이 앱을 다시 시작하므로 실행 중에는 값이 바뀌지 않는다.
 
 enum AppLanguage: String, CaseIterable {
-    case ko, en, ja
+    case ko, en, ja, hi, vi, id
+
+    var supportsReadAloud: Bool { [.ko, .en, .ja].contains(self) }
 
     static let current = resolve(Bundle.main.preferredLocalizations)
 
@@ -16,6 +18,9 @@ enum AppLanguage: String, CaseIterable {
         case .ko: return "한국어"  // i18n:skip
         case .en: return "English"
         case .ja: return "日本語"
+        case .hi: return "हिन्दी"
+        case .vi: return "Tiếng Việt"
+        case .id: return "Bahasa Indonesia"
         }
     }
 

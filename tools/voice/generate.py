@@ -5,11 +5,11 @@
   python3 tools/voice/generate.py models                    # 쓸 수 있는 모델 보기
   python3 tools/voice/generate.py voices [--lang en]        # 그 언어 여성 목소리 후보 (라이브러리)
   python3 tools/voice/generate.py sample --lang en --voice ID ...  # 후보별 샘플 → tools/voice/samples/
-  python3 tools/voice/generate.py build --lang en --voice ID       # 552문장 생성 → 앱 리소스로 배치
+  python3 tools/voice/generate.py build --lang en --voice ID       # 언어별 전체 문장 생성 → 앱 리소스로 배치
   python3 tools/voice/generate.py build --voice ID --regen c-3x2   # 특정 줄만 새로 녹음
   python3 tools/voice/generate.py sync-android --lang en           # iOS 음성 팩을 Android 로 그대로 복사 (생성·크레딧 없음)
-  --lang 기본값은 ko. 두 앱 모두 언어별 폴더에 쓴다 — iOS Voice/{ko,en,ja}/voice-manifest.json,
-  Android assets/voice/{ko,en,ja}/manifest.json (같은 파일, 매니페스트 이름만 다르다).
+  --lang 기본값은 ko. 두 앱 모두 언어별 폴더에 쓴다 — iOS Voice/{lang}/voice-manifest.json,
+  Android assets/voice/{lang}/manifest.json (같은 파일, 매니페스트 이름만 다르다).
   (검수: tools/voice/qa.py — 길이·음량·받아쓰기로 이상한 줄을 골라낸다)
 
 API 키: 환경변수 ELEVENLABS_API_KEY 또는 ~/.config/gugu/elevenlabs.env (ELEVENLABS_API_KEY=...)
@@ -66,6 +66,13 @@ SAMPLE_TEXT = {
     "ja": "なな かける はち は？\n\nしちは ごじゅうろく。\n\nごじゅうろく は なな かける なに？\n\n"
           "ににんが し。さざんが く。くく はちじゅういち。",
 }
+for lang in LANGS:
+    sample_lines = phrases(lang)
+    keys = (["q-7x8", "c-7x8", "m-7x8", "ox-7x8-56"] if lang not in SAMPLE_TEXT else [])
+    keys += ["q-19x19", "c-19x19", "m-19x19", "ox-19x19-380"]
+    SAMPLE_TEXT[lang] = "\n\n".join(([SAMPLE_TEXT[lang]] if lang in SAMPLE_TEXT else [])
+                                        + [sample_lines[key] for key in keys])
+
 PCM_RATE = 24_000
 AAC_BITRATE = 48_000
 # 줄마다 체감 음량을 맞춘다 — 최고치 기준으로 맞췄을 때는 순간 튀는 소리 때문에 줄마다 최대 8.7LU 차이가 났다
@@ -239,21 +246,37 @@ def cmd_sample(args) -> None:
 
 
 def cmd_build(args) -> None:
-    s = session()
     settings = settings_for(args.model)
-    ensure_voice(s, args.voice)
     lines = phrases(args.lang)
-    work_dir = CACHE / "m4a" / args.voice
-    work_dir.mkdir(parents=True, exist_ok=True)
-    (CACHE / "pcm").mkdir(parents=True, exist_ok=True)
-
+    ios_out = IOS_VOICE / args.lang
+    android_out = ANDROID_VOICE / args.lang
+    outs = [ios_out, android_out]
     unknown = sorted(set(args.regen) - set(lines))
     if unknown:
         raise SystemExit(f"없는 문장 키: {unknown}")
-    # --regen 으로 고른 줄은 캐시를 무시하고 새로 녹음한다 (생성할 때마다 녹음이 조금씩 다르다)
-    todo = [(k, t) for k, t in lines.items()
-            if k in args.regen or not cache_path(args.voice, args.model, t, settings).exists()]
-    print(f"총 {len(lines)}문장 · 새로 생성 {len(todo)} ({sum(len(t) for _, t in todo)}자)")
+    for out in outs:
+        check_stale(out, lines)
+    manifest_path = ios_out / IOS_MANIFEST
+    existing = json.loads(manifest_path.read_text()) if manifest_path.exists() else None
+    matching = existing is not None and (existing["voice"], existing["model"], existing["settings"]) == (
+        args.voice, args.model, settings)
+    reused = {key for key, text in lines.items()
+              if matching and key not in args.regen and existing["lines"].get(key) == text
+              and (ios_out / f"{key}.m4a").is_file()}
+    # --regen 으로 고른 줄은 기존 파일·캐시를 무시하고 새로 녹음한다
+    todo = [(k, t) for k, t in lines.items() if k not in reused
+            and (k in args.regen or not cache_path(args.voice, args.model, t, settings).is_file())]
+    print(f"총 {len(lines)}문장 · 기존 M4A 재사용 {len(reused)} · "
+          f"PCM 캐시 {len(lines) - len(reused) - len(todo)} · "
+          f"새로 생성 {len(todo)} ({sum(len(t) for _, t in todo)}자)")
+    if args.dry_run:
+        return
+    work_dir = CACHE / "m4a" / args.voice / args.lang
+    work_dir.mkdir(parents=True, exist_ok=True)
+    (CACHE / "pcm").mkdir(parents=True, exist_ok=True)
+    if todo:
+        s = session()
+        ensure_voice(s, args.voice)
 
     def fetch(item):
         key, text = item
@@ -272,21 +295,26 @@ def cmd_build(args) -> None:
             if done % 25 == 0 or done == len(todo):
                 print(f"  생성 {done}/{len(todo)}")
 
-    # 마스터링 → 앱 리소스 배치. 두 앱 모두 언어별 폴더에 같은 파일을 쓴다
-    ios_out = IOS_VOICE / args.lang
-    android_out = ANDROID_VOICE / args.lang
-    outs = [ios_out, android_out]
-    for out in outs:
-        out.mkdir(parents=True, exist_ok=True)
-        check_stale(out, lines)
+    # 모든 마스터링이 성공한 뒤에만 앱 리소스를 교체한다
+    staged = {}
     for i, (key, text) in enumerate(lines.items(), 1):
+        if key in reused:
+            staged[key] = ios_out / f"{key}.m4a"
+            continue
         m4a = work_dir / f"{key}.m4a"
         master(cache_path(args.voice, args.model, text, settings), m4a)
-        data = m4a.read_bytes()
-        for out in outs:
-            (out / f"{key}.m4a").write_bytes(data)
+        staged[key] = m4a
         if i % 100 == 0:
             print(f"  마스터링 {i}/{len(lines)}")
+
+    for out in outs:
+        out.mkdir(parents=True, exist_ok=True)
+    for key, m4a in staged.items():
+        data = m4a.read_bytes()
+        for out in outs:
+            target = out / f"{key}.m4a"
+            if target != m4a:
+                target.write_bytes(data)
 
     manifest = {"voice": args.voice, "model": args.model, "settings": settings, "lines": lines}
     body = json.dumps(manifest, ensure_ascii=False, indent=1, sort_keys=True)
@@ -344,6 +372,7 @@ def main() -> None:
     b.add_argument("--voice", required=True)
     b.add_argument("--model", default=DEFAULT_MODEL)
     b.add_argument("--workers", type=int, default=3)
+    b.add_argument("--dry-run", action="store_true", help="API 호출 없이 재사용·캐시·신규 생성 문자 수 확인")
     b.add_argument("--regen", nargs="+", default=[], metavar="KEY",
                    help="캐시를 무시하고 새로 녹음할 문장 키 (발음이 모호한 줄을 다시 받을 때)")
     sa = sub.add_parser("sync-android", help="iOS 음성 팩을 Android assets 로 그대로 복사")

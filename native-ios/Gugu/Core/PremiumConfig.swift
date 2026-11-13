@@ -29,7 +29,11 @@ enum PremiumConfig {
 
         static func url(_ page: String, language: AppLanguage = .current) -> String {
             let base = "https://gugu.aiagnt.kr"
-            return language == .ko ? "\(base)/\(page)" : "\(base)/\(language.rawValue)/\(page)"
+            switch language {
+            case .ko: return "\(base)/\(page)"
+            case .ja: return "\(base)/ja/\(page)"
+            case .en, .hi, .vi, .id: return "\(base)/en/\(page)"
+            }
         }
     }
 }

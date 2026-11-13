@@ -38,13 +38,14 @@ final class LearningTests: XCTestCase {
         XCTAssertFalse(LearningContract.isUuid("0191d0f3-1b2c-7abc-cdef-0123456789ab"))
     }
 
-    /// factId 는 2~9단 × 1~9 만
+    /// factId 는 2~19단 × 1~19 만
     func testFactIdPattern() {
         XCTAssertTrue(LearningContract.isFactId("2x1"))
         XCTAssertTrue(LearningContract.isFactId("9x9"))
         XCTAssertFalse(LearningContract.isFactId("1x3"))   // 1단 제외
         XCTAssertFalse(LearningContract.isFactId("3x0"))   // 0 제외
-        XCTAssertFalse(LearningContract.isFactId("10x2"))
+        XCTAssertTrue(LearningContract.isFactId("10x2"))
+        XCTAssertFalse(LearningContract.isFactId("20x2"))
         XCTAssertFalse(LearningContract.isFactId("3X4"))   // 대문자 X 는 계약 밖
         XCTAssertEqual(LearningContract.factId(a: 7, b: 8), "7x8")
         XCTAssertTrue(LearningContract.isInFactRange(a: 2, b: 1))
@@ -69,7 +70,7 @@ final class LearningTests: XCTestCase {
         XCTAssertThrowsError(try LearningContract.validate(event(sequenceNo: -1)))
         XCTAssertThrowsError(try LearningContract.validate(event(factId: "1x1")))
         XCTAssertThrowsError(try LearningContract.validate(event(tableNo: 1)))
-        XCTAssertThrowsError(try LearningContract.validate(event(tableNo: 10)))
+        XCTAssertThrowsError(try LearningContract.validate(event(tableNo: 20)))
         XCTAssertThrowsError(try LearningContract.validate(event(responseMs: -1)))
         XCTAssertThrowsError(try LearningContract.validate(event(responseMs: 600_001)))
         XCTAssertThrowsError(try LearningContract.validate(event(attemptNo: 0)))
@@ -170,7 +171,7 @@ final class LearningTests: XCTestCase {
             answers: [
                 AnswerRecord(a: 1, b: 5, correct: true, ms: 800),   // 1단 — 계약 밖
                 AnswerRecord(a: 4, b: 5, correct: true, ms: 800),
-                AnswerRecord(a: 12, b: 3, correct: true, ms: 800),  // 12단 — 계약 밖
+                AnswerRecord(a: 20, b: 3, correct: true, ms: 800),  // 20단 — 계약 밖
             ],
             maxCombo: 3, durationMs: 2400
         )

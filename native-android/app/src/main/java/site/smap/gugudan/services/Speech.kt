@@ -6,6 +6,12 @@ import android.media.MediaPlayer
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
+import android.widget.Toast
+import java.util.Locale
+import site.smap.gugudan.R
+import site.smap.gugudan.core.VoiceLines
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -31,6 +37,11 @@ object Speech {
 
     private var app: Context? = null
     private var player: MediaPlayer? = null
+    private var synthesizer: TextToSpeech? = null
+    private var synthesisReady = false
+    private var synthesisFailed = false
+    private var waitingForSynthesis = false
+    private var activeUtterance: String? = null
     private val queue = ArrayDeque<VoiceLine>()
     /** stop()/새 낭독이 시작되면 올라간다 — 이전 낭독의 늦은 콜백을 무시하기 위해서다 */
     private var generation = 0
@@ -43,6 +54,35 @@ object Speech {
 
     fun init(context: Context) {
         app = context.applicationContext
+        if (synthesizer != null) return
+        synthesizer = TextToSpeech(context.applicationContext) { status ->
+            main.post {
+                synthesisReady = status == TextToSpeech.SUCCESS
+                synthesisFailed = !synthesisReady
+                if (synthesisReady) {
+                    synthesizer?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                        override fun onStart(utteranceId: String?) = Unit
+                        override fun onDone(utteranceId: String?) {
+                            main.post {
+                                if (utteranceId == null || utteranceId != activeUtterance) return@post
+                                activeUtterance = null
+                                val gen = generation
+                                main.postDelayed({ playNext(gen) }, GAP_MS)
+                            }
+                        }
+                        override fun onError(utteranceId: String?) {
+                            main.post {
+                                if (utteranceId != null && utteranceId == activeUtterance) synthesisError()
+                            }
+                        }
+                    })
+                }
+                if (waitingForSynthesis) {
+                    waitingForSynthesis = false
+                    playNext(generation)
+                }
+            }
+        }
     }
 
     /** 한 줄을 읽는다 — 읽던 것은 끊는다 */
@@ -51,13 +91,16 @@ object Speech {
     /** 여러 줄을 이어 읽는다 — 읽던 것은 끊는다 */
     fun speak(lines: List<VoiceLine>) {
         stop()
+        if (!AppLanguage.current.supportsReadAloud) return
         queue.addAll(lines)
         playNext(generation)
     }
 
     fun stop() {
         generation += 1
-        main.removeCallbacksAndMessages(null)
+        waitingForSynthesis = false
+        activeUtterance = null
+        synthesizer?.stop()
         player?.release()
         player = null
         queue.clear()
@@ -65,8 +108,19 @@ object Speech {
         isSpeaking = false
     }
 
+    private fun synthesisError() {
+        Log.e(TAG, "기기 음성을 사용할 수 없습니다: ${AppLanguage.current.code}")
+        stop()
+        app?.let { Toast.makeText(it, R.string.speech_unavailable, Toast.LENGTH_LONG).show() }
+    }
+
     private fun playNext(gen: Int) {
         if (gen != generation) return
+        val next = queue.firstOrNull()
+        if (next != null && !VoiceLines.usesRecordedAudio(next) && !synthesisReady) {
+            if (synthesisFailed) synthesisError() else waitingForSynthesis = true
+            return
+        }
         val line = queue.removeFirstOrNull()
         if (line == null) {
             isSpeaking = false
@@ -74,6 +128,27 @@ object Speech {
             return
         }
         val context = checkNotNull(app) { "Speech.init 전에 호출됐습니다" }
+        if (!VoiceLines.usesRecordedAudio(line)) {
+            val tts = checkNotNull(synthesizer)
+            val locale = Locale.forLanguageTag(AppLanguage.current.code)
+            if (tts.setLanguage(locale) < 0) {
+                synthesisError()
+                return
+            }
+            val voice = tts.voices?.filter { it.locale.language == locale.language && !it.isNetworkConnectionRequired }
+                ?.sortedWith(compareByDescending<android.speech.tts.Voice> { it.quality }.thenBy { it.name })?.firstOrNull()
+            if (voice == null || tts.setVoice(voice) == TextToSpeech.ERROR) {
+                synthesisError()
+                return
+            }
+            tts.setSpeechRate(0.85f)
+            val id = "$gen:${line.key}"
+            activeUtterance = id
+            speakingKey = line.key
+            isSpeaking = true
+            if (tts.speak(line.text, TextToSpeech.QUEUE_FLUSH, null, id) == TextToSpeech.ERROR) synthesisError()
+            return
+        }
         val afd = try {
             // 음성 팩은 언어별 폴더 — 키는 언어와 무관하다 (VoiceLines)
             context.assets.openFd("voice/${AppLanguage.current.code}/${line.key}.m4a")

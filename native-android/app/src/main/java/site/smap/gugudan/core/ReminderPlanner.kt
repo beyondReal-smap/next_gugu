@@ -63,7 +63,7 @@ object ReminderPlanner {
                 else -> "오전 ${hour}시"  // i18n:skip
             }
             AppLanguage.JA -> "H時"
-            AppLanguage.EN -> {
+            AppLanguage.EN, AppLanguage.HI, AppLanguage.VI, AppLanguage.ID -> {
                 val short = DateTimeFormatterBuilder.getLocalizedDateTimePattern(
                     null, FormatStyle.SHORT, IsoChronology.INSTANCE, locale)
                 if (short.contains('h') || short.contains('K')) "h\u202Fa" else "HH"

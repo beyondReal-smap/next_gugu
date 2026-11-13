@@ -14,7 +14,7 @@ struct CoachHint: Equatable {
 }
 
 enum Hints {
-    static let roadmapTables = [2, 5, 3, 4, 6, 9, 7, 8]
+    static let roadmapTables = [2, 5, 3, 4, 6, 9, 7, 8] + Array(10...Problems.maxTable)
 
     /// 다음에 배울 단 — 로드맵 순서에서 아직 별이 없는 첫 단.
     /// 모든 단에 별이 있으면 별이 가장 적은 단(동률이면 로드맵 순), 전부 3개면 nil.

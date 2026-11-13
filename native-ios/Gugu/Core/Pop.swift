@@ -196,10 +196,10 @@ enum Pop {
 
     /// n 을 만드는 짝꿍 전부 (a ≤ b, 1~9, b ≥ 2) — 순서를 바꾼 쌍은 같은 쌍으로 본다
     static func pairs(of n: Int) -> [PopPair] {
-        (1...9).compactMap { a in
+        (Problems.minB...Problems.maxB).compactMap { a in
             guard n % a == 0 else { return nil }
             let b = n / a
-            return b >= a && b <= 9 && b >= 2 ? PopPair(a: a, b: b) : nil
+            return b >= a && b <= Problems.maxB && b >= 2 ? PopPair(a: a, b: b) : nil
         }
     }
 
@@ -210,7 +210,7 @@ enum Pop {
 
     /// 보스 수 — 그 웨이브 단 × 2~9 (단과 곱하는 수의 짝꿍이 반드시 있다)
     static func bossTarget(table: Int, random: () -> Double) -> Int {
-        table * (2 + pick(8, random))
+        table * (2 + pick(Problems.maxB - 1, random))
     }
 
     // MARK: - 풍선 값
@@ -228,19 +228,19 @@ enum Pop {
     }
 
     static func distractorPool(table t: Int) -> DistractorPool {
-        func ok(_ v: Int) -> Bool { v >= 1 && v <= 81 && v % t != 0 }
+        func ok(_ v: Int) -> Bool { v >= 1 && v <= Problems.maxTable * Problems.maxB && v % t != 0 }
         func uniqueSorted(_ xs: [Int]) -> [Int] { Array(Set(xs)).sorted() }
-        let multiples = (1...9).map { t * $0 }
+        let multiples = (Problems.minB...Problems.maxB).map { t * $0 }
         let near = uniqueSorted(multiples.flatMap { [$0 - 1, $0 + 1] }.filter(ok))
         let neighbour = uniqueSorted([t - 1, t + 1]
             .filter { (Problems.minTable...Problems.maxTable).contains($0) }
-            .flatMap { n in (1...9).map { n * $0 } }
+            .flatMap { n in (Problems.minB...Problems.maxB).map { n * $0 } }
             .filter { ok($0) && !near.contains($0) })
         let reversal = uniqueSorted(multiples
             .filter { $0 >= 10 && $0 % 10 != 0 }
-            .map { ($0 % 10) * 10 + $0 / 10 }
+            .compactMap { Int(String(String($0).reversed())) }
             .filter { ok($0) && !near.contains($0) && !neighbour.contains($0) })
-        let far = (1...81).filter { ok($0) && !near.contains($0) && !neighbour.contains($0) && !reversal.contains($0) }
+        let far = (1...(Problems.maxTable * Problems.maxB)).filter { ok($0) && !near.contains($0) && !neighbour.contains($0) && !reversal.contains($0) }
         return DistractorPool(near: near, neighbour: neighbour, reversal: reversal, far: far)
     }
 
@@ -267,7 +267,7 @@ enum Pop {
 
     /// 정답 값 — table × 1~9 중 화면에 없는 것
     static func correctValue(table: Int, exclude: [Int], random: () -> Double) -> Int {
-        let options = (1...9).map { table * $0 }.filter { !exclude.contains($0) }
+        let options = (Problems.minB...Problems.maxB).map { table * $0 }.filter { !exclude.contains($0) }
         precondition(!options.isEmpty, "정답 후보 없음: \(table)단")
         return options[pick(options.count, random)]
     }
@@ -276,7 +276,7 @@ enum Pop {
     static func smallValues(target: Int, random: () -> Double) -> [Int] {
         let all = pairs(of: target)
         let pair = all[pick(all.count, random)]
-        let others = shuffled((1...9).filter { !isPairMember($0, target: target) }, random)
+        let others = shuffled((Problems.minB...Problems.maxB).filter { !isPairMember($0, target: target) }, random)
         // 1~9 중 짝꿍에 드는 수는 많아야 4개(예: 12 → 2·3·4·6)라 남는 수가 늘 5개 이상이다
         precondition(others.count >= smallSlots.count - 2, "보스 \(target): 오답 후보 부족")
         return shuffled([pair.a, pair.b] + others.prefix(smallSlots.count - 2), random)
@@ -549,8 +549,8 @@ enum Pop {
 
     /// 빈자리용 수 — 화면에 없는 '짝꿍에 안 드는 수', 없으면 화면에 없는 짝꿍 수, 그것도 없으면 아무 '짝꿍에 안 드는 수'
     private static func filler(target: Int, exclude: [Int], random: () -> Double) -> Int {
-        let others = (1...9).filter { !isPairMember($0, target: target) }
-        let members = (1...9).filter { isPairMember($0, target: target) }
+        let others = (Problems.minB...Problems.maxB).filter { !isPairMember($0, target: target) }
+        let members = (Problems.minB...Problems.maxB).filter { isPairMember($0, target: target) }
         let fresh = others.filter { !exclude.contains($0) }
         if !fresh.isEmpty { return fresh[pick(fresh.count, random)] }
         let freshMembers = members.filter { !exclude.contains($0) }

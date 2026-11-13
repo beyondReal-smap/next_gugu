@@ -66,7 +66,7 @@ enum Runner {
             answer - problem.a, answer + problem.a, answer - problem.b,
             answer + problem.b, answer - 1, answer + 1,
         ].filter { value in
-            guard value > 0, value <= 81, value != answer else { return false }
+            guard value > 0, value <= Problems.maxTable * Problems.maxB, value != answer else { return false }
             return seen.insert(value).inserted
         }
         let picked = Array(shuffled(alternatives, random: random).prefix(2))

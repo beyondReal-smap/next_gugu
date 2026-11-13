@@ -4,9 +4,9 @@ import Foundation
 
 enum Problems {
     static let minTable = 2
-    static let maxTable = 9
+    static let maxTable = 19
     static let minB = 1
-    static let maxB = 9
+    static let maxB = 19
 
     static func key(_ a: Int, _ b: Int) -> String { "\(a)x\(b)" }
 

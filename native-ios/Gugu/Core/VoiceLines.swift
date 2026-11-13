@@ -1,7 +1,7 @@
 import Foundation
 
 // 소리 내어 읽을 문장 → 미리 만든 음성 파일(키) 연결.
-// 문장이 552개로 한정돼 있어 ElevenLabs 로 한 번 생성해 앱에 넣었다 (tools/voice).
+// 한국어·일본어·영어 각 2682줄을 ElevenLabs 로 생성해 앱에 넣었다 (tools/voice).
 // 키 규칙은 tools/voice/phrases.py 와 같고, 두 쪽이 어긋나면 VoiceLinesTests 가 실패한다.
 
 /// 읽을 한 줄 — key 로 음성 파일을 찾고, text 는 그 파일이 읽는 문장이다
@@ -11,6 +11,12 @@ struct VoiceLine: Equatable {
 }
 
 enum VoiceLines {
+    /// 한국어·일본어·영어는 19단까지 내장 팩을 사용한다.
+    static func usesRecordedAudio(_ line: VoiceLine, language: AppLanguage = .current) -> Bool {
+        guard language.supportsReadAloud else { return false }
+        return line.key.range(of: "^(q|m|c|ox)-([2-9]|1[0-9])x([1-9]|1[0-9])(-[0-9]+)?$", options: .regularExpression) != nil
+    }
+
     /// 세션 문제 낭독 — 모드별 문장 (SpokenMath.question 과 같은 글). 키는 언어와 무관하고, 파일은 언어별 폴더에 있다
     static func question(_ p: Problem, mode: GameMode, statement: Statement?,
                          language: AppLanguage = .current) -> VoiceLine {
@@ -36,6 +42,9 @@ enum VoiceLines {
         let key = "c-\(a)x\(b)"
         switch language {
         case .ko:
+            if a >= 10 || b >= 10 {
+                return VoiceLine(key: key, text: KoreanReading.chant(a, b) + ".")
+            }
             let head = KoreanReading.sino(a) + (b == 2 ? "," : "")
             return VoiceLine(key: key,
                              text: "\(head) \(KoreanReading.topic(KoreanReading.sino(b))) \(KoreanReading.sino(a * b)).")
@@ -43,6 +52,8 @@ enum VoiceLines {
             return VoiceLine(key: key, text: EnglishReading.chant(a, b))
         case .ja:
             return VoiceLine(key: key, text: JapaneseReading.chant(a, b) + "。")
+        case .hi, .vi, .id:
+            return VoiceLine(key: key, text: SpokenMath.equationLabel(a, b, language: language) + (language == .hi ? "।" : "."))
         }
     }
 

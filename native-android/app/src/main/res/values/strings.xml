@@ -43,7 +43,7 @@
     <string name="already_has_an_account_enter_the_6_digit">%s already has an account. Enter the 6-digit code from your email to sign in to it.</string>
     <!-- 상점 캐릭터 색 이름 -->
     <string name="amber">Amber</string>
-    <string name="an_even_mix_of_tables_2_9">An even mix of tables 2–9</string>
+    <string name="an_even_mix_of_tables_2_9">An even mix of tables 2–19</string>
     <!-- 알림 설정 문구 -->
     <string name="announcements">Announcements</string>
     <!-- Android 시스템 설정의 알림 채널 이름 — 공지·계정 등 서비스 알림 (FCM 기본 채널) -->
@@ -452,7 +452,7 @@
     <!-- 업적 설명 -->
     <string name="mastered_a_times_table_earned_a_star">Mastered a times table (earned a star)</string>
     <!-- 업적 설명 -->
-    <string name="mastered_every_table_from_2_to_9">Mastered every table from 2 to 9</string>
+    <string name="mastered_every_table_from_2_to_9">Mastered every table from 2 to 19</string>
     <string name="mastery">Mastery</string>
     <!-- 레벨 칭호 -->
     <string name="math_master">Math Master</string>
@@ -472,7 +472,7 @@
     <!-- 모드 이름 -->
     <string name="missing_number">Missing Number</string>
     <string name="mix_tables">Mixed</string>
-    <string name="mixed_tables_2_9_evenly">Mixed, tables 2–9 evenly</string>
+    <string name="mixed_tables_2_9_evenly">Mixed, tables 2–19 evenly</string>
     <!-- 업적 이름 -->
     <string name="mode_explorer">Mode Explorer</string>
     <!-- 모드 이름 — 단을 골라 천천히 푸는 연습 모드 (학습 탭 이름과 다름) -->
@@ -796,6 +796,7 @@
     <string name="solved_problems_are_saved_but_wins_and">Solved problems are saved, but wins and losses aren\'t.</string>
     <string name="sound_effects">Sound effects</string>
     <string name="sound_haptics">Sound &amp; Haptics</string>
+    <string name="speech_unavailable">Speech is unavailable for this language. Please check your device’s speech settings.</string>
     <string name="speed">%1$s · Speed %2$d</string>
     <!-- 모드 선택 시 하단 설명 -->
     <string name="speed_is_your_score_the_faster_you">Speed is your score! The faster you answer, the more XP you get.</string>

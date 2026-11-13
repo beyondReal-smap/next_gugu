@@ -67,7 +67,8 @@ enum KoreanReading {
 
     /// 구구단 외우기 한 줄 — "칠 팔은 오십육"
     static func chant(_ a: Int, _ b: Int) -> String {
-        "\(sino(a)) \(topic(sino(b))) \(sino(a * b))"
+        let separator = a >= 10 || b >= 10 ? " 곱하기 " : " "
+        return "\(sino(a))\(separator)\(topic(sino(b))) \(sino(a * b))"
     }
 
     // MARK: - 화면 문구용 (숫자는 아라비아 숫자, 조사는 한자어 읽기 기준)

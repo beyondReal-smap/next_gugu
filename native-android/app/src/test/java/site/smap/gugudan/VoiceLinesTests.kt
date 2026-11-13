@@ -6,10 +6,11 @@ import kotlinx.serialization.json.jsonPrimitive
 import org.junit.Test
 import site.smap.gugudan.core.*
 import java.io.File
+import kotlin.test.assertFalse
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-// 내장 음성 팩 검사 (iOS VoiceLinesTests.swift 미러링) — 언어별로 앱이 읽을 수 있는 모든 줄에 음성 파일이 있고,
+// 내장 음성 팩 검사 (iOS VoiceLinesTests.swift 미러링) — ko/ja/en 19단 범위에 음성 파일이 있고,
 // 파일이 읽는 문장이 앱 문장과 같은지. 음성 팩은 tools/voice/generate.py build(또는 sync-android)로 만든다.
 
 class VoiceLinesTests {
@@ -18,9 +19,9 @@ class VoiceLinesTests {
     private fun voiceDir(language: AppLanguage) = File("src/main/assets/voice/${language.code}")
 
     /** 앱이 읽을 수 있는 모든 줄 (문제·빈칸·OX 의 모든 보기 값·구구단 외우기) */
-    private fun allLines(language: AppLanguage = AppLanguage.KO): List<VoiceLine> = buildList {
-        for (a in Problems.MIN_TABLE..Problems.MAX_TABLE) {
-            for (b in Problems.MIN_B..Problems.MAX_B) {
+    private fun allLines(language: AppLanguage = AppLanguage.KO, tables: IntRange = 2..19, factors: IntRange = 1..19): List<VoiceLine> = buildList {
+        for (a in tables) {
+            for (b in factors) {
                 val p = Problem(a, b)
                 add(VoiceLines.question(p, GameMode.PRACTICE, null, language))
                 add(VoiceLines.question(p, GameMode.MISSING, null, language))
@@ -58,11 +59,26 @@ class VoiceLinesTests {
         assertEquals(allLines(AppLanguage.KO).map { it.key }, allLines(AppLanguage.JA).map { it.key })
     }
 
+    @Test fun recordedAudioAndTtsCoverEveryLanguageAndFact() {
+        for (language in AppLanguage.entries) {
+            for (a in 2..19) for (b in 1..19) {
+                val recorded = language in listOf(AppLanguage.KO, AppLanguage.JA, AppLanguage.EN)
+                for (line in allLines(language, a..a, b..b)) {
+                    assertEquals(recorded, VoiceLines.usesRecordedAudio(line, language), "${language.code}: ${line.key}")
+                    assertTrue(line.text.isNotBlank(), "${language.code}: ${line.key}")
+                }
+            }
+            for (key in listOf("q-20x1", "c-19x20", "m-1x19", "q-19x0", "q-019x19")) {
+                assertFalse(VoiceLines.usesRecordedAudio(VoiceLine(key, ""), language), "${language.code}: $key")
+            }
+        }
+    }
+
     @Test fun voicePackCoversEveryLineKo() = assertPackCoversEveryLine(AppLanguage.KO)
     @Test fun voicePackCoversEveryLineEn() = assertPackCoversEveryLine(AppLanguage.EN)
     @Test fun voicePackCoversEveryLineJa() = assertPackCoversEveryLine(AppLanguage.JA)
 
-    /** 552줄 전수 — 매니페스트(= iOS·phrases.py 와 같은 대본)의 문장과 Kotlin 이 만든 문장이 글자 단위로 같아야 한다 */
+    /** 한국어·일본어·영어 각 2682줄 전수 — 매니페스트(= iOS·phrases.py 와 같은 대본)의 문장과 Kotlin 이 만든 문장이 글자 단위로 같아야 한다 */
     private fun assertPackCoversEveryLine(language: AppLanguage) {
         val dir = voiceDir(language)
         val manifestFile = File(dir, "manifest.json")
@@ -71,7 +87,7 @@ class VoiceLinesTests {
         val manifest = Json.parseToJsonElement(manifestFile.readText()).jsonObject
         val packed = manifest.getValue("lines").jsonObject.mapValues { it.value.jsonPrimitive.content }
         val lines = allLines(language)
-        assertEquals(552, lines.size, "${language.code} 문장 수")
+        assertEquals(2682, lines.size, "${language.code} 문장 수")
         assertEquals(lines.map { it.key }.toSet(), packed.keys, "${language.code}: 앱 문장 목록과 음성 팩 목록이 다릅니다")
         for (line in lines) {
             assertEquals(line.text, packed[line.key], "${language.code}: 문장이 바뀌었습니다 — 음성 팩을 다시 만드세요: ${line.key}")

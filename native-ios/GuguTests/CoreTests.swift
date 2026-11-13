@@ -4,6 +4,50 @@ import XCTest
 /// P1 Core 도메인 로직 검증 — TS 원본(lib/)과의 기능 패리티 확인
 final class CoreTests: XCTestCase {
 
+    func testNewLanguagesReadEveryNineteenTableProblem() {
+        for language in [AppLanguage.hi, .vi, .id] {
+            for problem in Problems.candidatesAll() {
+                for mode in [GameMode.practice, .missing, .truefalse] {
+                    let line = VoiceLines.question(problem, mode: mode, statement: Statement(shown: problem.a * problem.b, isTrue: true), language: language)
+                    XCTAssertFalse(line.text.isEmpty)
+                    XCTAssertFalse(VoiceLines.usesRecordedAudio(line, language: language))
+                }
+                XCTAssertTrue(VoiceLines.chant(problem.a, problem.b, language: language).text.contains(String(problem.a * problem.b)))
+            }
+        }
+        XCTAssertEqual(SpokenMath.questionLabel(19, 19, language: .vi), "19 nhân 19 bằng bao nhiêu?")
+        XCTAssertEqual(SpokenMath.questionLabel(19, 19, language: .id), "Berapa 19 kali 19?")
+        XCTAssertEqual(SpokenMath.questionLabel(19, 19, language: .hi), "19 गुणा 19 कितना होता है?")
+        XCTAssertTrue(VoiceLines.usesRecordedAudio(VoiceLines.chant(9, 9, language: .ko), language: .ko))
+        XCTAssertTrue(VoiceLines.usesRecordedAudio(VoiceLines.chant(9, 19, language: .ko), language: .ko))
+    }
+
+    func testNineteenTimesTableRange() {
+        let pool = Problems.candidatesAll()
+        XCTAssertEqual(pool.count, 342)
+        XCTAssertEqual(pool.last, Problem(a: 19, b: 19))
+        XCTAssertEqual(Problems.parseKey("19x19"), Problem(a: 19, b: 19))
+        XCTAssertNil(Problems.parseKey("20x19"))
+        XCTAssertNil(Problems.parseKey("19x20"))
+        XCTAssertEqual(Problems.candidates(table: 19).count, 19)
+    }
+
+    func testNineteenTimesTableChoicesAndReading() {
+        let question = Runner.question(table: 19, recentKeys: [], random: { 0.999 })
+        XCTAssertEqual(question.answer, 361)
+        XCTAssertEqual(Set(question.choices).count, 3)
+        XCTAssertTrue(question.choices.allSatisfy { (1...361).contains($0) })
+        XCTAssertEqual(EnglishReading.cardinal(361), "three hundred sixty-one")
+        XCTAssertEqual(JapaneseReading.number(361), "さんびゃくろくじゅういち")
+        XCTAssertEqual(JapaneseReading.chant(19, 19), "じゅうきゅう かける じゅうきゅう は さんびゃくろくじゅういち")
+        XCTAssertTrue(LearningContract.isFactId("19x19"))
+        XCTAssertFalse(LearningContract.isFactId("20x19"))
+        XCTAssertFalse(LearningContract.isFactId("019x19"))
+        XCTAssertTrue(LearningContract.isInFactRange(a: 19, b: 19))
+        XCTAssertEqual(sessionAnswerSlotDigits(problem: Problem(a: 19, b: 19), mode: .practice, input: ""), 3)
+    }
+
+
     // MARK: - Level / XP
 
     func testLevelThresholds() {
@@ -296,14 +340,14 @@ final class CoreTests: XCTestCase {
 
     // MARK: - Runner (구구 점프)
 
-    /// 보기는 정답 1개 + 서로 다른 오답 2개, 모두 1...81 범위
+    /// 보기는 정답 1개 + 서로 다른 오답 2개, 모두 1...361 범위
     func testRunnerQuestionChoices() {
         for _ in 0..<50 {
             let q = Runner.question(table: nil, recentKeys: [])
             XCTAssertEqual(q.choices.count, 3)
             XCTAssertEqual(Set(q.choices).count, 3)
             XCTAssertTrue(q.choices.contains(q.answer))
-            for c in q.choices { XCTAssertTrue(c >= 1 && c <= 81, "보기 범위 이탈: \(c)") }
+            for c in q.choices { XCTAssertTrue(c >= 1 && c <= 361, "보기 범위 이탈: \(c)") }
         }
         for _ in 0..<20 { XCTAssertEqual(Runner.question(table: 7, recentKeys: []).a, 7) }
     }
@@ -326,7 +370,7 @@ final class CoreTests: XCTestCase {
         let wrongChoice = s.question.choices.first { $0 != s.question.answer }!
         XCTAssertEqual(Runner.answer(s, choice: wrongChoice).outcome, .wrong)
 
-        let absent = (1...81).first { !s.question.choices.contains($0) }!
+        let absent = (1...361).first { !s.question.choices.contains($0) }!
         XCTAssertNil(Runner.answer(s, choice: absent).outcome)
         XCTAssertEqual(Runner.answer(correct, choice: wrongChoice).outcome, .correct)
 

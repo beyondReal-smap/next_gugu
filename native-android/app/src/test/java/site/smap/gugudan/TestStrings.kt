@@ -44,6 +44,7 @@ class TestStrings(private val language: AppLanguage = AppLanguage.KO) : Strings 
             tables.getOrPut(language) {
                 val folder = when (language) {
                     null, AppLanguage.EN -> "values"
+                    AppLanguage.ID -> "values-in"
                     else -> "values-${language.code}"
                 }
                 val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder()

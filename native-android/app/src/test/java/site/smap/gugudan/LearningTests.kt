@@ -57,13 +57,16 @@ class LearningTests {
         assertFalse(LearningContract.isUuid("0191d0f3-1b2c-7abc-cdef-0123456789ab"))  // variant c
     }
 
-    /** factId 는 2~9단 × 1~9 만 */
+    /** factId 는 2~19단 × 1~19 만 */
     @Test fun factIdPattern() {
         assertTrue(LearningContract.isFactId("2x1"))
         assertTrue(LearningContract.isFactId("9x9"))
         assertFalse(LearningContract.isFactId("1x3"))
         assertFalse(LearningContract.isFactId("3x0"))
-        assertFalse(LearningContract.isFactId("10x2"))
+        assertTrue(LearningContract.isFactId("10x2"))
+        assertTrue(LearningContract.isFactId("19x19"))
+        assertFalse(LearningContract.isFactId("20x2"))
+        assertFalse(LearningContract.isFactId("2x20"))
         assertFalse(LearningContract.isFactId("3X4"))
         assertEquals("7x8", LearningContract.factId(7, 8))
         assertTrue(LearningContract.isInFactRange(2, 1))
@@ -85,7 +88,7 @@ class LearningTests {
         LearningContract.validate(event())  // 통과
         for (bad in listOf(
             event(eventId = "bad"), event(sequenceNo = -1), event(factId = "1x1"),
-            event(tableNo = 1), event(tableNo = 10), event(responseMs = -1),
+            event(tableNo = 1), event(tableNo = 20), event(responseMs = -1),
             event(responseMs = 600_001), event(attemptNo = 0),
             event(occurredAt = "2026-09-21T04:52:03"), event(contentVersion = ""),
             event(contentVersion = "버전"),
@@ -93,6 +96,7 @@ class LearningTests {
             runCatching { LearningContract.validate(bad) }
                 .onSuccess { throw AssertionError("거부되어야 함: $bad") }
         }
+        LearningContract.validate(event(tableNo = 19, factId = "19x19"))
         LearningContract.validate(event(tableNo = null))  // null 허용
     }
 
@@ -182,14 +186,15 @@ class LearningTests {
             answers = listOf(
                 AnswerRecord(1, 5, true, 800),    // 1단 — 계약 밖
                 AnswerRecord(4, 5, true, 800),
-                AnswerRecord(12, 3, true, 800),   // 12단 — 계약 밖
+                AnswerRecord(20, 3, true, 800),   // 20단 — 계약 밖
+                AnswerRecord(19, 19, true, 800),
+                AnswerRecord(3, 20, true, 800),   // 곱하는 수 20 — 계약 밖
             ),
-            maxCombo = 3, durationMs = 2400,
+            maxCombo = 5, durationMs = 4000,
         )
         val events = LearningRecord.events(result, ids)
-        assertEquals(1, events.size)
-        assertEquals("4x5", events[0].factId)
-        assertEquals(1, events[0].sequenceNo)
+        assertEquals(listOf("4x5", "19x19"), events.map { it.factId })
+        assertEquals(listOf(1, 3), events.map { it.sequenceNo })
     }
 
     /** 응답 시간은 0~600초로 잘린다 */

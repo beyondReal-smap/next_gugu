@@ -9,9 +9,9 @@ data class Statement(val shown: Int, val isTrue: Boolean)
 
 object Problems {
     const val MIN_TABLE = 2
-    const val MAX_TABLE = 9
+    const val MAX_TABLE = 19
     const val MIN_B = 1
-    const val MAX_B = 9
+    const val MAX_B = 19
 
     fun key(a: Int, b: Int): String = "${a}x${b}"
 

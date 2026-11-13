@@ -86,7 +86,11 @@ val MPlusRounded = FontFamily(
 
 /** 앱 언어에 맞는 글꼴 — 화면은 언어가 바뀌면 Activity 째 다시 그려지므로 그때 다시 고른다 */
 fun suite(weight: FontWeight, size: Int) = TextStyle(
-    fontFamily = if (AppLanguage.current == AppLanguage.JA) MPlusRounded else Suite,
+    fontFamily = when (AppLanguage.current) {
+        AppLanguage.JA -> MPlusRounded
+        AppLanguage.HI, AppLanguage.VI, AppLanguage.ID -> FontFamily.Default
+        AppLanguage.KO, AppLanguage.EN -> Suite
+    },
     fontWeight = weight, fontSize = size.sp,
 )
 

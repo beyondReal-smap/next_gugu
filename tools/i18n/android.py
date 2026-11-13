@@ -43,11 +43,11 @@ ANDROID_ONLY_DIR = ROOT / "tools/i18n/android-only.d"
 KEYS = ROOT / "tools/i18n/android-keys.json"
 SRC = ROOT / "native-android/app/src/main/java"
 RES = ROOT / "native-android/app/src/main/res"
-OUT_DIRS = {"en": "values", "ko": "values-ko", "ja": "values-ja"}
+OUT_DIRS = {"en": "values", "ko": "values-ko", "ja": "values-ja", "hi": "values-hi", "vi": "values-vi", "id": "values-in"}
 # 코드가 쓰는 고정 리소스 — 카탈로그 밖 (언어 판별·앱 이름)
 FIXED = {
-    "app_name": {"ko": "구구 어드벤처", "en": "Gugu Adventure", "ja": "九九アドベンチャー"},
-    "app_language_code": {"ko": "ko", "en": "en", "ja": "ja"},
+    "app_name": {"ko": "구구 어드벤처", "en": "Gugu Adventure", "ja": "九九アドベンチャー", "hi": "गुगु एडवेंचर", "vi": "Gugu Phiêu lưu", "id": "Petualangan Gugu"},
+    "app_language_code": {"ko": "ko", "en": "en", "ja": "ja", "hi": "hi", "vi": "vi", "id": "id"},
 }
 
 HANGUL = re.compile(r"[가-힣]")
@@ -208,13 +208,15 @@ def sources() -> dict[str, Entry]:
         locs = v.get("localizations", {})
         translatable = v.get("shouldTranslate", True)
         values = {"ko": _unit(locs["ko"]) if "ko" in locs else key}
-        for lang in ("en", "ja"):
+        for lang in ("en", "ja", "hi", "vi", "id"):
+            if translatable and lang not in locs:
+                raise SystemExit(f"번역 누락: {lang}: {key}")
             values[lang] = _unit(locs[lang]) if lang in locs else values["ko"]
         out[key] = Entry(key, values, translatable, v.get("comment", ""))
     for key, v in android_only().items():
         if key in out:
             raise SystemExit(f"android-only 키가 카탈로그에도 있습니다: {key!r}")
-        out[key] = Entry(key, {"ko": v.get("ko", key), "en": v["en"], "ja": v["ja"]},
+        out[key] = Entry(key, {"ko": v.get("ko", key), **{lang: v[lang] for lang in ("en", "ja", "hi", "vi", "id")}},
                          v.get("translatable", True), v.get("comment", ""))
     return out
 
@@ -419,7 +421,7 @@ def check() -> None:
             problems.append(f"{res}: 원본에 키가 없음 {key!r}")
             continue
         base = None
-        for lang in ("ko", "en", "ja"):
+        for lang in OUT_DIRS:
             value = entry.values[lang]
             forms = value.values() if isinstance(value, dict) else [value]
             for form in forms:

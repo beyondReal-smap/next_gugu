@@ -9,10 +9,14 @@ package site.smap.gugudan.core
 object JapaneseReading {
     private val DIGITS = listOf("", "いち", "に", "さん", "よん", "ご", "ろく", "なな", "はち", "きゅう")
 
-    /** 수 읽기 (0~99, 히라가나) — 56 → "ごじゅうろく", 40 → "よんじゅう", 0 → "ぜろ" */
+    /** 수 읽기 (0~999, 히라가나) — 56 → "ごじゅうろく", 40 → "よんじゅう", 0 → "ぜろ" */
     fun number(n: Int): String {
-        require(n in 0 until 100) { "읽을 수 없는 수: $n" }
+        require(n in 0 until 1000) { "읽을 수 없는 수: $n" }
         if (n == 0) return "ぜろ"
+        if (n >= 100) {
+            val hundreds = listOf("", "ひゃく", "にひゃく", "さんびゃく", "よんひゃく", "ごひゃく", "ろっぴゃく", "ななひゃく", "はっぴゃく", "きゅうひゃく")
+            return hundreds[n / 100] + if (n % 100 == 0) "" else number(n % 100)
+        }
         val ten = n / 10
         val unit = n % 10
         val head = if (ten == 0) "" else (if (ten == 1) "" else DIGITS[ten]) + "じゅう"
@@ -42,7 +46,8 @@ object JapaneseReading {
     /** 九九 낭송 한 줄 — 7 × 8 → "しちは ごじゅうろく" */
     fun chant(a: Int, b: Int): String {
         val row = KUKU[a]
-        require(row != null && b in 1..row.size) { "九九 범위 밖: $a × $b" }
+        require(a in Problems.MIN_TABLE..Problems.MAX_TABLE && b in Problems.MIN_B..Problems.MAX_B)
+        if (row == null || b !in 1..row.size) return "${number(a)} かける ${number(b)} は ${number(a * b)}"
         return row[b - 1]
     }
 

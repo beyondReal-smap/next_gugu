@@ -1,7 +1,7 @@
 import XCTest
 @testable import Gugu
 
-/// 내장 음성 팩 검사 — 앱이 읽을 수 있는 모든 줄에 음성 파일이 있고, 파일이 읽는 문장이 앱 문장과 같은지.
+/// 내장 음성 팩 검사 — 언어별 내장 팩 범위의 모든 줄에 음성 파일이 있고, 파일이 읽는 문장이 앱 문장과 같은지.
 /// 음성 팩은 tools/voice/generate.py build 로 만든다. 규칙이 바뀌면 다시 만들어야 이 테스트가 통과한다.
 final class VoiceLinesTests: XCTestCase {
 
@@ -11,11 +11,11 @@ final class VoiceLinesTests: XCTestCase {
         let lines: [String: String]
     }
 
-    /// 앱이 읽을 수 있는 모든 줄 (문제·빈칸·OX 의 모든 보기 값·구구단 외우기)
-    private func allLines(_ language: AppLanguage) -> [VoiceLine] {
+    /// 언어별 내장 팩 범위의 모든 줄 (문제·빈칸·OX 의 모든 보기 값·구구단 외우기)
+    private func allLines(_ language: AppLanguage, maxFactor: Int = 9) -> [VoiceLine] {
         var out: [VoiceLine] = []
-        for a in Problems.minTable...Problems.maxTable {
-            for b in Problems.minB...Problems.maxB {
+        for a in 2...maxFactor {
+            for b in 1...maxFactor {
                 let p = Problem(a: a, b: b)
                 out.append(VoiceLines.question(p, mode: .practice, statement: nil, language: language))
                 out.append(VoiceLines.question(p, mode: .missing, statement: nil, language: language))
@@ -27,6 +27,36 @@ final class VoiceLinesTests: XCTestCase {
             }
         }
         return out
+    }
+
+    func testRecordedAudioBoundaryForAllLanguagesAndProblems() {
+        for language in AppLanguage.allCases {
+            for problem in Problems.candidatesAll() {
+                let expected = [.ko, .en, .ja].contains(language)
+                var lines = [VoiceLines.chant(problem.a, problem.b, language: language)]
+                for mode in [GameMode.practice, .missing, .truefalse] {
+                    lines.append(VoiceLines.question(problem, mode: mode,
+                        statement: Statement(shown: problem.a * problem.b, isTrue: true), language: language))
+                }
+                for shown in Problems.statementCandidates(problem) {
+                    lines.append(VoiceLines.question(problem, mode: .truefalse,
+                        statement: Statement(shown: shown, isTrue: false), language: language))
+                }
+                for line in lines {
+                    XCTAssertEqual(VoiceLines.usesRecordedAudio(line, language: language), expected,
+                                   "\(language.rawValue): \(line.key)")
+                    XCTAssertFalse(line.text.isEmpty)
+                }
+            }
+        }
+    }
+
+    func testRecordedAudioRejectsOutOfRangeProblems() {
+        for language in AppLanguage.allCases {
+            for key in ["q-20x19", "q-19x20", "c-1x9", "m-2x0", "c-019x19"] {
+                XCTAssertFalse(VoiceLines.usesRecordedAudio(VoiceLine(key: key, text: ""), language: language), key)
+            }
+        }
     }
 
     func testQuestionKeysPerMode() {
@@ -55,13 +85,14 @@ final class VoiceLinesTests: XCTestCase {
         }
     }
 
-    /// 언어 팩 검사 — 앱이 읽을 수 있는 모든 줄에 그 언어 음성 파일이 있고, 파일이 읽는 문장이 앱 문장과 같은지
+    /// 언어 팩 검사 — 언어별 내장 팩 범위의 모든 줄에 그 언어 음성 파일이 있고, 파일이 읽는 문장이 앱 문장과 같은지
     private func checkPack(_ language: AppLanguage) throws {
         let folder = "Voice/\(language.rawValue)"
         let url = try XCTUnwrap(Bundle.main.url(forResource: "voice-manifest", withExtension: "json", subdirectory: folder),
                                 "음성 팩이 없습니다 — python3 tools/voice/generate.py build --lang \(language.rawValue) 를 실행하세요")
         let manifest = try JSONDecoder().decode(Manifest.self, from: Data(contentsOf: url))
-        let lines = allLines(language)
+        let lines = allLines(language, maxFactor: 19)
+        XCTAssertEqual(lines.count, 2682)
         XCTAssertEqual(Set(lines.map(\.key)), Set(manifest.lines.keys), "앱 문장 목록과 음성 팩 목록이 다릅니다")
         for line in lines {
             XCTAssertEqual(manifest.lines[line.key], line.text, "문장이 바뀌었습니다 — 음성 팩을 다시 만드세요: \(line.key)")
@@ -73,13 +104,8 @@ final class VoiceLinesTests: XCTestCase {
         try checkPack(.ko)
     }
 
-    /// en·ja 팩은 M6 에서 만든다 — 그 전까지는 건너뛰지만, 출시 빌드에서는 건너뛰면 안 된다
     func testEnglishAndJapaneseVoicePacks() throws {
         for language in [AppLanguage.en, .ja] {
-            guard Bundle.main.url(forResource: "voice-manifest", withExtension: "json",
-                                  subdirectory: "Voice/\(language.rawValue)") != nil else {
-                throw XCTSkip("\(language.rawValue) 음성 팩 아직 없음 — 출시 전 필수")
-            }
             try checkPack(language)
         }
     }

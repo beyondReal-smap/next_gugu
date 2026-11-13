@@ -1,8 +1,8 @@
 """앱이 소리 내어 읽는 모든 문장 목록 (음성 파일 생성용).
 
 언어별로 앱의 읽기 규칙과 같게 만든다 — ko: Core/KoreanReading(Swift·Kotlin), en: EnglishReading,
-ja: JapaneseReading(Swift). 앱 단위 테스트가 이 목록으로 만든 manifest 와 앱 쪽 문장을 대조하므로,
-규칙이 어긋나면 테스트가 실패한다. 키는 세 언어가 같다.
+ja: JapaneseReading, hi·vi·id: SpokenMath(Swift·Kotlin). 앱 단위 테스트가 이 목록으로 만든 manifest 와 앱 쪽 문장을 대조하므로,
+규칙이 어긋나면 테스트가 실패한다. 키는 여섯 언어가 같다.
 
 키 규칙
   q-{a}x{b}          문제 (학습·스피드런·챌린지·서바이벌)   "칠 곱하기 팔은?"
@@ -13,8 +13,8 @@ ja: JapaneseReading(Swift). 앱 단위 테스트가 이 목록으로 만든 mani
 
 DIGITS = ["", "일", "이", "삼", "사", "오", "육", "칠", "팔", "구"]
 UNITS = [(1000, "천"), (100, "백"), (10, "십")]
-TABLES = range(2, 10)
-MULTIPLIERS = range(1, 10)
+TABLES = range(2, 20)
+MULTIPLIERS = range(1, 20)
 
 
 def sino(n: int) -> str:
@@ -51,7 +51,7 @@ def ox_shown_values(a: int, b: int) -> list[int]:
     return sorted({answer, *(w for w in wrong if w > 0 and w != answer)})
 
 
-LANGS = ("ko", "en", "ja")
+LANGS = ("ko", "en", "ja", "hi", "vi", "id")
 
 
 def phrases(lang: str = "ko") -> dict[str, str]:
@@ -59,6 +59,8 @@ def phrases(lang: str = "ko") -> dict[str, str]:
         return english_phrases()
     if lang == "ja":
         return japanese_phrases()
+    if lang in ("hi", "vi", "id"):
+        return localized_phrases(lang)
     if lang != "ko":
         raise ValueError(f"지원하지 않는 언어: {lang}")
     out: dict[str, str] = {}
@@ -72,7 +74,8 @@ def phrases(lang: str = "ko") -> dict[str, str]:
             for shown in ox_shown_values(a, b):
                 out[f"ox-{a}x{b}-{shown}"] = f"{A} 곱하기 {topic(B)} {sino(shown)}. 맞을까요?"
             # 곱하는 수가 2면 쉼표로 끊는다 — 붙여 읽으면 '이'가 앞 숫자와 섞여 "삼위는"으로 들린다
-            out[f"c-{a}x{b}"] = f"{A}{',' if b == 2 else ''} {topic(B)} {P}."
+            head = f"{A} 곱하기" if a >= 10 or b >= 10 else A + ("," if b == 2 else "")
+            out[f"c-{a}x{b}"] = f"{head} {topic(B)} {P}."
     return out
 
 
@@ -84,8 +87,10 @@ EN_TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "ei
 
 
 def cardinal(n: int) -> str:
-    if not 0 <= n < 100:
+    if not 0 <= n < 1000:
         raise ValueError(f"읽을 수 없는 수: {n}")
+    if n >= 100:
+        return EN_ONES[n // 100] + " hundred" + ("" if n % 100 == 0 else " " + cardinal(n % 100))
     if n < 20:
         return EN_ONES[n]
     return EN_TENS[n // 10] + ("" if n % 10 == 0 else "-" + EN_ONES[n % 10])
@@ -132,10 +137,13 @@ KUKU = {
 
 
 def ja_number(n: int) -> str:
-    if not 0 <= n < 100:
+    if not 0 <= n < 1000:
         raise ValueError(f"읽을 수 없는 수: {n}")
     if n == 0:
         return "ぜろ"
+    if n >= 100:
+        hundreds = ["", "ひゃく", "にひゃく", "さんびゃく", "よんひゃく", "ごひゃく", "ろっぴゃく", "ななひゃく", "はっぴゃく", "きゅうひゃく"]
+        return hundreds[n // 100] + ("" if n % 100 == 0 else ja_number(n % 100))
     ten, unit = divmod(n, 10)
     head = "" if ten == 0 else ("" if ten == 1 else JA_DIGITS[ten]) + "じゅう"
     return head + JA_DIGITS[unit]
@@ -151,7 +159,31 @@ def japanese_phrases() -> dict[str, str]:
             out[f"m-{a}x{b}"] = f"{P} は {A} かける なに？"
             for shown in ox_shown_values(a, b):
                 out[f"ox-{a}x{b}-{shown}"] = f"{A} かける {B} は、{ja_number(shown)}。まるかな？ ばつかな？"
-            out[f"c-{a}x{b}"] = KUKU[a][b - 1] + "。"
+            out[f"c-{a}x{b}"] = (KUKU[a][b - 1] if a in KUKU and b <= 9 else f"{A} かける {B} は {P}") + "。"
+    return out
+
+
+# MARK: 힌디어·베트남어·인도네시아어 (SpokenMath 와 같은 숫자 문장)
+
+
+def localized_phrases(lang: str) -> dict[str, str]:
+    templates = {
+        "hi": ("{a} गुणा {b} कितना होता है?", "{a} को किस संख्या से गुणा करने पर {p} मिलता है?",
+               "{a} गुणा {b} बराबर {shown}। सही या गलत?", "{a} गुणा {b} बराबर {p}।"),
+        "vi": ("{a} nhân {b} bằng bao nhiêu?", "{a} nhân bao nhiêu bằng {p}?",
+               "{a} nhân {b} bằng {shown}. Đúng hay sai?", "{a} nhân {b} bằng {p}."),
+        "id": ("Berapa {a} kali {b}?", "{a} dikali berapa hasilnya {p}?",
+               "{a} kali {b} sama dengan {shown}. Benar atau salah?", "{a} kali {b} sama dengan {p}."),
+    }
+    question, missing, statement, chant = templates[lang]
+    out: dict[str, str] = {}
+    for a in TABLES:
+        for b in MULTIPLIERS:
+            out[f"q-{a}x{b}"] = question.format(a=a, b=b)
+            out[f"m-{a}x{b}"] = missing.format(a=a, p=a * b)
+            for shown in ox_shown_values(a, b):
+                out[f"ox-{a}x{b}-{shown}"] = statement.format(a=a, b=b, shown=shown)
+            out[f"c-{a}x{b}"] = chant.format(a=a, b=b, p=a * b)
     return out
 
 

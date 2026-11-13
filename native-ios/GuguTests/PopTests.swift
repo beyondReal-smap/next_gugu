@@ -116,7 +116,7 @@ final class PopTests: XCTestCase {
     }
 
     func testMixedWaveTablesFollowRoadmap() {
-        XCTAssertEqual((1...9).map { Pop.waveTable(wave: $0, table: nil) }, [2, 5, 3, 4, 6, 9, 7, 8, 2])
+        XCTAssertEqual((1...9).map { Pop.waveTable(wave: $0, table: nil) }, [2, 5, 3, 4, 6, 9, 7, 8, 10])
         XCTAssertEqual((1...4).map { Pop.waveTable(wave: $0, table: 7) }, [7, 7, 7, 7])
     }
 
@@ -124,23 +124,23 @@ final class PopTests: XCTestCase {
 
     func testDistractorPoolForSeven() {
         let pool = Pop.distractorPool(table: 7)
-        XCTAssertEqual(pool.near, [6, 8, 13, 15, 20, 22, 27, 29, 34, 36, 41, 43, 48, 50, 55, 57, 62, 64])
-        XCTAssertEqual(pool.neighbour, [12, 16, 18, 24, 30, 32, 40, 54, 72])
-        XCTAssertEqual(pool.reversal, [53, 65])
+        XCTAssertEqual(pool.near, [6, 8, 13, 15, 20, 22, 27, 29, 34, 36, 41, 43, 48, 50, 55, 57, 62, 64, 69, 71, 76, 78, 83, 85, 90, 92, 97, 99, 104, 106, 111, 113, 118, 120, 125, 127, 132, 134])
+        XCTAssertEqual(pool.neighbour, [12, 16, 18, 24, 30, 32, 40, 54, 60, 66, 72, 80, 88, 96, 102, 108, 114, 128, 136, 144, 152])
+        XCTAssertEqual(pool.reversal, [19, 53, 65, 82, 89, 94, 211, 331])
     }
 
     func testDistractorPoolsNeverContainMultiples() {
-        for t in 2...9 {
+        for t in 2...19 {
             let pool = Pop.distractorPool(table: t)
             let all = pool.near + pool.neighbour + pool.reversal + pool.far
             XCTAssertEqual(Set(all).count, all.count, "\(t)단: 후보끼리 겹침")
-            XCTAssertTrue(all.allSatisfy { $0 >= 1 && $0 <= 81 && $0 % t != 0 }, "\(t)단")
+            XCTAssertTrue(all.allSatisfy { $0 >= 1 && $0 <= 361 && $0 % t != 0 }, "\(t)단")
             XCTAssertFalse(pool.near.isEmpty || pool.neighbour.isEmpty || pool.far.isEmpty, "\(t)단")
         }
     }
 
     func testSpawnedBalloonsMatchMission() {
-        for t in [nil] + (2...9).map(Optional.some) {
+        for t in [nil] + (2...19).map(Optional.some) {
             for seed in UInt32(1)...12 {
                 _ = play(table: t, seed: seed, frames: 1600, policy: .sloppy) { s in
                     // 보스 작은 풍선은 제곱 짝꿍(6·6)이 있어 같은 수가 둘일 수 있다
@@ -150,10 +150,10 @@ final class PopTests: XCTestCase {
                     for b in s.balloons {
                         if b.correct {
                             XCTAssertEqual(b.value % s.waveTable, 0)
-                            XCTAssertTrue((1...9).contains(b.value / s.waveTable))
+                            XCTAssertTrue((1...19).contains(b.value / s.waveTable))
                         } else {
                             XCTAssertNotEqual(b.value % s.waveTable, 0, "오답에 배수: \(b.value) / \(s.waveTable)단")
-                            XCTAssertTrue((1...81).contains(b.value))
+                            XCTAssertTrue((1...361).contains(b.value))
                         }
                     }
                 }
@@ -172,15 +172,15 @@ final class PopTests: XCTestCase {
     // MARK: - 짝꿍 보스
 
     func testPairs() {
-        XCTAssertEqual(Pop.pairs(of: 36), [PopPair(a: 4, b: 9), PopPair(a: 6, b: 6)])
-        XCTAssertEqual(Pop.pairs(of: 24), [PopPair(a: 3, b: 8), PopPair(a: 4, b: 6)])
+        XCTAssertEqual(Pop.pairs(of: 36), [PopPair(a: 2, b: 18), PopPair(a: 3, b: 12), PopPair(a: 4, b: 9), PopPair(a: 6, b: 6)])
+        XCTAssertEqual(Pop.pairs(of: 24), [PopPair(a: 2, b: 12), PopPair(a: 3, b: 8), PopPair(a: 4, b: 6)])
         XCTAssertEqual(Pop.pairs(of: 8), [PopPair(a: 1, b: 8), PopPair(a: 2, b: 4)])
         XCTAssertEqual(Pop.pairs(of: 81), [PopPair(a: 9, b: 9)])
-        XCTAssertEqual(Pop.pairs(of: 11), [])
+        XCTAssertEqual(Pop.pairs(of: 11), [PopPair(a: 1, b: 11)])
     }
 
     func testBossAlwaysHasCompletablePair() {
-        for t in 2...9 {
+        for t in 2...19 {
             let random = rng(UInt32(t * 31))
             for _ in 0..<40 {
                 let target = Pop.bossTarget(table: t, random: random)
@@ -426,22 +426,22 @@ final class PopTests: XCTestCase {
     func testGoldenTable7Perfect() {
         let (run, _) = play(table: 7, seed: 42, frames: 2400, policy: .perfect)
         XCTAssertEqual(run, Run(
-            score: 1580, wave: 10, hearts: 3, maxCombo: 57, pops: 57, wrongTaps: 0, bossesDefeated: 3,
+            score: 1640, wave: 10, hearts: 3, maxCombo: 59, pops: 59, wrongTaps: 0, bossesDefeated: 3,
             over: false, trialLeft: nil,
-            values: [21, 68, 14, 49, 7, 56, 58, 23, 14, 51, 42, 21, 65, 22, 40, 53, 28, 8, 28, 72, 49, 21, 3, 4, 7, 2, 7, 8, 5, 2],
-            missions: [.multiples(table: 7), .pairBoss(target: 49), .multiples(table: 7), .pairBoss(target: 49),
-                       .multiples(table: 7), .pairBoss(target: 28), .multiples(table: 7)]))
+            values: [35, 289, 28, 98, 7, 119, 244, 150, 28, 228, 91, 42, 89, 43, 102, 19, 63, 20, 49, 136, 98, 42, 1, 7, 19, 14, 8, 11, 3, 18],
+            missions: [.multiples(table: 7), .pairBoss(target: 98), .multiples(table: 7), .pairBoss(target: 77),
+                       .multiples(table: 7), .pairBoss(target: 49), .multiples(table: 7)]))
     }
 
     func testGoldenMixedSloppy() {
         let (run, _) = play(table: nil, seed: 2026, frames: 2400, policy: .sloppy)
         XCTAssertEqual(run, Run(
-            score: 650, wave: 10, hearts: 3, maxCombo: 9, pops: 54, wrongTaps: 46, bossesDefeated: 3,
+            score: 610, wave: 10, hearts: 3, maxCombo: 7, pops: 55, wrongTaps: 45, bossesDefeated: 3,
             over: false, trialLeft: nil,
-            values: [25, 47, 4, 49, 12, 4, 69, 18, 6, 10, 35, 15, 51, 18, 10, 54, 30, 42, 30, 52, 6, 45, 9, 4, 6, 2, 7, 1, 8, 8],
-            missions: [.multiples(table: 2), .multiples(table: 5), .pairBoss(target: 9), .multiples(table: 4),
-                       .multiples(table: 6), .pairBoss(target: 54), .multiples(table: 7), .multiples(table: 8),
-                       .pairBoss(target: 6), .multiples(table: 5)]))
+            values: [75, 177, 8, 183, 22, 8, 295, 36, 12, 18, 65, 35, 53, 28, 20, 108, 60, 78, 55, 57, 11, 90, 17, 15, 1, 9, 14, 19, 18, 15],
+            missions: [.multiples(table: 2), .multiples(table: 5), .pairBoss(target: 15), .multiples(table: 4),
+                       .multiples(table: 6), .pairBoss(target: 135), .multiples(table: 7), .multiples(table: 8),
+                       .pairBoss(target: 190), .multiples(table: 11)]))
     }
 
     func testGoldenTable9Lazy() {
@@ -449,7 +449,7 @@ final class PopTests: XCTestCase {
         XCTAssertEqual(run, Run(
             score: 0, wave: 1, hearts: 0, maxCombo: 0, pops: 0, wrongTaps: 0, bossesDefeated: 0,
             over: true, trialLeft: nil,
-            values: [59, 27, 36, 52, 54, 72, 81],
+            values: [273, 54, 63, 256, 99, 153, 144],
             missions: [.multiples(table: 9)]))
     }
 }

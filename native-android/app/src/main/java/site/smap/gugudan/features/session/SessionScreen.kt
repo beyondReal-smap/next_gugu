@@ -109,7 +109,7 @@ private fun SessionPlayView(engine: SessionEngine, onExit: () -> Unit) {
 
     fun readQuestion() {
         // 확인 시트가 떠 있는 동안 넘어온 문제는 시트 뒤에서 읽지 않는다 — 재개할 때 읽는다
-        if (!prefs.readAloud || engine.pausedAt != null) return
+        if (!AppLanguage.current.supportsReadAloud || !prefs.readAloud || engine.pausedAt != null) return
         readSerial = engine.problemSerial
         Speech.speak(VoiceLines.question(engine.problem, engine.mode, engine.statement))
     }
@@ -179,17 +179,19 @@ private fun SessionPlayView(engine: SessionEngine, onExit: () -> Unit) {
                         }
                     }
                     // 문제 읽어주기 — 켜면 지금 문제부터 바로 읽는다
-                    PressableCard(onClick = {
-                        prefs.updateReadAloud(!prefs.readAloud)
-                        readQuestion()
-                    }) {
-                        Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
-                            Icon(
-                                if (prefs.readAloud) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
-                                stringResource(if (prefs.readAloud) R.string.turn_off_read_aloud else R.string.turn_on_read_aloud),
-                                tint = if (prefs.readAloud) gg.accent else gg.textMuted,
-                                modifier = Modifier.size(20.dp),
-                            )
+                    if (AppLanguage.current.supportsReadAloud) {
+                        PressableCard(onClick = {
+                            prefs.updateReadAloud(!prefs.readAloud)
+                            readQuestion()
+                        }) {
+                            Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                                Icon(
+                                    if (prefs.readAloud) Icons.AutoMirrored.Filled.VolumeUp else Icons.AutoMirrored.Filled.VolumeOff,
+                                    stringResource(if (prefs.readAloud) R.string.turn_off_read_aloud else R.string.turn_on_read_aloud),
+                                    tint = if (prefs.readAloud) gg.accent else gg.textMuted,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
                         }
                     }
                 }
@@ -500,7 +502,7 @@ fun Keypad(onInput: (Int) -> Unit, onDelete: () -> Unit, onSubmit: () -> Unit, c
 fun oxMark(isTrue: Boolean): String = when (AppLanguage.current) {
     AppLanguage.KO -> if (isTrue) "O" else "X"
     AppLanguage.JA -> if (isTrue) "○" else "×"
-    AppLanguage.EN -> if (isTrue) "✓" else "✗"
+    AppLanguage.EN, AppLanguage.HI, AppLanguage.VI, AppLanguage.ID -> if (isTrue) "✓" else "✗"
 }
 
 @Composable
@@ -521,7 +523,7 @@ fun OxPad(onAnswer: (Boolean) -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 // 영어권은 O/X 관습이 없어 ✓/✗ 로 보인다 (iOS 와 같음)
-                if (AppLanguage.current == AppLanguage.EN) {
+                if (AppLanguage.current !in listOf(AppLanguage.KO, AppLanguage.JA)) {
                     Icon(Icons.Filled.Check, null, tint = gg.success, modifier = Modifier.size(48.dp))
                 } else {
                     Box(Modifier.size(44.dp).border(5.dp, gg.success, CircleShape))

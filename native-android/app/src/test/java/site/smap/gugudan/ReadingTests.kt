@@ -12,6 +12,27 @@ import kotlin.test.assertNull
 // 영어·일본어 읽기 규칙 (iOS GuguTests/ReadingTests.swift 미러링) — 음성 대본(552줄)과 화면 낭독 라벨의 기준이다
 class ReadingTests {
 
+    @Test fun koreanExtendedChantsSeparateTheFactors() {
+        val examples = listOf(
+            Triple(3, 19, "삼 곱하기 십구는 오십칠"),
+            Triple(9, 10, "구 곱하기 십은 구십"),
+            Triple(10, 9, "십 곱하기 구는 구십"),
+            Triple(10, 2, "십 곱하기 이는 이십"),
+            Triple(19, 19, "십구 곱하기 십구는 삼백육십일"),
+        )
+        for ((a, b, expected) in examples) {
+            assertEquals(expected, KoreanReading.chant(a, b))
+            assertEquals("$expected.", VoiceLines.chant(a, b, AppLanguage.KO).text)
+        }
+        for (a in 2..9) for (b in 1..9) {
+            assertEquals("${KoreanReading.sino(a)} ${KoreanReading.topic(KoreanReading.sino(b))} ${KoreanReading.sino(a * b)}",
+                KoreanReading.chant(a, b))
+            val head = KoreanReading.sino(a) + if (b == 2) "," else ""
+            assertEquals("$head ${KoreanReading.topic(KoreanReading.sino(b))} ${KoreanReading.sino(a * b)}.",
+                VoiceLines.chant(a, b, AppLanguage.KO).text)
+        }
+    }
+
     @Test fun englishCardinals() {
         assertEquals("zero", EnglishReading.cardinal(0))
         assertEquals("thirteen", EnglishReading.cardinal(13))
@@ -58,8 +79,8 @@ class ReadingTests {
         val manifest = Json.parseToJsonElement(File("src/main/assets/voice/ja/manifest.json").readText())
             .jsonObject.getValue("lines").jsonObject.mapValues { it.value.jsonPrimitive.content }
         val lines = mutableSetOf<String>()
-        for (a in Problems.MIN_TABLE..Problems.MAX_TABLE) {
-            for (b in Problems.MIN_B..Problems.MAX_B) {
+        for (a in 2..9) {
+            for (b in 1..9) {
                 val line = JapaneseReading.chant(a, b)
                 lines += line
                 assertEquals(a * b < 10, line.contains("が "), "$a × $b: $line")

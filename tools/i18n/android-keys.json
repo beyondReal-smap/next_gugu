@@ -734,5 +734,6 @@
   "효과음": "sound_effects",
   "힌트, %@, %@": "hint",
   "🎉": "s_22",
-  "🎉 오늘의 목표를 달성했어요!": "you_reached_today_s_goal"
+  "🎉 오늘의 목표를 달성했어요!": "you_reached_today_s_goal",
+  "이 언어의 음성을 사용할 수 없습니다. 기기의 음성 설정을 확인해 주세요.": "speech_unavailable"
 }

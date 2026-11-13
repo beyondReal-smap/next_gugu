@@ -1,7 +1,7 @@
 package site.smap.gugudan.core
 
 // 소리 내어 읽을 문장 → 미리 만든 음성 파일(키) 연결 (iOS Core/VoiceLines.swift 이식).
-// 문장이 552개로 한정돼 있어 ElevenLabs 로 한 번 생성해 앱에 넣었다 (tools/voice).
+// 한국어·일본어·영어 각 2682문장을 ElevenLabs 로 생성해 앱에 넣었다 (tools/voice).
 // 키 규칙은 tools/voice/phrases.py 와 같고, 두 쪽이 어긋나면 VoiceLinesTests 가 실패한다.
 // 키는 언어와 무관하고, 파일은 언어별 폴더(assets/voice/<언어>/)에 있다.
 
@@ -9,6 +9,15 @@ package site.smap.gugudan.core
 data class VoiceLine(val key: String, val text: String)
 
 object VoiceLines {
+    private val RECORDED_KEY = Regex("^(q|m|c|ox)-([2-9]|1[0-9])x([1-9]|1[0-9])(-[0-9]+)?$")
+
+    /** 한국어·일본어·영어는 19단까지 내장 음성을 사용한다. */
+    fun usesRecordedAudio(line: VoiceLine, language: AppLanguage = AppLanguage.current): Boolean =
+        when (language) {
+            AppLanguage.KO, AppLanguage.JA, AppLanguage.EN -> RECORDED_KEY.matches(line.key)
+            AppLanguage.HI, AppLanguage.VI, AppLanguage.ID -> false
+        }
+
     /** 세션 문제 낭독 — 모드별 문장 (SpokenMath.question 과 같은 글) */
     fun question(p: Problem, mode: GameMode, statement: Statement?, language: AppLanguage = AppLanguage.current): VoiceLine =
         when {
@@ -28,11 +37,17 @@ object VoiceLines {
         val key = "c-${a}x$b"
         return when (language) {
             AppLanguage.KO -> {
-                val head = KoreanReading.sino(a) + if (b == 2) "," else ""
-                VoiceLine(key, "$head ${KoreanReading.topic(KoreanReading.sino(b))} ${KoreanReading.sino(a * b)}.")
+                if (a >= 10 || b >= 10) {
+                    VoiceLine(key, KoreanReading.chant(a, b) + ".")
+                } else {
+                    val head = KoreanReading.sino(a) + if (b == 2) "," else ""
+                    VoiceLine(key, "$head ${KoreanReading.topic(KoreanReading.sino(b))} ${KoreanReading.sino(a * b)}.")
+                }
             }
             AppLanguage.EN -> VoiceLine(key, EnglishReading.chant(a, b))
             AppLanguage.JA -> VoiceLine(key, JapaneseReading.chant(a, b) + "。")
+            AppLanguage.HI, AppLanguage.VI, AppLanguage.ID ->
+                VoiceLine(key, SpokenMath.equationLabel(a, b, language) + if (language == AppLanguage.HI) "।" else ".")
         }
     }
 

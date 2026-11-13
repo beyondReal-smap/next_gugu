@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""음성 팩 기계 검수 — 552개를 사람이 다 들을 수 없으니 이상한 줄만 골라낸다.
+"""음성 팩 기계 검수 — 모든 문장을 사람이 다 들을 수 없으니 이상한 줄만 골라낸다.
 
   1. 길이: 같은 종류 문장(q·m·ox·c) 안에서 음절당 길이가 튀는 줄 (말을 더 하거나 삼킴)
   2. 음량: 통합 음량(LUFS)이 가운데값보다 3LU 넘게 크거나 작은 줄
@@ -8,6 +8,7 @@
 사용 (Apple Silicon + mlx-whisper 필요, 일본어는 pykakasi 도 — 저장소 의존성에는 넣지 않는다)
   python3 -m venv <venv> && <venv>/bin/pip install mlx-whisper pykakasi
   <venv>/bin/python tools/voice/qa.py [--lang en] [--report 결과.json]
+hi·vi·id는 숫자 단어를 아라비아 숫자로 변환하지 않는다. 해당 표기 차이는 오류로 단정할 수 없다.
 걸러진 줄은 직접 들어 보고 판단한다. 받아쓰기 차이는 인식 쪽 표기 차이일 수도 있다.
 """
 
@@ -18,6 +19,7 @@ import json
 import re
 import statistics
 import subprocess
+import unicodedata
 from pathlib import Path
 
 from phrases import LANGS, cardinal, ja_number, sino
@@ -58,7 +60,10 @@ def kana(text: str) -> str:
 
 
 def units(text: str, lang: str) -> str:
-    """길이·비교에 쓰는 글자 — ko 한글 음절, en 알파벳, ja 히라가나"""
+    """길이·비교에 쓰는 글자 — 신규 언어는 숫자·유니코드 문자·결합 부호를 보존한다."""
+    if lang in ("hi", "vi", "id"):
+        return "".join(c for c in unicodedata.normalize("NFC", text.lower())
+                       if unicodedata.category(c)[0] in "LMN")
     return {"ko": hangul, "en": letters, "ja": kana}[lang](text)
 
 
@@ -81,14 +86,16 @@ def to_hiragana(text: str) -> str:
 
 def normalize_heard(text: str, lang: str = "ko") -> str:
     """인식 결과의 숫자·곱셈 기호를 앱 문장과 같은 표기로 바꾼다."""
+    if lang in ("hi", "vi", "id"):
+        return units(text, lang)
     if lang == "en":
         t = re.sub(r"(?<=\d)\s*[xX*×]\s*(?=\d)", " times ", text)
-        return letters(_digits(t, cardinal, 100))
+        return letters(_digits(t, cardinal, 1000))
     if lang == "ja":
         # 숫자 사이의 × 만 "かける" — "×かな"(○×퀴즈)의 × 는 "ばつ"
         t = re.sub(r"(?<=\d)\s*[xX*×]\s*(?=\d|何)", " かける ", text)
         t = t.replace("×", "ばつ").replace("○", "まる").replace("〇", "まる")
-        return kana(to_hiragana(_digits(t, ja_number, 100)))
+        return kana(to_hiragana(_digits(t, ja_number, 1000)))
     t = text.replace("×", " 곱하기 ")
     t = re.sub(r"(?<=\d)\s*[xX*]\s*(?=\d)", " 곱하기 ", t)
     return hangul(_digits(t, sino, 10_000))
@@ -118,6 +125,8 @@ def main() -> None:
     ap.add_argument("--report", type=Path, help="줄별 측정값 전체를 JSON 으로 저장")
     args = ap.parse_args()
     pack = VOICE / args.lang
+    if args.lang in ("hi", "vi", "id"):
+        print("검수 한계: 숫자 단어와 아라비아 숫자의 표기 차이는 직접 청취로 확인해야 합니다.")
 
     import mlx_whisper  # 선택 의존성 — 검수할 때만 필요
 

@@ -9,10 +9,14 @@ import Foundation
 enum JapaneseReading {
     private static let digits = ["", "いち", "に", "さん", "よん", "ご", "ろく", "なな", "はち", "きゅう"]
 
-    /// 수 읽기 (0~99, 히라가나) — 56 → "ごじゅうろく", 40 → "よんじゅう", 0 → "ぜろ"
+    /// 수 읽기 (0~999, 히라가나) — 56 → "ごじゅうろく", 40 → "よんじゅう", 0 → "ぜろ"
     static func number(_ n: Int) -> String {
-        precondition((0..<100).contains(n), "읽을 수 없는 수: \(n)")
+        precondition((0..<1000).contains(n), "읽을 수 없는 수: \(n)")
         if n == 0 { return "ぜろ" }
+        if n >= 100 {
+            let hundreds = ["", "ひゃく", "にひゃく", "さんびゃく", "よんひゃく", "ごひゃく", "ろっぴゃく", "ななひゃく", "はっぴゃく", "きゅうひゃく"]
+            return hundreds[n / 100] + (n % 100 == 0 ? "" : number(n % 100))
+        }
         let ten = n / 10
         let unit = n % 10
         let head = ten == 0 ? "" : (ten == 1 ? "" : digits[ten]) + "じゅう"
@@ -41,7 +45,10 @@ enum JapaneseReading {
 
     /// 九九 낭송 한 줄 — 7 × 8 → "しちは ごじゅうろく"
     static func chant(_ a: Int, _ b: Int) -> String {
-        guard let row = kuku[a], (1...row.count).contains(b) else { preconditionFailure("九九 범위 밖: \(a) × \(b)") }
+        precondition((Problems.minTable...Problems.maxTable).contains(a) && (Problems.minB...Problems.maxB).contains(b))
+        guard let row = kuku[a], (1...row.count).contains(b) else {
+            return "\(number(a)) かける \(number(b)) は \(number(a * b))"
+        }
         return row[b - 1]
     }
 

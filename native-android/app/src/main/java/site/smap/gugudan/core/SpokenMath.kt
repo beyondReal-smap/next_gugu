@@ -12,12 +12,27 @@ object SpokenMath {
             AppLanguage.KO -> KoreanReading.question(p, mode, statement)
             AppLanguage.EN -> EnglishReading.question(p, mode, statement)
             AppLanguage.JA -> JapaneseReading.question(p, mode, statement)
+            AppLanguage.HI -> when {
+                mode == GameMode.MISSING -> "${p.a} को किस संख्या से गुणा करने पर ${p.a * p.b} मिलता है?"
+                mode == GameMode.TRUEFALSE && statement != null -> "${p.a} गुणा ${p.b} बराबर ${statement.shown}। सही या गलत?"
+                else -> questionLabel(p.a, p.b, language)
+            }
+            AppLanguage.VI -> when {
+                mode == GameMode.MISSING -> "${p.a} nhân bao nhiêu bằng ${p.a * p.b}?"
+                mode == GameMode.TRUEFALSE && statement != null -> "${p.a} nhân ${p.b} bằng ${statement.shown}. Đúng hay sai?"
+                else -> questionLabel(p.a, p.b, language)
+            }
+            AppLanguage.ID -> when {
+                mode == GameMode.MISSING -> "${p.a} dikali berapa hasilnya ${p.a * p.b}?"
+                mode == GameMode.TRUEFALSE && statement != null -> "${p.a} kali ${p.b} sama dengan ${statement.shown}. Benar atau salah?"
+                else -> questionLabel(p.a, p.b, language)
+            }
         }
 
     /** 구구단 표 화면의 읽기 열 — 영어는 "7 × 8 = 56"과 같은 내용이라 숨긴다(null) */
     fun chantText(a: Int, b: Int, language: AppLanguage = AppLanguage.current): String? = when (language) {
         AppLanguage.KO -> KoreanReading.chant(a, b)
-        AppLanguage.EN -> null
+        AppLanguage.EN, AppLanguage.HI, AppLanguage.VI, AppLanguage.ID -> null
         AppLanguage.JA -> JapaneseReading.chant(a, b)
     }
 
@@ -26,6 +41,9 @@ object SpokenMath {
         AppLanguage.KO -> "$a 곱하기 ${KoreanReading.withTopic(b)}?"  // i18n:skip
         AppLanguage.EN -> EnglishReading.questionLabel(a, b)
         AppLanguage.JA -> JapaneseReading.questionLabel(a, b)
+        AppLanguage.HI -> "$a गुणा $b कितना होता है?"
+        AppLanguage.VI -> "$a nhân $b bằng bao nhiêu?"
+        AppLanguage.ID -> "Berapa $a kali $b?"
     }
 
     /** 개수 뒤에 붙는 단위("12 개" / "12 こ") — 영어는 단위 없이 숫자만 쓴다(null) */
@@ -41,6 +59,9 @@ object SpokenMath {
         AppLanguage.KO -> "$a 곱하기 $b"  // i18n:skip
         AppLanguage.EN -> "$a times $b"
         AppLanguage.JA -> "$a かける $b"
+        AppLanguage.HI -> "$a गुणा $b"
+        AppLanguage.VI -> "$a nhân $b"
+        AppLanguage.ID -> "$a kali $b"
     }
 
     /** 식 낭독 라벨 — "7 곱하기 8은 56" / "7 times 8 is 56" / "7 かける 8 は 56" */
@@ -48,6 +69,9 @@ object SpokenMath {
         AppLanguage.KO -> "$a 곱하기 ${KoreanReading.withTopic(b)} ${a * b}"  // i18n:skip
         AppLanguage.EN -> EnglishReading.equationLabel(a, b)
         AppLanguage.JA -> JapaneseReading.equationLabel(a, b)
+        AppLanguage.HI -> "$a गुणा $b बराबर ${a * b}"
+        AppLanguage.VI -> "$a nhân $b bằng ${a * b}"
+        AppLanguage.ID -> "$a kali $b sama dengan ${a * b}"
     }
 
     /** 정답 안내 — "정답은 56이에요" */
@@ -55,6 +79,9 @@ object SpokenMath {
         AppLanguage.KO -> "정답은 ${KoreanReading.withCopula(n)}"  // i18n:skip
         AppLanguage.EN -> EnglishReading.answerIs(n)
         AppLanguage.JA -> JapaneseReading.answerIs(n)
+        AppLanguage.HI -> "उत्तर $n है।"
+        AppLanguage.VI -> "Đáp án là $n."
+        AppLanguage.ID -> "Jawabannya $n."
     }
 
     /** 오답 설명 — "54가 아니라 56이에요" */
@@ -62,5 +89,8 @@ object SpokenMath {
         AppLanguage.KO -> KoreanReading.notButIs(given, answer)
         AppLanguage.EN -> EnglishReading.notButIs(given, answer)
         AppLanguage.JA -> JapaneseReading.notButIs(given, answer)
+        AppLanguage.HI -> "उत्तर $given नहीं, $answer है।"
+        AppLanguage.VI -> "Không phải $given, mà là $answer."
+        AppLanguage.ID -> "Bukan $given, melainkan $answer."
     }
 }

@@ -9,6 +9,7 @@ final class ReadingTests: XCTestCase {
         XCTAssertEqual(EnglishReading.cardinal(40), "forty")
         XCTAssertEqual(EnglishReading.cardinal(56), "fifty-six")
         XCTAssertEqual(EnglishReading.cardinal(90), "ninety")
+        XCTAssertEqual(EnglishReading.cardinal(380), "three hundred eighty")
     }
 
     func testEnglishQuestions() {
@@ -28,6 +29,7 @@ final class ReadingTests: XCTestCase {
         XCTAssertEqual(JapaneseReading.number(56), "ごじゅうろく")
         XCTAssertEqual(JapaneseReading.number(79), "ななじゅうきゅう")
         XCTAssertEqual(JapaneseReading.number(90), "きゅうじゅう")
+        XCTAssertEqual(JapaneseReading.number(380), "さんびゃくはちじゅう")
     }
 
     func testJapaneseQuestions() {
@@ -46,8 +48,8 @@ final class ReadingTests: XCTestCase {
         XCTAssertEqual(JapaneseReading.chant(8, 8), "はっぱ ろくじゅうし")
         XCTAssertEqual(JapaneseReading.chant(9, 9), "くく はちじゅういち")
         var lines = Set<String>()
-        for a in Problems.minTable...Problems.maxTable {
-            for b in Problems.minB...Problems.maxB {
+        for a in 2...9 {
+            for b in 1...9 {
                 let line = JapaneseReading.chant(a, b)
                 lines.insert(line)
                 XCTAssertEqual(line.contains("が "), a * b < 10, "\(a) × \(b): \(line)")

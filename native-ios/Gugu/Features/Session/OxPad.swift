@@ -8,7 +8,7 @@ struct OxPad: View {
     var body: some View {
         HStack(spacing: 12) {
             // 영어권은 O/X 관습이 없어 ✓/✗ 로 보인다
-            choice(isTrue: true, color: .gg.success, icon: AppLanguage.current == .en ? "checkmark" : "circle",
+            choice(isTrue: true, color: .gg.success, icon: ![AppLanguage.ko, .ja].contains(AppLanguage.current) ? "checkmark" : "circle",
                    label: String(localized: "맞아요", comment: "OX 퀴즈 버튼 — 식이 맞다"))
             choice(isTrue: false, color: .gg.danger, icon: "xmark",
                    label: String(localized: "아니에요", comment: "OX 퀴즈 버튼 — 식이 틀리다"))
@@ -20,7 +20,7 @@ struct OxPad: View {
         switch AppLanguage.current {
         case .ko: return isTrue ? "O" : "X"
         case .ja: return isTrue ? "○" : "×"
-        case .en: return isTrue ? "✓" : "✗"
+        case .en, .hi, .vi, .id: return isTrue ? "✓" : "✗"
         }
     }
 

@@ -10,6 +10,18 @@ import kotlin.test.assertTrue
 // 다국어 리소스 — 세 언어 키 집합이 같아야 한국어 기기에 영어가 새지 않는다 (iOS LocalizationTests 와 같은 취지)
 class LocalizationTests {
 
+    @Test fun newLanguagesHaveCompleteResources() {
+        for (folder in listOf("values-hi", "values-vi", "values-in")) {
+            assertEquals(names("values"), names(folder), folder)
+        }
+        for (code in listOf("hi", "vi", "id")) {
+            val language = AppLanguage.of(code)
+            assertEquals(code, TestStrings(language).get(R.string.app_language_code))
+            assertTrue(TestStrings(language).get(R.string.learn).isNotBlank())
+        }
+    }
+
+
     private fun names(folder: String): Set<String> =
         Regex("""<(?:string|plurals) name="([^"]+)"(?![^>]*translatable="false")""")
             .findAll(File("src/main/res/$folder/strings.xml").readText()).map { it.groupValues[1] }.toSet()
