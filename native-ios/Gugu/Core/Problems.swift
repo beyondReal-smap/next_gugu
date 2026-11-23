@@ -6,7 +6,16 @@ enum Problems {
     static let minTable = 2
     static let maxTable = 19
     static let minB = 1
-    static let maxB = 19
+    /// 기록·검증 계약의 곱하는 수 상한 — 학습 기록 키(2~19단 × 1~19)와 낭독 범위. 설정과 무관하게 고정
+    static let supportedMaxB = 19
+    /// 설정 「곱하는 수」에서 고를 수 있는 상한
+    static let maxBOptions = [9, 12, 15, 19]
+    static let defaultMaxB = 9
+    /// 지금 출제·학습표·게임에 쓰는 곱하는 수 상한 (9면 19단도 19 × 9까지).
+    /// PrefsStore 가 저장된 설정을 읽어 바꾼다 — Haptics.enabled 와 같은 방식
+    static var maxB = defaultMaxB {
+        didSet { precondition(maxBOptions.contains(maxB), "곱하는 수 상한 범위 밖: \(maxB)") }
+    }
 
     static func key(_ a: Int, _ b: Int) -> String { "\(a)x\(b)" }
 
@@ -68,17 +77,18 @@ enum Problems {
         return best
     }
 
-    /// "7x8" → Problem(7, 8). 형식이 깨졌거나 출제 범위 밖이면 nil
+    /// "7x8" → Problem(7, 8). 형식이 깨졌거나 기록 계약 범위(2~19단 × 1~19) 밖이면 nil.
+    /// 설정 상한(maxB)으로 자르지 않는다 — 상한을 낮춰도 이미 쌓인 기록은 그대로 복원·표시한다
     static func parseKey(_ key: String) -> Problem? {
         let parts = key.split(separator: "x", omittingEmptySubsequences: false)
         guard parts.count == 2, let a = Int(parts[0]), let b = Int(parts[1]) else { return nil }
-        guard (minTable...maxTable).contains(a), (minB...maxB).contains(b) else { return nil }
+        guard (minTable...maxTable).contains(a), (minB...supportedMaxB).contains(b) else { return nil }
         return Problem(a: a, b: b)
     }
 
     /// 취약 문제 복습 출제 큐 — 오답 가중치가 큰 문제부터 최대 count 개를 고르고(동률은 무작위),
     /// 고른 뒤 순서를 섞어 가중치 큰 문제가 늘 맨 앞에 몰리지 않게 한다.
-    /// 가중치 0 이하·형식이 깨진 키는 건너뛴다.
+    /// 가중치 0 이하·형식이 깨진 키·설정 상한(maxB)을 넘는 곱하는 수는 건너뛴다.
     static func reviewQueue(
         _ wrongPool: [String: Int],
         count: Int,
@@ -87,7 +97,7 @@ enum Problems {
         let ranked = wrongPool
             .sorted { $0.key < $1.key }   // 딕셔너리 순회 순서에 기대지 않는다 (주입 난수 재현성)
             .compactMap { entry -> (p: Problem, w: Int, tie: Double)? in
-                guard entry.value > 0, let p = parseKey(entry.key) else { return nil }
+                guard entry.value > 0, let p = parseKey(entry.key), p.b <= maxB else { return nil }
                 return (p, entry.value, random())
             }
             .sorted { $0.w != $1.w ? $0.w > $1.w : $0.tie < $1.tie }

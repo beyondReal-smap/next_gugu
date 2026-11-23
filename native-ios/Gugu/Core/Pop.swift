@@ -194,14 +194,19 @@ enum Pop {
 
     // MARK: - 짝꿍
 
-    /// n 을 만드는 짝꿍 전부 (a ≤ b, 1~9, b ≥ 2) — 순서를 바꾼 쌍은 같은 쌍으로 본다
+    /// n 을 만드는 짝꿍 전부 (a ≤ b, b ≥ 2) — 순서를 바꾼 쌍은 같은 쌍으로 본다.
+    /// 짝꿍은 지금 범위의 곱셈식(b단 × a)이어야 한다: 작은 수 a ≤ 곱하는 수 상한, 큰 수 b ≤ 최대 단.
+    /// 상한이 9여도 19단 보스(19 × 5 = 95)의 짝꿍 (5, 19)가 남는다
     static func pairs(of n: Int) -> [PopPair] {
         (Problems.minB...Problems.maxB).compactMap { a in
             guard n % a == 0 else { return nil }
             let b = n / a
-            return b >= a && b <= Problems.maxB && b >= 2 ? PopPair(a: a, b: b) : nil
+            return b >= a && b <= Problems.maxTable && b >= 2 ? PopPair(a: a, b: b) : nil
         }
     }
+
+    /// 보스 웨이브 작은 풍선에 쓰는 수 — 짝꿍의 큰 수가 최대 단까지 가므로 1~최대 단
+    private static var smallRange: ClosedRange<Int> { Problems.minB...Problems.maxTable }
 
     /// v 가 target 의 어떤 짝꿍 한쪽인지
     static func isPairMember(_ v: Int, target: Int) -> Bool {
@@ -276,7 +281,7 @@ enum Pop {
     static func smallValues(target: Int, random: () -> Double) -> [Int] {
         let all = pairs(of: target)
         let pair = all[pick(all.count, random)]
-        let others = shuffled((Problems.minB...Problems.maxB).filter { !isPairMember($0, target: target) }, random)
+        let others = shuffled(smallRange.filter { !isPairMember($0, target: target) }, random)
         // 1~9 중 짝꿍에 드는 수는 많아야 4개(예: 12 → 2·3·4·6)라 남는 수가 늘 5개 이상이다
         precondition(others.count >= smallSlots.count - 2, "보스 \(target): 오답 후보 부족")
         return shuffled([pair.a, pair.b] + others.prefix(smallSlots.count - 2), random)
@@ -549,8 +554,8 @@ enum Pop {
 
     /// 빈자리용 수 — 화면에 없는 '짝꿍에 안 드는 수', 없으면 화면에 없는 짝꿍 수, 그것도 없으면 아무 '짝꿍에 안 드는 수'
     private static func filler(target: Int, exclude: [Int], random: () -> Double) -> Int {
-        let others = (Problems.minB...Problems.maxB).filter { !isPairMember($0, target: target) }
-        let members = (Problems.minB...Problems.maxB).filter { isPairMember($0, target: target) }
+        let others = smallRange.filter { !isPairMember($0, target: target) }
+        let members = smallRange.filter { isPairMember($0, target: target) }
         let fresh = others.filter { !exclude.contains($0) }
         if !fresh.isEmpty { return fresh[pick(fresh.count, random)] }
         let freshMembers = members.filter { !exclude.contains($0) }

@@ -75,7 +75,7 @@ object Runner {
         val alternatives = listOf(
             answer - problem.a, answer + problem.a, answer - problem.b,
             answer + problem.b, answer - 1, answer + 1,
-        ).distinct().filter { it in 1..(Problems.MAX_TABLE * Problems.MAX_B) && it != answer }
+        ).distinct().filter { it in 1..(Problems.MAX_TABLE * Problems.maxB) && it != answer }
         val picked = shuffled(alternatives, random).take(2)
         return RunnerQuestion(problem.a, problem.b, shuffled(listOf(answer) + picked, random))
     }

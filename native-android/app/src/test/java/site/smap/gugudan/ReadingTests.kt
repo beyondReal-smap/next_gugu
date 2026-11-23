@@ -3,6 +3,8 @@ package site.smap.gugudan
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import site.smap.gugudan.core.*
 import java.io.File
@@ -11,6 +13,11 @@ import kotlin.test.assertNull
 
 // 영어·일본어 읽기 규칙 (iOS GuguTests/ReadingTests.swift 미러링) — 음성 대본(552줄)과 화면 낭독 라벨의 기준이다
 class ReadingTests {
+
+    // 이 클래스의 기대값은 곱하는 수 상한 19 기준이다 — 다른 테스트가 바꿔 둔 전역 설정에 기대지 않게 매번 고정한다
+    @Before fun fixMaxMultiplier() { Problems.maxB = 19 }
+
+    @After fun restoreMaxMultiplier() { Problems.maxB = Problems.DEFAULT_MAX_B }
 
     @Test fun koreanExtendedChantsSeparateTheFactors() {
         val examples = listOf(
@@ -123,7 +130,7 @@ class ReadingTests {
     /** 한국어 경로는 기존 KoreanReading 직접 호출과 글자 단위로 같아야 한다 (화면 낭독 회귀 방지) */
     @Test fun koreanPathMatchesKoreanReading() {
         for (a in Problems.MIN_TABLE..Problems.MAX_TABLE) {
-            for (b in Problems.MIN_B..Problems.MAX_B) {
+            for (b in Problems.MIN_B..Problems.SUPPORTED_MAX_B) {
                 val p = Problem(a, b)
                 for (mode in listOf(GameMode.PRACTICE, GameMode.MISSING)) {
                     assertEquals(KoreanReading.question(p, mode, null), SpokenMath.question(p, mode, null, AppLanguage.KO))

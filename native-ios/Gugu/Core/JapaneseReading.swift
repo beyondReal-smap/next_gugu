@@ -45,7 +45,7 @@ enum JapaneseReading {
 
     /// 九九 낭송 한 줄 — 7 × 8 → "しちは ごじゅうろく"
     static func chant(_ a: Int, _ b: Int) -> String {
-        precondition((Problems.minTable...Problems.maxTable).contains(a) && (Problems.minB...Problems.maxB).contains(b))
+        precondition((Problems.minTable...Problems.maxTable).contains(a) && (Problems.minB...Problems.supportedMaxB).contains(b))
         guard let row = kuku[a], (1...row.count).contains(b) else {
             return "\(number(a)) かける \(number(b)) は \(number(a * b))"
         }

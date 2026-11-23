@@ -5,6 +5,17 @@ import XCTest
 /// 한쪽 규칙을 바꾸면 양쪽 테스트의 기대값을 함께 바꿔야 한다.
 final class PopTests: XCTestCase {
 
+    // 이 클래스의 기대값은 곱하는 수 상한 19 기준이다 — 테스트 호스트 앱이 설정값을 읽어 바꿔 두므로 매번 고정한다
+    override func setUp() {
+        super.setUp()
+        Problems.maxB = 19
+    }
+
+    override func tearDown() {
+        Problems.maxB = Problems.defaultMaxB
+        super.tearDown()
+    }
+
     // MARK: - 도우미
 
     private func rng(_ seed: UInt32) -> () -> Double { World.mulberry32(seed) }
@@ -192,6 +203,40 @@ final class PopTests: XCTestCase {
                 }
                 XCTAssertTrue(hasPair, "보스 \(target): \(values)")
             }
+        }
+    }
+
+    /// 곱하는 수 상한 9 — 배수 풍선은 단 × 1~9, 보스는 단 × 2~9 이고 19단 보스도 짝꿍(작은 수 ≤ 9)이 있다
+    func testMaxMultiplierNineKeepsMissionsInRange() {
+        Problems.maxB = 9
+        XCTAssertEqual(Pop.pairs(of: 95), [PopPair(a: 5, b: 19)])
+        XCTAssertEqual(Pop.pairs(of: 36), [PopPair(a: 2, b: 18), PopPair(a: 3, b: 12), PopPair(a: 4, b: 9), PopPair(a: 6, b: 6)])
+        XCTAssertEqual(Pop.pairs(of: 11 * 13), [])   // 작은 수 11은 상한 9 밖
+        for t in 2...19 {
+            let random = rng(UInt32(t * 17))
+            for _ in 0..<40 {
+                let target = Pop.bossTarget(table: t, random: random)
+                XCTAssertEqual(target % t, 0)
+                XCTAssertTrue((2...9).contains(target / t), "보스 \(target) / \(t)단")
+                let values = Pop.smallValues(target: target, random: random)
+                let hasPair = values.indices.contains { i in
+                    values.indices.contains { j in i != j && values[i] * values[j] == target }
+                }
+                XCTAssertTrue(hasPair, "보스 \(target): \(values)")
+                let correct = Pop.correctValue(table: t, exclude: [], random: random)
+                XCTAssertTrue(correct % t == 0 && (1...9).contains(correct / t), "정답 \(correct) / \(t)단")
+            }
+            XCTAssertTrue(Pop.distractorPool(table: t).far.allSatisfy { $0 <= 19 * 9 })
+        }
+        // 한 판을 끝까지 돌려도 배수 풍선은 단 × 1~9
+        var s = started(Pop.create(table: 19, random: rng(3)))
+        let random = rng(4)
+        for _ in 0..<600 {
+            s = Pop.advance(s, dt: 50, random: random)
+            for b in s.balloons where b.kind != .small && b.correct {
+                XCTAssertTrue((1...9).contains(b.value / s.waveTable), "\(b.value) / \(s.waveTable)단")
+            }
+            if s.phase == .over { break }
         }
     }
 

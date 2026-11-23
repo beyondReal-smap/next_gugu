@@ -1,5 +1,7 @@
 package site.smap.gugudan
 
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import site.smap.gugudan.core.*
 import kotlin.test.assertEquals
@@ -10,6 +12,11 @@ import kotlin.test.assertNull
  * 체험 수(trialLeft)는 "다음 문제로 넘어가는 순간" 줄어들고, 하트를 다 쓰면 그 자리에서 끝난다.
  */
 class MinigameTrialTests {
+
+    // 이 클래스의 기대값은 곱하는 수 상한 19 기준이다 — 다른 테스트가 바꿔 둔 전역 설정에 기대지 않게 매번 고정한다
+    @Before fun fixMaxMultiplier() { Problems.maxB = 19 }
+
+    @After fun restoreMaxMultiplier() { Problems.maxB = Problems.DEFAULT_MAX_B }
 
     @Test fun trialLengthIsSingleSourced() {
         assertEquals(3, PremiumConfig.MINIGAME_TRIAL_QUESTIONS)

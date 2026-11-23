@@ -99,6 +99,7 @@
     <string name="change_goal">Ubah target</string>
     <string name="checking">Memeriksa…</string>
     <string name="choose_a_table">Pilih perkalian</string>
+    <string name="choose_how_far_each_table_goes">Pilih sampai berapa setiap perkalian. Pilih 9, maka Perkalian 19 pun hanya sampai 19 × 9.</string>
     <string name="choose_how_many_correct_answers_to_aim">Pilih target jawaban benar setiap hari. Setelah target tercapai, pengingat belajar berhenti untuk hari itu.</string>
     <string name="choose_which_records_to_continue_with">Pilih catatan untuk dilanjutkan</string>
     <string name="cleared">%s dituntaskan!</string>
@@ -370,6 +371,7 @@
     <string name="move_to_upper_lane">Pindah ke jalur atas</string>
     <string name="multiplication_champ">Juara Perkalian</string>
     <string name="multiplication_in_reverse_find_the">Perkalian terbalik! Temukan angka yang hilang untuk bonus XP lebih besar.</string>
+    <string name="multiply_up_to">Dikali sampai</string>
     <string name="mushroom_forest">Hutan Jamur</string>
     <string name="my_answer">Jawabanku %d</string>
     <string name="my_character">Karakterku</string>
@@ -719,6 +721,7 @@
     <string name="unlimited_move_and_play_games">Bermain Sambil Bergerak Tanpa Batas</string>
     <string name="unlock_all_game_modes">Buka semua mode permainan</string>
     <string name="unlocked">Berhasil!</string>
+    <string name="up_to_number">Sampai %d</string>
     <string name="verification_code">Kode verifikasi</string>
     <string name="version">Versi</string>
     <string name="version_build_description">Versi %1$s, build %2$d</string>

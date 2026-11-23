@@ -1,5 +1,7 @@
 package site.smap.gugudan
 
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import site.smap.gugudan.core.*
 import kotlin.test.assertEquals
@@ -10,6 +12,11 @@ import kotlin.test.assertTrue
 // UI/UX 개선에 쓰는 Core 로직 — iOS(GuguTests/UxCoreTests.swift)와 같은 케이스 미러링
 
 class UxCoreTests {
+
+    // 이 클래스의 기대값은 곱하는 수 상한 19 기준이다 — 다른 테스트가 바꿔 둔 전역 설정에 기대지 않게 매번 고정한다
+    @Before fun fixMaxMultiplier() { Problems.maxB = 19 }
+
+    @After fun restoreMaxMultiplier() { Problems.maxB = Problems.DEFAULT_MAX_B }
     private val ko = TestStrings(AppLanguage.KO)
 
     // MARK: KoreanReading
@@ -111,7 +118,7 @@ class UxCoreTests {
     /** 전 범위에서 풀이의 답이 맞고, 푸는 중에 보여 주는 scaffold 에는 정답이 드러나지 않는다 */
     @Test fun coachHintsNeverLeakAnswerAndAreCorrect() {
         for (a in Problems.MIN_TABLE..Problems.MAX_TABLE) {
-            for (b in Problems.MIN_B..Problems.MAX_B) {
+            for (b in Problems.MIN_B..Problems.SUPPORTED_MAX_B) {
                 val hint = Hints.coach(ko, a, b)
                 assertTrue(hint.full.endsWith((a * b).toString()), "$a×$b full=${hint.full}")
                 val numbers = Regex("""\d+""").findAll(hint.scaffold).map { it.value.toInt() }.toList()

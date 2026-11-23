@@ -5,6 +5,17 @@ import XCTest
 /// 음성 팩은 tools/voice/generate.py build 로 만든다. 규칙이 바뀌면 다시 만들어야 이 테스트가 통과한다.
 final class VoiceLinesTests: XCTestCase {
 
+    // 이 클래스의 기대값은 곱하는 수 상한 19 기준이다 — 테스트 호스트 앱이 설정값을 읽어 바꿔 두므로 매번 고정한다
+    override func setUp() {
+        super.setUp()
+        Problems.maxB = 19
+    }
+
+    override func tearDown() {
+        Problems.maxB = Problems.defaultMaxB
+        super.tearDown()
+    }
+
     private struct Manifest: Decodable {
         let voice: String
         let model: String

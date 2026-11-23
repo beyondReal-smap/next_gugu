@@ -46,7 +46,7 @@ object JapaneseReading {
     /** 九九 낭송 한 줄 — 7 × 8 → "しちは ごじゅうろく" */
     fun chant(a: Int, b: Int): String {
         val row = KUKU[a]
-        require(a in Problems.MIN_TABLE..Problems.MAX_TABLE && b in Problems.MIN_B..Problems.MAX_B)
+        require(a in Problems.MIN_TABLE..Problems.MAX_TABLE && b in Problems.MIN_B..Problems.SUPPORTED_MAX_B)
         if (row == null || b !in 1..row.size) return "${number(a)} かける ${number(b)} は ${number(a * b)}"
         return row[b - 1]
     }

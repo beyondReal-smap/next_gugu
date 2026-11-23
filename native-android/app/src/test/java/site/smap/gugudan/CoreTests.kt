@@ -1,6 +1,8 @@
 package site.smap.gugudan
 
 import kotlinx.serialization.json.Json
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import site.smap.gugudan.core.*
 import site.smap.gugudan.core.adventure.*
@@ -17,6 +19,11 @@ import kotlin.test.assertTrue
 // A1 Core 도메인 검증 — iOS(GuguTests/CoreTests.swift) 20개 테스트 패리티
 
 class CoreTests {
+
+    // 이 클래스의 기대값은 곱하는 수 상한 19 기준이다 — 다른 테스트가 바꿔 둔 전역 설정에 기대지 않게 매번 고정한다
+    @Before fun fixMaxMultiplier() { Problems.maxB = 19 }
+
+    @After fun restoreMaxMultiplier() { Problems.maxB = Problems.DEFAULT_MAX_B }
 
     @Test fun readAloudIsAvailableOnlyForKoreanEnglishAndJapanese() {
         assertEquals(
@@ -48,6 +55,41 @@ class CoreTests {
         assertTrue(VoiceLines.usesRecordedAudio(VoiceLines.chant(9, 19, AppLanguage.KO), AppLanguage.KO))
         assertTrue(VoiceLines.usesRecordedAudio(VoiceLines.chant(9, 19, AppLanguage.JA), AppLanguage.JA))
         assertTrue(VoiceLines.usesRecordedAudio(VoiceLines.chant(9, 19, AppLanguage.EN), AppLanguage.EN))
+    }
+
+    /** 설정 「곱하는 수」 9 — 19단도 19 × 9까지만 나오고, 이미 쌓인 × 10 이상 기록은 복원·표시만 한다 (iOS 와 같은 기대값) */
+    @Test fun maxMultiplierNineLimitsQuestionsButKeepsRecords() {
+        Problems.maxB = 9
+        val pool = Problems.candidatesAll()
+        assertEquals(18 * 9, pool.size)
+        assertEquals(Problem(19, 9), pool.last())
+        assertEquals((1..9).toList(), Problems.candidates(19).map { it.b })
+        assertEquals((1..9).toList(), Problems.candidates(9).map { it.b })
+
+        // 오답 가중이 큰 범위 밖 문제가 있어도 출제는 상한 안에서만
+        val heavy = mapOf("19x15" to 6, "19x19" to 6)
+        val seed = World.mulberry32(7u)
+        repeat(300) {
+            assertTrue(Problems.pick(19, heavy, emptyList(), seed).b <= 9)
+            assertTrue(Problems.pick(null, heavy, emptyList(), seed).b <= 9)
+            val q = Runner.question(19, emptyList(), seed)
+            assertTrue(q.b <= 9)
+            assertTrue(q.choices.all { it in 1..(19 * 9) })
+        }
+
+        // 복습 큐는 상한 밖 문제를 건너뛰고, 기록 계약(parseKey)은 19까지 그대로
+        assertEquals(listOf(Problem(7, 8)), Problems.reviewQueue(mapOf("7x8" to 2, "7x15" to 6, "19x19" to 6), 10) { 0.5 })
+        assertEquals(Problem(7, 15), Problems.parseKey("7x15"))
+        assertEquals(Problem(19, 19), Problems.parseKey("19x19"))
+
+        Problems.maxB = 12
+        assertEquals(Problem(19, 12), Problems.candidates(19).last())
+        assertEquals(18 * 12, Problems.candidatesAll().size)
+    }
+
+    @Test fun maxMultiplierRejectsValuesOutsideOptions() {
+        assertTrue(runCatching { Problems.maxB = 10 }.isFailure)
+        assertEquals(19, Problems.maxB)
     }
 
     @Test fun nineteenTimesTableRange() {

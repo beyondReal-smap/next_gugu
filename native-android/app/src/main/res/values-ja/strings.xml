@@ -99,6 +99,7 @@
     <string name="change_goal">もくひょうを かえる</string>
     <string name="checking">確認中…</string>
     <string name="choose_a_table">だんを えらぶ</string>
+    <string name="choose_how_far_each_table_goes">それぞれの だんを いくつまで かけるか えらびます。9に すると 19のだんも 19 × 9まで でます。</string>
     <string name="choose_how_many_correct_answers_to_aim">1日に 正かいする 数を えらぼう。もくひょうを たっせいすると、その日の 学習リマインダーは お休みだよ。</string>
     <string name="choose_which_records_to_continue_with">引き続き使う記録を選んでください</string>
     <string name="cleared">%s クリア！</string>
@@ -370,6 +371,7 @@
     <string name="move_to_upper_lane">上の みちへ</string>
     <string name="multiplication_champ">かけ算チャンピオン</string>
     <string name="multiplication_in_reverse_find_the">かけ算を ぎゃくから！あなの 数を 見つけると XPボーナスが 大きいよ。</string>
+    <string name="multiply_up_to">かける数</string>
     <string name="mushroom_forest">きのこの森</string>
     <string name="my_answer">自分の 答え %d</string>
     <string name="my_character">自分の キャラクター</string>
@@ -719,6 +721,7 @@
     <string name="unlimited_move_and_play_games">体を動かすゲームが無制限</string>
     <string name="unlock_all_game_modes">ゲームモードをすべて解放</string>
     <string name="unlocked">たっせい！</string>
+    <string name="up_to_number">%dまで</string>
     <string name="verification_code">確認コード</string>
     <string name="version">バージョン</string>
     <string name="version_build_description">バージョン %1$s、ビルド %2$d</string>

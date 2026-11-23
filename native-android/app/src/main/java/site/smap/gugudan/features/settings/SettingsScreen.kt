@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Campaign
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Contrast
@@ -59,6 +60,7 @@ import java.time.ZoneId
 import site.smap.gugudan.BuildConfig
 import site.smap.gugudan.R
 import site.smap.gugudan.core.AppLanguage
+import site.smap.gugudan.core.Problems
 import site.smap.gugudan.core.PremiumConfig
 import site.smap.gugudan.core.PromoVisibility
 import site.smap.gugudan.core.ReminderPlanner
@@ -154,6 +156,17 @@ fun SettingsScreen(onClose: () -> Unit) {
                         game.setDailyGoal(goal)
                         reminder.reschedule(game.state)
                     }
+                }
+                SettingsDivider()
+                Column(Modifier.padding(horizontal = 20.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SettingsLabel(Icons.Filled.Calculate, stringResource(R.string.multiply_up_to),
+                        stringResource(R.string.choose_how_far_each_table_goes))
+                    ChoiceChips(
+                        options = Problems.MAX_B_OPTIONS,
+                        selected = prefs.maxMultiplier,
+                        label = { strings.get(R.string.up_to_number, it) },
+                        modifier = Modifier.padding(start = 36.dp),
+                    ) { prefs.updateMaxMultiplier(it) }
                 }
                 if (AppLanguage.current.supportsReadAloud) {
                     SettingsDivider()

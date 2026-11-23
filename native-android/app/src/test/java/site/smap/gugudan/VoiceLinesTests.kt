@@ -3,6 +3,8 @@ package site.smap.gugudan
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import site.smap.gugudan.core.*
 import java.io.File
@@ -14,6 +16,11 @@ import kotlin.test.assertTrue
 // 파일이 읽는 문장이 앱 문장과 같은지. 음성 팩은 tools/voice/generate.py build(또는 sync-android)로 만든다.
 
 class VoiceLinesTests {
+
+    // 이 클래스의 기대값은 곱하는 수 상한 19 기준이다 — 다른 테스트가 바꿔 둔 전역 설정에 기대지 않게 매번 고정한다
+    @Before fun fixMaxMultiplier() { Problems.maxB = 19 }
+
+    @After fun restoreMaxMultiplier() { Problems.maxB = Problems.DEFAULT_MAX_B }
 
     /** 언어별 음성 팩 폴더 — Speech 가 여는 assets/voice/<언어>/ */
     private fun voiceDir(language: AppLanguage) = File("src/main/assets/voice/${language.code}")

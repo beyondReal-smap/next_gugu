@@ -99,6 +99,7 @@
     <string name="change_goal">Đổi mục tiêu</string>
     <string name="checking">Đang kiểm tra…</string>
     <string name="choose_a_table">Chọn bảng nhân</string>
+    <string name="choose_how_far_each_table_goes">Chọn mỗi bảng nhân đến số mấy. Chọn 9 thì bảng nhân 19 cũng chỉ đến 19 × 9.</string>
     <string name="choose_how_many_correct_answers_to_aim">Chọn số câu đúng cần đạt mỗi ngày. Khi đạt mục tiêu, sẽ không nhắc học thêm trong ngày đó.</string>
     <string name="choose_which_records_to_continue_with">Chọn lịch sử muốn dùng tiếp</string>
     <string name="cleared">Đã vượt qua %s!</string>
@@ -370,6 +371,7 @@
     <string name="move_to_upper_lane">Chuyển lên làn trên</string>
     <string name="multiplication_champ">Nhà vô địch phép nhân</string>
     <string name="multiplication_in_reverse_find_the">Phép nhân ngược! Tìm số còn thiếu để nhận thêm XP nhé.</string>
+    <string name="multiply_up_to">Nhân đến</string>
     <string name="mushroom_forest">Rừng Nấm</string>
     <string name="my_answer">Đáp án của tôi: %d</string>
     <string name="my_character">Nhân vật của tôi</string>
@@ -719,6 +721,7 @@
     <string name="unlimited_move_and_play_games">Chơi vận động không giới hạn</string>
     <string name="unlock_all_game_modes">Mở tất cả chế độ chơi</string>
     <string name="unlocked">Đạt được rồi!</string>
+    <string name="up_to_number">Đến %d</string>
     <string name="verification_code">Mã xác nhận</string>
     <string name="version">Phiên bản</string>
     <string name="version_build_description">Phiên bản %1$s, bản dựng %2$d</string>

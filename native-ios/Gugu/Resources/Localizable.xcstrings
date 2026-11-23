@@ -1551,6 +1551,47 @@
         }
       }
     },
+    "%lld까지" : {
+      "comment" : "설정 — 곱하는 수 상한 선택지 (예: 9까지)",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Up to %lld"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "%lld तक"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Sampai %lld"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "%lldまで"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld까지"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Đến %lld"
+          }
+        }
+      }
+    },
     "%lld단" : {
       "localizations" : {
         "en" : {
@@ -5127,6 +5168,47 @@
         }
       }
     },
+    "각 단을 몇까지 곱할지 골라요. 9를 고르면 19단도 19 × 9까지 나와요." : {
+      "comment" : "설정 — 곱하는 수 상한 설명",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Choose how far each table goes. Pick 9 and even Table 19 stops at 19 × 9."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "चुनें कि हर पहाड़ा कहाँ तक जाए। 9 चुनने पर 19 का पहाड़ा भी 19 × 9 तक ही आएगा।"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Pilih sampai berapa setiap perkalian. Pilih 9, maka Perkalian 19 pun hanya sampai 19 × 9."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "それぞれの だんを いくつまで かけるか えらびます。9に すると 19のだんも 19 × 9まで でます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "각 단을 몇까지 곱할지 골라요. 9를 고르면 19단도 19 × 9까지 나와요."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Chọn mỗi bảng nhân đến số mấy. Chọn 9 thì bảng nhân 19 cũng chỉ đến 19 × 9."
+          }
+        }
+      }
+    },
     "갈매기 끼룩" : {
       "comment" : "어드벤처 주민 이름 — 언어별로 새로 짓기 (음역 금지)",
       "localizations" : {
@@ -6010,6 +6092,47 @@
           "stringUnit" : {
             "state" : "needs_review",
             "value" : "Phép nhân ngược! Tìm số còn thiếu để nhận thêm XP nhé."
+          }
+        }
+      }
+    },
+    "곱하는 수" : {
+      "comment" : "설정 — 각 단에서 몇까지 곱할지 고르는 항목 제목",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Multiply up to"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "कहाँ तक गुणा करें"
+          }
+        },
+        "id" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Dikali sampai"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "かける数"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "곱하는 수"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Nhân đến"
           }
         }
       }

@@ -99,6 +99,7 @@
     <string name="change_goal">लक्ष्य बदलें</string>
     <string name="checking">जाँच रहे हैं…</string>
     <string name="choose_a_table">पहाड़ा चुनें</string>
+    <string name="choose_how_far_each_table_goes">चुनें कि हर पहाड़ा कहाँ तक जाए। 9 चुनने पर 19 का पहाड़ा भी 19 × 9 तक ही आएगा।</string>
     <string name="choose_how_many_correct_answers_to_aim">हर दिन कितने सही जवाब देने हैं, चुनें। लक्ष्य पूरा होने पर उस दिन अभ्यास की सूचनाएँ नहीं आएँगी।</string>
     <string name="choose_which_records_to_continue_with">जारी रखने के लिए रिकॉर्ड चुनें</string>
     <string name="cleared">%s पूरा किया!</string>
@@ -370,6 +371,7 @@
     <string name="move_to_upper_lane">ऊपर वाले रास्ते पर जाएँ</string>
     <string name="multiplication_champ">गुणा के चैंपियन</string>
     <string name="multiplication_in_reverse_find_the">उल्टा गुणा! लापता संख्या ढूँढें और ज़्यादा XP बोनस पाएँ।</string>
+    <string name="multiply_up_to">कहाँ तक गुणा करें</string>
     <string name="mushroom_forest">मशरूम वन</string>
     <string name="my_answer">मेरा जवाब %d</string>
     <string name="my_character">मेरा किरदार</string>
@@ -719,6 +721,7 @@
     <string name="unlimited_move_and_play_games">चलते-फिरते खेलें, बिना सीमा</string>
     <string name="unlock_all_game_modes">सभी खेल खोलें</string>
     <string name="unlocked">हासिल कर लिया!</string>
+    <string name="up_to_number">%d तक</string>
     <string name="verification_code">पुष्टि कोड</string>
     <string name="version">संस्करण</string>
     <string name="version_build_description">संस्करण %1$s, बिल्ड %2$d</string>

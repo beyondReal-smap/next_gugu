@@ -127,6 +127,19 @@ struct SettingsView: View {
             }
             .padding(.horizontal, 20).padding(.vertical, 16)
 
+            SettingsDivider()
+            VStack(alignment: .leading, spacing: 12) {
+                SettingsLabel(icon: "multiply", title: String(localized: "곱하는 수", comment: "설정 — 각 단에서 몇까지 곱할지 고르는 항목 제목"),
+                              subtitle: String(localized: "각 단을 몇까지 곱할지 골라요. 9를 고르면 19단도 19 × 9까지 나와요.", comment: "설정 — 곱하는 수 상한 설명"))
+                ChoiceChips(
+                    options: Problems.maxBOptions,
+                    selected: prefs.maxMultiplier,
+                    label: { String(localized: "\($0)까지", comment: "설정 — 곱하는 수 상한 선택지 (예: 9까지)") }
+                ) { prefs.maxMultiplier = $0 }
+                .padding(.leading, 36)
+            }
+            .padding(.horizontal, 20).padding(.vertical, 16)
+
             if AppLanguage.current.supportsReadAloud {
                 SettingsDivider()
                 ToggleRow(icon: "speaker.wave.2.bubble", title: String(localized: "문제 읽어주기"),

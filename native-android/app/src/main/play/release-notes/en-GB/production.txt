@@ -1,1 +1,1 @@
-• Small improvements and polish.
+• Choose how far each times table goes in Settings. Pick 9 and even Table 19 stops at 19 × 9.

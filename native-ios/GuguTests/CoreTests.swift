@@ -4,6 +4,17 @@ import XCTest
 /// P1 Core 도메인 로직 검증 — TS 원본(lib/)과의 기능 패리티 확인
 final class CoreTests: XCTestCase {
 
+    // 이 클래스의 기대값은 곱하는 수 상한 19 기준이다 — 테스트 호스트 앱이 설정값을 읽어 바꿔 두므로 매번 고정한다
+    override func setUp() {
+        super.setUp()
+        Problems.maxB = 19
+    }
+
+    override func tearDown() {
+        Problems.maxB = Problems.defaultMaxB
+        super.tearDown()
+    }
+
     func testNewLanguagesReadEveryNineteenTableProblem() {
         for language in [AppLanguage.hi, .vi, .id] {
             for problem in Problems.candidatesAll() {
@@ -30,6 +41,36 @@ final class CoreTests: XCTestCase {
         XCTAssertNil(Problems.parseKey("20x19"))
         XCTAssertNil(Problems.parseKey("19x20"))
         XCTAssertEqual(Problems.candidates(table: 19).count, 19)
+    }
+
+    /// 설정 「곱하는 수」 9 — 19단도 19 × 9까지만 나오고, 이미 쌓인 × 10 이상 기록은 복원·표시만 한다
+    func testMaxMultiplierNineLimitsQuestionsButKeepsRecords() {
+        Problems.maxB = 9
+        let pool = Problems.candidatesAll()
+        XCTAssertEqual(pool.count, 18 * 9)
+        XCTAssertEqual(pool.last, Problem(a: 19, b: 9))
+        XCTAssertEqual(Problems.candidates(table: 19).map(\.b), Array(1...9))
+        XCTAssertEqual(Problems.candidates(table: 9).map(\.b), Array(1...9))
+
+        // 오답 가중이 큰 범위 밖 문제가 있어도 출제는 상한 안에서만
+        let heavy = ["19x15": 6, "19x19": 6]
+        let seed = World.mulberry32(7)
+        for _ in 0..<300 {
+            XCTAssertLessThanOrEqual(Problems.pick(table: 19, wrongPool: heavy, recentKeys: [], random: { seed() }).b, 9)
+            XCTAssertLessThanOrEqual(Problems.pick(table: nil, wrongPool: heavy, recentKeys: [], random: { seed() }).b, 9)
+            let q = Runner.question(table: 19, recentKeys: [], random: { seed() })
+            XCTAssertLessThanOrEqual(q.b, 9)
+            XCTAssertTrue(q.choices.allSatisfy { (1...(19 * 9)).contains($0) })
+        }
+
+        // 복습 큐는 상한 밖 문제를 건너뛰고, 기록 계약(parseKey)은 19까지 그대로
+        XCTAssertEqual(Problems.reviewQueue(["7x8": 2, "7x15": 6, "19x19": 6], count: 10, random: { 0.5 }), [Problem(a: 7, b: 8)])
+        XCTAssertEqual(Problems.parseKey("7x15"), Problem(a: 7, b: 15))
+        XCTAssertEqual(Problems.parseKey("19x19"), Problem(a: 19, b: 19))
+
+        Problems.maxB = 12
+        XCTAssertEqual(Problems.candidates(table: 19).last, Problem(a: 19, b: 12))
+        XCTAssertEqual(Problems.candidatesAll().count, 18 * 12)
     }
 
     func testNineteenTimesTableChoicesAndReading() {

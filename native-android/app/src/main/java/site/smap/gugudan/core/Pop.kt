@@ -194,18 +194,25 @@ object Pop {
 
     // MARK: 짝꿍
 
-    /** n 을 만드는 짝꿍 전부 (a ≤ b, 1~9, b ≥ 2) — 순서를 바꾼 쌍은 같은 쌍으로 본다 */
-    fun pairs(n: Int): List<PopPair> = (Problems.MIN_B..Problems.MAX_B).mapNotNull { a ->
+    /**
+     * n 을 만드는 짝꿍 전부 (a ≤ b, b ≥ 2) — 순서를 바꾼 쌍은 같은 쌍으로 본다.
+     * 짝꿍은 지금 범위의 곱셈식(b단 × a)이어야 한다: 작은 수 a ≤ 곱하는 수 상한, 큰 수 b ≤ 최대 단.
+     * 상한이 9여도 19단 보스(19 × 5 = 95)의 짝꿍 (5, 19)가 남는다
+     */
+    fun pairs(n: Int): List<PopPair> = (Problems.MIN_B..Problems.maxB).mapNotNull { a ->
         if (n % a != 0) return@mapNotNull null
         val b = n / a
-        if (b >= a && b <= Problems.MAX_B && b >= 2) PopPair(a, b) else null
+        if (b >= a && b <= Problems.MAX_TABLE && b >= 2) PopPair(a, b) else null
     }
+
+    /** 보스 웨이브 작은 풍선에 쓰는 수 — 짝꿍의 큰 수가 최대 단까지 가므로 1~최대 단 */
+    private val smallRange: IntRange get() = Problems.MIN_B..Problems.MAX_TABLE
 
     /** v 가 target 의 어떤 짝꿍 한쪽인지 */
     fun isPairMember(v: Int, target: Int): Boolean = pairs(target).any { it.a == v || it.b == v }
 
     /** 보스 수 — 그 웨이브 단 × 2~9 (단과 곱하는 수의 짝꿍이 반드시 있다) */
-    fun bossTarget(table: Int, random: () -> Double): Int = table * (2 + pick(Problems.MAX_B - 1, random))
+    fun bossTarget(table: Int, random: () -> Double): Int = table * (2 + pick(Problems.maxB - 1, random))
 
     // MARK: 풍선 값
 
@@ -223,12 +230,12 @@ object Pop {
 
     fun distractorPool(table: Int): DistractorPool {
         val t = table
-        fun ok(v: Int): Boolean = v in 1..(Problems.MAX_TABLE * Problems.MAX_B) && v % t != 0
-        val multiples = (Problems.MIN_B..Problems.MAX_B).map { t * it }
+        fun ok(v: Int): Boolean = v in 1..(Problems.MAX_TABLE * Problems.maxB) && v % t != 0
+        val multiples = (Problems.MIN_B..Problems.maxB).map { t * it }
         val near = multiples.flatMap { listOf(it - 1, it + 1) }.filter(::ok).distinct().sorted()
         val neighbour = listOf(t - 1, t + 1)
             .filter { it in Problems.MIN_TABLE..Problems.MAX_TABLE }
-            .flatMap { n -> (Problems.MIN_B..Problems.MAX_B).map { n * it } }
+            .flatMap { n -> (Problems.MIN_B..Problems.maxB).map { n * it } }
             .filter { ok(it) && it !in near }
             .distinct().sorted()
         val reversal = multiples
@@ -236,7 +243,7 @@ object Pop {
             .map { it.toString().reversed().toInt() }
             .filter { ok(it) && it !in near && it !in neighbour }
             .distinct().sorted()
-        val far = (1..(Problems.MAX_TABLE * Problems.MAX_B)).filter { ok(it) && it !in near && it !in neighbour && it !in reversal }
+        val far = (1..(Problems.MAX_TABLE * Problems.maxB)).filter { ok(it) && it !in near && it !in neighbour && it !in reversal }
         return DistractorPool(near, neighbour, reversal, far)
     }
 
@@ -263,7 +270,7 @@ object Pop {
 
     /** 정답 값 — table × 1~9 중 화면에 없는 것 */
     fun correctValue(table: Int, exclude: List<Int>, random: () -> Double): Int {
-        val options = (Problems.MIN_B..Problems.MAX_B).map { table * it }.filter { it !in exclude }
+        val options = (Problems.MIN_B..Problems.maxB).map { table * it }.filter { it !in exclude }
         check(options.isNotEmpty()) { "정답 후보 없음: ${table}단" }
         return options[pick(options.size, random)]
     }
@@ -272,7 +279,7 @@ object Pop {
     fun smallValues(target: Int, random: () -> Double): List<Int> {
         val all = pairs(target)
         val pair = all[pick(all.size, random)]
-        val others = shuffled((Problems.MIN_B..Problems.MAX_B).filter { !isPairMember(it, target) }, random)
+        val others = shuffled(smallRange.filter { !isPairMember(it, target) }, random)
         // 1~9 중 짝꿍에 드는 수는 많아야 4개(예: 12 → 2·3·4·6)라 남는 수가 늘 5개 이상이다
         check(others.size >= SMALL_SLOTS.size - 2) { "보스 $target: 오답 후보 부족" }
         return shuffled(listOf(pair.a, pair.b) + others.take(SMALL_SLOTS.size - 2), random)
@@ -528,8 +535,8 @@ object Pop {
 
     /** 빈자리용 수 — 화면에 없는 '짝꿍에 안 드는 수', 없으면 화면에 없는 짝꿍 수, 그것도 없으면 아무 '짝꿍에 안 드는 수' */
     private fun filler(target: Int, exclude: List<Int>, random: () -> Double): Int {
-        val others = (Problems.MIN_B..Problems.MAX_B).filter { !isPairMember(it, target) }
-        val members = (Problems.MIN_B..Problems.MAX_B).filter { isPairMember(it, target) }
+        val others = smallRange.filter { !isPairMember(it, target) }
+        val members = smallRange.filter { isPairMember(it, target) }
         val fresh = others.filter { it !in exclude }
         if (fresh.isNotEmpty()) return fresh[pick(fresh.size, random)]
         val freshMembers = members.filter { it !in exclude }

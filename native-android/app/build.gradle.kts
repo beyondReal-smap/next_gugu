@@ -41,8 +41,8 @@ android {
         applicationId = "site.smap.gugudan"
         minSdk = 28          // SceneView(Filament) 요구 — 기기 커버리지 ~97%
         targetSdk = 36
-        versionCode = 28     // vc28: 2.8.1 — 앱 평가 요청, 일본 ¥500 결제 문구
-        versionName = "2.8.1"
+        versionCode = 29     // vc29: 2.8.2 — 설정 「곱하는 수」(단마다 몇까지 곱할지, 기본 9)
+        versionName = "2.8.2"
 
         buildConfigField("String", "SUPABASE_HOST", "\"${supabaseProp("SUPABASE_HOST")}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${supabaseProp("SUPABASE_ANON_KEY")}\"")

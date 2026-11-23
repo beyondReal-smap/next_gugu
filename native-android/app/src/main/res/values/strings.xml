@@ -132,6 +132,8 @@
     <string name="change_goal">Change goal</string>
     <string name="checking">Checking…</string>
     <string name="choose_a_table">Choose a table</string>
+    <!-- 설정 — 곱하는 수 상한 설명 -->
+    <string name="choose_how_far_each_table_goes">Choose how far each table goes. Pick 9 and even Table 19 stops at 19 × 9.</string>
     <string name="choose_how_many_correct_answers_to_aim">Choose how many correct answers to aim for each day. Once you reach the goal, practice reminders take the rest of the day off.</string>
     <string name="choose_which_records_to_continue_with">Choose which records to continue with</string>
     <string name="cleared">%s cleared!</string>
@@ -499,6 +501,8 @@
     <string name="multiplication_champ">Multiplication Champ</string>
     <!-- 모드 선택 시 하단 설명 -->
     <string name="multiplication_in_reverse_find_the">Multiplication in reverse! Find the missing number for a bigger XP bonus.</string>
+    <!-- 설정 — 각 단에서 몇까지 곱할지 고르는 항목 제목 -->
+    <string name="multiply_up_to">Multiply up to</string>
     <!-- 어드벤처 지역 이름 -->
     <string name="mushroom_forest">Mushroom Forest</string>
     <string name="my_answer">My answer: %d</string>
@@ -957,6 +961,8 @@
     <string name="unlimited_move_and_play_games">Unlimited move-and-play games</string>
     <string name="unlock_all_game_modes">Unlock all game modes</string>
     <string name="unlocked">Unlocked!</string>
+    <!-- 설정 — 곱하는 수 상한 선택지 (예: 9까지) -->
+    <string name="up_to_number">Up to %d</string>
     <string name="verification_code">Verification code</string>
     <string name="version">Version</string>
     <!-- 설정 > 앱 정보 버전 행의 TalkBack 설명 — %@ 는 버전 이름(2.6.0), %lld 는 빌드 번호 -->

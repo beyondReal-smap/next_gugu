@@ -1,5 +1,7 @@
 package site.smap.gugudan
 
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import site.smap.gugudan.core.*
 import site.smap.gugudan.core.adventure.World
@@ -14,6 +16,11 @@ import kotlin.test.assertTrue
  * 한쪽 규칙을 바꾸면 양쪽 테스트의 기대값을 함께 바꿔야 한다.
  */
 class PopTests {
+
+    // 이 클래스의 기대값은 곱하는 수 상한 19 기준이다 — 다른 테스트가 바꿔 둔 전역 설정에 기대지 않게 매번 고정한다
+    @Before fun fixMaxMultiplier() { Problems.maxB = 19 }
+
+    @After fun restoreMaxMultiplier() { Problems.maxB = Problems.DEFAULT_MAX_B }
 
     // 도우미
 
@@ -235,6 +242,38 @@ class PopTests {
                 val hasPair = values.indices.any { i -> values.indices.any { j -> i != j && values[i] * values[j] == target } }
                 assertTrue(hasPair, "보스 $target: $values")
             }
+        }
+    }
+
+    /** 곱하는 수 상한 9 — 배수 풍선은 단 × 1~9, 보스는 단 × 2~9 이고 19단 보스도 짝꿍(작은 수 ≤ 9)이 있다 (iOS 와 같은 기대값) */
+    @Test fun maxMultiplierNineKeepsMissionsInRange() {
+        Problems.maxB = 9
+        assertEquals(listOf(PopPair(5, 19)), Pop.pairs(95))
+        assertEquals(listOf(PopPair(2, 18), PopPair(3, 12), PopPair(4, 9), PopPair(6, 6)), Pop.pairs(36))
+        assertEquals(emptyList(), Pop.pairs(11 * 13))   // 작은 수 11은 상한 9 밖
+        for (t in 2..19) {
+            val random = rng(t * 17)
+            repeat(40) {
+                val target = Pop.bossTarget(t, random)
+                assertEquals(0, target % t)
+                assertTrue(target / t in 2..9, "보스 $target / ${t}단")
+                val values = Pop.smallValues(target, random)
+                val hasPair = values.indices.any { i -> values.indices.any { j -> i != j && values[i] * values[j] == target } }
+                assertTrue(hasPair, "보스 $target: $values")
+                val correct = Pop.correctValue(t, emptyList(), random)
+                assertTrue(correct % t == 0 && correct / t in 1..9, "정답 $correct / ${t}단")
+            }
+            assertTrue(Pop.distractorPool(t).far.all { it <= 19 * 9 })
+        }
+        // 한 판을 끝까지 돌려도 배수 풍선은 단 × 1~9
+        var s = started(Pop.create(19, random = rng(3)))
+        val random = rng(4)
+        for (i in 0 until 600) {
+            s = Pop.advance(s, 50.0, random)
+            for (b in s.balloons) {
+                if (b.kind != PopBalloonKind.SMALL && b.correct) assertTrue(b.value / s.waveTable in 1..9, "${b.value} / ${s.waveTable}단")
+            }
+            if (s.phase == RunnerPhase.OVER) break
         }
     }
 

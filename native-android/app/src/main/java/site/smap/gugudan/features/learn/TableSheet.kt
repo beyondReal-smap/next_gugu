@@ -114,7 +114,7 @@ fun TableStudyContent(table: Int, onBack: () -> Unit, onPractice: () -> Unit) {
 
             // 표 — 한 줄을 누르면 그 줄만 다시 듣는다
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                (Problems.MIN_B..Problems.MAX_B).forEach { b ->
+                (Problems.MIN_B..Problems.maxB).forEach { b ->
                     val speaking = Speech.speakingKey == rowKey(b)
                     val bg by animateColorAsState(if (speaking) gg.accent.copy(alpha = 0.12f) else gg.surface, label = "row")
                     val border by animateColorAsState(if (speaking) gg.accent.copy(alpha = 0.5f) else gg.border, label = "rowBorder")
@@ -166,7 +166,7 @@ fun TableStudyContent(table: Int, onBack: () -> Unit, onPractice: () -> Unit) {
                     modifier = Modifier.weight(1f),
                     onClick = {
                         if (chanting) Speech.stop()
-                        else Speech.speak((Problems.MIN_B..Problems.MAX_B).map { VoiceLines.chant(table, it) })
+                        else Speech.speak((Problems.MIN_B..Problems.maxB).map { VoiceLines.chant(table, it) })
                     },
                 ) {
                     Icon(if (chanting) Icons.Filled.Stop else Icons.AutoMirrored.Filled.VolumeUp, null, Modifier.size(20.dp))
