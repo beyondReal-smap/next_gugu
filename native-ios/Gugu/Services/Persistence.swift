@@ -5,17 +5,16 @@ import Foundation
 
 enum Persistence {
     static let progressKey = "gugu.progress.v1"
+    /// 3D 어드벤처(2.9.0 에서 제거) 저장본 — PlayRewardsStore 가 별 조각 이관 원본으로 읽는다. 키·값 모두 지우지 않는다
     static let adventureKey = "gugu.adventure.v1"
     static let themeKey = "gugu.theme"
     static let premiumKey = "gugu.premium.v1"
     /// 서버(구매 원장)가 부여한 프리미엄 — 스토어 구매와 따로 둬야 스토어 재확인이 이 값을 지우지 않는다
     static let serverPremiumKey = "gugu.premium.server.v1"
-    /// 구구 점프 단별 최고 기록 (웹 localStorage 키와 동일)
-    static let runnerBestKey = "gugu.runner.best.v1"
-    static let laneBestKey = "gugu.lane.best.v1"
-    static let basketBestKey = "gugu.basket.best.v1"
-    /// 구구 팡팡 단별 최고 점수 ({"all"|"2"…"9": 점수}, 키는 Pop.bestKey)
-    static let popBestKey = "gugu.pop.best.v1"
+    /// 구구 계단·구구 몬스터 보상 — 모은 별·옷장·도감·최고 기록 (PlayRewardsStore)
+    static let playRewardsKey = "gugu.play.v1"
+    /// 구구 계단·구구 몬스터 문제 순서 선택 — 게임마다 마지막 [순서대로]·[무작위] (GameOrderStore)
+    static let gameOrderKey = "gugu.gameOrder.v1"
     /// 서버 동기화 — 학습 신원 / 오프라인 아웃박스
     static let learningIdentityKey = "gugu.learning.identity.v1"
     static let learningOutboxKey = "gugu.learning.outbox.v1"

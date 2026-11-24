@@ -1,13 +1,4 @@
 {
-  "%@ 가는 중…": {
-    "name": "going_to_region",
-    "en": "Going to %@…",
-    "ja": "%@へ いどう中…",
-    "comment": "어드벤처 지역 이동 로딩 문구 — %@ 는 지역 이름 (한국어는 앱이 방향 조사 로/으로를 붙여 넘긴다: \"새싹 들판으로\")",
-    "hi": "%@ जा रहे हैं…",
-    "vi": "Đang đến %@…",
-    "id": "Menuju %@…"
-  },
   "정해진 시간에 오늘의 구구단을 알려드려요": {
     "name": "practice_reminder_channel_description",
     "en": "Reminds you to practice times tables at the time you chose.",

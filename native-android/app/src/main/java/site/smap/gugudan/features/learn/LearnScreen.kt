@@ -203,8 +203,8 @@ private fun TableTile(table: Int, recommended: Boolean, modifier: Modifier, onOp
                     .padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Text(stringResource(R.string.table, table), style = suite(FontWeight.ExtraBold, 24), color = gg.text,
-                    maxLines = 1, softWrap = false)
+                // 한 줄 + 자동 축소(24 → 약 14sp) — vi "Bảng nhân 13"·id "Perkalian 13"·hi 처럼 긴 이름이 잘려 몇 단인지 안 보였다
+                FitText(stringResource(R.string.table, table), suite(FontWeight.ExtraBold, 24), gg.text, minScale = 0.6f)
                 StarsView(stars, size = 13.dp)
             }
             if (recommended) {

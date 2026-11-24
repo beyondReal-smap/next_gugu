@@ -23,7 +23,14 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.Image
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -42,7 +49,7 @@ import site.smap.gugudan.core.ModeDef
 import site.smap.gugudan.core.Modes
 import site.smap.gugudan.core.PremiumConfig
 import site.smap.gugudan.designsystem.*
-import site.smap.gugudan.features.home.Minigames
+import site.smap.gugudan.features.games.Minigames
 import site.smap.gugudan.features.home.modeIcon
 import site.smap.gugudan.features.home.modeMeta
 import site.smap.gugudan.services.rememberStrings
@@ -52,6 +59,7 @@ import site.smap.gugudan.store.Minigame
 
 // 단 시트 "7단, 어떻게 연습할까요?" / '섞어서' 시트 — 행을 누르면 바로 시작한다(고른 상태를 화면에 남기지 않는다).
 // table null = '섞어서': 6개 모드 전부(60초·서바이벌은 여기에만)와 최고 기록을 보여 준다.
+// 아래에 게임 2개(구구 계단·구구 몬스터) — 구구 몬스터는 2~9단만(10단 이상이면 회색 "9단까지", 눌러도 아무 일 없음).
 // 안쪽 단계로 구구단 표(TableStudyContent)를 연다. 시스템 뒤로가기: 표 → 방식 고르기 → 시트 닫기.
 
 /** 시트에서 고른 일 — 시트를 먼저 닫은 뒤 화면(세션·결제·미니게임)을 띄워야 시트 창 밑에 깔리지 않는다 */
@@ -179,9 +187,9 @@ private fun PracticeOptions(table: Int?, onStudy: () -> Unit, onClose: () -> Uni
             )
         }
 
-        // 움직이며 놀기 — 이 단(또는 섞어서)을 골라 둔 채로 시작
+        // 게임 — 이 단(또는 섞어서)을 골라 둔 채로 시작
         Column(Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(stringResource(R.string.move_and_play), style = suite(FontWeight.ExtraBold, 16), color = gg.text,
+            Text(stringResource(R.string.games_group_title), style = suite(FontWeight.ExtraBold, 16), color = gg.text,
                 modifier = Modifier.semantics { heading() })
             Text(
                 table?.let { stringResource(R.string.starts_with_the_times_table, it) }
@@ -192,7 +200,7 @@ private fun PracticeOptions(table: Int?, onStudy: () -> Unit, onClose: () -> Uni
         Minigame.entries.chunked(2).forEach { row ->
             Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 row.forEach { g ->
-                    MinigameTile(g, Modifier.weight(1f).fillMaxHeight()) { onChoose(PracticeChoice.Game(g)) }
+                    MinigameTile(g, table, Modifier.weight(1f).fillMaxHeight()) { onChoose(PracticeChoice.Game(g)) }
                 }
             }
         }
@@ -265,35 +273,60 @@ private fun ModeOptionRow(def: ModeDef, meta: String, best: Int, locked: Boolean
     }
 }
 
+/**
+ * 게임 타일 — 고른 단을 못 쓰는 게임(구구 몬스터 10단 이상)은 회색으로 두고 "9단까지"만 알린다(누르면 아무 일 없음).
+ * 쓸 수 있으면 배지(무료 "N문제 체험", 이용권 "새 게임")
+ */
 @Composable
-private fun MinigameTile(game: Minigame, modifier: Modifier, onClick: () -> Unit) {
+private fun MinigameTile(game: Minigame, table: Int?, modifier: Modifier, onClick: () -> Unit) {
     val gg = LocalGG.current
-    val tint = Minigames.tint(game)
-    val badge = Minigames.badge(game, LocalPremium.current.isPremium)
-    PressableCard(modifier = modifier.semantics(mergeDescendants = true) {}, onClick = onClick) {
+    val enabled = game.supports(table)
+    val name = stringResource(Minigames.nameRes(game))
+    val note = if (enabled) Minigames.badge(rememberStrings(), LocalPremium.current.isPremium)
+        else stringResource(R.string.monster_up_to_nine)
+    val tint = if (enabled) Minigames.tint(game) else gg.textMuted
+    val lockedLabel = stringResource(R.string.game_tile_up_to_nine_label, name)
+    PressableCard(
+        modifier = modifier.then(
+            if (enabled) Modifier.semantics(mergeDescendants = true) {}
+            else Modifier.clearAndSetSemantics {
+                contentDescription = lockedLabel
+                disabled()
+            },
+        ),
+        enabled = enabled,
+        onClick = onClick,
+    ) {
         Row(
             Modifier.fillMaxSize().heightIn(min = 64.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(tint.copy(alpha = 0.06f))
+                .background(if (enabled) tint.copy(alpha = 0.06f) else gg.surface2)
                 .border(1.dp, tint.copy(alpha = 0.25f), RoundedCornerShape(16.dp))
                 .padding(10.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(Minigames.iconBg(game)),
-                contentAlignment = Alignment.Center) {
-                Icon(Minigames.icon(game), null, tint = Minigames.iconFg(game), modifier = Modifier.size(20.dp))
+            Box(
+                Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(Minigames.iconBg(game))
+                    .alpha(if (enabled) 1f else 0.5f).padding(3.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painterResource(Minigames.thumbnail(game)), null, Modifier.fillMaxSize(), contentScale = ContentScale.Fit,
+                    colorFilter = if (enabled) null else GRAYSCALE,
+                )
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(stringResource(Minigames.nameRes(game)), style = suite(FontWeight.ExtraBold, 14), color = gg.text, maxLines = 1)
-                badge?.let {
-                    Text(
-                        it, style = suite(FontWeight.ExtraBold, 10), color = tint, maxLines = 1,
-                        modifier = Modifier.clip(CircleShape).background(tint.copy(alpha = 0.12f))
-                            .padding(horizontal = 6.dp, vertical = 2.dp),
-                    )
-                }
+                Text(name, style = suite(FontWeight.ExtraBold, 14), color = if (enabled) gg.text else gg.textMuted, maxLines = 1)
+                Text(
+                    note, style = suite(FontWeight.ExtraBold, 10), color = tint, maxLines = 1,
+                    modifier = Modifier.clip(CircleShape).background(tint.copy(alpha = 0.12f))
+                        .padding(horizontal = 6.dp, vertical = 2.dp),
+                )
             }
         }
     }
 }
+
+/** 잠긴 게임 타일 썸네일 — 채도 0(회색) */
+private val GRAYSCALE = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })

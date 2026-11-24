@@ -1,6 +1,7 @@
 import Foundation
 
-// 보호자 주간 리포트 — GameState.dayLog(최근 56일 링버퍼)로 최근 7일을 요약한다.
+// 보호자 주간 리포트 — GameState.dayLog(최근 56일 링버퍼)로 이번 주(월~일)를 요약한다.
+// 주는 홈 도장(DailyMissionPlan.week(of:))과 같은 월~일이다 — "이번 주"가 화면마다 다른 뜻이던 문제(audit P5)를 없앴다.
 // 서버 없이 기기 기록만으로 만든다 (웹 lib/report/weekly.ts 대응).
 // 날짜는 "YYYY-MM-DD" 문자열로 다뤄 기기 시간대·일광절약시간과 무관하게 하루씩 센다.
 
@@ -16,17 +17,25 @@ struct WeeklyDay: Equatable {
 struct MissCount: Equatable {
     let key: String    // "7x8"
     let count: Int
+
+    /// 많이 틀린 순(같으면 키 순)으로 최대 limit 개
+    static func ranked(_ misses: [String: Int], limit: Int) -> [MissCount] {
+        Array(misses
+            .map { MissCount(key: $0.key, count: $0.value) }
+            .sorted { $0.count != $1.count ? $0.count > $1.count : $0.key < $1.key }
+            .prefix(limit))
+    }
 }
 
 struct WeeklyReport: Equatable {
-    /// 7일 — 6일 전 → 오늘 순
+    /// 이번 주 월 → 일 7일. 오늘 뒤의 날은 0
     let days: [WeeklyDay]
-    /// 직전 7일(13일 전 ~ 7일 전) 정답 수 — 지난주 대비 비교용
+    /// 지난주 월요일부터 지난주의 오늘과 같은 요일까지의 정답 수 — 화요일이면 지난주 월·화만 비교한다.
+    /// 월요일에 꽉 찬 지난주와 비교하면 늘 지기 때문
     let prevCorrect: Int
-    /// 이번 7일 자주 틀린 문제 (많이 틀린 순, 최대 3개)
+    /// 이번 주(오늘까지) 자주 틀린 문제 (많이 틀린 순, 최대 3개)
     let topMisses: [MissCount]
 
-    static let span = 7
     static let topMissLimit = 3
 
     var correct: Int { days.reduce(0) { $0 + $1.correct } }
@@ -61,42 +70,28 @@ struct WeeklyReport: Equatable {
         return String(localized: "꾸준히 하고 있어요. 취약 문제 복습으로 헷갈리는 문제를 정리해 보세요.", comment: "주간 리포트 보호자 팁")
     }
 
-    /// today 를 마지막 날로 하는 최근 7일 리포트
+    /// today 가 든 주(월~일) 리포트
     static func build(_ dayLog: [DayLogEntry]?, today: String) -> WeeklyReport {
-        // 같은 날짜가 둘 이상 저장돼 있으면(손상된 저장본) 합쳐서 센다 — 한쪽을 버리면 기록이 사라진다
-        var byDate: [String: DayLogEntry] = [:]
-        for e in Commit.normalizeDayLog(dayLog) {
-            if var merged = byDate[e.date] {
-                merged.correct += e.correct
-                merged.wrong += e.wrong
-                merged.msSum += e.msSum
-                merged.misses.merge(e.misses, uniquingKeysWith: +)
-                byDate[e.date] = merged
-            } else {
-                byDate[e.date] = e
-            }
-        }
+        let byDate = Commit.dayLogByDate(dayLog)
 
-        let dates = (0..<span).reversed().map { shift(today, by: -$0) }
-        let days = dates.map { date -> WeeklyDay in
-            let e = byDate[date]
-            return WeeklyDay(date: date, correct: e?.correct ?? 0, wrong: e?.wrong ?? 0, msSum: e?.msSum ?? 0)
+        let week = DailyMissionPlan.week(of: today)
+        // 날짜 문자열은 "yyyy-MM-dd" 라 사전 순이 날짜 순이다
+        let soFar = week.filter { $0 <= today }
+        let days = week.map { date -> WeeklyDay in
+            guard date <= today, let e = byDate[date] else { return WeeklyDay(date: date, correct: 0, wrong: 0, msSum: 0) }
+            return WeeklyDay(date: date, correct: e.correct, wrong: e.wrong, msSum: e.msSum)
         }
-        let prevCorrect = (span..<(span * 2))
-            .map { shift(today, by: -$0) }
+        let prevCorrect = soFar
+            .map { shift($0, by: -7) }
             .reduce(0) { $0 + (byDate[$1]?.correct ?? 0) }
 
         var misses: [String: Int] = [:]
-        for date in dates {
+        for date in soFar {
             guard let e = byDate[date] else { continue }
             misses.merge(e.misses, uniquingKeysWith: +)
         }
-        let topMisses = misses
-            .map { MissCount(key: $0.key, count: $0.value) }
-            .sorted { $0.count != $1.count ? $0.count > $1.count : $0.key < $1.key }
-            .prefix(topMissLimit)
 
-        return WeeklyReport(days: days, prevCorrect: prevCorrect, topMisses: Array(topMisses))
+        return WeeklyReport(days: days, prevCorrect: prevCorrect, topMisses: MissCount.ranked(misses, limit: topMissLimit))
     }
 
     // MARK: - 날짜 문자열 계산

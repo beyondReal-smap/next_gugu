@@ -79,6 +79,17 @@ object Problems {
         return byTable.entries.sortedBy { it.key }.maxByOrNull { it.value }?.key
     }
 
+    /** 오답 가중치가 남은 문제가 있는 단 집합 (지도 먹구름 표시용, 계획서 2-7). 가중치 0 이하·깨진 키·범위 밖은 무시. */
+    fun tablesWithWrong(wrongPool: Map<String, Int>): Set<Int> {
+        val tables = mutableSetOf<Int>()
+        for ((key, weight) in wrongPool) {
+            if (weight <= 0) continue
+            val problem = parseKey(key) ?: continue
+            tables.add(problem.a)
+        }
+        return tables
+    }
+
     /**
      * "7x8" → Problem(7, 8). 형식이 깨졌거나 기록 계약 범위(2~19단 × 1~19) 밖이면 null.
      * 설정 상한(maxB)으로 자르지 않는다 — 상한을 낮춰도 이미 쌓인 기록은 그대로 복원·표시한다

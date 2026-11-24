@@ -1,8 +1,7 @@
 import SwiftUI
 
-// 움직이며 놀기(점프·레인·바구니·팡팡) 무료 체험 — 시작 전 안내, 진행 표시, 체험 종료 패널.
-// 체험 규칙(몇 문제, 언제 끝나는지)은 Core 엔진의 trialLeft 가 맡고, 여기서는 보여 주기만 한다.
-// 팡팡은 체험 단위가 문제가 아니라 웨이브라 문구를 따로 둔다(PopTrial).
+// 게임(구구 계단·구구 몬스터) 무료 체험 — 시작 전 안내, 진행 표시, 체험 종료 패널.
+// 체험 규칙(몇 문제, 언제 끝나는지)은 게임 엔진의 trialLeft 가 맡고, 여기서는 보여 주기만 한다.
 
 enum MinigameTrial {
     static var questions: Int { PremiumConfig.minigameTrialQuestions }
@@ -14,19 +13,10 @@ enum MinigameTrial {
     static func badge(isPremium: Bool) -> String? { isPremium ? nil : String(localized: "\(questions)문제 체험") }
 }
 
-/// 구구 팡팡 체험 — 첫 웨이브(PremiumConfig.popTrialWaves)를 깨면 끝난다
-enum PopTrial {
-    /// 새 판의 체험 웨이브 수 — 이용권이 있으면 제한 없음(nil)
-    static func limit(isPremium: Bool) -> Int? { isPremium ? nil : PremiumConfig.popTrialWaves }
-
-    static var badge: String { String(localized: "첫 웨이브 체험") }
-    static var noticeTitle: String { String(localized: "무료 체험 · 첫 웨이브") }
-}
-
 /// 시작 전 안내 — 체험이 몇 문제인지 먼저 알려 끝이 갑작스럽지 않게 한다
 struct TrialNotice: View {
-    /// 체험 범위 — 팡팡은 웨이브 단위라 PopTrial.noticeTitle 을 넘긴다
-    var title: String = String(localized: "무료 체험 · \(MinigameTrial.questions)문제")
+    /// 체험 범위 — 게임 둘 다 문제 수 단위
+    private var title: String { String(localized: "무료 체험 · \(MinigameTrial.questions)문제") }
 
     var body: some View {
         HStack(spacing: 10) {
@@ -70,13 +60,18 @@ struct TrialProgressPill: View {
     }
 }
 
-/// 체험 판이 끝났을 때의 패널 — 결제 화면으로 안내한다.
+/// 체험 문제 수를 다 채워 판이 끝났을 때의 패널 — 결제 화면으로 안내한다.
 /// "다시 하기"는 두지 않는다: 체험을 이어 붙여 계속 노는 흐름을 막기 위해서다(대표님 결정).
+/// 체험 수 전에 잡히거나 시간이 다 된 판은 이 패널이 아니라 일반 결과 창([다시 하기])을 쓴다(2026-11-24 대표님 결정).
 struct TrialEndPanel: View {
     /// 이번 판에서 맞힌 문제 수
     let correct: Int
-    /// 맞힌 수 앞 문장 — 팡팡은 문제가 아니라 풍선 수로 말한다. nil 이면 "N문제를 맞혔어요!"
+    /// 맞힌 수 앞 문장 — 구구 몬스터는 문제가 아니라 물리친 몬스터 수로 말한다. nil 이면 "N문제를 맞혔어요!"
     var lead: String? = nil
+    /// 학습 기록으로 받은 XP(구구 계단·구구 몬스터) — nil 이면 줄을 그리지 않음
+    var xpEarned: Int? = nil
+    /// 오늘의 미션 줄(GameResultContent.missionNote) — nil 이면 그리지 않음
+    var missionNote: String? = nil
     let onUnlock: () -> Void
     let onExit: () -> Void
 
@@ -99,6 +94,20 @@ struct TrialEndPanel: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             .accessibilityElement(children: .combine)
+
+            if let missionNote {
+                Label(missionNote, systemImage: "checkmark.seal.fill")
+                    .font(.suite(.extrabold, 13)).foregroundStyle(Color.gg.success)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if let xpEarned {
+                Text(verbatim: "+\(xpEarned) XP")
+                    .font(.suite(.extrabold, 12)).foregroundStyle(Color.gg.accent).monospacedDigit()
+                    .padding(.horizontal, 10).padding(.vertical, 4)
+                    .background(Color.gg.accent.opacity(0.12), in: Capsule())
+            }
 
             GGButton(variant: .primary, size: .lg, action: onUnlock) {
                 Image(systemName: "sparkles")

@@ -308,7 +308,7 @@ struct ProfileView: View {
                     .background(Color.white.opacity(0.2), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("평생 이용권").font(.suite(.extrabold, 15)).foregroundStyle(.white)
-                    Text("모든 모드와 3D 어드벤처 · 한 번 구매로 계속")
+                    Text("모든 모드와 구구 계단·구구 몬스터 · 한 번 구매로 계속")
                         .font(.suite(.medium, 12)).foregroundStyle(.white.opacity(0.85))
                 }
                 Spacer(minLength: 4)
@@ -323,37 +323,5 @@ struct ProfileView: View {
             )
         }
         .buttonStyle(PressScaleStyle())
-    }
-}
-
-// 간단한 플로우 레이아웃 (칩 줄바꿈)
-struct FlowRow: Layout {
-    var spacing: CGFloat = 8
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let maxWidth = proposal.width ?? .infinity
-        var x: CGFloat = 0, y: CGFloat = 0, rowHeight: CGFloat = 0
-        for sub in subviews {
-            let size = sub.sizeThatFits(.unspecified)
-            if x + size.width > maxWidth {
-                x = 0; y += rowHeight + spacing; rowHeight = 0
-            }
-            x += size.width + spacing
-            rowHeight = max(rowHeight, size.height)
-        }
-        return CGSize(width: maxWidth, height: y + rowHeight)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var x = bounds.minX, y = bounds.minY, rowHeight: CGFloat = 0
-        for sub in subviews {
-            let size = sub.sizeThatFits(.unspecified)
-            if x + size.width > bounds.maxX {
-                x = bounds.minX; y += rowHeight + spacing; rowHeight = 0
-            }
-            sub.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
-            x += size.width + spacing
-            rowHeight = max(rowHeight, size.height)
-        }
     }
 }

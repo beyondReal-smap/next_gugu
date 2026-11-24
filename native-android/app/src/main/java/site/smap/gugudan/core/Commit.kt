@@ -16,13 +16,56 @@ object Commit {
 
     private val DATE_RE = Regex("""^\d{4}-\d{2}-\d{2}$""")
 
-    /** 저장본의 날짜 로그 정리 — 날짜 형식이 깨진 항목과 0 이하 오답 집계를 버리고 최근 56일만 남긴다. */
+    /** 저장본의 날짜 로그 정리 — 날짜 형식이 깨진 항목과 0 이하 오답·유효하지 않은 단 집계를 버리고 최근 56일만 남긴다. */
     fun normalizeDayLog(raw: List<DayLogEntry>): List<DayLogEntry> =
         raw.filter { DATE_RE.matches(it.date) }
-            .map { it.copy(misses = it.misses.filterValues { v -> v > 0 }) }
+            .map { entry ->
+                entry.copy(
+                    misses = entry.misses.filterValues { v -> v > 0 },
+                    tables = entry.tables?.filter { (table, tally) ->
+                        table in Problems.MIN_TABLE..Problems.MAX_TABLE &&
+                            tally.correct >= 0 && tally.wrong >= 0 && tally.msSum >= 0 &&
+                            (tally.correct + tally.wrong) > 0
+                    },
+                )
+            }
             .takeLast(DAY_LOG_CAP)
 
-    /** 오늘 버킷에 세션 답안을 누적하고 날짜 순으로 정렬해 최근 56일만 남긴다. */
+    /** 두 단별 집계 맵을 합친다 — 둘 다 null 이면 null(구버전 표시 유지), 한쪽만 있으면 그쪽, 둘 다 있으면 단별로 합산 */
+    fun mergeTables(a: Map<Int, TableTally>?, b: Map<Int, TableTally>?): Map<Int, TableTally>? {
+        if (a == null) return b
+        if (b == null) return a
+        val out = a.toMutableMap()
+        for ((table, tally) in b) {
+            val prev = out[table]
+            out[table] = if (prev == null) tally else TableTally(
+                correct = prev.correct + tally.correct,
+                wrong = prev.wrong + tally.wrong,
+                msSum = prev.msSum + tally.msSum,
+            )
+        }
+        return out.toMap()
+    }
+
+    /** 날짜별 로그를 정규화하고 같은 날짜가 중복 저장돼 있으면 오답·단별 집계까지 모두 합친다. */
+    fun mergeDayLog(raw: List<DayLogEntry>): Map<String, DayLogEntry> {
+        val byDate = mutableMapOf<String, DayLogEntry>()
+        for (e in normalizeDayLog(raw)) {
+            val prev = byDate[e.date]
+            byDate[e.date] = if (prev == null) e else prev.copy(
+                correct = prev.correct + e.correct,
+                wrong = prev.wrong + e.wrong,
+                msSum = prev.msSum + e.msSum,
+                misses = (prev.misses.keys + e.misses.keys).associateWith {
+                    (prev.misses[it] ?: 0) + (e.misses[it] ?: 0)
+                },
+                tables = mergeTables(prev.tables, e.tables),
+            )
+        }
+        return byDate
+    }
+
+    /** 오늘 버킷에 세션 답안을 누적하고 날짜 순으로 정렬해 최근 56일만 남긴다. 단별 집계는 AnswerRecord.a 기준. */
     private fun appendDayLog(log: List<DayLogEntry>, result: SessionResult, date: String): List<DayLogEntry> {
         val next = log.toMutableList()
         var i = next.indexOfFirst { it.date == date }
@@ -34,6 +77,7 @@ object Commit {
         var wrong = next[i].wrong
         var msSum = next[i].msSum
         val misses = next[i].misses.toMutableMap()
+        val tables = if (result.answers.isEmpty()) null else (next[i].tables ?: emptyMap()).toMutableMap()
         for (ans in result.answers) {
             if (ans.correct) {
                 correct += 1
@@ -43,8 +87,23 @@ object Commit {
                 misses[key] = (misses[key] ?: 0) + 1
             }
             msSum += ans.ms
+            if (tables != null && ans.a in Problems.MIN_TABLE..Problems.MAX_TABLE) {
+                val cur = tables[ans.a] ?: TableTally()
+                tables[ans.a] = TableTally(
+                    correct = cur.correct + if (ans.correct) 1 else 0,
+                    wrong = cur.wrong + if (ans.correct) 0 else 1,
+                    msSum = cur.msSum + ans.ms,
+                )
+            }
         }
-        next[i] = DayLogEntry(date = date, correct = correct, wrong = wrong, msSum = msSum, misses = misses.toMap())
+        next[i] = DayLogEntry(
+            date = date,
+            correct = correct,
+            wrong = wrong,
+            msSum = msSum,
+            misses = misses.toMap(),
+            tables = tables?.toMap() ?: next[i].tables,
+        )
         return next.sortedBy { it.date }.takeLast(DAY_LOG_CAP)
     }
 
@@ -152,8 +211,8 @@ object Commit {
                 recentAvgMs = (s.recentAvgMs + avgMs).takeLast(20),
             )
 
-            // 마스터리 (단 집중 세션)
-            if (result.table != null) {
+            // 마스터리 (단 집중 세션) — 게임 판은 단을 기록(서버 tableNo)만 하고 별은 주지 않는다(GameMode.isGame)
+            if (result.table != null && !result.mode.isGame) {
                 val prev = s.tableMastery[result.table] ?: TableMastery()
                 val sessionStars = starsFor(accuracy, avgMs, result.answers.size)
                 val stars = maxOf(prev.stars, sessionStars)

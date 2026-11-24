@@ -68,9 +68,25 @@ enum Modes {
             detail: String(localized: "3D 월드 주민과 구구단 대결. 학습 모드 기록과는 따로 쌓여요.", comment: "모드 선택 시 하단 설명"),
             kind: .fixed, total: 0, timeLimitMs: nil, lives: nil,
             supportsTable: true, scored: false, xpBonus: 3),
+        // 게임 판의 학습 기록용 — 이름·소개는 기록·알림에서 모드를 가리킬 때만 쓴다(카드 문구는 Features/Games/GameStyle).
+        // 최고 기록은 게임 보상 저장소(PlayRewardsStore)가 따로 맡아 scored 는 false. 문제 수가 정해지지 않아 total 0.
+        // XP 보너스는 0 — 게임은 별 코인으로 따로 보상하고, 빠르게 많이 푸는 판이라 정답당 보너스를 얹지 않는다
+        .stairs: ModeDef(
+            id: .stairs, name: String(localized: "구구 계단", comment: "게임 이름"),
+            tagline: String(localized: "발판 점프", comment: "모드 카드 한 줄 소개 — 짧게"),
+            detail: String(localized: "정답 발판으로 점프해 먹구름보다 높이 올라가요.", comment: "모드 선택 시 하단 설명"),
+            kind: .fixed, total: 0, timeLimitMs: nil, lives: nil,
+            supportsTable: true, scored: false, xpBonus: 0),
+        .monster: ModeDef(
+            id: .monster, name: String(localized: "구구 몬스터", comment: "게임 이름"),
+            tagline: String(localized: "카드 2장 곱셈", comment: "모드 카드 한 줄 소개 — 짧게"),
+            detail: String(localized: "곱해서 몬스터 숫자가 되는 카드 2장을 골라요.", comment: "모드 선택 시 하단 설명"),
+            kind: .timed, total: 0, timeLimitMs: 60_000, lives: nil,
+            supportsTable: true, scored: false, xpBonus: 0),
     ]
 
-    /// 학습 탭에 노출하는 모드 (MODE_LIST). adventure 는 월드 전용이라 제외.
+    /// 학습 탭에 노출하는 모드 (MODE_LIST). adventure 는 옛 3D 어드벤처 기록(2.9.0 제거, 저장 호환용), stairs·monster 는 게임 전용이라 제외.
+    /// 업적 '모드 탐험가'의 목표치도 이 목록 수라 게임을 넣으면 기존 사용자 업적 기준이 바뀐다.
     static let list: [ModeDef] = [
         all[.practice]!, all[.timeAttack]!, all[.challenge]!,
         all[.survival]!, all[.missing]!, all[.truefalse]!,

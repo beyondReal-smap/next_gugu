@@ -4,7 +4,7 @@ import Foundation
 // 검증 규칙은 서버가 거부하는 조건을 클라이언트에서 미리 걸러내기 위한 것으로,
 // 웹 validateLearningEvent 와 같은 기준을 쓴다.
 
-/// 서버가 받는 모드 — adventure 는 계약에 없어 practice 로 보낸다
+/// 서버가 받는 모드 — adventure·stairs·monster 는 계약에 없어 practice 로 보낸다
 enum LearningMode: String, Codable, CaseIterable {
     case practice, timeAttack, challenge, survival, missing, truefalse
 }

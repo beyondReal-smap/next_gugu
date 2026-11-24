@@ -30,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.key
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,18 +42,18 @@ import site.smap.gugudan.designsystem.GuguTheme
 import site.smap.gugudan.designsystem.LocalGG
 import site.smap.gugudan.designsystem.PressableCard
 import site.smap.gugudan.designsystem.suite
-import site.smap.gugudan.features.adventure.AdventureScreen
 import site.smap.gugudan.features.home.HomeScreen
 import site.smap.gugudan.features.learn.LearnScreen
 import site.smap.gugudan.features.onboarding.OnboardingScreen
 import site.smap.gugudan.features.paywall.PaywallScreen
 import site.smap.gugudan.features.profile.ProfileScreen
-import site.smap.gugudan.features.basket.BasketScreen
-import site.smap.gugudan.features.lanerunner.LaneRunnerScreen
-import site.smap.gugudan.features.pop.PopScreen
-import site.smap.gugudan.features.runner.RunnerScreen
+import site.smap.gugudan.features.games.monster.MonsterScreen
+import site.smap.gugudan.features.games.shared.blockTouches
+import site.smap.gugudan.features.games.stairs.StairsScreen
+import site.smap.gugudan.features.games.wardrobe.WardrobeScreen
 import site.smap.gugudan.features.session.SessionScreen
 import site.smap.gugudan.services.AndroidStrings
+import site.smap.gugudan.services.DevProps
 import site.smap.gugudan.services.Haptics
 import site.smap.gugudan.services.LearningIdentityStore
 import site.smap.gugudan.services.LearningOutboxStore
@@ -105,7 +106,15 @@ class MainActivity : ComponentActivity() {
         Sound.init(persistence)
         Speech.init(applicationContext)
         val game = GameStore(persistence)
-        val adventure = AdventureStore(persistence, devClearR2 = devFlag("clear_r2"))
+        // 구구 계단·몬스터 보상(모은 별·옷장·도감·최고 기록) — 처음 한 번 옛 어드벤처 저장본(gugu.adventure.v1)의 별 조각을 옮긴다
+        val gameStorage = PersistencePlayRewardsStorage(persistence)
+        val playRewards = PlayRewardsStore(gameStorage, debug = PlayRewardsDebug.from(DevProps::get))
+        // 구구 계단·몬스터 문제 순서(순서대로·무작위) 선택 기억 — DEBUG: setprop debug.gugu.stairs_order|monster_order sequential|random
+        val gameOrders = GameOrderStore(gameStorage, overrides = GameOrderStore.debugOverrides(DevProps::get))
+        // DEBUG: setprop debug.gugu.game stairs|monster|wardrobe → 앱 시작 때 구구 계단·구구 몬스터·옷장을 전체 화면으로(온보딩 전에도 — 화면 단독 확인용)
+        val debugGame = DevProps.get("debug.gugu.game")?.also {
+            require(it in DEBUG_GAMES) { "debug.gugu.game 은 $DEBUG_GAMES 중 하나: $it" }
+        }
         val session = SessionStore()
         val premium = PremiumStore(this, persistence, devForcePremium = devFlag("premium"))
         val theme = ThemeStore(persistence)
@@ -138,7 +147,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             CompositionLocalProvider(
                 LocalGame provides game,
-                LocalAdventure provides adventure,
+                LocalPlayRewards provides playRewards,
+                LocalGameOrders provides gameOrders,
                 LocalSession provides session,
                 LocalPremium provides premium,
                 LocalTheme provides theme,
@@ -198,7 +208,7 @@ class MainActivity : ComponentActivity() {
                     // 학습 알림 재예약 — 학습해서 오늘 진척이 바뀔 때.
                     // 오늘 목표를 채웠다면 이때 오늘 알림이 빠진다. (앱 복귀는 onResume 에서)
                     LaunchedEffect(game.state.dailyCorrect) { reminder.reschedule(game.state) }
-                    RootScreen()
+                    RootScreen(debugGame = debugGame)
                 }
             }
         }
@@ -275,26 +285,33 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// 앱 셸 (iOS RootView 이식) — 온보딩 게이트 + 탭 + 오버레이(세션/어드벤처/게임/설정/페이월).
+private const val DEBUG_GAME_STAIRS = "stairs"
+private const val DEBUG_GAME_MONSTER = "monster"
+private const val DEBUG_GAME_WARDROBE = "wardrobe"
+private val DEBUG_GAMES = listOf(DEBUG_GAME_STAIRS, DEBUG_GAME_MONSTER, DEBUG_GAME_WARDROBE)
+
+// 앱 셸 (iOS RootView 이식) — 온보딩 게이트 + 탭 + 오버레이(세션/게임/옷장/설정/페이월).
 // 시스템 뒤로가기는 가장 위에 떠 있는 화면이 먼저 받는다 (각 화면이 자기 BackHandler 를 가진다).
+// debugGame: DEBUG 훅(debug.gugu.game stairs|monster|wardrobe) — 구구 계단·구구 몬스터·옷장을 온보딩 여부와 상관없이 맨 위 전체 화면으로 띄운다
 @Composable
-fun RootScreen() {
+fun RootScreen(debugGame: String? = null) {
     val gg = LocalGG.current
     val game = LocalGame.current
     val session = LocalSession.current
-    val adventure = LocalAdventure.current
     val premium = LocalPremium.current
     val router = LocalRouter.current
+    var debugOpen by remember { mutableStateOf(debugGame) }
 
-    // 세션·미니게임·어드벤처 진행 중에는 원격 알림을 소리·배너 없이 목록에만 둔다
-    val playing = session.active != null || adventure.open || router.runnerOpen || router.laneOpen || router.basketOpen ||
-        router.popOpen
+    // 세션·게임 진행 중에는 원격 알림을 소리·배너 없이 목록에만 둔다
+    val playing = session.active != null || router.minigame != null || debugOpen != null
     LaunchedEffect(playing) { RemotePush.playing = playing }
-    // 알림으로 들어온 이동 — 온보딩을 마치고 진행 중인 세션·미니게임·어드벤처가 끝난 뒤에 적용한다 (그 전에는 보관)
+    // 알림으로 들어온 이동 — 온보딩을 마치고 진행 중인 세션·게임이 끝나고 옷장을 닫은 뒤에 적용한다 (그 전에는 보관).
+    // 옷장은 진행 중은 아니지만(알림 소리는 그대로) 그 위에서 탭을 바꾸면 옷장 밑에 깔려 보이지 않는다
     val pendingRoute = router.pendingRoute
-    LaunchedEffect(pendingRoute, game.state.onboarded, playing) {
+    val routeBlocked = playing || router.wardrobeOpen
+    LaunchedEffect(pendingRoute, game.state.onboarded, routeBlocked) {
         router.applyPendingRoute(
-            onboarded = game.state.onboarded, playing = playing, isPremium = premium.isPremium,
+            onboarded = game.state.onboarded, playing = routeBlocked, isPremium = premium.isPremium,
         ) { premium.openPaywall() }
     }
 
@@ -318,49 +335,36 @@ fun RootScreen() {
                 }
             }
 
-            // 어드벤처 오버레이
+            // 게임 오버레이 (구구 계단·구구 몬스터) — 홈 "게임" 묶음·학습 탭 단 시트에서. 열 때마다 id 가 달라 새 판(새 엔진)이 된다.
+            // 맨 아래 형제 층이 빈 곳 탭을 삼켜 아래 메인 탭으로 새지 않게 한다(부모에 걸면 게임 버튼 클릭까지 취소된다)
             AnimatedVisibility(
-                visible = adventure.open,
+                visible = router.minigame != null,
                 enter = slideInVertically(initialOffsetY = { it / 4 }) + fadeIn(),
                 exit = slideOutVertically(targetOffsetY = { it / 4 }) + fadeOut(),
             ) {
-                AdventureScreen(onExit = { adventure.closeAdventure() })
+                router.minigame?.let { open ->
+                    Box(Modifier.fillMaxSize()) {
+                        Box(Modifier.fillMaxSize().blockTouches())
+                        key(open.id) {
+                            when (open.game) {
+                                Minigame.STAIRS -> StairsScreen(start = open.start, onExit = router::closeMinigame)
+                                Minigame.MONSTER -> MonsterScreen(start = open.start, onExit = router::closeMinigame)
+                            }
+                        }
+                    }
+                }
             }
 
-            // 구구 점프 오버레이
+            // 옷장 오버레이 (구구 꾸미기) — 홈 "게임" 묶음에서. 뒤로가기는 옷장 화면이 받아 닫는다
             AnimatedVisibility(
-                visible = router.runnerOpen,
+                visible = router.wardrobeOpen,
                 enter = slideInVertically(initialOffsetY = { it / 4 }) + fadeIn(),
                 exit = slideOutVertically(targetOffsetY = { it / 4 }) + fadeOut(),
             ) {
-                RunnerScreen(start = router.minigameStart, onExit = { router.runnerOpen = false })
-            }
-
-            // 구구 레인 오버레이
-            AnimatedVisibility(
-                visible = router.laneOpen,
-                enter = slideInVertically(initialOffsetY = { it / 4 }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it / 4 }) + fadeOut(),
-            ) {
-                LaneRunnerScreen(start = router.minigameStart, onExit = { router.laneOpen = false })
-            }
-
-            // 구구 바구니 오버레이
-            AnimatedVisibility(
-                visible = router.basketOpen,
-                enter = slideInVertically(initialOffsetY = { it / 4 }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it / 4 }) + fadeOut(),
-            ) {
-                BasketScreen(start = router.minigameStart, onExit = { router.basketOpen = false })
-            }
-
-            // 구구 팡팡 오버레이
-            AnimatedVisibility(
-                visible = router.popOpen,
-                enter = slideInVertically(initialOffsetY = { it / 4 }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it / 4 }) + fadeOut(),
-            ) {
-                PopScreen(start = router.minigameStart, onExit = { router.popOpen = false })
+                Box(Modifier.fillMaxSize()) {
+                    Box(Modifier.fillMaxSize().blockTouches())
+                    WardrobeScreen(onClose = router::closeWardrobe)
+                }
             }
 
             // 설정 오버레이 (프로필 톱니바퀴)
@@ -372,7 +376,25 @@ fun RootScreen() {
                 SettingsScreen(onClose = { router.settingsOpen = false })
             }
 
-            // 페이월 오버레이 (최상위 — 설정에서 열어도 그 위에 뜬다)
+            // 페이월 오버레이 (최상위 — 설정에서 열어도 그 위에 뜬다). 게임 화면(DEBUG 훅)이 떠 있으면 그 위에 따로 띄운다(아래)
+            AnimatedVisibility(
+                visible = premium.paywallOpen && debugOpen == null,
+                enter = slideInVertically(initialOffsetY = { it / 4 }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it / 4 }) + fadeOut(),
+            ) {
+                PaywallScreen(onDismiss = { premium.closePaywall() })
+            }
+        }
+
+        // DEBUG 훅(debug.gugu.game)으로 연 구구 계단·구구 몬스터·옷장 — 온보딩 전에도 뜨도록 게이트 밖, 체험 끝 결제 화면은 그 위에
+        val openGame = debugOpen
+        if (openGame != null) {
+            when (openGame) {
+                DEBUG_GAME_STAIRS -> StairsScreen(start = MinigameStart.Default, onExit = { debugOpen = null })
+                DEBUG_GAME_MONSTER -> MonsterScreen(start = MinigameStart.Default, onExit = { debugOpen = null })
+                DEBUG_GAME_WARDROBE -> WardrobeScreen(onClose = { debugOpen = null })
+                else -> error("모르는 debug.gugu.game: $openGame")
+            }
             AnimatedVisibility(
                 visible = premium.paywallOpen,
                 enter = slideInVertically(initialOffsetY = { it / 4 }) + fadeIn(),

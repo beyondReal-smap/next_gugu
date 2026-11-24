@@ -1,11 +1,10 @@
 import SwiftUI
 
-// 앱 셸 (AppShell.tsx 이식) — 온보딩 게이트 + TabView + 세션/어드벤처/페이월 오버레이
+// 앱 셸 (AppShell.tsx 이식) — 온보딩 게이트 + TabView + 세션/게임/옷장/페이월 오버레이
 
 struct RootView: View {
     @State private var game = GameStore()
     @State private var session = SessionStore()
-    @State private var adventure = AdventureStore()
     @State private var premium = PremiumStore()
     @State private var theme = ThemeStore()
     @State private var router = Router()
@@ -14,6 +13,19 @@ struct RootView: View {
     @State private var reminder = ReminderStore()
     @State private var prefs = PrefsStore()
     @State private var push = PushStore()
+    @State private var playRewards = PlayRewardsStore()
+    @State private var gameOrders = GameOrderStore()
+    #if DEBUG
+    /// DEBUG 전용 — SIMCTL_CHILD_GUGU_GAME=stairs|monster|wardrobe 이면 앱 시작 때 구구 계단·구구 몬스터·옷장을
+    /// 전체 화면으로 바로 띄운다(온보딩 전이어도)
+    @State private var debugGame: String? = RootView.debugGameFromEnvironment()
+
+    private static func debugGameFromEnvironment() -> String? {
+        guard let name = ProcessInfo.processInfo.environment["GUGU_GAME"] else { return nil }
+        precondition(["stairs", "monster", "wardrobe"].contains(name), "GUGU_GAME 은 stairs·monster·wardrobe 만 지원: \(name)")
+        return name
+    }
+    #endif
     /// AppDelegate 가 남긴 알림 탭·토큰 갱신 (GuguApp 이 주입)
     @Environment(PushEvents.self) private var pushEvents
     @Environment(\.scenePhase) private var scenePhase
@@ -22,7 +34,6 @@ struct RootView: View {
         content
             .environment(game)
             .environment(session)
-            .environment(adventure)
             .environment(premium)
             .environment(theme)
             .environment(router)
@@ -31,6 +42,8 @@ struct RootView: View {
             .environment(reminder)
             .environment(prefs)
             .environment(push)
+            .environment(playRewards)
+            .environment(gameOrders)
             .preferredColorScheme(theme.colorScheme)
             .tint(.gg.accent)
             // 첫 실행 시 조용히 익명 계정을 만든다 — 화면을 막지 않고 실패해도 앱은 그대로 동작
@@ -98,14 +111,15 @@ struct RootView: View {
         "\(accountKey)|\(PushStore.guardianEligible(auth: auth, premium: premium))|\(reminder.settings.enabled)|\(pushEvents.tokenRevision)"
     }
 
-    /// 세션·미니게임·어드벤처 진행 중 — 알림 이동을 미루고, 포그라운드 공지는 목록에만 둔다
+    /// 세션·게임 진행 중 — 알림 이동을 미루고, 포그라운드 공지는 목록에만 둔다
     private var isImmersive: Bool {
-        session.active != nil || adventure.open || router.minigame != nil
+        session.active != nil || router.minigame != nil
     }
 
-    /// 보관한 알림 이동을 지금 적용해도 되는지 — 온보딩 전·진행 중·페이월이 떠 있으면 기다린다
+    /// 보관한 알림 이동을 지금 적용해도 되는지 — 온보딩 전·진행 중·옷장·페이월이 떠 있으면 기다린다
+    /// (옷장은 놀이 중이 아니라 알림 배너는 그대로 보이지만, 전체화면 뒤에서 탭이 바뀌거나 결제 시트가 무시되지 않게 닫힐 때까지 미룬다)
     private var canApplyRoute: Bool {
-        router.pendingRoute != nil && game.state.onboarded && !isImmersive && !premium.paywallOpen
+        router.pendingRoute != nil && game.state.onboarded && !isImmersive && !router.wardrobeOpen && !premium.paywallOpen
     }
 
     /// 허용 목록 딥링크를 화면 이동으로 바꾼다. 설정 시트가 떠 있으면 닫고 이동한다
@@ -120,13 +134,13 @@ struct RootView: View {
             router.tab = .home
         case .learn:
             router.settingsOpen = false
-            router.tab = .learn
+            router.tab = .map
         case .profile, .profileReport:
             // 주간 리포트 카드는 프로필 상단에 있다
             router.settingsOpen = false
-            router.tab = .profile
+            router.tab = .treasure
         case .settingsNotifications:
-            router.tab = .profile
+            router.tab = .treasure
             router.settingsFocusNotifications = true
             router.settingsOpen = true
         case .paywall:
@@ -162,6 +176,24 @@ struct RootView: View {
 
     @ViewBuilder
     private var content: some View {
+        #if DEBUG
+        if let name = debugGame {
+            // 디버그 훅 게임 — 나가면 평소 화면(온보딩 또는 탭)으로
+            switch name {
+            case "monster": MonsterView(start: .standard) { debugGame = nil }
+            case "wardrobe": WardrobeView { debugGame = nil }
+            default: StairsView(start: .standard) { debugGame = nil }
+            }
+        } else {
+            appContent
+        }
+        #else
+        appContent
+        #endif
+    }
+
+    @ViewBuilder
+    private var appContent: some View {
         if !game.state.onboarded {
             OnboardingView()
                 .transition(.opacity)
@@ -177,19 +209,19 @@ struct RootView: View {
                     }
                     .id(active.id)
                 }
-                // 어드벤처 오버레이
-                .fullScreenCover(isPresented: Binding(
-                    get: { adventure.open },
-                    set: { adventure.open = $0 }
-                )) {
-                    AdventureView { adventure.closeAdventure() }
-                }
-                // 미니게임 오버레이 (팡팡·바구니·점프·레인) — 고른 단을 엔진 시작 단으로 넘긴다
+                // 게임 오버레이 (구구 계단·구구 몬스터) — 고른 단을 엔진 시작 단으로 넘긴다
                 .fullScreenCover(item: Binding(
                     get: { router.minigame },
                     set: { router.minigame = $0 }
                 )) { launch in
                     minigameView(launch)
+                }
+                // 구구 꾸미기(옷장) 오버레이 — 홈 "게임" 묶음에서 연다
+                .fullScreenCover(isPresented: Binding(
+                    get: { router.wardrobeOpen },
+                    set: { router.wardrobeOpen = $0 }
+                )) {
+                    WardrobeView { router.wardrobeOpen = false }
                 }
                 // 페이월 오버레이
                 .sheet(isPresented: Binding(
@@ -202,17 +234,15 @@ struct RootView: View {
     }
 }
 
-// MARK: - 미니게임
+// MARK: - 게임
 
 extension RootView {
     @ViewBuilder
     fileprivate func minigameView(_ launch: MinigameLaunch) -> some View {
         let exit = { router.minigame = nil }
         switch launch.game {
-        case .pop: PopView(start: launch.start, onExit: exit)
-        case .basket: BasketView(start: launch.start, onExit: exit)
-        case .jump: RunnerView(start: launch.start, onExit: exit)
-        case .lane: LaneRunnerView(start: launch.start, onExit: exit)
+        case .stairs: StairsView(start: launch.start, onExit: exit)
+        case .monster: MonsterView(start: launch.start, onExit: exit)
         }
     }
 }
@@ -238,10 +268,10 @@ struct MainTabView: View {
                 .tag(AppTab.home)
             LearnView()
                 .tabItem { Label("학습", systemImage: "graduationcap.fill") }
-                .tag(AppTab.learn)
+                .tag(AppTab.map)
             ProfileView()
                 .tabItem { Label("프로필", systemImage: "person.fill") }
-                .tag(AppTab.profile)
+                .tag(AppTab.treasure)
         }
     }
 }

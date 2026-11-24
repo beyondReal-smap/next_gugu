@@ -47,12 +47,6 @@ enum SpokenMath {
         }
     }
 
-    /// 개수 뒤에 붙는 단위("12 개" / "12 こ") — 영어는 단위 없이 숫자만 쓴다(nil).
-    /// 빈 번역("")은 iOS 가 번역 없음으로 보고 한국어 원문을 보여 주므로 화면에서 아예 그리지 않는다
-    static var countSuffix: String? {
-        AppLanguage.current == .en ? nil : String(localized: "개", comment: "개수 단위 — 점수 숫자 옆 작은 글씨 (영어는 쓰지 않음)")
-    }
-
     /// 곱셈식 라벨 — "7 곱하기 8" / "7 times 8" / "7 かける 8"
     static func factLabel(_ a: Int, _ b: Int, language: AppLanguage = .current) -> String {
         switch language {

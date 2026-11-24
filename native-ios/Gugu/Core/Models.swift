@@ -2,13 +2,29 @@ import Foundation
 
 // 구구단 학습 앱 — 도메인 타입 (types.ts 이식)
 
+/// 저장값(rawValue)은 기존 사용자 저장본 modesPlayed·bestScores 에 들어 있다 — 값을 지우거나 이름을 바꾸면
+/// GameState 디코딩이 실패해 진행도가 통째로 격리·초기화된다. adventure 는 3D 어드벤처를 없앤 뒤에도 남겨 둔다.
+/// stairs·monster 는 구구 계단·구구 몬스터 판의 학습 기록(2.9.0) — 학습 탭 모드 목록(Modes.list)에는 넣지 않는다.
 enum GameMode: String, Codable, CaseIterable, Hashable {
-    case practice, timeAttack, challenge, survival, missing, truefalse, adventure
+    case practice, timeAttack, challenge, survival, missing, truefalse, adventure, stairs, monster
+
+    /// 게임(구구 계단·구구 몬스터) 판 — 학습 기록(XP·오늘 목표·틀린 문제)에는 들어가지만 단 마스터리 별은 주지 않는다.
+    /// 마스터리 별은 문제 수 하한 없이 정확도·속도로 매겨져서, 몇 마리짜리 체험 판만으로도 별 3개가 나오기 때문
+    var isGame: Bool { self == .stairs || self == .monster }
 }
 
 /// 화면 테마 — system 은 기기 설정(라이트/다크)을 따른다
 enum Theme: String, Codable, CaseIterable {
     case system, light, dark
+
+    /// 저장값으로 정하는 시작 테마 — 고른 적 없으면(nil) 낮(light). 재디자인 V1 그림이 낮 하늘 기준이라 첫값을 다크에서 바꿨다.
+    /// 다크를 직접 고른 사람(저장값 dark)은 그대로 밤이다. 모르는 값(손상)도 낮으로 시작하고 로그를 남긴다 — 저장값은 건드리지 않는다
+    static func initial(saved: String?) -> Theme {
+        guard let saved else { return .light }
+        if let theme = Theme(rawValue: saved) { return theme }
+        print("[Theme] 알 수 없는 저장값 — 낮으로 시작:", String(saved.prefix(32)))
+        return .light
+    }
 }
 
 struct Problem: Equatable {
@@ -67,6 +83,26 @@ struct SessionResult {
     var xpScale: Double? = nil  // 재대결 등 XP 체감 (nil/1 = 기본)
 }
 
+/// 하루 동안 한 단(AnswerRecord.a)에서 푼 문제의 합계 — 보호자 리포트 단별 실력(TableSkills)이 최근 14일을 더해 쓴다
+struct TableTally: Codable, Equatable {
+    var correct: Int
+    var wrong: Int
+    var msSum: Int
+
+    static let zero = TableTally(correct: 0, wrong: 0, msSum: 0)
+
+    var attempts: Int { correct + wrong }
+
+    mutating func add(correct isCorrect: Bool, ms: Int) {
+        if isCorrect { correct += 1 } else { wrong += 1 }
+        msSum += ms
+    }
+
+    static func + (l: TableTally, r: TableTally) -> TableTally {
+        TableTally(correct: l.correct + r.correct, wrong: l.wrong + r.wrong, msSum: l.msSum + r.msSum)
+    }
+}
+
 // 날짜별 집계 — 보호자 주간 리포트용 링버퍼 항목 (최근 56일)
 struct DayLogEntry: Codable, Equatable {
     var date: String            // YYYY-MM-DD
@@ -74,6 +110,24 @@ struct DayLogEntry: Codable, Equatable {
     var wrong: Int
     var msSum: Int
     var misses: [String: Int]
+    /// 단별 합계(키 = 단). nil = 이 필드가 생기기 전 저장본의 날 — 합성 디코더가 Optional 을 decodeIfPresent 로 읽어
+    /// 구버전 저장본도 실패하지 않는다. 그날 기록이 이 필드 전후에 걸쳐 있으면 뒤쪽 답만 들어 있다
+    var tables: [Int: TableTally]? = nil
+
+    /// 같은 날짜 기록을 합친다(손상된 저장본에 같은 날이 둘 이상 있을 때). 한쪽만 tables 가 있으면 그쪽을 쓴다
+    func merged(with other: DayLogEntry) -> DayLogEntry {
+        precondition(date == other.date, "다른 날짜는 합칠 수 없음: \(date), \(other.date)")
+        var next = self
+        next.correct += other.correct
+        next.wrong += other.wrong
+        next.msSum += other.msSum
+        next.misses.merge(other.misses, uniquingKeysWith: +)
+        switch (tables, other.tables) {
+        case (nil, let t), (let t, nil): next.tables = t
+        case let (l?, r?): next.tables = l.merging(r, uniquingKeysWith: +)
+        }
+        return next
+    }
 }
 
 struct TableMastery: Codable, Equatable {

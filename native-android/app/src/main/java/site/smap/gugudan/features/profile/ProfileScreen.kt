@@ -339,7 +339,7 @@ fun ProfileScreen() {
                     }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(stringResource(R.string.lifetime_pass), style = suite(FontWeight.ExtraBold, 15), color = Color.White)
-                        Text(stringResource(R.string.all_modes_3d_adventure_buy_once_keep),
+                        Text(stringResource(R.string.profile_pass_all_modes_games),
                             style = suite(FontWeight.Medium, 12), color = Color.White.copy(alpha = 0.85f))
                     }
                     // 스토어 가격을 받기 전에는 금액을 비워 둔다 (고정 원화 폴백 없음 — iOS 와 같다)

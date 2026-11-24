@@ -1,0 +1,13 @@
+{
+  "images": [
+    {
+      "filename": "house_gugu.png",
+      "idiom": "universal",
+      "scale": "1x"
+    }
+  ],
+  "info": {
+    "author": "xcode",
+    "version": 1
+  }
+}

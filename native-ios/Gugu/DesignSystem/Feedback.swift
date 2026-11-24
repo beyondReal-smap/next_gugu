@@ -24,20 +24,14 @@ enum IconMap {
         case "Timer": return "timer"
         case "HeartPulse": return "heart.fill"
         case "Compass": return "safari.fill"
-        case "Swords": return "shield.lefthalf.filled"
-        case "Gauge": return "gauge.medium"
-        case "Medal": return "medal.fill"
-        case "Flag": return "flag.fill"
-        case "Gem": return "diamond.fill"
         default: return "star.fill"
         }
     }
 
-    /// 업적 id → (이름, SF 아이콘) — 코어/어드벤처 업적 통합 조회
+    /// 업적 id → (이름, SF 아이콘) — 정의된 업적(Achievements.all)만. 2.9.0 에서 지운 어드벤처 업적 id 는 nil
     static func achievement(_ id: String) -> (name: String, icon: String)? {
-        if let a = Achievements.get(id) { return (a.name, sf(a.icon)) }
-        if let a = AdvAchievements.get(id) { return (a.name, sf(a.icon)) }
-        return nil
+        guard let a = Achievements.get(id) else { return nil }
+        return (a.name, sf(a.icon))
     }
 }
 

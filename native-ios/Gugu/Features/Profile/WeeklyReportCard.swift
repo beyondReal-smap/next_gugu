@@ -42,11 +42,11 @@ struct WeeklyReportCard: View {
         return (String(localized: "지난주와 같아요"), .gg.textMuted)
     }
 
-    // 7일 막대 — 아래는 정답, 위는 오답. 문제를 안 푼 날은 짧은 회색 막대
+    // 월~일 막대 — 아래는 정답, 위는 오답. 문제를 안 푼 날(오늘 뒤의 날 포함)은 짧은 회색 막대
     private var bars: some View {
         HStack(alignment: .bottom, spacing: 8) {
-            ForEach(Array(report.days.enumerated()), id: \.offset) { i, day in
-                let isToday = i == report.days.count - 1
+            ForEach(Array(report.days.enumerated()), id: \.offset) { _, day in
+                let isToday = day.date == Commit.todayStr()
                 VStack(spacing: 6) {
                     VStack(spacing: 0) {
                         if day.solved == 0 {

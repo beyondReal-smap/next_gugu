@@ -36,7 +36,8 @@ enum LearningRecord {
         var sessionId: String
     }
 
-    /// 서버 계약에 없는 모드(adventure)는 practice 로 보낸다 — 출제 단/식은 factId·tableNo 로 남는다
+    /// 서버 계약에 없는 모드(adventure·stairs·monster)는 practice 로 보낸다 — 출제 단/식은 factId·tableNo 로 남는다.
+    /// 서버 LearningMode 는 6값 계약이라 게임을 새 값으로 보내면 거부된다(서버 변경 없이 2.9.0 출시)
     static func apiMode(_ mode: GameMode) -> LearningMode {
         LearningMode(rawValue: mode.rawValue) ?? .practice
     }
@@ -64,7 +65,7 @@ enum LearningRecord {
 
         for (index, answer) in result.answers.enumerated() {
             let factId = LearningContract.factId(a: answer.a, b: answer.b)
-            // factId 계약은 2~9단 × 1~9. 범위를 벗어나면 이 문항만 건너뛴다(세션 전체 적재 실패 방지).
+            // factId 계약은 2~19단 × 1~19(LearningContract 상수). 범위를 벗어나면 이 문항만 건너뛴다(세션 전체 적재 실패 방지).
             guard LearningContract.isInFactRange(a: answer.a, b: answer.b) else {
                 print("[LearningRecord] 이벤트 생략: factId 범위 밖 \(factId)")
                 continue

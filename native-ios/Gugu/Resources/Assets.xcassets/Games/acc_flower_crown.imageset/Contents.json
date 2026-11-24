@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "acc_flower_crown.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

@@ -17,8 +17,7 @@ import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Coffee
 import androidx.compose.material.icons.filled.CurrencyYen
-import androidx.compose.material.icons.filled.DirectionsRun
-import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -72,14 +71,13 @@ fun PaywallScreen(onDismiss: () -> Unit) {
     // 결제·복원은 됐지만 아직 이메일 로그인 전 — 닫기 전에 로그인을 권한다
     var showLinkPrompt by remember { mutableStateOf(false) }
 
+    // 이용권 혜택 (iOS PaywallView.benefits 와 같은 순서) — 게임 무제한 · 모드 전부 · 평생 소장
     val benefits = listOf(
-        Benefit(Icons.Filled.Map, stringResource(R.string.all_3d_adventure_regions),
-            stringResource(R.string.explore_8_regions_times_table_battles)),
+        Benefit(Icons.Filled.SportsEsports, stringResource(R.string.paywall_games_unlimited),
+            pluralStringResource(R.plurals.paywall_games_desc,
+                PremiumConfig.MINIGAME_TRIAL_QUESTIONS, PremiumConfig.MINIGAME_TRIAL_QUESTIONS)),
         Benefit(Icons.Filled.Bolt, stringResource(R.string.unlock_all_game_modes),
             stringResource(R.string.s_60_second_challenge_survival_missing)),
-        Benefit(Icons.Filled.DirectionsRun, stringResource(R.string.unlimited_move_and_play_games),
-            pluralStringResource(R.plurals.gugu_pop_basket_jump_lanes_free_pop_s,
-                PremiumConfig.MINIGAME_TRIAL_QUESTIONS, PremiumConfig.MINIGAME_TRIAL_QUESTIONS)),
         Benefit(Icons.Filled.AllInclusive, stringResource(R.string.pay_once_keep_forever),
             stringResource(R.string.no_extra_charges_all_updates_included)),
     )

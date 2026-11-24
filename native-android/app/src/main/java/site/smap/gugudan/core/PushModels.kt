@@ -172,7 +172,7 @@ object PushKind {
 
     /**
      * 소리·배너 없이 알림 목록에만 둘지 — 광고는 앱을 쓰는 중이면 항상 조용히,
-     * 나머지는 세션·미니게임·어드벤처 진행 중일 때 조용히 (아이의 집중을 깨지 않는다).
+     * 나머지는 학습 세션·게임 진행 중일 때 조용히 (아이의 집중을 깨지 않는다).
      */
     fun isQuiet(kind: String?, appInForeground: Boolean, playing: Boolean): Boolean =
         (kind == PROMO && appInForeground) || playing

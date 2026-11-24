@@ -52,9 +52,23 @@ object Modes {
             GameMode.ADVENTURE, R.string.adventure, R.string.battle_in_the_world,
             R.string.battle_the_residents_of_a_3d_world_with,
             ModeKind.FIXED, 0, null, null, supportsTable = true, scored = false, xpBonus = 3),
+        // 게임 판의 학습 기록용 — 이름·소개는 기록에서 모드를 가리킬 때만 쓴다(카드 문구는 features/games/GameStyle.kt 의 Minigames).
+        // 최고 기록은 게임 보상 저장소(PlayRewardsStore)가 따로 맡아 scored 는 false. 문제 수가 정해지지 않아 total 0.
+        // XP 보너스는 0 — 게임은 별 코인으로 따로 보상하고, 빠르게 많이 푸는 판이라 정답당 보너스를 얹지 않는다 (iOS Modes.swift 와 같음)
+        GameMode.STAIRS to ModeDef(
+            GameMode.STAIRS, R.string.stairs_title, R.string.stairs_mode_tagline,
+            R.string.stairs_mode_detail,
+            ModeKind.FIXED, 0, null, null, supportsTable = true, scored = false, xpBonus = 0),
+        GameMode.MONSTER to ModeDef(
+            GameMode.MONSTER, R.string.monster_title, R.string.monster_mode_tagline,
+            R.string.monster_mode_detail,
+            ModeKind.TIMED, 0, 60_000, null, supportsTable = true, scored = false, xpBonus = 0),
     )
 
-    /** 학습 탭에 노출하는 모드 (MODE_LIST, 표시 순서 고정). ADVENTURE 는 월드 전용이라 제외. */
+    /**
+     * 학습 탭에 노출하는 모드 (MODE_LIST, 표시 순서 고정). ADVENTURE 는 옛 저장본 호환용(2.9.0 에서 3D 어드벤처 제거), STAIRS·MONSTER 는 게임 전용이라 제외.
+     * 업적 '모드 탐험가'의 목표치도 이 목록 수라 게임을 넣으면 기존 사용자 업적 기준이 바뀐다.
+     */
     val list: List<ModeDef> = listOf(
         all.getValue(GameMode.PRACTICE), all.getValue(GameMode.TIME_ATTACK),
         all.getValue(GameMode.CHALLENGE), all.getValue(GameMode.SURVIVAL),

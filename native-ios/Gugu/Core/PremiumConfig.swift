@@ -14,11 +14,9 @@ enum PremiumConfig {
 
     static func isPremiumMode(_ mode: GameMode) -> Bool { premiumModes.contains(mode) }
 
-    /// 움직이며 놀기(점프·레인·바구니) 무료 체험 문제 수 — 이만큼 풀면 게임을 멈추고 결제 화면으로 안내한다
-    static let minigameTrialQuestions = 3
-
-    /// 구구 팡팡 무료 체험 웨이브 수 — 첫 웨이브를 깨면 판을 멈추고 결제 화면으로 안내한다 (PopState.trialLeft 단위가 웨이브)
-    static let popTrialWaves = 1
+    /// 게임(구구 계단·구구 몬스터) 무료 체험 수 — 맞힌 문제(계단 칸·물리친 몬스터)가 이만큼이면 판을 멈추고 결제 화면으로 안내한다.
+    /// 3문제는 게임 맛을 보기엔 짧아서 10문제로 늘렸다(2026-11-24 대표님 결정). 배지·안내·결제 화면 문구는 이 값을 끼워 쓴다
+    static let minigameTrialQuestions = 10
 
     /// 일본 스토어 가격이 정확히 ¥500(500엔 동전 하나)인가 — 맞으면 "커피 한 잔 값" 대신 "ワンコイン(동전 하나)" 문구를 쓴다.
     /// 일본에서는 500엔 동전 한 닢 가격을 ワンコイン이라 부르며, 부담 없는 가격을 뜻하는 관용 표현으로 쓴다.

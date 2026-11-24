@@ -10,7 +10,7 @@ import kotlin.test.assertTrue
 class ManifestTests {
 
     /**
-     * INTERNET 은 라이브러리(SceneView 등)가 병합해 주는 것에 기대지 않고 앱이 직접 선언한다.
+     * INTERNET 은 라이브러리가 병합해 주는 것에 기대지 않고 앱이 직접 선언한다.
      * 라이브러리가 빼 버리면 계정·학습 기록 서버 통신이 조용히 전부 죽는다.
      */
     @Test fun manifestDeclaresInternetPermission() {

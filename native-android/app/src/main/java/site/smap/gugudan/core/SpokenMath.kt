@@ -46,10 +46,6 @@ object SpokenMath {
         AppLanguage.ID -> "Berapa $a kali $b?"
     }
 
-    /** 개수 뒤에 붙는 단위("12 개" / "12 こ") — 영어는 단위 없이 숫자만 쓴다(null) */
-    fun countSuffix(strings: Strings): String? =
-        if (strings.language == AppLanguage.EN) null else strings.get(R.string.count)
-
     /** 낭독 라벨 두 문장 잇기 — 일본어는 "。", 한국어·영어는 ". " (빈 문장은 뺀다) */
     fun sentences(vararg parts: String?, language: AppLanguage = AppLanguage.current): String =
         parts.filterNot { it.isNullOrEmpty() }.joinToString(if (language == AppLanguage.JA) "。" else ". ")

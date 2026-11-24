@@ -39,7 +39,7 @@ android {
 
     defaultConfig {
         applicationId = "site.smap.gugudan"
-        minSdk = 28          // SceneView(Filament) 요구 — 기기 커버리지 ~97%
+        minSdk = 28          // 처음엔 SceneView(Filament) 요구. 2.9.0 에서 SceneView 제거 — 낮출지는 별도 검토 (기기 커버리지 ~97%)
         targetSdk = 36
         versionCode = 29     // vc29: 2.8.2 — 설정 「곱하는 수」(단마다 몇까지 곱할지, 기본 9)
         versionName = "2.8.2"
@@ -68,7 +68,7 @@ android {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.findByName("release")
-            // Play Console 크래시/ANR 분석용 — SceneView(Filament) 등 네이티브 .so 디버그 심볼을 AAB에 포함
+            // Play Console 크래시/ANR 분석용 — 라이브러리 네이티브 .so(androidx graphics·datastore) 디버그 심볼을 AAB에 포함
             ndk {
                 debugSymbolLevel = "FULL"
             }
@@ -138,7 +138,6 @@ dependencies {
     implementation("com.android.billingclient:billing-ktx:8.0.0")
     // 앱 평가 요청 — Play In-App Review (ReviewPolicy 가 시점을 정한다, iOS requestReview 대응)
     implementation("com.google.android.play:review:2.0.2")
-    implementation("io.github.sceneview:sceneview:4.24.0")
     // 원격 푸시(FCM) — Messaging 만 쓴다. Analytics 는 넣지 않는다 (게스트 개인정보 미수집 방침)
     implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
     implementation("com.google.firebase:firebase-messaging")

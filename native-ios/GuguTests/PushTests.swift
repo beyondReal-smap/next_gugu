@@ -61,6 +61,21 @@ final class PushTests: XCTestCase {
         XCTAssertEqual(PushRoute.parse(" learn\n"), .learn)
     }
 
+    /// 알림 이동 6종 × 이용권 유무 — 보호자 대상은 3초 문부터(계획서 2-9). 결제 이동은 이용권이 있으면 홈
+    func testNavTargetForEveryRoute() {
+        for premium in [false, true] {
+            XCTAssertEqual(NavTarget.from(.home, isPremium: premium), .tab(.home))
+            XCTAssertEqual(NavTarget.from(.learn, isPremium: premium), .tab(.map))
+            XCTAssertEqual(NavTarget.from(.profile, isPremium: premium), .guardian(.report))
+            XCTAssertEqual(NavTarget.from(.profileReport, isPremium: premium), .guardian(.report))
+            XCTAssertEqual(NavTarget.from(.settingsNotifications, isPremium: premium),
+                           .guardian(.settings(focus: .notifications)))
+        }
+        XCTAssertEqual(NavTarget.from(.paywall, isPremium: false), .guardian(.paywall))
+        XCTAssertEqual(NavTarget.from(.paywall, isPremium: true), .tab(.home))
+        XCTAssertEqual(PushRoute.allCases.count, 6, "이동을 더하면 이 표에도 더할 것")
+    }
+
     func testRouteParseUnknownGoesHome() {
         XCTAssertEqual(PushRoute.parse(nil), .home)
         XCTAssertEqual(PushRoute.parse(""), .home)

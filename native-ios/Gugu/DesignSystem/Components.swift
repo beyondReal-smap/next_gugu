@@ -136,6 +136,8 @@ enum ModeStyle {
         case .missing: return "puzzlepiece.fill"
         case .truefalse: return "scalemass.fill"
         case .adventure: return "shield.lefthalf.filled"
+        case .stairs: return "stairs"
+        case .monster: return "pawprint.fill"
         }
     }
     static func tint(_ mode: GameMode) -> Color {
@@ -147,6 +149,8 @@ enum ModeStyle {
         case .missing: return .gg.violet
         case .truefalse: return .gg.emerald
         case .adventure: return .gg.indigo
+        case .stairs: return .gg.sky
+        case .monster: return .gg.emerald
         }
     }
     /// 카드에 적는 규칙 요약 (문제 수 / 제한 시간 / 하트) — 홈 모드 카드·학습 탭 단 시트 공통

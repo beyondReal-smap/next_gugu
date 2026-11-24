@@ -166,6 +166,92 @@ final class UxCoreTests: XCTestCase {
         XCTAssertNil(Hints.nextRoadmapTable(full))
     }
 
+    // MARK: - 오늘의 섬
+
+    /// 기록이 쌓이기 전에는 예전 규칙(Hints.nextRoadmapTable)과 같은 단이 나온다 — 그 테스트의 기대값 그대로
+    func testTodayIslandKeepsRoadmapRuleWithoutRecords() {
+        let none = TableSkills.build(nil, today: "2026-11-24")
+        func pick(_ mastery: [Int: TableMastery]) -> TodayIsland { TodayIsland.pick(mastery: mastery, skills: none) }
+        XCTAssertEqual(pick([:]), .table(2, reason: .next))
+        XCTAssertEqual(TodayIsland.pick(mastery: [:], skills: [:]), .table(2, reason: .next))
+        let m1 = TableMastery(stars: 1, bestAccuracy: 0.8, bestAvgMs: 3000, plays: 1)
+        XCTAssertEqual(pick([2: m1]), .table(5, reason: .next))
+
+        var allButSeven: [Int: TableMastery] = [:]
+        for t in (2...19).filter({ $0 != 7 }) { allButSeven[t] = m1 }
+        XCTAssertEqual(pick(allButSeven), .table(7, reason: .next))
+
+        func m(_ s: Int) -> TableMastery { TableMastery(stars: s, bestAccuracy: 1, bestAvgMs: 1000, plays: 1) }
+        var mixed: [Int: TableMastery] = [2: m(3), 5: m(2), 3: m(1), 4: m(1), 6: m(3), 9: m(3), 7: m(3), 8: m(3)]
+        XCTAssertEqual(pick(mixed), .table(10, reason: .next))
+        for t in 10...19 { mixed[t] = m(3) }
+        XCTAssertEqual(pick(mixed), .table(3, reason: .next))
+
+        var full: [Int: TableMastery] = [:]
+        for t in Hints.roadmapTables { full[t] = m(3) }
+        XCTAssertEqual(pick(full), .mixed)
+    }
+
+    private func skills(_ tallies: [Int: TableTally]) -> [Int: TableSkill] {
+        let total = tallies.values.reduce(TableTally.zero, +)
+        return TableSkills.build([DayLogEntry(date: "2026-11-24", correct: total.correct, wrong: total.wrong,
+                                              msSum: total.msSum, misses: [:], tables: tallies)], today: "2026-11-24")
+    }
+
+    /// 약한 단이 있으면 별과 상관없이 가장 약한 단
+    func testTodayIslandPrefersWeakestTable() {
+        let recent = skills([8: TableTally(correct: 6, wrong: 4, msSum: 0), 7: TableTally(correct: 5, wrong: 5, msSum: 0)])
+        let starred = [7: TableMastery(stars: 3, bestAccuracy: 1, bestAvgMs: 900, plays: 5)]
+        XCTAssertEqual(TodayIsland.pick(mastery: starred, skills: recent), .table(7, reason: .weak))
+    }
+
+    /// 최근 기록이 잘해요인 단은 건너뛴다 — 게임만 해서 별이 없는 아이도 다음 섬으로 넘어간다
+    func testTodayIslandSkipsStrongTables() {
+        let ten = TableTally(correct: 10, wrong: 0, msSum: 0)
+        XCTAssertEqual(TodayIsland.pick(mastery: [:], skills: skills([2: ten])), .table(5, reason: .next))
+        XCTAssertEqual(TodayIsland.pick(mastery: [:], skills: skills([2: ten, 5: ten])), .table(3, reason: .next))
+        var twoToNine: [Int: TableTally] = [:]
+        for t in 2...9 { twoToNine[t] = ten }
+        XCTAssertEqual(TodayIsland.pick(mastery: [:], skills: skills(twoToNine)), .table(10, reason: .next))
+        var all: [Int: TableTally] = [:]
+        for t in 2...19 { all[t] = ten }
+        XCTAssertEqual(TodayIsland.pick(mastery: [:], skills: skills(all)), .mixed, "남은 단이 없으면 섞어서")
+    }
+
+    // MARK: - 섬 시트
+
+    func testIslandPlanRecommendedMethod() {
+        func skill(_ correct: Int, of attempts: Int) -> TableSkill {
+            TableSkill(table: 5, attempts: attempts, correct: correct, msSum: 0)
+        }
+        XCTAssertEqual(IslandPlan.recommended(table: 5, stars: 0, skill: skill(0, of: 0)), .tableStudy, "처음 가는 단")
+        XCTAssertEqual(IslandPlan.recommended(table: 5, stars: 2, skill: skill(4, of: 10)), .tableStudy, "약한 단")
+        XCTAssertEqual(IslandPlan.recommended(table: 5, stars: 0, skill: skill(3, of: 5)), .mode(.practice), "게임으로 풀어 봤다")
+        XCTAssertEqual(IslandPlan.recommended(table: 5, stars: 2, skill: skill(0, of: 0)), .mode(.practice), "별이 있다")
+        XCTAssertEqual(IslandPlan.recommended(table: 5, stars: 3, skill: skill(10, of: 10)), .mode(.practice))
+    }
+
+    func testIslandPlanSamples() {
+        XCTAssertEqual(IslandPlan.sample(table: 5), Problem(a: 5, b: 3))
+        XCTAssertEqual(IslandPlan.sample(table: 19), Problem(a: 19, b: 3))
+        XCTAssertEqual(IslandPlan.sample(table: nil), Problem(a: 7, b: 8))
+        XCTAssertEqual(IslandPlan.oxShown(Problem(a: 5, b: 3)), 16)
+        XCTAssertEqual(IslandPlan.oxShown(Problem(a: 7, b: 8)), 57)
+        XCTAssertEqual(IslandPlan.studyChip(table: 19), Problem(a: 19, b: 2))
+    }
+
+    // MARK: - 테마 첫값
+
+    /// 고른 적 없으면 낮, 다크를 고른 사람은 밤 그대로, 손상된 값은 낮
+    func testThemeInitial() {
+        XCTAssertEqual(Theme.initial(saved: nil), .light)
+        XCTAssertEqual(Theme.initial(saved: "dark"), .dark)
+        XCTAssertEqual(Theme.initial(saved: "light"), .light)
+        XCTAssertEqual(Theme.initial(saved: "system"), .system)
+        XCTAssertEqual(Theme.initial(saved: "Dark"), .light)
+        XCTAssertEqual(Theme.initial(saved: ""), .light)
+    }
+
     // MARK: - Problems.reviewQueue
 
     func testParseKey() {
@@ -207,28 +293,49 @@ final class UxCoreTests: XCTestCase {
         XCTAssertEqual(WeeklyReport.weekdayLabel("2024-02-29"), "목")
     }
 
+    /// 이번 주 = 오늘이 든 주의 월~일. 오늘 뒤의 날은 0(시계를 되돌려 생긴 기록도), 지난주는 같은 요일까지만 비교한다
     func testWeeklyReportAggregates() {
         let log = [
-            DayLogEntry(date: "2026-09-15", correct: 100, wrong: 0, msSum: 1, misses: [:]),   // 14일 전 — 제외
-            DayLogEntry(date: "2026-09-16", correct: 4, wrong: 0, msSum: 1, misses: [:]),     // 13일 전 — 지난주
-            DayLogEntry(date: "2026-09-22", correct: 7, wrong: 1, msSum: 1, misses: ["2x2": 1]), // 7일 전 — 지난주
-            DayLogEntry(date: "2026-09-23", correct: 3, wrong: 0, msSum: 9_000, misses: [:]), // 6일 전 — 이번 주 첫날
-            DayLogEntry(date: "2026-09-27", correct: 5, wrong: 1, msSum: 12_000, misses: ["6x9": 1, "7x8": 1]),
-            DayLogEntry(date: "2026-09-29", correct: 10, wrong: 2, msSum: 30_000, misses: ["7x8": 2]),
+            DayLogEntry(date: "2026-09-21", correct: 4, wrong: 0, msSum: 1, misses: [:]),     // 지난주 월 — 비교
+            DayLogEntry(date: "2026-09-22", correct: 7, wrong: 1, msSum: 1, misses: ["2x2": 1]), // 지난주 화 — 비교
+            DayLogEntry(date: "2026-09-23", correct: 100, wrong: 0, msSum: 1, misses: [:]),   // 지난주 수 — 오늘(화) 뒤라 비교 안 함
+            DayLogEntry(date: "2026-09-27", correct: 50, wrong: 5, msSum: 1, misses: ["9x9": 5]), // 지난주 일
+            DayLogEntry(date: "2026-09-28", correct: 3, wrong: 0, msSum: 9_000, misses: [:]), // 이번 주 월
+            DayLogEntry(date: "2026-09-29", correct: 10, wrong: 2, msSum: 30_000, misses: ["7x8": 2]), // 오늘(화)
+            DayLogEntry(date: "2026-09-30", correct: 99, wrong: 9, msSum: 1, misses: ["6x9": 9]), // 오늘 뒤 — 0
         ]
         let r = WeeklyReport.build(log, today: "2026-09-29")
-        XCTAssertEqual(r.days.count, 7)
-        XCTAssertEqual(r.days.first?.date, "2026-09-23")
-        XCTAssertEqual(r.days.last?.date, "2026-09-29")
-        XCTAssertEqual(r.days.map(\.correct), [3, 0, 0, 0, 5, 0, 10])
-        XCTAssertEqual(r.correct, 18)
-        XCTAssertEqual(r.wrong, 3)
-        XCTAssertEqual(r.activeDays, 3)
-        XCTAssertEqual(r.studyMs, 51_000)
-        XCTAssertEqual(r.accuracy, 86)   // 18/21 = 85.7%
+        XCTAssertEqual(r.days.map(\.date), ["2026-09-28", "2026-09-29", "2026-09-30", "2026-10-01",
+                                            "2026-10-02", "2026-10-03", "2026-10-04"])
+        XCTAssertEqual(r.days.map(\.correct), [3, 10, 0, 0, 0, 0, 0])
+        XCTAssertEqual(r.days[2].wrong, 0)
+        XCTAssertEqual(r.correct, 13)
+        XCTAssertEqual(r.wrong, 2)
+        XCTAssertEqual(r.activeDays, 2)
+        XCTAssertEqual(r.studyMs, 39_000)
+        XCTAssertEqual(r.accuracy, 87)   // 13/15 = 86.7%
         XCTAssertEqual(r.prevCorrect, 11)
-        XCTAssertEqual(r.correctDelta, 7)
-        XCTAssertEqual(r.topMisses, [MissCount(key: "7x8", count: 3), MissCount(key: "6x9", count: 1)])
+        XCTAssertEqual(r.correctDelta, 2)
+        XCTAssertEqual(r.topMisses, [MissCount(key: "7x8", count: 2)])
+    }
+
+    /// 월요일이면 이번 주는 오늘 하루와 남은 6일(0), 지난주 비교는 지난 월요일 하루. 일요일이면 둘 다 꽉 찬 7일
+    func testWeeklyReportOnMondayAndSunday() {
+        let log = (0..<14).map { i -> DayLogEntry in
+            // 2026-11-16(월) ~ 2026-11-29(일), 하루 정답 = i + 1
+            DayLogEntry(date: WeeklyReport.shift("2026-11-16", by: i), correct: i + 1, wrong: 0, msSum: 0, misses: [:])
+        }
+        let monday = WeeklyReport.build(log, today: "2026-11-23")
+        XCTAssertEqual(monday.days.first?.date, "2026-11-23")
+        XCTAssertEqual(monday.days.last?.date, "2026-11-29")
+        XCTAssertEqual(monday.days.map(\.correct), [8, 0, 0, 0, 0, 0, 0])
+        XCTAssertEqual(monday.prevCorrect, 1)
+
+        let sunday = WeeklyReport.build(log, today: "2026-11-29")
+        XCTAssertEqual(sunday.days.map(\.date), DailyMissionPlan.week(of: "2026-11-29"))
+        XCTAssertEqual(sunday.days.map(\.correct), [8, 9, 10, 11, 12, 13, 14])
+        XCTAssertEqual(sunday.prevCorrect, 28)   // 1 + … + 7
+        XCTAssertEqual(sunday.activeDays, 7)
     }
 
     func testWeeklyReportMergesDuplicateDatesAndHandlesEmpty() {
@@ -249,7 +356,7 @@ final class UxCoreTests: XCTestCase {
     }
 
     func testWeeklyParentTip() {
-        let today = "2026-09-29"
+        let today = "2026-10-01"   // 목 — 이번 주 월(09-28)부터 셈
         XCTAssertEqual(WeeklyReport.build(nil, today: today).parentTip,
                        "이번 주는 아직 기록이 없어요. 하루 5분, 한 판부터 함께 시작해 보세요.")
         // 같은 문제를 2번 이상 틀렸으면 그 단 외우기를 권한다 (8=팔 → "8이에요")
@@ -260,7 +367,7 @@ final class UxCoreTests: XCTestCase {
         let once = [DayLogEntry(date: today, correct: 9, wrong: 1, msSum: 1, misses: ["6x9": 1])]
         XCTAssertTrue(WeeklyReport.build(once, today: today).parentTip.hasPrefix("짧게라도 매일"))
         // 사흘 이상 + 정확도 90% 이상이면 속도 도전을 권한다
-        let steady = ["2026-09-27", "2026-09-28", "2026-09-29"].map {
+        let steady = ["2026-09-29", "2026-09-30", "2026-10-01"].map {
             DayLogEntry(date: $0, correct: 10, wrong: 0, msSum: 1, misses: [:])
         }
         XCTAssertTrue(WeeklyReport.build(steady, today: today).parentTip.hasPrefix("정확도가 아주 좋아요"))

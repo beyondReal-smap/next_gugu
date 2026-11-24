@@ -32,6 +32,15 @@ enum Commit {
         return Array(valid.suffix(dayLogCap))
     }
 
+    /// 정리한 날짜 로그를 날짜별로 모은다 — 같은 날짜가 둘 이상 저장돼 있으면(손상된 저장본) 합쳐서 센다. 한쪽을 버리면 기록이 사라진다
+    static func dayLogByDate(_ raw: [DayLogEntry]?) -> [String: DayLogEntry] {
+        var byDate: [String: DayLogEntry] = [:]
+        for e in normalizeDayLog(raw) {
+            byDate[e.date] = byDate[e.date].map { $0.merged(with: e) } ?? e
+        }
+        return byDate
+    }
+
     private static func isDateKey(_ s: String) -> Bool {
         guard s.count == 10 else { return false }
         let parts = s.split(separator: "-", omittingEmptySubsequences: false)
@@ -40,16 +49,19 @@ enum Commit {
     }
 
     /// 오늘 버킷에 세션 답안을 누적하고 날짜 순으로 정렬해 최근 56일만 남긴다.
+    /// 단별 합계(tables)는 답의 a 로 나눈다 — 세션·빈칸·OX 는 고른 단, 구구 계단은 "단 × 칸", 구구 몬스터는 목표 식이라
+    /// 모든 판(게임·중도 이탈 부분 기록 포함)이 같은 규칙으로 쌓인다
     private static func appendDayLog(_ log: [DayLogEntry], result: SessionResult, date: String) -> [DayLogEntry] {
         var next = log
         let i: Int
         if let found = next.firstIndex(where: { $0.date == date }) {
             i = found
         } else {
-            next.append(DayLogEntry(date: date, correct: 0, wrong: 0, msSum: 0, misses: [:]))
+            next.append(DayLogEntry(date: date, correct: 0, wrong: 0, msSum: 0, misses: [:], tables: [:]))
             i = next.count - 1
         }
         var bucket = next[i]
+        var tables = bucket.tables ?? [:]
         for ans in result.answers {
             if ans.correct {
                 bucket.correct += 1
@@ -59,7 +71,9 @@ enum Commit {
                 bucket.misses[key] = (bucket.misses[key] ?? 0) + 1
             }
             bucket.msSum += ans.ms
+            tables[ans.a, default: .zero].add(correct: ans.correct, ms: ans.ms)
         }
+        bucket.tables = tables
         next[i] = bucket
         next.sort { $0.date < $1.date }
         return Array(next.suffix(dayLogCap))
@@ -165,8 +179,8 @@ enum Commit {
             s.recentAccuracy = Array((s.recentAccuracy + [Int((accuracy * 100).rounded())]).suffix(20))
             s.recentAvgMs = Array((s.recentAvgMs + [avgMs]).suffix(20))
 
-            // 마스터리 (단 집중 세션)
-            if let table = result.table {
+            // 마스터리 (단 집중 세션) — 게임 판은 단을 기록(서버 tableNo)만 하고 별은 주지 않는다(GameMode.isGame)
+            if let table = result.table, !result.mode.isGame {
                 let prev = s.tableMastery[table] ?? .empty
                 let sessionStars = starsFor(accuracy: accuracy, avgMs: avgMs, count: result.answers.count)
                 let stars = max(prev.stars, sessionStars)

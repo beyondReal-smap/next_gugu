@@ -54,13 +54,10 @@ final class CoreTests: XCTestCase {
 
         // 오답 가중이 큰 범위 밖 문제가 있어도 출제는 상한 안에서만
         let heavy = ["19x15": 6, "19x19": 6]
-        let seed = World.mulberry32(7)
+        let seed = SeededRandom.mulberry32(7)
         for _ in 0..<300 {
             XCTAssertLessThanOrEqual(Problems.pick(table: 19, wrongPool: heavy, recentKeys: [], random: { seed() }).b, 9)
             XCTAssertLessThanOrEqual(Problems.pick(table: nil, wrongPool: heavy, recentKeys: [], random: { seed() }).b, 9)
-            let q = Runner.question(table: 19, recentKeys: [], random: { seed() })
-            XCTAssertLessThanOrEqual(q.b, 9)
-            XCTAssertTrue(q.choices.allSatisfy { (1...(19 * 9)).contains($0) })
         }
 
         // 복습 큐는 상한 밖 문제를 건너뛰고, 기록 계약(parseKey)은 19까지 그대로
@@ -74,10 +71,11 @@ final class CoreTests: XCTestCase {
     }
 
     func testNineteenTimesTableChoicesAndReading() {
-        let question = Runner.question(table: 19, recentKeys: [], random: { 0.999 })
-        XCTAssertEqual(question.answer, 361)
-        XCTAssertEqual(Set(question.choices).count, 3)
-        XCTAssertTrue(question.choices.allSatisfy { (1...361).contains($0) })
+        // 구구 계단 19단 꼭대기(「곱하는 수」 19) 발판 — 정답 361 포함 서로 다른 3개, 보기 최대값(19 × 19 + 19) 안
+        let choices = StairsSession.makeChoices(Problem(a: 19, b: 19), standing: 19 * 18, topStep: 19, random: { 0.999 })
+        XCTAssertTrue(choices.contains(361))
+        XCTAssertEqual(Set(choices).count, 3)
+        XCTAssertTrue(choices.allSatisfy { (1...StairsSession.maxChoice(table: 19, topStep: 19)).contains($0) })
         XCTAssertEqual(EnglishReading.cardinal(361), "three hundred sixty-one")
         XCTAssertEqual(JapaneseReading.number(361), "さんびゃくろくじゅういち")
         XCTAssertEqual(JapaneseReading.chant(19, 19), "じゅうきゅう かける じゅうきゅう は さんびゃくろくじゅういち")
@@ -208,17 +206,18 @@ final class CoreTests: XCTestCase {
         XCTAssertEqual(next2.lastPlayedDate, Commit.todayStr(today))
     }
 
-    /// 재대결 XP 배율 — 원본 XP의 0.3배로 체감
+    /// XP 배율(xpScale) — 0.3배면 XP 도 그만큼 줄어든다 (예전 어드벤처 재대결이 쓰던 값)
     func testRematchXpScale() {
+        let xpScale = 0.3
         let answers = (0..<4).map { _ in AnswerRecord(a: 6, b: 7, correct: true, ms: 1200) }
-        let full = SessionResult(mode: .adventure, table: 6, answers: answers, maxCombo: 4, durationMs: 5000)
-        let scaled = SessionResult(mode: .adventure, table: 6, answers: answers, maxCombo: 4,
-                                   durationMs: 5000, xpScale: Battle.rematchXpScale)
+        let full = SessionResult(mode: .practice, table: 6, answers: answers, maxCombo: 4, durationMs: 5000)
+        let scaled = SessionResult(mode: .practice, table: 6, answers: answers, maxCombo: 4,
+                                   durationMs: 5000, xpScale: xpScale)
         let base = Commit.applySession(Commit.defaultState, result: full).commit.xpEarned
         let cut = Commit.applySession(Commit.defaultState, result: scaled).commit.xpEarned
         XCTAssertGreaterThan(base, cut)
         // 문항별 반올림 누적 오차를 감안해 ±문항 수 범위로 검증
-        XCTAssertLessThanOrEqual(abs(cut - Int((Double(base) * Battle.rematchXpScale).rounded())), answers.count)
+        XCTAssertLessThanOrEqual(abs(cut - Int((Double(base) * xpScale).rounded())), answers.count)
     }
 
     /// 날짜별 링버퍼 — 같은 날은 한 버킷에 누적, 오답은 식별 키로 집계
@@ -239,6 +238,62 @@ final class CoreTests: XCTestCase {
         XCTAssertEqual(log[0].wrong, 2)
         XCTAssertEqual(log[0].misses["4x5"], 2)
         XCTAssertEqual(log[0].msSum, 6000)
+        // 단별 합계도 같은 날 두 판을 더한다
+        XCTAssertEqual(log[0].tables, [2: TableTally(correct: 2, wrong: 0, msSum: 2000),
+                                       4: TableTally(correct: 0, wrong: 2, msSum: 4000)])
+    }
+
+    /// 단별 합계 — 세션·게임·중도 이탈 부분 기록 모두 답의 a(단)로 나뉘어 쌓이고, 합은 그날 합계와 같다
+    func testDayLogTalliesEveryRoundByTable() throws {
+        let now = Date()
+        let session = SessionResult(mode: .practice, table: 7, answers: [
+            AnswerRecord(a: 7, b: 3, correct: true, ms: 1000),
+            AnswerRecord(a: 7, b: 8, correct: false, ms: 2000),
+        ], maxCombo: 1, durationMs: 3000)
+        // 구구 계단 섞어서 — 답마다 단이 다르다(단 × 칸)
+        let stairs = SessionResult(mode: .stairs, table: nil, answers: [
+            AnswerRecord(a: 3, b: 4, correct: true, ms: 500, given: .number(12)),
+            AnswerRecord(a: 7, b: 2, correct: true, ms: 700, given: .number(14)),
+        ], maxCombo: 2, durationMs: 9000)
+        // 구구 몬스터 판 도중 나감 — 부분 기록도 쌓인다
+        let monsterQuit = SessionResult(mode: .monster, table: nil, answers: [
+            AnswerRecord(a: 6, b: 7, correct: false, ms: 900, given: .number(48)),
+        ], maxCombo: 0, durationMs: 4000, partial: true)
+
+        var s = Commit.defaultState
+        for result in [session, stairs, monsterQuit] { s = Commit.applySession(s, result: result, now: now).next }
+
+        let day = try XCTUnwrap(s.dayLog?.first)
+        XCTAssertEqual(day.tables, [
+            7: TableTally(correct: 2, wrong: 1, msSum: 3700),
+            3: TableTally(correct: 1, wrong: 0, msSum: 500),
+            6: TableTally(correct: 0, wrong: 1, msSum: 900),
+        ])
+        let tallies = Array(try XCTUnwrap(day.tables).values)
+        XCTAssertEqual(tallies.map(\.correct).reduce(0, +), day.correct)
+        XCTAssertEqual(tallies.map(\.wrong).reduce(0, +), day.wrong)
+        XCTAssertEqual(tallies.map(\.msSum).reduce(0, +), day.msSum)
+    }
+
+    /// 같은 날짜가 둘 이상인 저장본은 날짜별로 합칠 때 단별 합계도 더한다. 한쪽만 합계가 있으면(구버전 날) 그쪽을 쓴다
+    func testDayLogByDateMergesTables() {
+        let log = [
+            DayLogEntry(date: "2026-11-24", correct: 2, wrong: 1, msSum: 300, misses: ["7x8": 1],
+                        tables: [7: TableTally(correct: 2, wrong: 1, msSum: 300)]),
+            DayLogEntry(date: "2026-11-24", correct: 1, wrong: 1, msSum: 200, misses: ["7x8": 1],
+                        tables: [7: TableTally(correct: 0, wrong: 1, msSum: 120), 3: TableTally(correct: 1, wrong: 0, msSum: 80)]),
+            DayLogEntry(date: "2026-11-23", correct: 4, wrong: 0, msSum: 400, misses: [:]),
+            DayLogEntry(date: "2026-11-23", correct: 1, wrong: 0, msSum: 90, misses: [:],
+                        tables: [5: TableTally(correct: 1, wrong: 0, msSum: 90)]),
+        ]
+        let byDate = Commit.dayLogByDate(log)
+        XCTAssertEqual(byDate["2026-11-24"]?.correct, 3)
+        XCTAssertEqual(byDate["2026-11-24"]?.misses, ["7x8": 2])
+        XCTAssertEqual(byDate["2026-11-24"]?.tables, [7: TableTally(correct: 2, wrong: 2, msSum: 420),
+                                                      3: TableTally(correct: 1, wrong: 0, msSum: 80)])
+        XCTAssertEqual(byDate["2026-11-23"]?.correct, 5)
+        XCTAssertEqual(byDate["2026-11-23"]?.tables, [5: TableTally(correct: 1, wrong: 0, msSum: 90)])
+        XCTAssertTrue(Commit.dayLogByDate(nil).isEmpty)
     }
 
     /// 구버전 저장본(dayLog 키 없음)도 디코딩되고, 방문 시 빈 배열로 정리된다
@@ -288,6 +343,13 @@ final class CoreTests: XCTestCase {
         XCTAssertNil(Problems.dominantWrongTable(["x3": 5, "99x9": 6, "3x4": 0]))
     }
 
+    /// 먹구름이 뜨는 단 — 오답 가중치가 남은 문제가 있는 단. 0·형식 오류·범위 밖 키는 무시
+    func testTablesWithWrong() {
+        XCTAssertEqual(Problems.tablesWithWrong([:]), [])
+        XCTAssertEqual(Problems.tablesWithWrong(["7x8": 2, "7x3": 1, "8x9": 0, "bad": 3, "1x5": 2, "19x19": 1, "3x20": 4]),
+                       [7, 19])
+    }
+
     func testPickDeterministicWithInjectedRandom() {
         // random()=0 → 첫 후보 (2단이면 2x1)
         let p = Problems.pick(table: 2, wrongPool: [:], recentKeys: [], random: { 0 })
@@ -313,198 +375,6 @@ final class CoreTests: XCTestCase {
         XCTAssertEqual(sessionAnswerSlotDigits(problem: missing, mode: .missing, input: ""), 1)
     }
 
-    // MARK: - Adventure
-
-    func testRegionsStructure() {
-        XCTAssertEqual(World.regions.count, 8)
-        for r in World.regions {
-            XCTAssertEqual(r.npcs.count, 4) // 일반 3 + 보스 1
-            XCTAssertEqual(r.npcs.filter { $0.kind == .boss }.count, 1)
-            // 소품 12~16개
-            XCTAssertGreaterThanOrEqual(r.decoItems.count, 12)
-            XCTAssertLessThanOrEqual(r.decoItems.count, 16)
-        }
-        XCTAssertEqual(World.regions.map { $0.table }, Array(2...9))
-    }
-
-    func testRegionUnlockChain() {
-        var p = AdvProgress.defaultProgress
-        XCTAssertTrue(AdvProgress.isRegionUnlocked(p, table: 2))  // 첫 지역 항상 열림
-        XCTAssertFalse(AdvProgress.isRegionUnlocked(p, table: 3)) // 2단 보스 미격파
-        p.defeatedNpcs.append(World.bossId(for: 2))
-        XCTAssertTrue(AdvProgress.isRegionUnlocked(p, table: 3))  // 2단 보스 격파 → 3단 해금
-    }
-
-    /// 로드맵(2,5,3,4,6,9,7,8) 직전 보스 격파 또는 해당 단 별 1개로도 해금된다
-    func testRegionUnlockByRoadmapOrStars() {
-        var p = AdvProgress.defaultProgress
-        XCTAssertFalse(AdvProgress.isRegionUnlocked(p, table: 5))
-        // 로드맵상 5단의 직전은 2단 → 2단 보스 격파로 5단 해금
-        p.defeatedNpcs.append(World.bossId(for: 2))
-        XCTAssertTrue(AdvProgress.isRegionUnlocked(p, table: 5))
-
-        // 별점만으로도 해금 (직전 보스 미격파여도)
-        let fresh = AdvProgress.defaultProgress
-        XCTAssertFalse(AdvProgress.isRegionUnlocked(fresh, table: 8))
-        XCTAssertTrue(AdvProgress.isRegionUnlocked(fresh, table: 8, tableStars: 1))
-
-        XCTAssertEqual(AdvProgress.roadmapPrevTable(5), 2)
-        XCTAssertNil(AdvProgress.roadmapPrevTable(2))
-    }
-
-    /// 배틀 커밋은 adventure 모드로 들어가 학습 모드 기록과 섞이지 않는다
-    func testBattleCommitsAsAdventureMode() {
-        let npc = World.regions[0].npcs[0]
-        let result = Battle.toSessionResult(npc, answers: [], maxCombo: 0, durationMs: 1000)
-        XCTAssertEqual(result.mode, .adventure)
-        XCTAssertFalse(Modes.def(.adventure).scored)
-        XCTAssertFalse(Modes.list.contains { $0.id == .adventure })  // 학습 탭 목록엔 없음
-    }
-
-    func testApplyBattle() {
-        let p = AdvProgress.defaultProgress
-        let (next, unlocked) = AdvProgress.applyBattle(p, npcId: "r2-n1", won: true)
-        XCTAssertEqual(next.battlesWon, 1)
-        XCTAssertTrue(next.defeatedNpcs.contains("r2-n1"))
-        XCTAssertTrue(unlocked.contains("adv_first_win"))
-        // 중복 격파는 목록에 다시 추가되지 않음
-        let (again, _) = AdvProgress.applyBattle(next, npcId: "r2-n1", won: true)
-        XCTAssertEqual(again.defeatedNpcs.filter { $0 == "r2-n1" }.count, 1)
-    }
-
-    func testBattleDamage() {
-        // 빠른 답(1000ms) + 콤보 3 → 20 + 8 + min(10,2*2)=4 = 32
-        XCTAssertEqual(Battle.damage(ms: 1000, combo: 3), 32)
-        // 느린 답 콤보 1 → 20 + 0 + 0
-        XCTAssertEqual(Battle.damage(ms: 5000, combo: 1), 20)
-    }
-
-    // MARK: - Runner (구구 점프)
-
-    /// 보기는 정답 1개 + 서로 다른 오답 2개, 모두 1...361 범위
-    func testRunnerQuestionChoices() {
-        for _ in 0..<50 {
-            let q = Runner.question(table: nil, recentKeys: [])
-            XCTAssertEqual(q.choices.count, 3)
-            XCTAssertEqual(Set(q.choices).count, 3)
-            XCTAssertTrue(q.choices.contains(q.answer))
-            for c in q.choices { XCTAssertTrue(c >= 1 && c <= 361, "보기 범위 이탈: \(c)") }
-        }
-        for _ in 0..<20 { XCTAssertEqual(Runner.question(table: 7, recentKeys: []).a, 7) }
-    }
-
-    /// 제한 시간 — 5개마다 450ms 감소, 하한 3200ms
-    func testRunnerAnswerWindow() {
-        XCTAssertEqual(Runner.answerWindowMs(score: 0), 5000)
-        XCTAssertEqual(Runner.answerWindowMs(score: 3), 5000 - 500)      // 3개마다 한 단계
-        XCTAssertEqual(Runner.answerWindowMs(score: 11), 5000 - 500 * 3)
-        XCTAssertEqual(Runner.answerWindowMs(score: 200), 2800)
-    }
-
-    /// 정답/오답 판정 — 보기에 없는 값이나 이미 판정된 상태는 무시
-    func testRunnerAnswerGuards() {
-        let s = Runner.create(table: 3)
-        let correct = Runner.answer(s, choice: s.question.answer)
-        XCTAssertEqual(correct.outcome, .correct)
-        XCTAssertEqual(correct.given, s.question.answer)
-
-        let wrongChoice = s.question.choices.first { $0 != s.question.answer }!
-        XCTAssertEqual(Runner.answer(s, choice: wrongChoice).outcome, .wrong)
-
-        let absent = (1...361).first { !s.question.choices.contains($0) }!
-        XCTAssertNil(Runner.answer(s, choice: absent).outcome)
-        XCTAssertEqual(Runner.answer(correct, choice: wrongChoice).outcome, .correct)
-
-        let ready = Runner.create(table: 3, phase: .ready)
-        XCTAssertNil(Runner.answer(ready, choice: ready.question.choices[0]).outcome)
-    }
-
-    /// 시간 초과 → 하트 1개 감소 + 피격 연출, 콤보 초기화
-    func testRunnerMissedCostsLife() {
-        var s = Runner.create(table: 2)
-        s.combo = 4
-        s = Runner.advance(s, dt: Runner.answerWindowMs(score: 0))
-        XCTAssertEqual(s.outcome, .missed)
-        XCTAssertEqual(s.lives, Runner.maxLives - 1)
-        XCTAssertEqual(s.combo, 0)
-        XCTAssertEqual(s.obstacleX, Runner.collisionX)
-        XCTAssertEqual(s.hitMs, Runner.hitDurationMs)
-
-        s = Runner.advance(s, dt: Runner.hitDurationMs)
-        XCTAssertNil(s.outcome)
-        XCTAssertEqual(s.obstacleX, Runner.obstacleStart)
-        XCTAssertEqual(s.round, 1)
-    }
-
-    /// 하트를 모두 잃고 연출이 끝나면 over
-    func testRunnerGameOverAfterLastLife() {
-        var s = Runner.create(table: 2)
-        s.lives = 1
-        s = Runner.advance(s, dt: Runner.answerWindowMs(score: 0))
-        XCTAssertEqual(s.lives, 0)
-        s = Runner.advance(s, dt: Runner.hitDurationMs)
-        XCTAssertEqual(s.phase, .over)
-    }
-
-    /// 정답 후 장애물이 화면을 벗어나면 점수·콤보 증가 + 최고 콤보 갱신
-    func testRunnerClearingObstacleScores() {
-        let base = Runner.create(table: 2)
-        var s = Runner.answer(base, choice: base.question.answer)
-        XCTAssertEqual(s.outcome, .correct)
-        var guardCount = 0
-        while s.score == 0 && guardCount < 10_000 {
-            s = Runner.advance(s, dt: 16)
-            guardCount += 1
-        }
-        XCTAssertEqual(s.score, 1)
-        XCTAssertEqual(s.combo, 1)
-        XCTAssertEqual(s.maxCombo, 1)
-        XCTAssertEqual(s.lives, Runner.maxLives)
-        XCTAssertEqual(s.round, 1)
-    }
-
-    /// 점프 높이 — 정답일 때만, 구간 안에서만 솟는다
-    func testRunnerJumpArc() {
-        let base = Runner.create(table: 2)
-        XCTAssertEqual(Runner.jump(base), 0)
-        var correct = Runner.answer(base, choice: base.question.answer)
-
-        correct.obstacleX = Runner.jumpStart + 1
-        XCTAssertEqual(Runner.jump(correct), 0)
-        correct.obstacleX = Runner.jumpEnd - 1
-        XCTAssertEqual(Runner.jump(correct), 0)
-        correct.obstacleX = (Runner.jumpStart + Runner.jumpEnd) / 2
-        XCTAssertEqual(Runner.jump(correct), 96, accuracy: 0.001)
-
-        var wrong = Runner.answer(base, choice: base.question.choices.first { $0 != base.question.answer }!)
-        wrong.obstacleX = (Runner.jumpStart + Runner.jumpEnd) / 2
-        XCTAssertEqual(Runner.jump(wrong), 0)
-    }
-
-    /// 일시정지/비정상 dt 는 상태를 바꾸지 않는다
-    func testRunnerAdvanceGuards() {
-        var paused = Runner.create(table: 2)
-        paused.phase = .paused
-        XCTAssertEqual(Runner.advance(paused, dt: 16).obstacleX, paused.obstacleX)
-        let running = Runner.create(table: 2)
-        XCTAssertEqual(Runner.advance(running, dt: 0).obstacleX, running.obstacleX)
-        XCTAssertEqual(Runner.advance(running, dt: .nan).obstacleX, running.obstacleX)
-    }
-
-    // MARK: - 시드 난수 결정성
-
-    func testMulberry32Deterministic() {
-        let r1 = World.mulberry32(12345)
-        let r2 = World.mulberry32(12345)
-        for _ in 0..<50 {
-            XCTAssertEqual(r1(), r2(), accuracy: 0)
-        }
-        // 소품 배치도 재현 가능
-        let a = World.genDecoItems(table: 2, layout: World.layouts[2]!)
-        let b = World.genDecoItems(table: 2, layout: World.layouts[2]!)
-        XCTAssertEqual(a, b)
-    }
-
     // MARK: - 영속화 라운드트립
 
     func testGameStateCodableRoundTrip() throws {
@@ -514,7 +384,9 @@ final class CoreTests: XCTestCase {
         s.bestScores[.challenge] = 15
         s.modesPlayed = [.practice, .challenge]
         s.wrongPool = ["2x3": 4]
-        s.dayLog = [DayLogEntry(date: "2026-09-18", correct: 8, wrong: 2, msSum: 12000, misses: ["4x5": 2])]
+        s.dayLog = [DayLogEntry(date: "2026-09-18", correct: 8, wrong: 2, msSum: 12000, misses: ["4x5": 2],
+                                tables: [4: TableTally(correct: 8, wrong: 2, msSum: 12000)]),
+                    DayLogEntry(date: "2026-09-19", correct: 1, wrong: 0, msSum: 900, misses: [:])]
         let data = try JSONEncoder().encode(s)
         let decoded = try JSONDecoder().decode(GameState.self, from: data)
         XCTAssertEqual(decoded, s)
@@ -544,7 +416,9 @@ final class CoreTests: XCTestCase {
             unlockedAchievements: ["first_step"], totalCorrect: 100, totalWrong: 7, maxCombo: 9,
             recentAccuracy: [80, 90], recentAvgMs: [1400, 1300], wrongPool: ["6x7": 2],
             bestScores: [.challenge: 12], modesPlayed: [.practice, .truefalse], onboarded: true,
-            dayLog: [DayLogEntry(date: "2026-09-29", correct: 5, wrong: 1, msSum: 7000, misses: ["6x7": 1])])
+            dayLog: [DayLogEntry(date: "2026-09-29", correct: 5, wrong: 1, msSum: 7000, misses: ["6x7": 1],
+                                 tables: [6: TableTally(correct: 3, wrong: 1, msSum: 4000),
+                                          9: TableTally(correct: 2, wrong: 0, msSum: 3000)])])
         let data = try JSONEncoder().encode(s)
 
         // 픽스처가 모든 필드를 기본값과 다르게 채웠는지 확인 — 필드를 추가하고 픽스처를 안 고치면 여기서 걸린다
@@ -556,64 +430,11 @@ final class CoreTests: XCTestCase {
                               "필드 \(key) 가 기본값과 같다 — 픽스처를 채워 주세요")
         }
         XCTAssertNotNil(filled["dayLog"])
+        // 날짜 기록 항목도 모든 필드가 저장된다 — DayLogEntry 에 필드를 더하면 픽스처도 채울 것
+        let day = try XCTUnwrap((filled["dayLog"] as? [NSDictionary])?.first)
+        XCTAssertEqual(Set(day.allKeys.compactMap { $0 as? String }), ["date", "correct", "wrong", "msSum", "misses", "tables"])
 
         XCTAssertEqual(try JSONDecoder().decode(GameState.self, from: data), s)
-    }
-
-    func testAdventureProgressCodableRoundTrip() throws {
-        var p = AdvProgress.defaultProgress
-        p.defeatedNpcs = ["r2-n1", "r2-boss"]
-        p.battlesWon = 2
-        p.achievements = ["adv_first_win"]
-        p.starShards = 7
-        p.ownedColors = ["rose"]
-        p.ownedHats = ["sprout"]
-        p.equippedColor = "rose"
-        p.equippedHat = "sprout"
-        let data = try JSONEncoder().encode(p)
-        let decoded = try JSONDecoder().decode(AdventureProgress.self, from: data)
-        XCTAssertEqual(decoded, p)
-    }
-
-    // 상점 카탈로그 무결성 — id 유일, 기본 색상 무료, 가격 양수
-    func testShopCatalog() {
-        XCTAssertEqual(Set(Shop.colors.map { $0.id }).count, Shop.colors.count)
-        XCTAssertEqual(Set(Shop.hats.map { $0.id }).count, Shop.hats.count)
-        let base = Shop.color(Shop.defaultColorID)
-        XCTAssertNotNil(base)
-        XCTAssertEqual(base?.price, 0)
-        for c in Shop.colors where c.id != Shop.defaultColorID {
-            XCTAssertGreaterThan(c.price, 0)
-        }
-        for h in Shop.hats {
-            XCTAssertGreaterThan(h.price, 0)
-        }
-    }
-
-    // 구버전 저장소(starShards 없던 시절) 디코딩 호환
-    func testAdventureProgressDecodesLegacyStorage() throws {
-        let legacy = #"{"version":1,"defeatedNpcs":["r2-n1"],"battlesWon":1,"battlesLost":0,"achievements":[]}"#
-        let p = try JSONDecoder().decode(AdventureProgress.self, from: Data(legacy.utf8))
-        XCTAssertEqual(p.defeatedNpcs, ["r2-n1"])
-        XCTAssertEqual(p.starShards, 0)
-    }
-
-    // 별 조각 배치 — 지역당 5개, 결정적, NPC/스폰과 안전 거리
-    func testStarSpots() {
-        for r in World.regions {
-            XCTAssertEqual(r.starSpots.count, 5, "\(r.name) 별 조각 수")
-            for s in r.starSpots {
-                XCTAssertLessThanOrEqual(abs(s.x), 13.5)
-                XCTAssertLessThanOrEqual(abs(s.z), 13.5)
-                for n in r.npcs {
-                    XCTAssertGreaterThan(hypot(n.pos.x - s.x, n.pos.z - s.z), 2.0)
-                }
-            }
-        }
-        // 결정성 — 같은 시드는 같은 배치
-        let a = World.genStarSpots(table: 2, layout: World.layouts[2]!)
-        let b = World.genStarSpots(table: 2, layout: World.layouts[2]!)
-        XCTAssertEqual(a, b)
     }
 
     // 손상 저장본 격리 (Persistence) — 테스트 키는 고유하게 만들고, 끝나면 저장본·격리 파일을 정리한다
@@ -723,194 +544,5 @@ final class CoreTests: XCTestCase {
 
         Persistence.clearQuarantine(key: keyB)
         XCTAssertTrue(Persistence.quarantinedFiles(key: keyB).isEmpty)
-    }
-
-    // MARK: - LaneRunner (구구 레인)
-
-    /// 속도 단계 — 정답 길 3개마다 한 단계, 각 구간 값은 하한에서 멈춘다
-    func testLaneSpeedSteps() {
-        XCTAssertEqual(LaneRunner.level(score: 2), 0)
-        XCTAssertEqual(LaneRunner.level(score: 3), 1)
-        XCTAssertEqual(LaneRunner.travelMs(score: 0), 3400)
-        XCTAssertEqual(LaneRunner.travelMs(score: 3), 3400 - 250)
-        XCTAssertEqual(LaneRunner.travelMs(score: 300), 1900)       // 하한 고정
-        XCTAssertEqual(LaneRunner.quizWindowMs(score: 0), 5000)
-        XCTAssertEqual(LaneRunner.quizWindowMs(score: 300), 3500)   // 하한 고정
-        XCTAssertEqual(LaneRunner.spawnGapMs(score: 300), 750)      // 하한 고정
-        XCTAssertEqual(LaneRunner.obstaclesPerCycle(score: 300), 4) // 상한 고정
-    }
-
-    /// 레인 이동 — 범위 밖/같은 레인/비 running 은 무시하고, 전환 중에는 보간 위치를 남긴다
-    func testLaneMoveGuards() {
-        let s = LaneRunner.create(table: 2)
-        XCTAssertEqual(s.lane, 1)
-        XCTAssertEqual(LaneRunner.setLane(s, lane: 1).lane, 1)      // 같은 레인
-        XCTAssertEqual(LaneRunner.setLane(s, lane: 3).lane, 1)      // 범위 밖
-        XCTAssertEqual(LaneRunner.move(LaneRunner.create(table: 2, phase: .ready), delta: -1).lane, 1)
-
-        var up = LaneRunner.move(s, delta: -1)
-        XCTAssertEqual(up.lane, 0)
-        XCTAssertEqual(up.laneFrom, 1)
-        XCTAssertEqual(up.laneAnimMs, LaneRunner.laneAnimMs)
-        // 전환 직후에는 이전 레인에 가깝고, 애니메이션이 끝나면 새 레인에 정확히 놓인다
-        XCTAssertEqual(LaneRunner.offset(up), 1, accuracy: 0.001)
-        up.laneAnimMs = 0
-        XCTAssertEqual(LaneRunner.offset(up), 0, accuracy: 0.001)
-    }
-
-    /// 내 레인을 막은 장애물은 하트를 깎고, 다른 레인 장애물은 피한 수로 센다
-    func testLaneObstacleJudgement() {
-        var base = LaneRunner.create(table: 2)
-        base.obstacles = [
-            LaneObstacle(id: 0, lane: 1, x: LaneRunner.judgeX + 1, kind: .rock),
-            LaneObstacle(id: 1, lane: 0, x: LaneRunner.judgeX + 1, kind: .rock),
-        ]
-        let hit = LaneRunner.advance(base, dt: 16)
-        XCTAssertEqual(hit.outcome, .hit)
-        XCTAssertEqual(hit.lives, LaneRunner.maxLives - 1)
-        XCTAssertEqual(hit.hitMs, LaneRunner.hitMs)
-        // 부딪힌 열의 나머지 장애물은 피한 것으로 세지 않는다
-        XCTAssertEqual(hit.dodged, 0)
-
-        var away = base
-        away.lane = 2
-        let dodged = LaneRunner.advance(away, dt: 16)
-        XCTAssertNil(dodged.outcome)
-        XCTAssertEqual(dodged.dodged, 2)
-        XCTAssertEqual(dodged.lives, LaneRunner.maxLives)
-    }
-
-    /// 게이트 판정 — 내 레인의 숫자가 정답이면 점수, 아니면 하트가 줄어든다
-    func testLaneGateJudgement() {
-        let question = RunnerQuestion(a: 3, b: 4, choices: [12, 10, 14])
-        var base = LaneRunner.create(table: 3)
-        base.segment = .quiz
-        base.question = question
-        base.gate = LaneGate(x: LaneRunner.judgeX + 1, startX: 600, values: question.choices)
-
-        var onAnswer = base
-        onAnswer.lane = 0
-        let correct = LaneRunner.advance(onAnswer, dt: 16)
-        XCTAssertEqual(correct.outcome, .correct)
-        XCTAssertEqual(correct.score, 1)
-        XCTAssertEqual(correct.combo, 1)
-        XCTAssertEqual(correct.maxCombo, 1)
-        XCTAssertEqual(correct.lives, LaneRunner.maxLives)
-        XCTAssertEqual(correct.given, 12)
-
-        var onWrong = base
-        onWrong.lane = 1
-        onWrong.combo = 2
-        let wrong = LaneRunner.advance(onWrong, dt: 16)
-        XCTAssertEqual(wrong.outcome, .wrong)
-        XCTAssertEqual(wrong.score, 0)
-        XCTAssertEqual(wrong.combo, 0)
-        XCTAssertEqual(wrong.lives, LaneRunner.maxLives - 1)
-        XCTAssertEqual(wrong.given, 10)
-    }
-
-    /// 속도 UP 판정 — 정답이고 누적 점수가 단계 배수일 때만
-    func testLaneLeveledUp() {
-        var s = LaneRunner.create(table: 2)
-        s.outcome = .correct
-        s.score = 0
-        XCTAssertFalse(LaneRunner.leveledUp(s))
-        s.score = 2
-        XCTAssertFalse(LaneRunner.leveledUp(s))
-        s.score = 3
-        XCTAssertTrue(LaneRunner.leveledUp(s))
-        s.outcome = .wrong
-        XCTAssertFalse(LaneRunner.leveledUp(s))
-    }
-
-    /// 하트를 모두 잃고 연출이 끝나면 over, 일시정지·비정상 dt 는 무시
-    func testLaneGameOverAndGuards() {
-        var dying = LaneRunner.create(table: 2)
-        dying.lives = 0
-        dying.hitMs = 10
-        dying.outcome = .hit
-        XCTAssertEqual(LaneRunner.advance(dying, dt: 16).phase, .over)
-
-        var paused = LaneRunner.create(table: 2)
-        paused.phase = .paused
-        XCTAssertEqual(LaneRunner.advance(paused, dt: 16).distance, paused.distance)
-        let running = LaneRunner.create(table: 2)
-        XCTAssertEqual(LaneRunner.advance(running, dt: 0).distance, running.distance)
-        XCTAssertEqual(LaneRunner.advance(running, dt: .nan).distance, running.distance)
-    }
-
-    // MARK: - Basket (구구 바구니)
-
-    /// 낙하 시간 — 정답 3개마다 한 단계 빨라지고 2.2초가 하한
-    func testBasketFallSteps() {
-        XCTAssertEqual(Basket.level(score: 0), 1)
-        XCTAssertEqual(Basket.level(score: 3), 2)
-        XCTAssertEqual(Basket.fallDurationMs(score: 0), 3000)
-        XCTAssertEqual(Basket.fallDurationMs(score: 3), 2700)
-        XCTAssertEqual(Basket.fallDurationMs(score: 300), 2200)   // 하한 고정
-    }
-
-    /// 바구니 이동 — 좌우 끝을 넘지 않고, 판정 중/비 running 은 무시
-    func testBasketMoveGuards() {
-        let s = Basket.create(table: 2)
-        XCTAssertEqual(Basket.move(s, x: -100).x, Basket.minX)
-        XCTAssertEqual(Basket.move(s, x: 9999).x, Basket.maxX)
-        XCTAssertEqual(Basket.move(s, x: .nan).x, s.x)
-        var judged = s
-        judged.outcome = .correct
-        XCTAssertEqual(Basket.move(judged, x: 100).x, s.x)
-        XCTAssertEqual(Basket.move(Basket.create(table: 2, phase: .ready), x: 100).x, s.x)
-    }
-
-    /// 열매 판정 — 정답을 받으면 점수, 다른 열매는 오답, 아무것도 못 받으면 놓침
-    func testBasketCatchJudgement() {
-        let question = RunnerQuestion(a: 3, b: 4, choices: [12, 10, 14])
-        let duration = Basket.fallDurationMs(score: 0)
-        var base = Basket.create(table: 2)
-        base.question = question
-        base.elapsedMs = duration - 1
-
-        var onAnswer = base
-        onAnswer.x = Basket.fruitX(index: 0, elapsedMs: duration)
-        let correct = Basket.advance(onAnswer, dt: 16)
-        XCTAssertEqual(correct.outcome, .correct)
-        XCTAssertEqual(correct.score, 1)
-        XCTAssertEqual(correct.combo, 1)
-        XCTAssertEqual(correct.lives, Basket.maxLives)
-        XCTAssertEqual(correct.feedbackMs, Basket.correctFeedbackMs)
-
-        var onWrong = base
-        onWrong.x = Basket.fruitX(index: 1, elapsedMs: duration)
-        onWrong.combo = 2
-        let wrong = Basket.advance(onWrong, dt: 16)
-        XCTAssertEqual(wrong.outcome, .wrong)
-        XCTAssertEqual(wrong.score, 0)
-        XCTAssertEqual(wrong.combo, 0)
-        XCTAssertEqual(wrong.lives, Basket.maxLives - 1)
-
-        // 어느 열매와도 겹치지 않는 열매 사이 — 놓침
-        var onGap = base
-        onGap.x = (Basket.fruitX(index: 0, elapsedMs: duration) + Basket.fruitX(index: 1, elapsedMs: duration)) / 2
-        let missed = Basket.advance(onGap, dt: 16)
-        XCTAssertEqual(missed.outcome, .missed)
-        XCTAssertNil(missed.caughtIndex)
-        XCTAssertEqual(missed.lives, Basket.maxLives - 1)
-    }
-
-    /// 연출이 끝나면 다음 문제로 넘어가고, 하트가 없으면 over
-    func testBasketAdvancesRoundAndEnds() {
-        var done = Basket.create(table: 2)
-        done.outcome = .correct
-        done.feedbackMs = 10
-        done.elapsedMs = 500
-        let next = Basket.advance(done, dt: 16)
-        XCTAssertNil(next.outcome)
-        XCTAssertEqual(next.round, 1)
-        XCTAssertEqual(next.elapsedMs, 0)
-        XCTAssertEqual(next.recentKeys.count, 1)
-
-        var last = done
-        last.lives = 0
-        XCTAssertEqual(Basket.advance(last, dt: 16).phase, .over)
     }
 }

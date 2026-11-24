@@ -13,6 +13,10 @@ final class GameStore {
     init() {
         // 로드 + 방문(스트릭/데일리) 갱신
         var s = Persistence.load(GameState.self, key: Persistence.progressKey) ?? Commit.defaultState
+        #if DEBUG
+        // 캡처용 진행 상태(SIMCTL_CHILD_GUGU_SEED=v1|max, App/DebugSeed) — 저장본을 덮어쓴다
+        if let seed = ProcessInfo.processInfo.environment["GUGU_SEED"] { s = DebugSeed.state(seed, today: Commit.todayStr()) }
+        #endif
         s = Commit.applyVisit(s)
         self.state = s
         self.loaded = true
@@ -29,15 +33,6 @@ final class GameStore {
         state = next
         persist()
         return commit
-    }
-
-    /// 세션 외 소량 XP 지급 (별 조각 등) — 통계(정확도/오답풀)는 건드리지 않음
-    @discardableResult
-    func grantXp(_ amount: Int) -> Bool {
-        let prevLevel = Level.info(totalXp: state.totalXp).level
-        state.totalXp += amount
-        persist()
-        return Level.info(totalXp: state.totalXp).level > prevLevel
     }
 
     /// 로그인한 계정의 서버 기록으로 약한 문제를 채운다 (기기 값과 문제별 max 병합)

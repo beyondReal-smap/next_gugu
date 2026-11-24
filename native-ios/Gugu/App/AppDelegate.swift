@@ -14,7 +14,7 @@ final class PushEvents {
     var tappedRoute: PushRoute?
     /// FCM 토큰 발급·갱신 횟수 — 바뀌면 RootView 가 PushStore.sync 로 서버에 다시 등록한다
     var tokenRevision = 0
-    /// 세션·미니게임·어드벤처 진행 중 — 이때 온 공지는 배너 없이 알림 목록에만 둔다 (RootView 가 갱신)
+    /// 세션·게임 진행 중 — 이때 온 공지는 배너 없이 알림 목록에만 둔다 (RootView 가 갱신)
     var isImmersive = false
 }
 

@@ -18,9 +18,8 @@ struct PaywallView: View {
         let id = UUID(); let icon: String; let title: String; let desc: String
     }
     private let benefits: [Benefit] = [
-        Benefit(icon: "map.fill", title: String(localized: "3D 어드벤처 전 지역"), desc: String(localized: "8개 지역 탐험 · 주민/보스 구구단 대결")),
+        Benefit(icon: "gamecontroller.fill", title: String(localized: "구구 계단 · 구구 몬스터 무제한"), desc: String(localized: "오르고, 물리치며 구구단 연습 (무료는 게임마다 \(PremiumConfig.minigameTrialQuestions)문제 체험)")),
         Benefit(icon: "bolt.fill", title: String(localized: "게임 모드 전부 해제"), desc: String(localized: "60초 챌린지 · 서바이벌 · 빈칸 추리 · OX 퀴즈")),
-        Benefit(icon: "figure.run", title: String(localized: "움직이며 놀기 무제한"), desc: String(localized: "구구 팡팡 · 바구니 · 점프 · 레인 (무료는 팡팡 첫 웨이브, 나머지 \(PremiumConfig.minigameTrialQuestions)문제 체험)")),
         Benefit(icon: "infinity", title: String(localized: "한 번 결제, 평생 소장"), desc: String(localized: "추가 결제 없음 · 업데이트 콘텐츠도 전부 포함")),
     ]
 

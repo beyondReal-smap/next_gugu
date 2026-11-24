@@ -26,7 +26,6 @@ import kotlinx.coroutines.delay
 import site.smap.gugudan.R
 import site.smap.gugudan.core.Achievements
 import site.smap.gugudan.core.Level
-import site.smap.gugudan.core.adventure.AdvAchievements
 import kotlin.random.Random
 
 // 피드백 오버레이 — Confetti / LevelUpOverlay / AchievementToast (iOS Feedback.swift 이식)
@@ -49,18 +48,12 @@ fun achievementIcon(key: String): ImageVector = when (key) {
     "Timer" -> Icons.Filled.Timer
     "HeartPulse" -> Icons.Filled.Favorite
     "Compass" -> Icons.Filled.Explore
-    "Swords" -> Icons.Filled.Shield
-    "Gauge" -> Icons.Filled.Speed
-    "Medal" -> Icons.Filled.MilitaryTech
-    "Flag" -> Icons.Filled.Flag
-    "Gem" -> Icons.Filled.Diamond
     else -> Icons.Filled.Star
 }
 
-/** 업적 id → (이름 리소스, 아이콘) — 코어/어드벤처 통합 조회 */
+/** 업적 id → (이름 리소스, 아이콘). 정의된 업적만 — 옛 저장본에 남은 어드벤처 업적 id(adv_*)는 null(알림을 띄우지 않는다) */
 fun achievementInfo(id: String): Pair<Int, ImageVector>? {
     Achievements.get(id)?.let { return it.nameRes to achievementIcon(it.icon) }
-    AdvAchievements.get(id)?.let { return it.nameRes to achievementIcon(it.icon) }
     return null
 }
 

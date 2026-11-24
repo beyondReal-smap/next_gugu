@@ -5,7 +5,7 @@ import SwiftUI
 struct HomeView: View {
     @Environment(GameStore.self) private var game
     @Environment(SessionStore.self) private var session
-    @Environment(AdventureStore.self) private var adventure
+    @Environment(PlayRewardsStore.self) private var playRewards
     @Environment(PremiumStore.self) private var premium
     @Environment(Router.self) private var router
     @State private var showGoalSheet = false
@@ -23,6 +23,10 @@ struct HomeView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 header
+                // 날마다 바뀌는 미션 3개 → 보물상자 → 이번 주 도장: 매일 앱을 열 이유 (2.9.0)
+                DailyMissionsCard()
+                // 게임은 아이가 첫 화면에서 바로 누를 수 있게 맨 위에 둔다 (2.9.0 — 예전엔 목록 맨 아래라 스크롤해야 보였다)
+                gamesGroup
                 dailyGoalCard
                 levelCard
                 quickStartButton
@@ -30,8 +34,6 @@ struct HomeView: View {
                 modesHeader
                 recommendGroup
                 recordGroup
-                playGroup
-                adventureGroup
             }
             .padding(.horizontal, 20)
             .padding(.top, 12)
@@ -149,7 +151,7 @@ struct HomeView: View {
     private var modesHeader: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text("어떻게 놀아볼까요?").font(.suite(.extrabold, 17)).foregroundStyle(Color.gg.text)
-            Text("배우기부터 달리기까지, 모두 구구단 연습이 돼요.")
+            Text("배우기부터 게임까지, 모두 구구단 연습이 돼요.")
                 .font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -181,64 +183,107 @@ struct HomeView: View {
         }
     }
 
-    // 움직이며 놀기 — 팡팡·바구니·점프·레인 (순서·문구는 Minigame 정의 하나를 학습 탭 단 시트와 같이 쓴다)
-    private var playGroup: some View {
+    // 게임 — 구구 계단·구구 몬스터 + 구구 꾸미기(옷장). 순서·문구는 Minigame 정의 하나를 학습 탭 단 시트와 같이 쓴다
+    private var gamesGroup: some View {
         VStack(alignment: .leading, spacing: 8) {
-            groupHeader("figure.run", String(localized: "움직이며 놀기"), String(localized: "터뜨리고, 받고, 달리며 정답을 찾아요"), .gg.emerald)
-            ForEach(Minigame.allCases) { g in
-                gameCard(title: g.title, badge: g.badge(isPremium: premium.isPremium), desc: g.desc,
-                         icon: g.icon, iconBg: g.iconBg, iconFg: g.iconFg, tint: g.tint) { router.open(g) }
+            groupHeader("gamecontroller.fill", String(localized: "게임"), String(localized: "오르고, 물리치며 구구단 연습"), .gg.emerald)
+            HStack(spacing: 12) {
+                ForEach(Minigame.allCases) { g in
+                    gameCard(g) { router.open(g) }
+                }
             }
+            wardrobeCard
         }
     }
 
-    private var adventureGroup: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            groupHeader("map.fill", String(localized: "모험"), String(localized: "3D 월드를 탐험하며 대결"), .gg.indigo)
-            adventureHero
-        }
-    }
-
-    /// 미니게임 진입 카드
-    private func gameCard(
-        title: String, badge: String?, desc: String,
-        icon: String, iconBg: Color, iconFg: Color, tint: Color,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button {
+    /// 게임 진입 카드 — 두 장을 나란히 놓는 큰 카드. 글을 못 읽어도 고를 수 있게 게임 그림을 크게 두고,
+    /// 이름·배지(무료 "N문제 체험", 이용권 "새 게임")만 얹는다. 한 줄 소개는 화면 읽기 도움말로 남긴다.
+    /// 그림은 천천히 숨쉰다(두 카드 위상 반대) — 게임·세션·옷장이 홈을 덮는 동안은 멈춤
+    private func gameCard(_ g: Minigame, action: @escaping () -> Void) -> some View {
+        let badge = g.badge(isPremium: premium.isPremium)
+        let phase = Double(Minigame.allCases.firstIndex(of: g)!) * Motion.cardBreathPhaseStep
+        let covered = router.minigame != nil || router.wardrobeOpen || session.active != nil
+        return Button {
             Haptics.impact(.light)
             action()
         } label: {
-            HStack(spacing: 14) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous).fill(iconBg).frame(width: 48, height: 48)
-                    Image(systemName: icon).font(.system(size: 22, weight: .bold)).foregroundStyle(iconFg)
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 8) {
-                        Text(title).font(.suite(.extrabold, 16)).foregroundStyle(Color.gg.text)
-                        if let badge {
-                            Text(badge)
-                                .font(.suite(.extrabold, 10)).foregroundStyle(tint)
-                                .padding(.horizontal, 8).padding(.vertical, 3)
-                                .background(tint.opacity(0.12), in: Capsule())
-                        }
-                    }
-                    Text(desc)
-                        .font(.suite(.medium, 13)).foregroundStyle(Color.gg.textMuted)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 4)
-                Image(systemName: "arrow.up.right").font(.system(size: 16, weight: .bold)).foregroundStyle(tint)
+            VStack(spacing: 8) {
+                GameArt.image(g.thumbnail)
+                    .resizable()
+                    .scaledToFit()
+                    .cardBreathing(phase: phase, paused: covered)
+                    .padding(8)
+                    .frame(width: 96, height: 96)
+                    .background(g.iconBg, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .accessibilityHidden(true)
+                Text(g.title)
+                    .font(.suite(.extrabold, 17)).foregroundStyle(Color.gg.text)
+                    .lineLimit(1).minimumScaleFactor(0.6)
+                Text(badge)
+                    .font(.suite(.extrabold, 11)).foregroundStyle(g.tint)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                    .padding(.horizontal, 10).padding(.vertical, 4)
+                    .background(g.tint.opacity(0.14), in: Capsule())
             }
-            .padding(.horizontal, 18)
+            .padding(.horizontal, 10)
             .padding(.vertical, 16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(tint.opacity(0.06), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(tint.opacity(0.25), lineWidth: 1))
+            .frame(maxWidth: .infinity)
+            .background(
+                LinearGradient(colors: [g.tint.opacity(0.16), g.tint.opacity(0.05)], startPoint: .top, endPoint: .bottom),
+                in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .strokeBorder(g.tint.opacity(0.35), lineWidth: 1.5))
         }
         .buttonStyle(PressScaleStyle())
+        .accessibilityLabel("\(g.title), \(badge)")
+        .accessibilityHint(g.desc)
+    }
+
+    /// 구구 꾸미기 — 게임에서 모은 별로 장신구를 사서 씌운다(무료 사용자에게도 열림, 대표님 결정 Q5)
+    private var wardrobeCard: some View {
+        let stars = playRewards.stars
+        let tint = Color.gg.warning
+        return Button {
+            Haptics.impact(.light)
+            router.openWardrobe()
+        } label: {
+            HStack(spacing: 14) {
+                gameThumbnail("icon_hanger", bg: tint.opacity(0.15), inset: 10)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("구구 꾸미기").font(.suite(.extrabold, 17)).foregroundStyle(Color.gg.text)
+                    HStack(spacing: 4) {
+                        GameArt.image("icon_coin").resizable().scaledToFit().frame(width: 16, height: 16)
+                        Text("모은 별 \(stars)개").monospacedDigit()
+                    }
+                    .font(.suite(.bold, 13)).foregroundStyle(Color.gg.textMuted)
+                }
+                Spacer(minLength: 4)
+                HStack(spacing: 4) {
+                    Text("옷장 열기").font(.suite(.extrabold, 13)).lineLimit(1).fixedSize()
+                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold))
+                }
+                .foregroundStyle(tint)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.gg.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Color.gg.border, lineWidth: 1))
+        }
+        .buttonStyle(PressScaleStyle())
+        .accessibilityLabel(String(localized: "구구 꾸미기, 모은 별 \(stars)개"))
+        .accessibilityHint(String(localized: "눌러서 옷장 열기"))
+    }
+
+    /// 게임 그림 썸네일 — 둥근 받침 위에 그림을 맞춰 얹는다
+    private func gameThumbnail(_ file: String, bg: Color, inset: CGFloat = 4) -> some View {
+        GameArt.image(file)
+            .resizable()
+            .scaledToFit()
+            .padding(inset)
+            .frame(width: 60, height: 60)
+            .background(bg, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .accessibilityHidden(true)
     }
 
     /// 세션 모드 한 줄 카드 (웹 모바일의 목록형과 동일)
@@ -284,77 +329,6 @@ struct HomeView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.gg.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color.gg.border, lineWidth: 1))
-    }
-
-    // MARK: 어드벤처 히어로
-    private var adventureHero: some View {
-        let adv = AdvProgress.totalStats(adventure.progress)
-        let nextRegion = World.regions.first { !adventure.progress.defeatedNpcs.contains(World.bossId(for: $0.table)) }
-        return Button {
-            Haptics.impact(.light)
-            if premium.isPremium { adventure.openAdventure() } else { premium.openPaywall() }
-        } label: {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "map.fill").font(.system(size: 12))
-                        Text("어드벤처").font(.suite(.extrabold, 11))
-                        if !premium.isPremium { Image(systemName: "lock.fill").font(.system(size: 10)) }
-                    }
-                    .padding(.horizontal, 10).padding(.vertical, 5)
-                    .background(Color.white.opacity(0.2), in: Capsule())
-
-                    Text("3D 월드를 탐험하며\n구구단 대결!")
-                        .font(.suite(.extrabold, 20)).foregroundStyle(.white)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    HStack(spacing: 6) {
-                        Image(systemName: "flame.fill").font(.system(size: 12))
-                        Text("격파 \(adv.defeated)/\(adv.total)").monospacedDigit()
-                        if let n = nextRegion { Text("· 다음 모험 \(n.name)").lineLimit(1) }
-                    }
-                    .font(.suite(.bold, 12)).foregroundStyle(.white.opacity(0.9))
-
-                    HStack(spacing: 6) {
-                        ForEach(World.regions, id: \.table) { r in
-                            let cleared = adventure.progress.defeatedNpcs.contains(World.bossId(for: r.table))
-                            Capsule()
-                                .fill(cleared ? Color.white : Color.white.opacity(0.35))
-                                .frame(width: cleared ? 16 : 6, height: 6)
-                        }
-                    }
-                    .padding(.top, 2)
-                }
-                Spacer()
-                mascot
-                Image(systemName: "chevron.right").foregroundStyle(.white.opacity(0.9))
-            }
-            .padding(20)
-            .frame(maxWidth: .infinity)
-            .background(
-                LinearGradient(colors: [Color.gg.indigo, Color.gg.violet, Color.gg.purple],
-                               startPoint: .topLeading, endPoint: .bottomTrailing)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .shadow(color: Color.gg.indigo.opacity(0.3), radius: 12, y: 6)
-        }
-        .buttonStyle(PressScaleStyle())
-    }
-
-    // 마스코트 — 월드 플레이어와 같은 캡슐+눈 언어
-    private var mascot: some View {
-        ZStack(alignment: .top) {
-            Capsule().fill(Color.white).frame(width: 52, height: 74).shadow(radius: 6)
-            HStack(spacing: 6) {
-                ForEach(0..<2, id: \.self) { _ in
-                    Circle().fill(Color.white)
-                        .frame(width: 10, height: 10)
-                        .overlay(Circle().strokeBorder(Color(red: 0.13, green: 0.14, blue: 0.17), lineWidth: 3))
-                }
-            }
-            .padding(.top, 18)
-        }
-        .frame(width: 64, height: 90, alignment: .bottom)
     }
 
     // MARK: 취약 문제 복습

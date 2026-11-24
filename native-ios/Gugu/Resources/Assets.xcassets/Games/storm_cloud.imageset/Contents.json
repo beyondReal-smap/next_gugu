@@ -1,0 +1,13 @@
+{
+  "images" : [
+    {
+      "filename" : "storm_cloud.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

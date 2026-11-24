@@ -29,11 +29,12 @@ final class CoreLocalizationTests: XCTestCase {
         XCTAssertEqual(Level.title(1), expected(ko: "구구단 입문자", en: "Times Table Beginner", ja: "九九ビギナー", hi: "पहाड़ों के नए साथी", vi: "Người mới học bảng nhân", id: "Pemula Perkalian"))
     }
 
-    func testWorldNamesAndDefaultGreeting() {
-        let meadow = World.region(for: 2)
-        XCTAssertEqual(meadow?.name, expected(ko: "새싹 들판", en: "Sprout Meadow", ja: "ふたばの のはら", hi: "अंकुरों का मैदान", vi: "Cánh đồng Mầm Non", id: "Padang Tunas"))
-        XCTAssertEqual(meadow?.npcs.first?.greeting,
-                       expected(ko: "2단으로 승부하자!", en: "Let's battle with the 2 times table!", ja: "2のだんで しょうぶだ！", hi: "आओ, 2 के पहाड़े से मुकाबला करें!", vi: "Cùng đấu bảng nhân 2 nào!", id: "Ayo bertanding dengan perkalian 2!"))
+    /// 2.9.0 게임 이름 — 홈·단 시트 카드와 학습 기록 모드 이름이 같은 번역을 쓴다
+    func testGameNames() {
+        XCTAssertEqual(Minigame.stairs.title, expected(ko: "구구 계단", en: "Gugu Stairs", ja: "九九かいだん", hi: "गुगु सीढ़ियाँ", vi: "Gugu Cầu thang", id: "Tangga Gugu"))
+        XCTAssertEqual(Minigame.monster.title, expected(ko: "구구 몬스터", en: "Gugu Monsters", ja: "九九モンスター", hi: "गुगु मॉन्स्टर", vi: "Gugu Quái vật", id: "Monster Gugu"))
+        XCTAssertEqual(Modes.def(.stairs).name, Minigame.stairs.title)
+        XCTAssertEqual(Modes.def(.monster).name, Minigame.monster.title)
     }
 
     /// 힌트 제목은 번역되고, 식 부분은 언어와 무관하게 같다

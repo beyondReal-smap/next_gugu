@@ -35,7 +35,10 @@ data class PendingLearningEvent(
 object LearningRecord {
     data class Ids(val learnerId: String, val deviceId: String, val sessionId: String)
 
-    /** 서버 계약에 없는 모드(adventure)는 practice 로 보낸다 — 출제 단/식은 factId·tableNo 로 남는다 */
+    /**
+     * 서버 계약에 없는 모드(adventure·stairs·monster)는 practice 로 보낸다 — 출제 단/식은 factId·tableNo 로 남는다.
+     * 서버 LearningMode 는 6값 계약이라 게임을 새 값으로 보내면 거부된다(서버 변경 없이 2.9.0 출시)
+     */
     fun apiMode(mode: GameMode): LearningMode = when (mode) {
         GameMode.PRACTICE -> LearningMode.PRACTICE
         GameMode.TIME_ATTACK -> LearningMode.TIME_ATTACK
@@ -43,7 +46,7 @@ object LearningRecord {
         GameMode.SURVIVAL -> LearningMode.SURVIVAL
         GameMode.MISSING -> LearningMode.MISSING
         GameMode.TRUEFALSE -> LearningMode.TRUEFALSE
-        GameMode.ADVENTURE -> LearningMode.PRACTICE
+        GameMode.ADVENTURE, GameMode.STAIRS, GameMode.MONSTER -> LearningMode.PRACTICE
     }
 
     /** 이 세션에 보낼 tableNo — 모든 문항이 같은 단일 때만 값을 갖는다.
@@ -73,14 +76,14 @@ object LearningRecord {
 
         result.answers.forEachIndexed { index, answer ->
             val factId = LearningContract.factId(answer.a, answer.b)
-            // factId 계약은 2~9단 × 1~9. 범위를 벗어나면 이 문항만 건너뛴다(세션 전체 적재 실패 방지).
+            // factId 계약은 2~19단 × 1~19(LearningContract 상수). 범위를 벗어나면 이 문항만 건너뛴다(세션 전체 적재 실패 방지).
             if (!LearningContract.isInFactRange(answer.a, answer.b)) {
                 println("[LearningRecord] 이벤트 생략: factId 범위 밖 $factId")
                 return@forEachIndexed
             }
             seen[factId] = (seen[factId] ?: 0) + 1
 
-            // given 이 없으면 제출 자체가 없었던 문항(배틀 시간 초과 등)이다.
+            // given 이 없으면 제출 자체가 없었던 문항(시간 초과 등)이다.
             // 예전에는 오답일 때 0 을 넣었는데, 이는 "아이가 0 이라고 답했다"는
             // 사실이 아닌 기록을 만들어 낸다 — 명시적인 미응답 값으로 남긴다.
             val submitted = answer.given ?: GivenAnswer.NoAnswer

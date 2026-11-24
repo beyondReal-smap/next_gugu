@@ -2,11 +2,6 @@ package site.smap.gugudan
 
 import org.junit.Test
 import site.smap.gugudan.core.*
-import site.smap.gugudan.core.adventure.AdvAchievements
-import site.smap.gugudan.core.adventure.Battle
-import site.smap.gugudan.core.adventure.BattleStyle
-import site.smap.gugudan.core.adventure.Shop
-import site.smap.gugudan.core.adventure.World
 import site.smap.gugudan.services.GuardianDenial
 import site.smap.gugudan.services.PermissionDenial
 import site.smap.gugudan.services.PushApi
@@ -42,28 +37,12 @@ class CoreLocalizationTests {
         assertEquals(Triple("구구단 입문자", "Times Table Beginner", "九九ビギナー"), all(Level.titleRes(1)))
     }
 
-    @Test fun worldNamesAndDefaultGreeting() {
-        val meadow = World.region(2)!!
-        assertEquals(Triple("새싹 들판", "Sprout Meadow", "ふたばの のはら"), all(meadow.nameRes))
-        val npc = meadow.npcs.first()
-        assertEquals(Triple("2단으로 승부하자!", "Let's battle with the 2 times table!", "2のだんで しょうぶだ！"),
-            all(npc.greetingRes, npc.table))
-        // 보스 인사말은 단을 받지 않는다 — 화면이 단을 함께 넘겨도 그대로
-        val boss = meadow.npcs.last()
-        assertEquals("들판을 지나가려면 2단쯤은 술술 나와야지!", ko.get(boss.greetingRes, boss.table))
-    }
-
     /** 정적 데이터는 문자열 대신 리소스 ID 만 든다 — 모든 이름이 세 언어로 읽히고, 영어·일본어에 한국어가 새지 않는다 */
     @Test fun everyCoreNameResolvesPerLanguage() {
         val ids = buildList {
             Modes.all.values.forEach { addAll(listOf(it.nameRes, it.taglineRes, it.detailRes)) }
             Achievements.all.forEach { addAll(listOf(it.nameRes, it.descriptionRes)) }
-            AdvAchievements.all.forEach { addAll(listOf(it.nameRes, it.descriptionRes)) }
             (1..40).forEach { add(Level.titleRes(it)) }
-            World.regions.forEach { r -> add(r.nameRes); r.npcs.forEach { addAll(listOf(it.nameRes, it.greetingRes)) } }
-            Shop.colors.forEach { add(it.nameRes) }
-            Shop.hats.forEach { add(it.nameRes) }
-            BattleStyle.entries.forEach { add(Battle.styleNameRes(it)) }
             Theme.entries.forEach { add(ThemeStore.labelRes(it)) }
             GuardianDenial.entries.forEach { add(it.messageRes) }
             PermissionDenial.entries.forEach { add(it.messageRes) }

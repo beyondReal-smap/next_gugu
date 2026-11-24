@@ -38,7 +38,6 @@ enum GG {
     static let violet  = solid(139, 92, 246)
     static let emerald = solid(16, 185, 129)
     static let indigo  = solid(99, 102, 241)
-    static let purple  = solid(147, 51, 234)
 }
 
 extension Color {
@@ -121,7 +120,7 @@ extension View {
     }
 }
 
-/// hex 문자열(#rrggbb) → Color (어드벤처 NPC/테마 색용)
+/// hex 문자열(#rrggbb) → Color (게임 배경·옷장 색용)
 extension Color {
     init(hex: String) {
         var s = hex.trimmingCharacters(in: .whitespacesAndNewlines)

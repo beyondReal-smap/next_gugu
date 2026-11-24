@@ -26,7 +26,7 @@ object RemotePush {
     /** 앱 화면이 보이는지 — MainActivity onStart/onStop 이 갱신한다. 메시징 서비스(다른 스레드)가 읽는다 */
     @Volatile var appInForeground: Boolean = false
 
-    /** 세션·미니게임·어드벤처 진행 중 — 이때 온 알림은 소리·배너 없이 목록에만 둔다 */
+    /** 학습 세션·게임(구구 계단·구구 몬스터) 진행 중 — 이때 온 알림은 소리·배너 없이 목록에만 둔다 */
     @Volatile var playing: Boolean = false
 
     /** 알림 탭 → MainActivity 로 넘기는 data 키 (FCM 시스템 알림도 같은 이름으로 extras 에 담아 준다) */

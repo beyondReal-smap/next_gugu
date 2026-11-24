@@ -18,6 +18,11 @@ import kotlinx.serialization.json.jsonPrimitive
 // 구구단 학습 앱 — 도메인 타입 (iOS Core/Models.swift 이식)
 // 주의: 상태 갱신 시 컬렉션은 항상 새 인스턴스로 재할당한다 (copy() 공유 참조 부작용 방지)
 
+/**
+ * 저장값(SerialName)은 기존 사용자 저장본 modesPlayed·bestScores 에 들어 있다 — 값을 지우거나 이름을 바꾸면
+ * GameState 디코딩이 실패해 진행도가 통째로 격리·초기화된다. ADVENTURE 는 3D 어드벤처를 없앤 뒤에도 남겨 둔다.
+ * STAIRS·MONSTER 는 구구 계단·구구 몬스터 판의 학습 기록(2.9.0) — 학습 탭 모드 목록(Modes.list)에는 넣지 않는다.
+ */
 @Serializable
 enum class GameMode {
     @SerialName("practice") PRACTICE,
@@ -27,14 +32,39 @@ enum class GameMode {
     @SerialName("missing") MISSING,
     @SerialName("truefalse") TRUEFALSE,
     @SerialName("adventure") ADVENTURE,
+    @SerialName("stairs") STAIRS,
+    @SerialName("monster") MONSTER;
+
+    /**
+     * 게임(구구 계단·구구 몬스터) 판 — 학습 기록(XP·오늘 목표·틀린 문제)에는 들어가지만 단 마스터리 별은 주지 않는다.
+     * 마스터리 별은 문제 수 하한 없이 정확도·속도로 매겨져서, 몇 마리짜리 체험 판만으로도 별 3개가 나오기 때문 (iOS GameMode.isGame)
+     */
+    val isGame: Boolean get() = this == STAIRS || this == MONSTER
 }
 
-/** 화면 테마 — SYSTEM 은 기기 설정(라이트/다크)을 따른다 */
+/** 화면 테마 — SYSTEM 은 기기 설정(낮/밤)을 따른다. 고른 적 없으면 낮(LIGHT) */
 @Serializable
 enum class Theme {
     @SerialName("system") SYSTEM,
     @SerialName("light") LIGHT,
-    @SerialName("dark") DARK,
+    @SerialName("dark") DARK;
+
+    companion object {
+        /**
+         * 저장된 테마 문자열 → 초기 테마 (계획서 2-10).
+         * 없음(null) → LIGHT, "dark" → DARK, "light" → LIGHT, "system" → SYSTEM,
+         * 그 밖의 손상 문자열 → LIGHT (호출부가 onUnknown 으로 로그 한 줄 남김).
+         */
+        fun initial(saved: String?, onUnknown: ((String) -> Unit)? = null): Theme = when (saved) {
+            null, "light" -> LIGHT
+            "dark" -> DARK
+            "system" -> SYSTEM
+            else -> {
+                onUnknown?.invoke(saved)
+                LIGHT
+            }
+        }
+    }
 }
 
 data class Problem(val a: Int, val b: Int)   // a=단(2~9), b=곱하는 수(1~9)
@@ -101,6 +131,14 @@ data class SessionResult(
     val xpScale: Double? = null,    // 재대결 등 XP 체감 (null/1 = 기본)
 )
 
+/** 하루 안 한 단의 누적 집계 — 보호자 단별 실력 리포트용 (계획서 2-4) */
+@Serializable
+data class TableTally(
+    val correct: Int = 0,
+    val wrong: Int = 0,
+    val msSum: Int = 0,
+)
+
 // 날짜별 집계 — 보호자 주간 리포트용 링버퍼 항목 (최근 56일)
 @Serializable
 data class DayLogEntry(
@@ -109,6 +147,8 @@ data class DayLogEntry(
     val wrong: Int = 0,
     val msSum: Int = 0,
     val misses: Map<String, Int> = emptyMap(),
+    /** 단별 합계 (key = 단 번호 2~19). null = 이 필드 도입 전 구버전 저장본의 날 */
+    val tables: Map<Int, TableTally>? = null,
 )
 
 @Serializable

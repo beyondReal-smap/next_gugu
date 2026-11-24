@@ -1,6 +1,7 @@
 package site.smap.gugudan.core
 
 import site.smap.gugudan.R
+import site.smap.gugudan.core.games.DailyMissionPlan
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 import java.time.format.TextStyle
@@ -22,11 +23,11 @@ data class WeeklyDay(
 data class MissCount(val key: String, val count: Int)   // key = "7x8"
 
 data class WeeklyReport(
-    /** 7일 — 6일 전 → 오늘 순 */
+    /** 이번 주 월~일 7일 (오늘 뒤의 날은 0) */
     val days: List<WeeklyDay>,
-    /** 직전 7일(13일 전 ~ 7일 전) 정답 수 — 지난주 대비 비교용 */
+    /** 지난주 월요일 ~ 지난주 같은 요일까지 정답 수 — 지난주 대비 비교용 */
     val prevCorrect: Int,
-    /** 이번 7일 자주 틀린 문제 (많이 틀린 순, 최대 3개) */
+    /** 이번 주 자주 틀린 문제 (많이 틀린 순, 최대 3개) */
     val topMisses: List<MissCount>,
 ) {
     val correct: Int get() = days.sumOf { it.correct }
@@ -60,32 +61,30 @@ data class WeeklyReport(
         const val TOP_MISS_LIMIT = 3
         private val WEEKDAY_LABELS = listOf("월", "화", "수", "목", "금", "토", "일")   // ISO: 월=1 … 일=7  // i18n:skip
 
-        /** today 를 마지막 날로 하는 최근 7일 리포트 */
+        /** today 가 속한 이번 주(월~일) 리포트 (계획서 2-5). 오늘 뒤의 날은 0, 지난주 비교는 같은 요일까지. */
         fun build(dayLog: List<DayLogEntry>, today: String): WeeklyReport {
-            // 같은 날짜가 둘 이상 저장돼 있으면(손상된 저장본) 합쳐서 센다 — 한쪽을 버리면 기록이 사라진다
-            val byDate = mutableMapOf<String, DayLogEntry>()
-            for (e in Commit.normalizeDayLog(dayLog)) {
-                val prev = byDate[e.date]
-                byDate[e.date] = if (prev == null) e else prev.copy(
-                    correct = prev.correct + e.correct,
-                    wrong = prev.wrong + e.wrong,
-                    msSum = prev.msSum + e.msSum,
-                    misses = (prev.misses.keys + e.misses.keys).associateWith {
-                        (prev.misses[it] ?: 0) + (e.misses[it] ?: 0)
-                    },
-                )
-            }
+            // 같은 날짜가 둘 이상 저장돼 있으면(손상된 저장본) 단별 집계까지 합쳐서 센다
+            val byDate = Commit.mergeDayLog(dayLog)
+            val todayDate = parse(today)
+            val weekDates = DailyMissionPlan.week(todayDate)
 
-            val dates = (SPAN - 1 downTo 0).map { shift(today, -it) }
-            val days = dates.map { date ->
-                val e = byDate[date]
-                WeeklyDay(date, e?.correct ?: 0, e?.wrong ?: 0, e?.msSum ?: 0)
+            val days = weekDates.map { date ->
+                val key = Commit.todayStr(date)
+                if (date > todayDate) {
+                    WeeklyDay(key, 0, 0, 0)
+                } else {
+                    val e = byDate[key]
+                    WeeklyDay(key, e?.correct ?: 0, e?.wrong ?: 0, e?.msSum ?: 0)
+                }
             }
-            val prevCorrect = (SPAN until SPAN * 2).sumOf { byDate[shift(today, -it)]?.correct ?: 0 }
+            val elapsed = weekDates.filter { it <= todayDate }
+            val prevCorrect = elapsed.sumOf { d ->
+                byDate[Commit.todayStr(d.minusDays(SPAN.toLong()))]?.correct ?: 0
+            }
 
             val misses = mutableMapOf<String, Int>()
-            for (date in dates) {
-                byDate[date]?.misses?.forEach { (k, v) -> misses[k] = (misses[k] ?: 0) + v }
+            for (date in elapsed) {
+                byDate[Commit.todayStr(date)]?.misses?.forEach { (k, v) -> misses[k] = (misses[k] ?: 0) + v }
             }
             val topMisses = misses.map { MissCount(it.key, it.value) }
                 .sortedWith(compareByDescending<MissCount> { it.count }.thenBy { it.key })

@@ -46,6 +46,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -202,6 +205,18 @@ fun Pill(bg: Color, fg: Color, content: @Composable RowScope.() -> Unit) {
     }
 }
 
+/**
+ * 한 줄 글자 — 칸보다 길면 minScale 배까지 글자를 줄여 맞춘다 (iOS lineLimit(1).minimumScaleFactor).
+ * vi·id·hi 처럼 번역이 긴 언어에서 단 이름·게임 이름이 잘리지 않게
+ */
+@Composable
+fun FitText(text: String, style: TextStyle, color: Color, minScale: Float, modifier: Modifier = Modifier) {
+    BasicText(
+        text, modifier, style = style.copy(color = color), maxLines = 1, softWrap = false,
+        autoSize = TextAutoSize.StepBased(minFontSize = style.fontSize * minScale, maxFontSize = style.fontSize),
+    )
+}
+
 /** 모드별 틴트 (modeIcons.ts 대응) */
 object ModeStyle {
     @Composable
@@ -213,6 +228,8 @@ object ModeStyle {
         GameMode.MISSING -> GGColors.violet
         GameMode.TRUEFALSE -> GGColors.emerald
         GameMode.ADVENTURE -> GGColors.indigo
+        GameMode.STAIRS -> GGColors.sky
+        GameMode.MONSTER -> GGColors.emerald
     }
 }
 

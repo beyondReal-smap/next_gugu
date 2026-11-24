@@ -2,7 +2,7 @@ import SwiftUI
 
 // 단 시트 "어떻게 연습할까요?" — 학습 탭 단 지도에서 단(또는 섞어서)을 누르면 열린다.
 // 행 하나가 곧 시작 버튼이라 화면에 남는 '고른 모드' 상태가 없다(예전에는 모드 카드 테두리 색 하나로만 보였다).
-// 단을 골랐으면 단을 지원하는 모드 4개, 섞어서면 6개 전부(60초·서바이벌 포함 + 최고 기록).
+// 단을 골랐으면 단을 지원하는 모드 4개, 섞어서면 6개 전부(60초·서바이벌 포함 + 최고 기록). 아래에 게임 2개(구구 몬스터는 2~9단만).
 // 잠긴 행은 이 시트 위에 결제 화면을 띄우고, 구매하면 그대로 돌아와 행이 열린다.
 
 /// 단 시트에서 고른 다음 행동 — 시트가 완전히 닫힌 뒤 학습 탭이 실행한다
@@ -202,12 +202,12 @@ struct PracticeSheet: View {
         return best > 0 ? String(localized: "\(base), 최고 \(best)점") : base
     }
 
-    // MARK: - 움직이며 놀기 (고른 단으로 시작)
+    // MARK: - 게임 (고른 단으로 시작)
 
     private var minigames: some View {
         VStack(alignment: .leading, spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("움직이며 놀기").font(.suite(.extrabold, 16)).foregroundStyle(Color.gg.text)
+                Text("게임").font(.suite(.extrabold, 16)).foregroundStyle(Color.gg.text)
                     .accessibilityAddTraits(.isHeader)
                 Text(table.map { String(localized: "\($0)단으로 시작해요") } ?? String(localized: "섞어서 시작해요"))
                     .font(.suite(.medium, 12)).foregroundStyle(Color.gg.textMuted)
@@ -218,36 +218,44 @@ struct PracticeSheet: View {
         }
     }
 
+    /// 게임 타일 — 고른 단을 못 쓰는 게임(구구 몬스터 10단 이상)은 회색으로 두고 "9단까지"만 알린다(누르면 아무 일 없음)
     private func minigameTile(_ g: Minigame) -> some View {
-        let badge = g.badge(isPremium: premium.isPremium)
+        let enabled = g.supports(table: table)
+        let note = enabled ? g.badge(isPremium: premium.isPremium) : String(localized: "9단까지")
+        let tint = enabled ? g.tint : Color.gg.textMuted
         return Button {
             Haptics.impact(.light)
             onStart(.minigame(g, table: table))
         } label: {
             HStack(spacing: 10) {
-                Image(systemName: g.icon).font(.system(size: 17, weight: .bold)).foregroundStyle(g.iconFg)
+                GameArt.image(g.thumbnail)
+                    .resizable()
+                    .scaledToFit()
+                    .padding(3)
                     .frame(width: 40, height: 40)
                     .background(g.iconBg, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .saturation(enabled ? 1 : 0)
+                    .opacity(enabled ? 1 : 0.5)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(g.title).font(.suite(.extrabold, 14)).foregroundStyle(Color.gg.text)
+                    Text(g.title).font(.suite(.extrabold, 14))
+                        .foregroundStyle(enabled ? Color.gg.text : Color.gg.textMuted)
                         .lineLimit(1).minimumScaleFactor(0.75)
-                    if let badge {
-                        Text(badge)
-                            .font(.suite(.extrabold, 10)).foregroundStyle(g.tint)
-                            .lineLimit(1).minimumScaleFactor(0.8)
-                            .padding(.horizontal, 6).padding(.vertical, 2)
-                            .background(g.tint.opacity(0.12), in: Capsule())
-                    }
+                    Text(note)
+                        .font(.suite(.extrabold, 10)).foregroundStyle(tint)
+                        .lineLimit(1).minimumScaleFactor(0.8)
+                        .padding(.horizontal, 6).padding(.vertical, 2)
+                        .background(tint.opacity(0.12), in: Capsule())
                 }
                 Spacer(minLength: 0)
             }
             .padding(10)
             .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
-            .background(g.tint.opacity(0.06), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(g.tint.opacity(0.25), lineWidth: 1))
+            .background(enabled ? g.tint.opacity(0.06) : Color.gg.surface2, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(tint.opacity(0.25), lineWidth: 1))
         }
         .buttonStyle(PressScaleStyle())
-        .accessibilityLabel(badge.map { "\(g.title), \($0)" } ?? g.title)
-        .accessibilityHint(table.map { String(localized: "\($0)단으로 시작해요") } ?? String(localized: "섞어서 시작해요"))
+        .disabled(!enabled)
+        .accessibilityLabel(enabled ? "\(g.title), \(note)" : String(localized: "\(g.title), 9단까지만 할 수 있어요"))
+        .accessibilityHint(enabled ? (table.map { String(localized: "\($0)단으로 시작해요") } ?? String(localized: "섞어서 시작해요")) : "")
     }
 }

@@ -77,6 +77,11 @@ enum Problems {
         return best
     }
 
+    /// 오답 가중치가 남은 문제가 하나라도 있는 단 — 지도 탭 먹구름 표시. 형식이 깨졌거나 범위 밖 키는 무시
+    static func tablesWithWrong(_ wrongPool: [String: Int]) -> Set<Int> {
+        Set(wrongPool.compactMap { key, weight in weight > 0 ? parseKey(key)?.a : nil })
+    }
+
     /// "7x8" → Problem(7, 8). 형식이 깨졌거나 기록 계약 범위(2~19단 × 1~19) 밖이면 nil.
     /// 설정 상한(maxB)으로 자르지 않는다 — 상한을 낮춰도 이미 쌓인 기록은 그대로 복원·표시한다
     static func parseKey(_ key: String) -> Problem? {

@@ -1,50 +1,39 @@
 package site.smap.gugudan
 
 import org.junit.Test
-import site.smap.gugudan.core.Pop
-import site.smap.gugudan.core.RunnerPhase
-import site.smap.gugudan.features.pop.PopLayout
 import site.smap.gugudan.store.Minigame
 import site.smap.gugudan.store.MinigameStart
 import site.smap.gugudan.store.Router
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
-/** 미니게임 진입(시작 단 전달·표시 순서)과 팡팡 화면 좌표 → Core 좌표 변환 (Android UI 전용) */
+/**
+ * 게임 진입(시작 단 전달·표시 순서) (Android UI 전용).
+ * 2.9.0 에서 진입점이 놀이 4종 → 구구 계단·구구 몬스터로 바뀌었다.
+ */
 class MinigameEntryTests {
 
     @Test fun openMinigameCarriesStartTable() {
         val router = Router()
-        router.openMinigame(Minigame.POP, MinigameStart.Table(7))
-        assertTrue(router.popOpen)
-        assertEquals(MinigameStart.Table(7), router.minigameStart)
+        router.openMinigame(Minigame.MONSTER, MinigameStart.Table(7))
+        assertEquals(Minigame.MONSTER, router.minigame?.game)
+        assertEquals(MinigameStart.Table(7), router.minigame?.start)
 
         // '섞어서'(null)와 홈 진입(기본값)은 다른 값이다
-        router.openMinigame(Minigame.BASKET, MinigameStart.Table(null))
-        assertTrue(router.basketOpen)
-        assertEquals(MinigameStart.Table(null), router.minigameStart)
+        router.openMinigame(Minigame.STAIRS, MinigameStart.Table(null))
+        assertEquals(Minigame.STAIRS, router.minigame?.game)
+        assertEquals(MinigameStart.Table(null), router.minigame?.start)
+        assertNotEquals<MinigameStart>(MinigameStart.Default, MinigameStart.Table(null))
 
         // 홈에서 다시 열면 이전 진입의 단이 남지 않는다
-        router.openMinigame(Minigame.RUNNER)
-        assertTrue(router.runnerOpen)
-        assertEquals(MinigameStart.Default, router.minigameStart)
+        router.openMinigame(Minigame.MONSTER)
+        assertEquals(MinigameStart.Default, router.minigame?.start)
     }
 
-    @Test fun minigameOrderIsPopFirst() {
-        assertEquals(listOf(Minigame.POP, Minigame.BASKET, Minigame.RUNNER, Minigame.LANE), Minigame.entries)
-    }
-
-    @Test fun popLayoutTapHitsBalloonWhereItIsDrawn() {
-        val layout = PopLayout(width = 1000f, height = 1333f)
-        val state = Pop.create(7, RunnerPhase.RUNNING)
-        // 안내가 끝나고 풍선이 나올 때까지 진행
-        var s = state
-        while (s.balloons.isEmpty()) s = Pop.advance(s, 16.0)
-        s = Pop.advance(s, 1500.0)
-        val b = s.balloons.first()
-        val (x, y, aspect) = layout.toCore(layout.px(b.x), layout.py(b.y))
-        assertEquals(b.x, x, 1e-4)
-        assertEquals(b.y, y, 1e-4)
-        assertEquals(b.id, Pop.target(s, x, y, aspect))
+    /** 홈 "게임" 묶음·단 시트 타일이 같은 순서(선언 순)를 쓴다 — 구구 계단 먼저 */
+    @Test fun minigameOrderIsStairsFirst() {
+        assertEquals(listOf(Minigame.STAIRS, Minigame.MONSTER), Minigame.entries)
+        assertTrue(Minigame.entries.chunked(2).single().size == 2, "단 시트는 한 줄에 두 개")
     }
 }

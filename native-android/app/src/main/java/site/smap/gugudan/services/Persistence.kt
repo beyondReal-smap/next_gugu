@@ -9,7 +9,6 @@ import site.smap.gugudan.core.GameState
 import site.smap.gugudan.core.PushRegistrationState
 import site.smap.gugudan.core.PushSettings
 import site.smap.gugudan.core.ReviewPromptLog
-import site.smap.gugudan.core.adventure.AdventureProgress
 import java.io.File
 import java.io.IOException
 import java.util.UUID
@@ -52,18 +51,17 @@ class Persistence(context: Context) {
         private val migrationGate = DeviceMigrationGate()
 
         const val PROGRESS_KEY = "gugu.progress.v1"
+        /** 2.8 까지의 3D 어드벤처 저장본 — 2.9.0 에서 어드벤처는 없어졌지만 별 조각 이관 원본이라 키를 남긴다(PlayRewardsStore 가 읽기만 한다) */
         const val ADVENTURE_KEY = "gugu.adventure.v1"
         const val THEME_KEY = "gugu.theme"
         const val PREMIUM_KEY = "gugu.premium.v1"
         /** 서버(구매 원장)가 부여한 프리미엄 — 스토어 구매와 따로 둬야 Play 재확인이 이 값을 지우지 않는다 */
         const val SERVER_PREMIUM_KEY = "gugu.premium.server.v1"
         const val SOUND_KEY = "gugu.sound"
-        /** 구구 점프 단별 최고 기록 (웹 localStorage 키와 동일) */
-        const val RUNNER_BEST_KEY = "gugu.runner.best.v1"
-        const val LANE_BEST_KEY = "gugu.lane.best.v1"
-        const val BASKET_BEST_KEY = "gugu.basket.best.v1"
-        /** 구구 팡팡 단별 최고 점수 ({"all"|"2"…"9": 점수}, 키는 Pop.bestKey) */
-        const val POP_BEST_KEY = "gugu.pop.best.v1"
+        /** 구구 계단·구구 몬스터 보상 — 모은 별·옷장·도감·최고 기록 (PlayRewardsStore, iOS 와 같은 키) */
+        const val PLAY_REWARDS_KEY = "gugu.play.v1"
+        /** 구구 계단·구구 몬스터 문제 순서 선택 — 순서대로·무작위 (GameOrderStore, iOS 와 같은 키). 아이 설정이라 백업 대상("gugu") */
+        const val GAME_ORDER_KEY = "gugu.gameOrder.v1"
 
         /** 익명 계정 세션 (토큰 — 앱 전용 저장소) */
         const val AUTH_SESSION_KEY = "gugu.auth.session.v1"
@@ -113,13 +111,6 @@ class Persistence(context: Context) {
 
     fun saveGameState(state: GameState) =
         putString(PROGRESS_KEY, json.encodeToString(GameState.serializer(), state))
-
-    fun loadAdventure(): AdventureProgress? = decodeOrNull(ADVENTURE_KEY) {
-        json.decodeFromString(AdventureProgress.serializer(), it)
-    }
-
-    fun saveAdventure(p: AdventureProgress) =
-        putString(ADVENTURE_KEY, json.encodeToString(AdventureProgress.serializer(), p))
 
     fun loadPushSettings(): PushSettings? = decodeOrNull(PUSH_SETTINGS_KEY) {
         json.decodeFromString(PushSettings.serializer(), it)

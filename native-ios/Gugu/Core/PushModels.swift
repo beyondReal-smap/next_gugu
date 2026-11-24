@@ -192,7 +192,7 @@ enum PushForegroundStyle: Equatable {
     case listOnly
 
     /// 광고는 앱 사용 중엔 목록만. 공지·보호자·계정은 배너로 알리되,
-    /// 세션·미니게임·어드벤처를 하는 중이면 흐름을 끊지 않게 목록에만 둔다.
+    /// 세션·게임을 하는 중이면 흐름을 끊지 않게 목록에만 둔다.
     static func decide(kind: PushKind, immersive: Bool) -> PushForegroundStyle {
         if kind == .promo { return .listOnly }
         return immersive ? .listOnly : .full

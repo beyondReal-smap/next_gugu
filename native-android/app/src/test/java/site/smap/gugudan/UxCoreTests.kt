@@ -4,6 +4,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import site.smap.gugudan.core.*
+import site.smap.gugudan.core.guardian.TableSkill
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -144,6 +145,99 @@ class UxCoreTests {
         assertNull(Hints.nextRoadmapTable(Hints.ROADMAP_TABLES.associateWith { m(3) }))
     }
 
+    // MARK: TodayIsland / IslandPlan / tablesWithWrong
+
+    @Test fun todayIslandKeepsRoadmapOrderAndPrioritizesWeakAndSkipsStrong() {
+        fun m(s: Int) = TableMastery(stars = s, bestAccuracy = 1.0, bestAvgMs = 1000, plays = 1)
+        fun skill(t: Int, attempts: Int, correct: Int) = TableSkill(t, attempts, correct, attempts * 2000)
+
+        // 기록 없을 때 기존 nextRoadmapTable 기대값 전부 유지
+        assertEquals(TodayIsland.Table(2, TodayIsland.Reason.NEXT), TodayIsland.pick(emptyMap(), emptyMap()))
+        assertEquals(TodayIsland.Table(5, TodayIsland.Reason.NEXT), TodayIsland.pick(mapOf(2 to m(1)), emptyMap()))
+        assertEquals(
+            TodayIsland.Table(7, TodayIsland.Reason.NEXT),
+            TodayIsland.pick(listOf(2, 3, 4, 5, 6, 8, 9).associateWith { m(1) }, emptyMap()),
+        )
+        assertEquals(
+            TodayIsland.Table(10, TodayIsland.Reason.NEXT),
+            TodayIsland.pick((2..9).associateWith { m(3) }, emptyMap()),
+        )
+        val mixed = (10..19).associateWith { m(3) } +
+            mapOf(2 to m(3), 5 to m(2), 3 to m(1), 4 to m(1), 6 to m(3), 9 to m(3), 7 to m(3), 8 to m(3))
+        assertEquals(TodayIsland.Table(3, TodayIsland.Reason.NEXT), TodayIsland.pick(mixed, emptyMap()))
+        assertEquals(TodayIsland.Mixed, TodayIsland.pick(Hints.ROADMAP_TABLES.associateWith { m(3) }, emptyMap()))
+
+        // 약한 단이 있으면 별 3개 단이라도·로드맵 순서보다 먼저 나온다 (정확도 가장 낮은 단 우선)
+        val withWeak = mapOf(
+            7 to skill(7, attempts = 10, correct = 6),   // 60%
+            8 to skill(8, attempts = 10, correct = 5),   // 50% — 더 약함
+        )
+        assertEquals(
+            TodayIsland.Table(8, TodayIsland.Reason.WEAK),
+            TodayIsland.pick(Hints.ROADMAP_TABLES.associateWith { m(3) }, withWeak),
+        )
+
+        // 최근 기록이 잘해요(STRONG)인 단은 별이 0이어도 건너뛴다 (게임만 하는 아이가 2단에 머물지 않게)
+        val gameKidSkills = mapOf(2 to skill(2, attempts = 10, correct = 9))
+        assertEquals(TodayIsland.Table(5, TodayIsland.Reason.NEXT), TodayIsland.pick(emptyMap(), gameKidSkills))
+
+        // 남은 단이 모두 별 3개이거나 18단 전부 잘해요면 Mixed
+        val allExcept2ThreeStars = (Hints.ROADMAP_TABLES - 2).associateWith { m(3) }
+        assertEquals(TodayIsland.Mixed, TodayIsland.pick(allExcept2ThreeStars, gameKidSkills))
+        val allStrong = Hints.ROADMAP_TABLES.associateWith { skill(it, attempts = 10, correct = 10) }
+        assertEquals(TodayIsland.Mixed, TodayIsland.pick(emptyMap(), allStrong))
+    }
+
+    @Test fun islandPlanRecommendedAndSamples() {
+        val noRecord = TableSkill(5, attempts = 0, correct = 0, msSum = 0)
+        val practicing = TableSkill(5, attempts = 5, correct = 4, msSum = 10_000)
+        val weak = TableSkill(5, attempts = 10, correct = 6, msSum = 30_000)
+        val strong = TableSkill(5, attempts = 10, correct = 10, msSum = 15_000)
+
+        // 처음 가는 단(별 0, 최근 기록 0) → 표 보고 외우기
+        assertEquals(IslandMethod.TableStudy, IslandPlan.recommended(5, stars = 0, skill = noRecord))
+        // 약한 단 → 별이 있어도 표 보고 외우기
+        assertEquals(IslandMethod.TableStudy, IslandPlan.recommended(5, stars = 0, skill = weak))
+        assertEquals(IslandMethod.TableStudy, IslandPlan.recommended(5, stars = 2, skill = weak))
+        // 별 0 이어도 최근 기록이 있고 약하지 않으면 차근차근
+        assertEquals(IslandMethod.Mode(GameMode.PRACTICE), IslandPlan.recommended(5, stars = 0, skill = practicing))
+        // 별이 있으면 최근 기록 없어도 차근차근
+        assertEquals(IslandMethod.Mode(GameMode.PRACTICE), IslandPlan.recommended(5, stars = 1, skill = noRecord))
+        assertEquals(IslandMethod.Mode(GameMode.PRACTICE), IslandPlan.recommended(5, stars = 3, skill = strong))
+        // 다른 단의 실력을 넘기면 즉시 거부
+        assertTrue(runCatching { IslandPlan.recommended(6, stars = 0, skill = noRecord) }.isFailure)
+
+        // 예시 식·OX 틀린 답·배우기 칩
+        assertEquals(Problem(5, 3), IslandPlan.sample(5))
+        assertEquals(Problem(19, 3), IslandPlan.sample(19))
+        assertEquals(Problem(7, 8), IslandPlan.sample(null))
+        assertEquals(16, IslandPlan.oxShown(IslandPlan.sample(5)))
+        assertEquals(57, IslandPlan.oxShown(IslandPlan.sample(null)))
+        assertEquals("5 × 2 = 10", IslandPlan.studyChip(5))
+        assertEquals("19 × 2 = 38", IslandPlan.studyChip(19))
+    }
+
+    @Test fun tablesWithWrongFiltersValidPositiveWeights() {
+        assertEquals(emptySet(), Problems.tablesWithWrong(emptyMap()))
+        assertEquals(
+            setOf(7, 8, 15),
+            Problems.tablesWithWrong(
+                mapOf(
+                    "7x8" to 2,
+                    "7x6" to 4,
+                    "8x7" to 1,
+                    "15x3" to 3,
+                    "2x3" to 0,
+                    "3x4" to -1,
+                    "bad" to 5,
+                    "1x5" to 5,
+                    "20x3" to 5,
+                    "7x20" to 5,
+                ),
+            ),
+        )
+    }
+
     // MARK: Problems.reviewQueue
 
     @Test fun parseKey() {
@@ -186,27 +280,61 @@ class UxCoreTests {
     }
 
     @Test fun weeklyReportAggregates() {
+        // 2026-09-29 는 화요일 — 이번 주는 월(28)~일(10-04), 지난주 비교는 지난주 월(21)·화(22)만
         val log = listOf(
-            DayLogEntry("2026-09-15", correct = 100, msSum = 1),                       // 14일 전 — 제외
-            DayLogEntry("2026-09-16", correct = 4, msSum = 1),                         // 13일 전 — 지난주
-            DayLogEntry("2026-09-22", correct = 7, wrong = 1, msSum = 1, misses = mapOf("2x2" to 1)), // 7일 전
-            DayLogEntry("2026-09-23", correct = 3, msSum = 9_000),                     // 6일 전 — 이번 주 첫날
-            DayLogEntry("2026-09-27", correct = 5, wrong = 1, msSum = 12_000, misses = mapOf("6x9" to 1, "7x8" to 1)),
-            DayLogEntry("2026-09-29", correct = 10, wrong = 2, msSum = 30_000, misses = mapOf("7x8" to 2)),
+            DayLogEntry("2026-09-20", correct = 100, msSum = 1),                       // 지지난주 일 — 제외
+            DayLogEntry("2026-09-21", correct = 4, msSum = 1),                         // 지난주 월 — 비교 포함
+            DayLogEntry("2026-09-22", correct = 7, wrong = 1, msSum = 1, misses = mapOf("2x2" to 1)), // 지난주 화 — 비교 포함
+            DayLogEntry("2026-09-23", correct = 50, msSum = 9_000),                    // 지난주 수 — 화요일 기준 비교 제외
+            DayLogEntry("2026-09-27", correct = 20, wrong = 1, msSum = 12_000),        // 지난주 일 — 제외
+            DayLogEntry("2026-09-28", correct = 5, wrong = 1, msSum = 12_000, misses = mapOf("6x9" to 1, "7x8" to 1)), // 이번 주 월
+            DayLogEntry("2026-09-29", correct = 10, wrong = 2, msSum = 30_000, misses = mapOf("7x8" to 2)),            // 이번 주 화(오늘)
+            DayLogEntry("2026-09-30", correct = 99, wrong = 5, msSum = 99_000, misses = mapOf("9x9" to 9)),            // 미래(수) — 0 처리
         )
         val r = WeeklyReport.build(log, "2026-09-29")
         assertEquals(7, r.days.size)
-        assertEquals("2026-09-23", r.days.first().date)
-        assertEquals("2026-09-29", r.days.last().date)
-        assertEquals(listOf(3, 0, 0, 0, 5, 0, 10), r.days.map { it.correct })
-        assertEquals(18, r.correct)
+        assertEquals("2026-09-28", r.days.first().date)
+        assertEquals("2026-10-04", r.days.last().date)
+        assertEquals(listOf(5, 10, 0, 0, 0, 0, 0), r.days.map { it.correct })
+        assertEquals(15, r.correct)
         assertEquals(3, r.wrong)
-        assertEquals(3, r.activeDays)
-        assertEquals(51_000, r.studyMs)
-        assertEquals(86, r.accuracy)   // 18/21 = 85.7%
-        assertEquals(11, r.prevCorrect)
-        assertEquals(7, r.correctDelta)
+        assertEquals(2, r.activeDays)
+        assertEquals(42_000, r.studyMs)
+        assertEquals(83, r.accuracy)   // 15/18 = 83.3%
+        assertEquals(11, r.prevCorrect)   // 지난주 월(4) + 화(7)
+        assertEquals(4, r.correctDelta)
         assertEquals(listOf(MissCount("7x8", 3), MissCount("6x9", 1)), r.topMisses)
+    }
+
+    /** 이번 주 경계 — 월요일·일요일 각각 월~일 7일, 미래 0, 지난주 같은 요일까지 비교 */
+    @Test fun weeklyReportMondayAndSundayBoundaries() {
+        val log = listOf(
+            // 지난주 (2026-11-16 월 ~ 2026-11-22 일)
+            DayLogEntry("2026-11-16", correct = 10, msSum = 1000),
+            DayLogEntry("2026-11-17", correct = 20, msSum = 1000),
+            DayLogEntry("2026-11-22", correct = 30, msSum = 1000),
+            // 이번 주 (2026-11-23 월 ~ 2026-11-29 일)
+            DayLogEntry("2026-11-23", correct = 12, msSum = 1000),
+            DayLogEntry("2026-11-25", correct = 8, msSum = 1000),
+            DayLogEntry("2026-11-29", correct = 15, msSum = 1000),
+        )
+
+        // 월요일(2026-11-23): 화~일은 미래라 0, 지난주 비교는 지난주 월(10)만
+        val mon = WeeklyReport.build(log, "2026-11-23")
+        assertEquals("2026-11-23", mon.days.first().date)
+        assertEquals("2026-11-29", mon.days.last().date)
+        assertEquals(listOf(12, 0, 0, 0, 0, 0, 0), mon.days.map { it.correct })
+        assertEquals(10, mon.prevCorrect)
+        assertEquals(2, mon.correctDelta)
+
+        // 일요일(2026-11-29): 같은 주 7일 전체, 지난주 비교는 지난주 7일 전체(10+20+30=60)
+        val sun = WeeklyReport.build(log, "2026-11-29")
+        assertEquals("2026-11-23", sun.days.first().date)
+        assertEquals("2026-11-29", sun.days.last().date)
+        assertEquals(listOf(12, 0, 8, 0, 0, 0, 15), sun.days.map { it.correct })
+        assertEquals(35, sun.correct)
+        assertEquals(60, sun.prevCorrect)
+        assertEquals(-25, sun.correctDelta)
     }
 
     @Test fun weeklyReportMergesDuplicateDatesAndHandlesEmpty() {
@@ -227,7 +355,7 @@ class UxCoreTests {
     }
 
     @Test fun weeklyParentTip() {
-        val today = "2026-09-29"
+        val today = "2026-09-30"   // 수요일 — 월·화·수 사흘이 같은 주 안에 들어간다
         assertEquals("이번 주는 아직 기록이 없어요. 하루 5분, 한 판부터 함께 시작해 보세요.",
             WeeklyReport.build(emptyList(), today).parentTip(ko))
         // 같은 문제를 2번 이상 틀렸으면 그 단 외우기를 권한다 (8=팔 → "8이에요")
@@ -238,7 +366,7 @@ class UxCoreTests {
         val once = listOf(DayLogEntry(today, correct = 9, wrong = 1, msSum = 1, misses = mapOf("6x9" to 1)))
         assertTrue(WeeklyReport.build(once, today).parentTip(ko).startsWith("짧게라도 매일"))
         // 사흘 이상 + 정확도 90% 이상이면 속도 도전을 권한다
-        val steady = listOf("2026-09-27", "2026-09-28", "2026-09-29").map { DayLogEntry(it, correct = 10, msSum = 1) }
+        val steady = listOf("2026-09-28", "2026-09-29", "2026-09-30").map { DayLogEntry(it, correct = 10, msSum = 1) }
         assertTrue(WeeklyReport.build(steady, today).parentTip(ko).startsWith("정확도가 아주 좋아요"))
     }
 

@@ -9,6 +9,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.unit.sp
 import site.smap.gugudan.R
 import site.smap.gugudan.core.AppLanguage
@@ -39,7 +40,6 @@ data class GGColors(
         val violet = Color(0xFF8B5CF6)
         val emerald = Color(0xFF10B981)
         val indigo = Color(0xFF6366F1)
-        val purple = Color(0xFF9333EA)
     }
 }
 
@@ -94,16 +94,11 @@ fun suite(weight: FontWeight, size: Int) = TextStyle(
     fontWeight = weight, fontSize = size.sp,
 )
 
-/** hex 문자열(#rrggbb) → Color (어드벤처 NPC/테마 색용) */
-fun hexColor(hex: String): Color {
-    val s = hex.removePrefix("#")
-    val v = s.toLong(16)
-    return Color(
-        red = ((v shr 16) and 0xff) / 255f,
-        green = ((v shr 8) and 0xff) / 255f,
-        blue = (v and 0xff) / 255f,
-    )
-}
+/**
+ * 여러 줄 문구를 낱말(한국어 어절·일본어 문절) 단위로 줄바꿈한다 — 기본 줄바꿈은 CJK 를 글자마다 끊어
+ * "몬스터/를"·"たんけんし/て" 처럼 낱말 중간에서 줄이 바뀐다. Phrase 방식을 공용으로 (CJK 에만 적용)
+ */
+fun TextStyle.phraseBreak(): TextStyle = copy(lineBreak = LineBreak.Simple.copy(wordBreak = LineBreak.WordBreak.Phrase))
 
 /** 테마 설정을 실제 다크 여부로 — SYSTEM 은 기기 설정을 따른다 */
 @Composable
@@ -115,6 +110,8 @@ fun resolvedDark(theme: AppTheme): Boolean = when (theme) {
 
 @Composable
 fun GuguTheme(theme: AppTheme, content: @Composable () -> Unit) {
-    val colors = if (resolvedDark(theme)) DarkColors else LightColors
-    CompositionLocalProvider(LocalGG provides colors, content = content)
+    val dark = resolvedDark(theme)
+    val colors = if (dark) DarkColors else LightColors
+    val world = if (dark) NightWorldColors else DayWorldColors
+    CompositionLocalProvider(LocalGG provides colors, LocalWorld provides world, content = content)
 }

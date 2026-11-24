@@ -1,6 +1,6 @@
 plugins {
     id("com.android.application") version "8.9.2" apply false
-    // SceneView 4.24.0이 Kotlin 2.4.0으로 빌드됨 → metadata 호환 위해 툴체인 상향
+    // Kotlin 2.4.0 — SceneView 4.24.0(Kotlin 2.4.0 빌드) metadata 호환 때문에 올렸다. 2.9.0 에서 SceneView 제거, 툴체인은 그대로
     id("org.jetbrains.kotlin.android") version "2.4.0" apply false
     id("org.jetbrains.kotlin.plugin.compose") version "2.4.0" apply false
     id("org.jetbrains.kotlin.plugin.serialization") version "2.4.0" apply false

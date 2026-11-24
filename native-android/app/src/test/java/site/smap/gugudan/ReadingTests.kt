@@ -117,10 +117,6 @@ class ReadingTests {
         assertNull(SpokenMath.chantText(7, 8, AppLanguage.EN))
         assertEquals("しちは ごじゅうろく", SpokenMath.chantText(7, 8, AppLanguage.JA))
         assertEquals(VoiceLine("c-7x8", "しちは ごじゅうろく。"), VoiceLines.chant(7, 8, AppLanguage.JA))
-        // 개수 단위 — 영어는 숫자만
-        assertEquals("개", SpokenMath.countSuffix(TestStrings(AppLanguage.KO)))
-        assertNull(SpokenMath.countSuffix(TestStrings(AppLanguage.EN)))
-        assertEquals("こ", SpokenMath.countSuffix(TestStrings(AppLanguage.JA)))
         // 낭독 라벨 두 문장 잇기 — 일본어는 "。", 빈 문장은 뺀다
         assertEquals("7 times 8 is 56. My answer: 5", SpokenMath.sentences("7 times 8 is 56", "My answer: 5", language = AppLanguage.EN))
         assertEquals("7 かける 8 は 56。自分の 答え 5", SpokenMath.sentences("7 かける 8 は 56", "自分の 答え 5", language = AppLanguage.JA))

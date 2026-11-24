@@ -3,8 +3,17 @@ package site.smap.gugudan.features.home
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
-import androidx.compose.material.icons.filled.DirectionsRun
-import androidx.compose.material.icons.filled.ArrowOutward
+import androidx.compose.material.icons.filled.Pets
+import androidx.compose.material.icons.filled.SportsEsports
+import androidx.compose.material.icons.filled.Stairs
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -20,7 +29,6 @@ import androidx.compose.material.icons.filled.Extension
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Scale
 import androidx.compose.material.icons.filled.Shield
@@ -48,22 +56,23 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import site.smap.gugudan.core.GameMode
 import site.smap.gugudan.core.Level
 import site.smap.gugudan.core.ModeKind
 import site.smap.gugudan.core.Modes
 import site.smap.gugudan.core.Strings
-import site.smap.gugudan.core.adventure.AdvProgress
-import site.smap.gugudan.core.adventure.World
 import site.smap.gugudan.designsystem.*
+import site.smap.gugudan.designsystem.rememberMotionSeconds
+import site.smap.gugudan.designsystem.rememberReduceMotion
+import site.smap.gugudan.features.games.Minigames
+import site.smap.gugudan.features.games.shared.Motion
 import site.smap.gugudan.features.learn.RecommendCard
 import site.smap.gugudan.services.rememberStrings
 import site.smap.gugudan.store.*
@@ -81,6 +90,8 @@ fun modeIcon(mode: GameMode): ImageVector = when (mode) {
     GameMode.MISSING -> Icons.Filled.Extension
     GameMode.TRUEFALSE -> Icons.Filled.Scale
     GameMode.ADVENTURE -> Icons.Filled.Shield
+    GameMode.STAIRS -> Icons.Filled.Stairs
+    GameMode.MONSTER -> Icons.Filled.Pets
 }
 
 @Composable
@@ -88,7 +99,6 @@ fun HomeScreen() {
     val gg = LocalGG.current
     val game = LocalGame.current
     val session = LocalSession.current
-    val adventure = LocalAdventure.current
     val premium = LocalPremium.current
     val router = LocalRouter.current
 
@@ -131,6 +141,23 @@ fun HomeScreen() {
                     Text(pluralStringResource(R.plurals.days, streak, streak))
                 }
             }
+        }
+
+        // 오늘의 미션 — 날마다 바뀌는 미션 3개 + 보물상자 + 이번 주 도장. 매일 열 이유가 되게 헤더 바로 아래·게임 카드 위 (iOS HomeView 와 같은 순서)
+        DailyMissionsCard()
+
+        // 게임 — 구구 계단·구구 몬스터 + 구구 꾸미기(옷장). 순서·문구는 Minigames(features/games/GameStyle.kt) 정의 하나를 학습 탭 단 시트와 같이 쓴다.
+        // 아이가 첫 화면에서 바로 누를 수 있게 헤더 바로 아래에 둔다 (2.9.0 — 예전엔 목록 맨 아래라 스크롤해야 보였다, iOS HomeView 와 같은 순서)
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            GroupHeader(Icons.Filled.SportsEsports, stringResource(R.string.games_group_title),
+                stringResource(R.string.games_group_desc), GGColors.emerald)
+            // 큰 카드 두 장을 같은 폭·같은 키로 나란히 — 이름이 자동 축소돼도 두 카드 높이가 어긋나지 않게
+            Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Minigame.entries.forEach { g ->
+                    GameCard(g, isPremium = premium.isPremium, Modifier.weight(1f).fillMaxHeight()) { router.openMinigame(g) }
+                }
+            }
+            WardrobeCard { router.openWardrobe() }
         }
 
         // 데일리 골 — 누르면 목표를 바꾼다. 낭독은 라벨 + TalkBack 동작 이름("두 번 탭하여 목표 바꾸기") —
@@ -225,7 +252,7 @@ fun HomeScreen() {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(stringResource(R.string.how_do_you_want_to_play), style = suite(FontWeight.ExtraBold, 17), color = gg.text)
             Text(
-                stringResource(R.string.from_learning_to_running_it_s_all_times),
+                stringResource(R.string.from_learning_to_games_it_s_all_times),
                 style = suite(FontWeight.Medium, 12), color = gg.textMuted,
             )
         }
@@ -244,29 +271,6 @@ fun HomeScreen() {
             RECORD_MODES.forEach { mode ->
                 SessionModeRow(mode) { if (premium.gate(mode)) session.start(mode, null) }
             }
-        }
-
-        // 직접 움직이며 놀기
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            GroupHeader(Icons.Filled.DirectionsRun, stringResource(R.string.move_and_play),
-                stringResource(R.string.pop_catch_and_run_for_answers), GGColors.emerald)
-            Minigame.entries.forEach { g ->
-                GameCard(
-                    title = stringResource(Minigames.nameRes(g)), badge = Minigames.badge(g, premium.isPremium),
-                    desc = stringResource(Minigames.descRes(g)),
-                    icon = Minigames.icon(g), iconBg = Minigames.iconBg(g), iconFg = Minigames.iconFg(g),
-                    tint = Minigames.tint(g), onClick = { router.openMinigame(g) },
-                )
-            }
-        }
-
-        // 모험
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            GroupHeader(Icons.Filled.Map, stringResource(R.string.adventure_2),
-                stringResource(R.string.explore_and_battle_in_a_3d_world), GGColors.indigo)
-            AdventureHero(
-                onClick = { if (premium.isPremium) adventure.openAdventure() else premium.openPaywall() },
-            )
         }
     }
 
@@ -323,53 +327,123 @@ private fun GroupHeader(icon: ImageVector, title: String, desc: String, tint: Co
     }
 }
 
-/** 러너·레인·바구니 진입 카드 */
+/**
+ * 게임 진입 카드 — 두 장을 나란히 놓는 큰 카드 (iOS gameCard). 글을 못 읽어도 고를 수 있게 게임 그림을 크게 두고,
+ * 이름·배지(무료 "N문제 체험", 이용권 "새 게임")만 얹는다. 한 줄 소개는 화면에서 빼고 TalkBack 낭독으로 남긴다
+ */
 @Composable
-private fun GameCard(
-    title: String,
-    badge: String?,
-    desc: String,
-    icon: ImageVector,
-    iconBg: Color,
-    iconFg: Color,
-    tint: Color,
-    onClick: () -> Unit,
-) {
+private fun GameCard(game: Minigame, isPremium: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val gg = LocalGG.current
-    PressableCard(onClick = onClick) {
+    val tint = Minigames.tint(game)
+    val name = stringResource(Minigames.nameRes(game))
+    val badge = Minigames.badge(rememberStrings(), isPremium)
+    val desc = stringResource(Minigames.descRes(game))
+    val label = "$name, $badge"
+    val shape = RoundedCornerShape(22.dp)
+    // 낭독 "이름, 배지" + 동작 이름(한 줄 소개) — iOS accessibilityLabel·Hint 와 같은 구성.
+    // 두 문장을 ". " 로 이어 붙이지 않는다(일본어 문장부호가 어긋난다) — 데일리 골·구구 꾸미기 카드와 같은 방식
+    PressableCard(
+        modifier = modifier.clearAndSetSemantics {
+            contentDescription = label
+            role = Role.Button
+            onClick(label = desc) { onClick(); true }
+        },
+        onClick = onClick,
+    ) {
+        Column(
+            Modifier.fillMaxSize()
+                .clip(shape)
+                .background(Brush.verticalGradient(listOf(tint.copy(alpha = 0.16f), tint.copy(alpha = 0.05f))))
+                .border(1.5.dp, tint.copy(alpha = 0.35f), shape)
+                .padding(horizontal = 10.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            // 그림이 천천히 숨 쉬듯 위아래·크기(두 카드 위상을 달리해 같이 움직이지 않게)
+            GameThumbnail(
+                Minigames.thumbnail(game), Minigames.iconBg(game), inset = 8.dp, size = 96.dp, radius = 24.dp,
+                breathPhase = game.ordinal * Motion.CARD_BREATH_PHASE_STEP,
+            )
+            FitText(name, suite(FontWeight.ExtraBold, 17), gg.text, minScale = 0.6f)
+            FitText(
+                badge, suite(FontWeight.ExtraBold, 11), tint, minScale = 0.7f,
+                Modifier.clip(CircleShape).background(tint.copy(alpha = 0.14f)).padding(horizontal = 10.dp, vertical = 4.dp),
+            )
+        }
+    }
+}
+
+/** 구구 꾸미기 — 게임에서 모은 별로 장신구를 사서 씌운다(무료 사용자에게도 열림, 대표님 결정 Q5) */
+@Composable
+private fun WardrobeCard(onClick: () -> Unit) {
+    val gg = LocalGG.current
+    val stars = LocalPlayRewards.current.stars
+    val tint = gg.warning
+    val label = pluralStringResource(R.plurals.wardrobe_card_label, stars, stars)
+    val openLabel = stringResource(R.string.wardrobe_card_open)
+    // 낭독 "구구 꾸미기, 모은 별 N개" + 동작 이름 "옷장 열기" (iOS accessibilityLabel·Hint 와 같은 구성)
+    PressableCard(
+        modifier = Modifier.clearAndSetSemantics {
+            contentDescription = label
+            role = Role.Button
+            onClick(label = openLabel) { onClick(); true }
+        },
+        onClick = onClick,
+    ) {
         Row(
-            Modifier.fillMaxWidth()
-                .clip(RoundedCornerShape(18.dp))
-                .background(tint.copy(alpha = 0.06f))
-                .border(1.dp, tint.copy(alpha = 0.25f), RoundedCornerShape(18.dp))
-                .padding(horizontal = 18.dp, vertical = 16.dp),
+            Modifier.fillMaxWidth().ggCard(18.dp).padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
-                Modifier.size(48.dp).clip(RoundedCornerShape(16.dp)).background(iconBg),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(icon, null, tint = iconFg, modifier = Modifier.size(24.dp))
-            }
+            GameThumbnail(R.drawable.game_icon_hanger, tint.copy(alpha = 0.15f), inset = 10.dp)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(title, style = suite(FontWeight.ExtraBold, 16), color = gg.text)
-                    if (badge != null) {
-                        Text(
-                            badge, style = suite(FontWeight.ExtraBold, 10), color = tint,
-                            modifier = Modifier.clip(CircleShape).background(tint.copy(alpha = 0.12f))
-                                .padding(horizontal = 8.dp, vertical = 3.dp),
-                        )
-                    }
+                Text(stringResource(R.string.wardrobe_title), style = suite(FontWeight.ExtraBold, 17), color = gg.text)
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Image(painterResource(R.drawable.game_icon_coin), null, Modifier.size(16.dp), contentScale = ContentScale.Fit)
+                    Text(pluralStringResource(R.plurals.wardrobe_card_stars, stars, stars),
+                        style = suite(FontWeight.Bold, 13), color = gg.textMuted)
                 }
-                Text(desc, style = suite(FontWeight.Medium, 13), color = gg.textMuted)
             }
-            Icon(Icons.Filled.ArrowOutward, null, tint = tint, modifier = Modifier.size(18.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.wardrobe_card_open), style = suite(FontWeight.ExtraBold, 13), color = tint,
+                    maxLines = 1, softWrap = false)
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = tint, modifier = Modifier.size(16.dp))
+            }
         }
+    }
+}
+
+/**
+ * 게임 그림 썸네일 — 둥근 받침 위에 그림을 맞춰 얹는다 (게임 큰 카드 96dp, 구구 꾸미기 60dp).
+ * breathPhase 가 있으면 받침은 두고 그림만 숨 쉬듯 움직인다(Motion.cardBreath, 동작 줄이기면 멈춤)
+ */
+@Composable
+private fun GameThumbnail(
+    @DrawableRes res: Int,
+    bg: Color,
+    inset: Dp = 4.dp,
+    size: Dp = 60.dp,
+    radius: Dp = 16.dp,
+    breathPhase: Double? = null,
+) {
+    val reduceMotion = rememberReduceMotion()
+    val breathing = breathPhase != null && !reduceMotion
+    val time = rememberMotionSeconds(running = breathing)
+    Box(
+        Modifier.size(size).clip(RoundedCornerShape(radius)).background(bg).padding(inset),
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            painterResource(res), null,
+            Modifier.fillMaxSize().graphicsLayer {
+                if (!breathing) return@graphicsLayer
+                val b = Motion.cardBreath(time.value, breathPhase)
+                translationY = (-b.lift).toFloat().dp.toPx()
+                scaleX = b.scale.toFloat()
+                scaleY = b.scale.toFloat()
+            },
+            contentScale = ContentScale.Fit,
+        )
     }
 }
 
@@ -473,83 +547,6 @@ private fun ModeCard(mode: GameMode, modifier: Modifier = Modifier, onClick: () 
                 Box(Modifier.align(Alignment.TopEnd).clip(CircleShape)
                     .background(gg.warning.copy(alpha = 0.15f)).padding(horizontal = 8.dp, vertical = 2.dp)) {
                     Text(stringResource(R.string.best, best), style = suite(FontWeight.ExtraBold, 10), color = gg.warning)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun AdventureHero(onClick: () -> Unit) {
-    val adventure = LocalAdventure.current
-    val premium = LocalPremium.current
-    val (defeated, total) = AdvProgress.totalStats(adventure.progress)
-    val nextRegion = World.regions.firstOrNull {
-        World.bossId(it.table) !in adventure.progress.defeatedNpcs
-    }
-
-    PressableCard(onClick = onClick) {
-        Row(
-            Modifier.fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
-                .background(Brush.linearGradient(listOf(GGColors.indigo, GGColors.violet, GGColors.purple)))
-                .padding(20.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Row(
-                    Modifier.clip(CircleShape).background(Color.White.copy(alpha = 0.2f))
-                        .padding(horizontal = 10.dp, vertical = 5.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(Icons.Filled.Map, null, tint = Color.White, modifier = Modifier.size(12.dp))
-                    Text(stringResource(R.string.adventure), style = suite(FontWeight.ExtraBold, 11), color = Color.White)
-                    if (!premium.isPremium) Icon(Icons.Filled.Lock, null, tint = Color.White, modifier = Modifier.size(10.dp))
-                }
-                // 일본어는 글자 단위로 줄이 바뀌어 "たんけんし/て" 처럼 끊긴다 — 구(문절) 단위 줄바꿈 (CJK 에만 적용)
-                Text(stringResource(R.string.explore_a_3d_world_and_battle_with_times),
-                    style = suite(FontWeight.ExtraBold, 20).copy(
-                        lineHeight = 26.sp, lineBreak = LineBreak.Simple.copy(wordBreak = LineBreak.WordBreak.Phrase),
-                    ), color = Color.White)
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.LocalFireDepartment, null, tint = Color.White.copy(alpha = 0.9f), modifier = Modifier.size(12.dp))
-                    Text(
-                        // iOS 와 같이 "격파 n/m" 뒤에 "· 다음 모험 …"을 한 칸 띄워 잇는다
-                        stringResource(R.string.defeated, defeated, total) +
-                            (nextRegion?.let { " " + stringResource(R.string.next, stringResource(it.nameRes)) } ?: ""),
-                        style = suite(FontWeight.Bold, 12), color = Color.White.copy(alpha = 0.9f), maxLines = 1,
-                    )
-                }
-                // 지역 진행 도트
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.padding(top = 2.dp)) {
-                    World.regions.forEach { r ->
-                        val cleared = World.bossId(r.table) in adventure.progress.defeatedNpcs
-                        Box(
-                            Modifier.height(6.dp).width(if (cleared) 16.dp else 6.dp)
-                                .clip(CircleShape)
-                                .background(if (cleared) Color.White else Color.White.copy(alpha = 0.35f))
-                        )
-                    }
-                }
-            }
-            // 마스코트 — 캡슐+눈
-            Mascot()
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = Color.White.copy(alpha = 0.9f))
-        }
-    }
-}
-
-@Composable
-private fun Mascot() {
-    Box(Modifier.size(width = 52.dp, height = 74.dp).clip(RoundedCornerShape(50)).background(Color.White),
-        contentAlignment = Alignment.TopCenter) {
-        Row(Modifier.padding(top = 18.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            repeat(2) {
-                Box(Modifier.size(10.dp).clip(CircleShape).background(Color(0xFF20242C)),
-                    contentAlignment = Alignment.Center) {
-                    Box(Modifier.size(4.dp).clip(CircleShape).background(Color.White))
                 }
             }
         }

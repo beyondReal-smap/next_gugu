@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- 계정·학습 기록 서버(Supabase, gugu API) 통신. SceneView 등 라이브러리가 병합해 주는 것에 기대지 않고 직접 선언한다 -->
+    <!-- 계정·학습 기록 서버(Supabase, gugu API) 통신. 라이브러리가 병합해 주는 것에 기대지 않고 직접 선언한다 -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="com.android.vending.BILLING" />
