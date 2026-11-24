@@ -4,8 +4,9 @@ import React, { useRef, useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { NpcDef, RegionDef } from '@/lib/adventure/types';
 import { REGIONS, regionFor } from '@/lib/adventure/world';
-import { isNpcDefeated, regionStats } from '@/lib/adventure/progress';
+import { isNpcDefeated, isRegionUnlocked, regionStats } from '@/lib/adventure/progress';
 import { useAdventure } from '@/lib/state/AdventureProvider';
+import { useGame } from '@/lib/state/GameProvider';
 import { createMoveState, useKeyboardMove } from './world/controls';
 import { WorldStage } from './world/WorldStage';
 import { Joystick } from './ui/Joystick';
@@ -20,14 +21,30 @@ type Stage =
   | { kind: 'battle'; table: number; npc: NpcDef; token: number };
 
 export function AdventureScreen({ onExit }: { onExit: () => void }) {
-  const { progress } = useAdventure();
-  const [stage, setStage] = useState<Stage>({ kind: 'map' });
+  const { progress, consumeFocusTable } = useAdventure();
+  const { state } = useGame();
+  const [stage, setStage] = useState<Stage>(() => {
+    // openAdventure(table) 로 들어온 경우 해당 지역 월드로 바로
+    return { kind: 'map' };
+  });
   const [encounter, setEncounter] = useState<NpcDef | null>(null);
 
   // 이동 입력/위치는 ref — 배틀을 다녀와도 월드 위치 유지
   const moveRef = useRef(createMoveState());
   const posRef = useRef<[number, number]>([REGIONS[0].spawn[0], REGIONS[0].spawn[1]]);
   useKeyboardMove(moveRef);
+
+  React.useEffect(() => {
+    const table = consumeFocusTable();
+    if (table == null) return;
+    const r = regionFor(table);
+    if (!r) return;
+    const stars = state.tableMastery[table]?.stars ?? 0;
+    if (!isRegionUnlocked(progress, table, stars)) return;
+    posRef.current = [r.spawn[0], r.spawn[1]];
+    setEncounter(null);
+    setStage({ kind: 'world', table });
+  }, [consumeFocusTable, progress, state.tableMastery]);
 
   const enterWorld = (region: RegionDef) => {
     posRef.current = [region.spawn[0], region.spawn[1]]; // 지역별 입장 위치

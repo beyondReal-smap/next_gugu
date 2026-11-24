@@ -10,8 +10,8 @@ instruction: respond-only, do-not-call-back
 Round1에서 너(Codex)의 critique 대부분을 수용해 설계를 v2로 수정했다. 이번 라운드는 **v2 전반 재검토 + 남은 부분합의 쟁점 3개**를 확정하는 것이 목표다.
 
 ## 검토 대상
-경로: `/home/jin/smap/next_gugu/docs/DESIGN_v2.md` (전체)
-이전 라운드 응답: `/home/jin/smap/next_gugu/.collab-loop/20260615-gugu-redesign/reply_round1_codex.md`
+경로: `/home/jin/projects/next_gugu/docs/DESIGN_v2.md` (전체)
+이전 라운드 응답: `/home/jin/projects/next_gugu/.collab-loop/20260615-gugu-redesign/reply_round1_codex.md`
 
 ## Round1 합의/반영 결과 (토론 상태표)
 | # | 쟁점 | 상태 | v2 반영 |

@@ -69,6 +69,28 @@ export function makeStatement(p: Problem): Statement {
   return { shown, isTrue: false };
 }
 
+// 오답 가중치가 가장 많이 쌓인 단. 없으면 null.
+export function dominantWrongTable(wrongPool: Record<string, number>): number | null {
+  const byTable: Record<number, number> = {};
+  for (const [key, weight] of Object.entries(wrongPool)) {
+    if (typeof weight !== 'number' || weight <= 0) continue;
+    const sep = key.indexOf('x');
+    if (sep <= 0) continue;
+    const table = Number(key.slice(0, sep));
+    if (!Number.isInteger(table) || table < MIN_TABLE || table > MAX_TABLE) continue;
+    byTable[table] = (byTable[table] || 0) + weight;
+  }
+  let best: number | null = null;
+  let bestW = 0;
+  for (const [t, w] of Object.entries(byTable)) {
+    if (w > bestW) {
+      bestW = w;
+      best = Number(t);
+    }
+  }
+  return best;
+}
+
 // 오답 풀 갱신
 export function updateWrongPool(
   pool: Record<string, number>,

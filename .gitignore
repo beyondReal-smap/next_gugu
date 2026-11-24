@@ -17,6 +17,7 @@
 /.next/
 /out/
 /dist/
+/.next-dev/
 
 # production
 /build
@@ -50,3 +51,10 @@ store-assets/*.apk
 tools/voice/.cache/
 tools/voice/samples/
 tools/voice/__pycache__/
+
+# 로컬 백업·실험 산출물 (작업 원칙: .archive 보존, 커밋 제외)
+/.archive/
+/dist.backup_*/
+
+# 설치 클릭 로그(운영 데이터)
+/data/

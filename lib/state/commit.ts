@@ -1,5 +1,5 @@
 // 세션 결과를 게임 상태에 반영하는 순수 계산 로직
-import { GameState, SessionResult, CommitResult, TableMastery } from '../types';
+import { GameState, SessionResult, CommitResult, TableMastery, DayLogEntry } from '../types';
 import { getLevelInfo, xpForAnswer } from '../level';
 import { MODES } from '../modes';
 import { updateWrongPool } from '../problems';
@@ -33,24 +33,79 @@ export const DEFAULT_STATE: GameState = {
   bestScores: {},
   modesPlayed: [],
   onboarded: false,
+  dayLog: [],
 };
 
-// 앱 진입 시 스트릭/데일리 갱신
+const DAY_LOG_CAP = 56; // 8주
+
+export function normalizeDayLog(raw: unknown): DayLogEntry[] {
+  if (!Array.isArray(raw)) return [];
+  const out: DayLogEntry[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue;
+    const d = item as Partial<DayLogEntry>;
+    if (typeof d.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(d.date)) continue;
+    const misses: Record<string, number> = {};
+    if (d.misses && typeof d.misses === 'object') {
+      for (const [k, v] of Object.entries(d.misses)) {
+        if (typeof v === 'number' && v > 0) misses[k] = v;
+      }
+    }
+    out.push({
+      date: d.date,
+      correct: typeof d.correct === 'number' ? d.correct : 0,
+      wrong: typeof d.wrong === 'number' ? d.wrong : 0,
+      msSum: typeof d.msSum === 'number' ? d.msSum : 0,
+      misses,
+    });
+  }
+  return out.slice(-DAY_LOG_CAP);
+}
+
+function appendDayLog(log: DayLogEntry[], result: SessionResult, date: string): DayLogEntry[] {
+  const next = [...log];
+  let i = next.findIndex((d) => d.date === date);
+  if (i < 0) {
+    next.push({ date, correct: 0, wrong: 0, msSum: 0, misses: {} });
+    i = next.length - 1;
+  }
+  const bucket: DayLogEntry = { ...next[i], misses: { ...next[i].misses } };
+  for (const ans of result.answers) {
+    if (ans.correct) bucket.correct += 1;
+    else {
+      bucket.wrong += 1;
+      const key = `${ans.a}x${ans.b}`;
+      bucket.misses[key] = (bucket.misses[key] || 0) + 1;
+    }
+    bucket.msSum += ans.ms;
+  }
+  next[i] = bucket;
+  next.sort((a, b) => a.date.localeCompare(b.date));
+  return next.slice(-DAY_LOG_CAP);
+}
+
+// 앱 진입 시 데일리 골 날짜만 갱신.
+// 스트릭은 학습 자격(세션 완료 또는 일일 정답 하한)이 있을 때만 qualifyStreak 로 올린다.
+// 기존 lastPlayedDate/streak 값은 소급해서 깎지 않는다.
 export function applyVisit(state: GameState): GameState {
   const today = todayStr();
-  let s = { ...state };
+  let s = { ...state, dayLog: normalizeDayLog(state.dayLog) };
   if (s.dailyDate !== today) {
     s.dailyDate = today;
     s.dailyCorrect = 0;
   }
-  if (s.lastPlayedDate !== today) {
-    if (s.lastPlayedDate === shift(-1)) s.streak = (s.streak || 0) + 1;
-    else s.streak = 1;
-    s.lastPlayedDate = today;
-  } else if (!s.streak) {
-    s.streak = 1;
-  }
   return s;
+}
+
+// 오늘 스트릭 자격 부여. 이미 오늘 자격이면 그대로.
+function qualifyStreak(s: GameState): GameState {
+  const today = todayStr();
+  if (s.lastPlayedDate === today) return s;
+  const next = { ...s };
+  if (s.lastPlayedDate === shift(-1)) next.streak = (s.streak || 0) + 1;
+  else next.streak = 1;
+  next.lastPlayedDate = today;
+  return next;
 }
 
 function starsFor(accuracy: number, avgMs: number, count: number): number {
@@ -61,9 +116,11 @@ function starsFor(accuracy: number, avgMs: number, count: number): number {
 }
 
 // 세션 결과 반영 → 새 상태 + 부가 정보(CommitResult)
+// partial=true 이면 XP·오답풀·일일 정답만 반영하고, 한 판 완료 통계(별/신기록/추이/모드 탐험)는 건너뛴다.
 export function applySession(state: GameState, result: SessionResult): { next: GameState; commit: CommitResult } {
   const today = todayStr();
   let s: GameState = { ...state };
+  const partial = result.partial === true;
   // 날짜 경계
   if (s.dailyDate !== today) { s.dailyDate = today; s.dailyCorrect = 0; }
 
@@ -80,7 +137,9 @@ export function applySession(state: GameState, result: SessionResult): { next: G
     if (ans.correct) {
       combo += 1;
       correctCount += 1;
-      xpEarned += xpForAnswer({ mode: result.mode, combo, ms: ans.ms });
+      const raw = xpForAnswer({ mode: result.mode, combo, ms: ans.ms });
+      const scale = result.xpScale != null && result.xpScale >= 0 ? result.xpScale : 1;
+      xpEarned += Math.max(0, Math.round(raw * scale));
     } else {
       combo = 0;
     }
@@ -97,44 +156,55 @@ export function applySession(state: GameState, result: SessionResult): { next: G
   s.maxCombo = Math.max(s.maxCombo, result.maxCombo);
   s.wrongPool = wrongPool;
   s.dailyCorrect = s.dailyCorrect + correctCount;
+  s.dayLog = appendDayLog(s.dayLog ?? [], result, today);
 
-  // 최근 추이 (cap 20)
-  s.recentAccuracy = [...s.recentAccuracy, Math.round(accuracy * 100)].slice(-20);
-  s.recentAvgMs = [...s.recentAvgMs, avgMs].slice(-20);
-
-  // 마스터리 (단 집중 세션)
   let newStars = 0;
   let improvedStars = false;
-  if (result.table != null) {
-    const prev: TableMastery = s.tableMastery[result.table] || { stars: 0, bestAccuracy: 0, bestAvgMs: 0, plays: 0 };
-    const sessionStars = starsFor(accuracy, avgMs, result.answers.length);
-    const stars = Math.max(prev.stars, sessionStars);
-    improvedStars = stars > prev.stars;
-    newStars = stars;
-    s.tableMastery = {
-      ...s.tableMastery,
-      [result.table]: {
-        stars,
-        bestAccuracy: Math.max(prev.bestAccuracy, accuracy),
-        bestAvgMs: prev.bestAvgMs === 0 ? avgMs : Math.min(prev.bestAvgMs, avgMs),
-        plays: prev.plays + 1,
-      },
-    };
-  }
-
-  // 모드 기록 — 점수형 모드(챌린지/서바이벌) 최고 기록 + 플레이한 모드
-  const def = MODES[result.mode];
   let score: number | null = null;
   let isNewBest = false;
-  if (def.scored) {
-    score = correctCount;
-    const prevBest = s.bestScores[result.mode] ?? 0;
-    if (score > prevBest) {
-      isNewBest = true;
-      s.bestScores = { ...s.bestScores, [result.mode]: score };
+  const def = MODES[result.mode];
+
+  if (!partial) {
+    // 최근 추이 (cap 20) — 한 판을 끝냈을 때만
+    s.recentAccuracy = [...s.recentAccuracy, Math.round(accuracy * 100)].slice(-20);
+    s.recentAvgMs = [...s.recentAvgMs, avgMs].slice(-20);
+
+    // 마스터리 (단 집중 세션)
+    if (result.table != null) {
+      const prev: TableMastery = s.tableMastery[result.table] || { stars: 0, bestAccuracy: 0, bestAvgMs: 0, plays: 0 };
+      const sessionStars = starsFor(accuracy, avgMs, result.answers.length);
+      const stars = Math.max(prev.stars, sessionStars);
+      improvedStars = stars > prev.stars;
+      newStars = stars;
+      s.tableMastery = {
+        ...s.tableMastery,
+        [result.table]: {
+          stars,
+          bestAccuracy: Math.max(prev.bestAccuracy, accuracy),
+          bestAvgMs: prev.bestAvgMs === 0 ? avgMs : Math.min(prev.bestAvgMs, avgMs),
+          plays: prev.plays + 1,
+        },
+      };
     }
+
+    // 모드 기록 — 점수형 모드(챌린지/서바이벌) 최고 기록 + 플레이한 모드
+    if (def.scored) {
+      score = correctCount;
+      const prevBest = s.bestScores[result.mode] ?? 0;
+      if (score > prevBest) {
+        isNewBest = true;
+        s.bestScores = { ...s.bestScores, [result.mode]: score };
+      }
+    }
+    if (!s.modesPlayed.includes(result.mode)) s.modesPlayed = [...s.modesPlayed, result.mode];
+
+    // 세션 1회 완료 → 스트릭 자격
+    s = qualifyStreak(s);
   }
-  if (!s.modesPlayed.includes(result.mode)) s.modesPlayed = [...s.modesPlayed, result.mode];
+
+  // 부분 커밋이어도 오늘 정답이 하한에 도달하면 스트릭 자격
+  const streakFloor = Math.min(s.dailyGoal, 10);
+  if (s.dailyCorrect >= streakFloor) s = qualifyStreak(s);
 
   // 업적
   const unlocked = newlyUnlocked(s);
@@ -156,6 +226,7 @@ export function applySession(state: GameState, result: SessionResult): { next: G
       goalReached,
       score,
       isNewBest,
+      partial,
     },
   };
 }

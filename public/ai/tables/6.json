@@ -1,0 +1,211 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-09-18",
+  "url": "https://gugu.smap.site/guide/6-dan",
+  "readingRule": "한국어 구구단 낭독은 '앞수 뒷수 → 답' 순서입니다. 답이 한 자리면 뒷수 뒤에 '은/는'을 붙이고(예: 이 삼은 육), 답이 두 자리면 붙이지 않습니다(예: 삼 사 십이).",
+  "table": 6,
+  "name": "6단",
+  "learnOrder": 5,
+  "difficulty": "medium",
+  "difficultyRank": 5,
+  "summary": "6단은 3단의 두 배입니다. 6 × 7은 3 × 7 = 21의 두 배인 42입니다.",
+  "whyMatters": "6단부터는 답이 두 자리로 커지고 간격도 넓어져 통암기가 흔들리기 시작합니다. 여기서부터 '만들어 내는 방법'이 필요합니다.",
+  "pattern": "짝수 × 6은 답의 일의 자리가 곱한 수와 같아집니다. 6 × 2 = 12, 6 × 4 = 24, 6 × 6 = 36, 6 × 8 = 48",
+  "strategies": [
+    {
+      "title": "3단의 두 배",
+      "detail": "6 × 8이 막히면 3 × 8 = 24를 두 배 해 48을 만듭니다."
+    },
+    {
+      "title": "짝수 곱셈의 일의 자리 규칙",
+      "detail": "6 × 4는 답의 일의 자리가 4(24), 6 × 6은 6(36), 6 × 8은 8(48)입니다. 짝수를 곱할 때만 통하는 규칙이라 검산용으로 좋습니다."
+    },
+    {
+      "title": "5 × □ + □",
+      "detail": "6 × 7 = 5 × 7(35) + 7 = 42. 5단을 발판으로 한 칸 더 가는 방식입니다."
+    }
+  ],
+  "commonMistakes": [
+    {
+      "fact": "6x7",
+      "correct": 42,
+      "confusedWith": [
+        48,
+        36
+      ],
+      "why": "6단에서 가장 많이 틀리는 식입니다. 6 × 8(48)과 소리가 비슷하고 답의 규칙성도 없습니다.",
+      "fix": "6 × 7 = 42는 3 × 7 = 21의 두 배로 매번 되짚어 확인하게 합니다."
+    },
+    {
+      "fact": "6x8",
+      "correct": 48,
+      "confusedWith": [
+        42,
+        54
+      ],
+      "why": "6 × 7(42), 6 × 9(54) 사이에 끼어 앞뒤로 밀립니다.",
+      "fix": "'짝수 × 6은 일의 자리가 같다'는 규칙으로 48을 고정합니다."
+    },
+    {
+      "fact": "6x9",
+      "correct": 54,
+      "confusedWith": [
+        56,
+        48
+      ],
+      "why": "7 × 8 = 56과 자주 뒤바뀝니다.",
+      "fix": "9단 규칙(자릿수 합이 9)으로 확인합니다. 5+4=9이므로 54가 맞고, 56은 5+6=11이라 9단 답이 아닙니다."
+    }
+  ],
+  "realLife": [
+    "주사위 면의 개수",
+    "벌집의 육각형 변",
+    "한 상자에 6개씩 든 음료"
+  ],
+  "relatedTables": [
+    3,
+    12
+  ],
+  "questions": [
+    {
+      "q": "6 × 7이 자꾸 헷갈리는데 어떻게 하나요?",
+      "a": "3 × 7 = 21의 두 배가 42라는 경로를 만들어 두세요. 6단에서 가장 많이 틀리는 식이라 통암기보다 만들어 내는 방법이 훨씬 안정적입니다."
+    }
+  ],
+  "facts": [
+    {
+      "id": "6x1",
+      "a": 6,
+      "b": 1,
+      "answer": 6,
+      "expression": "6 × 1 = 6",
+      "reading": "육 일은 육",
+      "commutativePair": "1x6",
+      "commutativePairInScope": false,
+      "isSquare": false,
+      "difficulty": "trivial",
+      "difficultyScore": 1
+    },
+    {
+      "id": "6x2",
+      "a": 6,
+      "b": 2,
+      "answer": 12,
+      "expression": "6 × 2 = 12",
+      "reading": "육 이 십이",
+      "commutativePair": "2x6",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    },
+    {
+      "id": "6x3",
+      "a": 6,
+      "b": 3,
+      "answer": 18,
+      "expression": "6 × 3 = 18",
+      "reading": "육 삼 십팔",
+      "commutativePair": "3x6",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    },
+    {
+      "id": "6x4",
+      "a": 6,
+      "b": 4,
+      "answer": 24,
+      "expression": "6 × 4 = 24",
+      "reading": "육 사 이십사",
+      "commutativePair": "4x6",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    },
+    {
+      "id": "6x5",
+      "a": 6,
+      "b": 5,
+      "answer": 30,
+      "expression": "6 × 5 = 30",
+      "reading": "육 오 삼십",
+      "commutativePair": "5x6",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "easy",
+      "difficultyScore": 2
+    },
+    {
+      "id": "6x6",
+      "a": 6,
+      "b": 6,
+      "answer": 36,
+      "expression": "6 × 6 = 36",
+      "reading": "육 육 삼십육",
+      "commutativePair": "6x6",
+      "commutativePairInScope": true,
+      "isSquare": true,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    },
+    {
+      "id": "6x7",
+      "a": 6,
+      "b": 7,
+      "answer": 42,
+      "expression": "6 × 7 = 42",
+      "reading": "육 칠 사십이",
+      "commutativePair": "7x6",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "hard",
+      "difficultyScore": 4
+    },
+    {
+      "id": "6x8",
+      "a": 6,
+      "b": 8,
+      "answer": 48,
+      "expression": "6 × 8 = 48",
+      "reading": "육 팔 사십팔",
+      "commutativePair": "8x6",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "hard",
+      "difficultyScore": 4
+    },
+    {
+      "id": "6x9",
+      "a": 6,
+      "b": 9,
+      "answer": 54,
+      "expression": "6 × 9 = 54",
+      "reading": "육 구 오십사",
+      "commutativePair": "9x6",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "hard",
+      "difficultyScore": 4
+    }
+  ],
+  "learningStep": {
+    "step": 5,
+    "table": 6,
+    "difficulty": "medium",
+    "estimatedDays": "5~7일",
+    "goal": "6 × 7 = 42를 흔들림 없이 답하기",
+    "buildsOn": [
+      3,
+      5
+    ],
+    "keyIdea": "3단의 두 배 / 5단에서 한 묶음 더",
+    "recommendedMode": "missing"
+  },
+  "license": {
+    "content": "구구단 곱셈식과 표는 공개된 수학적 사실입니다. 가이드 본문과 학습 전략 텍스트는 인용 시 출처(https://gugu.smap.site)를 표기해 주세요.",
+    "attribution": "구구 어드벤처 (https://gugu.smap.site)"
+  }
+}

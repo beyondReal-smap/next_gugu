@@ -1,0 +1,204 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-09-18",
+  "url": "https://gugu.smap.site/guide/9-dan",
+  "readingRule": "한국어 구구단 낭독은 '앞수 뒷수 → 답' 순서입니다. 답이 한 자리면 뒷수 뒤에 '은/는'을 붙이고(예: 이 삼은 육), 답이 두 자리면 붙이지 않습니다(예: 삼 사 십이).",
+  "table": 9,
+  "name": "9단",
+  "learnOrder": 6,
+  "difficulty": "medium",
+  "difficultyRank": 6,
+  "summary": "9단은 규칙이 가장 아름다운 단입니다. 답의 두 자리 숫자를 더하면 언제나 9가 됩니다.",
+  "whyMatters": "9단 규칙을 알면 9단 아홉 개를 외우지 않고도 전부 만들어 낼 수 있고, 다른 단의 답을 검산하는 도구로도 쓸 수 있습니다.",
+  "pattern": "십의 자리는 곱하는 수보다 1 작고, 일의 자리는 그 십의 자리를 9에서 뺀 값입니다. 자릿수를 더하면 항상 9. 9 · 18 · 27 · 36 · 45 · 54 · 63 · 72 · 81",
+  "strategies": [
+    {
+      "title": "자릿수 합이 9",
+      "detail": "9 × 6 = 54에서 5 + 4 = 9입니다. 답이 맞는지 1초 만에 검산할 수 있습니다."
+    },
+    {
+      "title": "10배에서 한 번 빼기",
+      "detail": "9 × 7 = 10 × 7(70) − 7 = 63. 9단 전체를 이 방법 하나로 만들 수 있습니다."
+    },
+    {
+      "title": "손가락 셈",
+      "detail": "양손 열 손가락을 펴고 곱하는 수 번째 손가락을 접습니다. 접은 손가락 왼쪽 개수가 십의 자리, 오른쪽 개수가 일의 자리입니다. 9 × 4면 넷째 손가락을 접어 왼쪽 3개, 오른쪽 6개 → 36."
+    }
+  ],
+  "commonMistakes": [
+    {
+      "fact": "9x6",
+      "correct": 54,
+      "confusedWith": [
+        56,
+        45
+      ],
+      "why": "7 × 8(56)과 값이 가깝고, 45와는 자릿수 순서가 뒤집혀 헷갈립니다.",
+      "fix": "십의 자리는 곱하는 수보다 1 작다는 규칙으로 확인합니다. 9 × 6이면 십의 자리가 5여야 합니다."
+    },
+    {
+      "fact": "9x7",
+      "correct": 63,
+      "confusedWith": [
+        56,
+        72
+      ],
+      "why": "7 × 8(56), 8 × 9(72)와 인접합니다.",
+      "fix": "70에서 7을 빼는 경로로 매번 되짚습니다."
+    }
+  ],
+  "realLife": [
+    "야구 한 팀의 선수 수",
+    "9칸 스도쿠 한 줄",
+    "구멍 9개짜리 골프 코스"
+  ],
+  "relatedTables": [
+    3,
+    10
+  ],
+  "questions": [
+    {
+      "q": "9단에 어떤 규칙이 있나요?",
+      "a": "세 가지가 있습니다. ①답의 두 자리를 더하면 항상 9입니다(9 × 6 = 54 → 5+4=9). ②십의 자리는 곱하는 수보다 1 작습니다. ③10배 한 뒤 한 번 빼면 답이 됩니다(9 × 7 = 70 − 7 = 63)."
+    },
+    {
+      "q": "9단 손가락 셈은 어떻게 하나요?",
+      "a": "양손 열 손가락을 펴고 왼쪽부터 세어 곱하는 수 번째 손가락을 접습니다. 접힌 손가락 왼쪽에 남은 손가락 개수가 십의 자리, 오른쪽 개수가 일의 자리입니다. 9 × 4는 넷째를 접어 왼쪽 3개, 오른쪽 6개이므로 36입니다."
+    }
+  ],
+  "facts": [
+    {
+      "id": "9x1",
+      "a": 9,
+      "b": 1,
+      "answer": 9,
+      "expression": "9 × 1 = 9",
+      "reading": "구 일은 구",
+      "commutativePair": "1x9",
+      "commutativePairInScope": false,
+      "isSquare": false,
+      "difficulty": "trivial",
+      "difficultyScore": 1
+    },
+    {
+      "id": "9x2",
+      "a": 9,
+      "b": 2,
+      "answer": 18,
+      "expression": "9 × 2 = 18",
+      "reading": "구 이 십팔",
+      "commutativePair": "2x9",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    },
+    {
+      "id": "9x3",
+      "a": 9,
+      "b": 3,
+      "answer": 27,
+      "expression": "9 × 3 = 27",
+      "reading": "구 삼 이십칠",
+      "commutativePair": "3x9",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    },
+    {
+      "id": "9x4",
+      "a": 9,
+      "b": 4,
+      "answer": 36,
+      "expression": "9 × 4 = 36",
+      "reading": "구 사 삼십육",
+      "commutativePair": "4x9",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    },
+    {
+      "id": "9x5",
+      "a": 9,
+      "b": 5,
+      "answer": 45,
+      "expression": "9 × 5 = 45",
+      "reading": "구 오 사십오",
+      "commutativePair": "5x9",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "easy",
+      "difficultyScore": 2
+    },
+    {
+      "id": "9x6",
+      "a": 9,
+      "b": 6,
+      "answer": 54,
+      "expression": "9 × 6 = 54",
+      "reading": "구 육 오십사",
+      "commutativePair": "6x9",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "hard",
+      "difficultyScore": 4
+    },
+    {
+      "id": "9x7",
+      "a": 9,
+      "b": 7,
+      "answer": 63,
+      "expression": "9 × 7 = 63",
+      "reading": "구 칠 육십삼",
+      "commutativePair": "7x9",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "hard",
+      "difficultyScore": 4
+    },
+    {
+      "id": "9x8",
+      "a": 9,
+      "b": 8,
+      "answer": 72,
+      "expression": "9 × 8 = 72",
+      "reading": "구 팔 칠십이",
+      "commutativePair": "8x9",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "hard",
+      "difficultyScore": 4
+    },
+    {
+      "id": "9x9",
+      "a": 9,
+      "b": 9,
+      "answer": 81,
+      "expression": "9 × 9 = 81",
+      "reading": "구 구 팔십일",
+      "commutativePair": "9x9",
+      "commutativePairInScope": true,
+      "isSquare": true,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    }
+  ],
+  "learningStep": {
+    "step": 6,
+    "table": 9,
+    "difficulty": "medium",
+    "estimatedDays": "3~5일",
+    "goal": "9단 규칙(자릿수 합 9)으로 전부 만들어 내기",
+    "buildsOn": [
+      3
+    ],
+    "keyIdea": "10배에서 한 번 빼기 / 손가락 셈",
+    "recommendedMode": "truefalse"
+  },
+  "license": {
+    "content": "구구단 곱셈식과 표는 공개된 수학적 사실입니다. 가이드 본문과 학습 전략 텍스트는 인용 시 출처(https://gugu.smap.site)를 표기해 주세요.",
+    "attribution": "구구 어드벤처 (https://gugu.smap.site)"
+  }
+}

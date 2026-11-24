@@ -30,7 +30,7 @@ const config: Config = {
         ring: withVar("--ring"),
       },
       fontFamily: {
-        suite: ["SUITE", "sans-serif"],
+        suite: ["var(--font-suite)", "SUITE", "sans-serif"],
         num: ["var(--font-geist-sans)", "SUITE", "ui-sans-serif", "sans-serif"],
       },
       borderRadius: {

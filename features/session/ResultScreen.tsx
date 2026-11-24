@@ -5,6 +5,8 @@ import { Check, Gauge, Sparkles, RotateCcw, X, Flame, Trophy } from 'lucide-reac
 import { SessionResult, CommitResult } from '@/lib/types';
 import { MODES } from '@/lib/modes';
 import { useGame } from '@/lib/state/GameProvider';
+import { useAdventure } from '@/lib/state/AdventureProvider';
+import { regionFor } from '@/lib/adventure/world';
 import { Button } from '@/components/ui/Button';
 import { Stars } from '@/components/ui/Stars';
 import { Confetti } from '@/components/feedback/Confetti';
@@ -23,6 +25,7 @@ interface ResultScreenProps {
 
 export function ResultScreen({ result, commit, wrongCount, onAgain, onRetryWrong, onClose }: ResultScreenProps) {
   const { state } = useGame();
+  const { openAdventure } = useAdventure();
   const def = MODES[result.mode];
   const total = result.answers.length;
   const correct = total - wrongCount;
@@ -44,9 +47,29 @@ export function ResultScreen({ result, commit, wrongCount, onAgain, onRetryWrong
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const headline = def.scored
-    ? commit.isNewBest ? '신기록 달성! 🏆' : '수고했어요!'
-    : accuracy >= 95 ? '완벽해요! 🎯' : accuracy >= 70 ? '잘했어요!' : '좋은 시도예요!';
+  const questTable = (() => {
+    if (result.table != null) return result.table;
+    const miss: Record<number, number> = {};
+    for (const a of result.answers) {
+      if (!a.correct) miss[a.a] = (miss[a.a] || 0) + 1;
+    }
+    let best: number | null = null;
+    let n = 0;
+    for (const [t, c] of Object.entries(miss)) {
+      if (c > n) { n = c; best = Number(t); }
+    }
+    return best;
+  })();
+  const questRegion = questTable != null ? regionFor(questTable) : undefined;
+
+  const headline = result.partial || commit.partial
+    ? '여기까지 했어요'
+    : def.scored
+      ? commit.isNewBest ? '신기록 달성! 🏆' : '수고했어요!'
+      : accuracy >= 95 ? '완벽해요! 🎯'
+        : accuracy >= 80 ? '잘했어요!'
+          : accuracy >= 70 ? '거의 다 왔어요'
+            : '다시 보면 금방 늘어요';
 
   return (
     <div className="flex min-h-dvh flex-col px-6 py-10">
@@ -55,7 +78,9 @@ export function ResultScreen({ result, commit, wrongCount, onAgain, onRetryWrong
       <LevelUpOverlay show={levelUp} level={commit.newLevel} onClose={() => setLevelUp(false)} />
 
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex-1">
-        <div className="mb-1 text-sm font-bold text-text-muted">{def.name} 완료</div>
+        <div className="mb-1 text-sm font-bold text-text-muted">
+          {result.partial || commit.partial ? `${def.name} 여기까지` : `${def.name} 완료`}
+        </div>
         <h1 className="mb-6 text-3xl font-extrabold text-text">{headline}</h1>
 
         {/* 점수형 모드(챌린지/서바이벌) — 점수 히어로 */}
@@ -104,13 +129,38 @@ export function ResultScreen({ result, commit, wrongCount, onAgain, onRetryWrong
         )}
       </motion.div>
 
+      {commit.table != null && commit.newStars < 3 && !commit.partial && (
+        <p className="mb-3 text-center text-sm font-bold text-text-muted">
+          {commit.table}단 별을 더 모아 볼까요?
+        </p>
+      )}
+
       <div className="flex flex-col gap-2.5">
-        {def.kind === 'fixed' && wrongCount > 0 && (
+        {def.kind === 'fixed' && wrongCount > 0 && accuracy < 80 ? (
+          <Button variant="primary" size="lg" onClick={onRetryWrong}>
+            <RotateCcw className="h-5 w-5" /> 방금 틀린 {wrongCount}개 바로잡기
+          </Button>
+        ) : def.kind === 'fixed' && wrongCount > 0 ? (
           <Button variant="surface" size="lg" onClick={onRetryWrong}>
             <RotateCcw className="h-5 w-5" /> 틀린 문제만 다시 ({wrongCount})
           </Button>
+        ) : null}
+        <Button
+          variant={def.kind === 'fixed' && wrongCount > 0 && accuracy < 80 ? 'surface' : 'primary'}
+          size="lg"
+          onClick={onAgain}
+        >
+          한 판 더
+        </Button>
+        {questRegion && result.mode !== 'adventure' && (
+          <Button
+            variant="surface"
+            size="lg"
+            onClick={() => { openAdventure(questRegion.table); onClose(); }}
+          >
+            {questRegion.name}에서 {questRegion.table}단 대결
+          </Button>
         )}
-        <Button variant="primary" size="lg" onClick={onAgain}>한 판 더</Button>
         <Button variant="ghost" size="md" onClick={onClose}><X className="h-4 w-4" /> 닫기</Button>
       </div>
     </div>

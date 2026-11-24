@@ -1,0 +1,212 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-09-18",
+  "url": "https://gugu.smap.site/guide/8-dan",
+  "readingRule": "한국어 구구단 낭독은 '앞수 뒷수 → 답' 순서입니다. 답이 한 자리면 뒷수 뒤에 '은/는'을 붙이고(예: 이 삼은 육), 답이 두 자리면 붙이지 않습니다(예: 삼 사 십이).",
+  "table": 8,
+  "name": "8단",
+  "learnOrder": 8,
+  "difficulty": "hard",
+  "difficultyRank": 7,
+  "summary": "8단은 4단의 두 배, 즉 2단을 세 번 적용한 단입니다. 8 × 7은 7 → 14 → 28 → 56으로 세 번 두 배 하면 나옵니다.",
+  "whyMatters": "8단은 답이 커서 부담스러워 보이지만, 두 배를 반복하는 경로가 명확해 7단보다 되찾기 쉽습니다.",
+  "pattern": "답이 모두 짝수이고 일의 자리가 8 · 6 · 4 · 2 · 0 순서로 반복됩니다. 8 · 16 · 24 · 32 · 40 · 48 · 56 · 64 · 72",
+  "strategies": [
+    {
+      "title": "두 배를 세 번",
+      "detail": "8 × 6 = 6 → 12 → 24 → 48. 2단만 알면 8단 전체를 만들어 낼 수 있습니다."
+    },
+    {
+      "title": "10배에서 2배 빼기",
+      "detail": "8 × 7 = 10 × 7(70) − 2 × 7(14) = 56. 큰 수에서 빼는 방식이 편한 아이도 있습니다."
+    },
+    {
+      "title": "일의 자리 내림 규칙",
+      "detail": "8단 답의 일의 자리는 8, 6, 4, 2, 0, 8, 6, 4, 2로 2씩 줄어듭니다. 답이 맞는지 빠르게 걸러낼 수 있습니다."
+    }
+  ],
+  "commonMistakes": [
+    {
+      "fact": "8x7",
+      "correct": 56,
+      "confusedWith": [
+        54,
+        63,
+        48
+      ],
+      "why": "7 × 8과 같은 식이며 구구단 최고 난도 구간입니다.",
+      "fix": "5-6-7-8 규칙(56 = 7 × 8)과 '두 배 세 번' 경로를 함께 씁니다."
+    },
+    {
+      "fact": "8x6",
+      "correct": 48,
+      "confusedWith": [
+        42,
+        54
+      ],
+      "why": "6 × 7(42), 6 × 9(54)와 크기가 비슷해 섞입니다.",
+      "fix": "8단 일의 자리 규칙으로 확인합니다. 8 × 6의 일의 자리는 8이어야 하므로 42·54는 후보에서 빠집니다."
+    },
+    {
+      "fact": "8x9",
+      "correct": 72,
+      "confusedWith": [
+        63,
+        81
+      ],
+      "why": "7 × 9(63), 9 × 9(81) 사이에 있습니다.",
+      "fix": "9단 규칙으로 확인합니다. 7+2=9이므로 72가 맞습니다."
+    }
+  ],
+  "realLife": [
+    "문어의 다리 개수",
+    "거미의 다리 개수",
+    "8조각으로 자른 피자"
+  ],
+  "relatedTables": [
+    2,
+    4
+  ],
+  "questions": [
+    {
+      "q": "8단을 외우기 어려운 이유는 뭔가요?",
+      "a": "답이 두 자리로 커지고 7단·9단과 값이 서로 가까워 혼동되기 때문입니다. 다만 '두 배를 세 번' 하는 경로가 분명해서, 통암기 대신 이 방법을 쓰면 7단보다 안정적으로 되찾을 수 있습니다."
+    }
+  ],
+  "facts": [
+    {
+      "id": "8x1",
+      "a": 8,
+      "b": 1,
+      "answer": 8,
+      "expression": "8 × 1 = 8",
+      "reading": "팔 일은 팔",
+      "commutativePair": "1x8",
+      "commutativePairInScope": false,
+      "isSquare": false,
+      "difficulty": "trivial",
+      "difficultyScore": 1
+    },
+    {
+      "id": "8x2",
+      "a": 8,
+      "b": 2,
+      "answer": 16,
+      "expression": "8 × 2 = 16",
+      "reading": "팔 이 십육",
+      "commutativePair": "2x8",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    },
+    {
+      "id": "8x3",
+      "a": 8,
+      "b": 3,
+      "answer": 24,
+      "expression": "8 × 3 = 24",
+      "reading": "팔 삼 이십사",
+      "commutativePair": "3x8",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    },
+    {
+      "id": "8x4",
+      "a": 8,
+      "b": 4,
+      "answer": 32,
+      "expression": "8 × 4 = 32",
+      "reading": "팔 사 삼십이",
+      "commutativePair": "4x8",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "medium",
+      "difficultyScore": 3
+    },
+    {
+      "id": "8x5",
+      "a": 8,
+      "b": 5,
+      "answer": 40,
+      "expression": "8 × 5 = 40",
+      "reading": "팔 오 사십",
+      "commutativePair": "5x8",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "easy",
+      "difficultyScore": 2
+    },
+    {
+      "id": "8x6",
+      "a": 8,
+      "b": 6,
+      "answer": 48,
+      "expression": "8 × 6 = 48",
+      "reading": "팔 육 사십팔",
+      "commutativePair": "6x8",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "hard",
+      "difficultyScore": 4
+    },
+    {
+      "id": "8x7",
+      "a": 8,
+      "b": 7,
+      "answer": 56,
+      "expression": "8 × 7 = 56",
+      "reading": "팔 칠 오십육",
+      "commutativePair": "7x8",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "hardest",
+      "difficultyScore": 5
+    },
+    {
+      "id": "8x8",
+      "a": 8,
+      "b": 8,
+      "answer": 64,
+      "expression": "8 × 8 = 64",
+      "reading": "팔 팔 육십사",
+      "commutativePair": "8x8",
+      "commutativePairInScope": true,
+      "isSquare": true,
+      "difficulty": "hard",
+      "difficultyScore": 4
+    },
+    {
+      "id": "8x9",
+      "a": 8,
+      "b": 9,
+      "answer": 72,
+      "expression": "8 × 9 = 72",
+      "reading": "팔 구 칠십이",
+      "commutativePair": "9x8",
+      "commutativePairInScope": true,
+      "isSquare": false,
+      "difficulty": "hard",
+      "difficultyScore": 4
+    }
+  ],
+  "learningStep": {
+    "step": 8,
+    "table": 8,
+    "difficulty": "hard",
+    "estimatedDays": "5~10일",
+    "goal": "8단을 두 배 세 번으로 되찾고 전체 혼합 문제 풀기",
+    "buildsOn": [
+      2,
+      4
+    ],
+    "keyIdea": "두 배를 세 번 / 10배에서 2배 빼기",
+    "recommendedMode": "challenge"
+  },
+  "license": {
+    "content": "구구단 곱셈식과 표는 공개된 수학적 사실입니다. 가이드 본문과 학습 전략 텍스트는 인용 시 출처(https://gugu.smap.site)를 표기해 주세요.",
+    "attribution": "구구 어드벤처 (https://gugu.smap.site)"
+  }
+}

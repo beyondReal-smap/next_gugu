@@ -1,170 +1,244 @@
 "use client";
-import React from 'react';
-import { Capacitor } from '@capacitor/core';
-import { PRODUCT_ID, VALIDATOR_URL } from '@/lib/premiumConfig';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import {
+  fetchPremiumStatus,
+  parsePremiumStatus,
+  PremiumEntitlement,
+  PremiumFeatureKey,
+  PremiumStatus,
+} from '../api/premium';
+import { useAuth } from './AuthProvider';
+import '../../app/types/webkit'; // window.webkit / window.Android / 프리미엄 콜백 전역 타입
 
-export type PurchaseResult = 'ok' | 'cancelled' | 'error';
+// 레거시 네이티브 셸(purchaseManager)과 같은 키 — 기존 구매자의 로컬 상태 유지
+const NATIVE_STATUS_STORAGE_KEY = 'PREMIUM_STATUS';
+const ACCOUNT_CACHE_STORAGE_KEY = 'gugu.premium.account.v1';
+// 평생권도 환불·철회 상태를 주기적으로 확인하도록 오프라인 사용을 7일로 제한한다.
+const ACCOUNT_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-/** cordova-plugin-purchase 전역 (deviceready 이후 window.CdvPurchase로 주입됨) */
-declare global {
-  interface Window { CdvPurchase?: any }
+interface LocalPremium {
+  isPremium: boolean;
+  purchaseDate?: string;
+  transactionId?: string;
 }
 
-/** 검증 완료 프리미엄 캐시 — 오프라인 실행 대비 (스토어 확인으로 매 실행 보정) */
-const PREMIUM_CACHE_KEY = 'gugu.premium.v1';
+interface AccountPremiumCache {
+  version: 1;
+  userId: string;
+  verifiedAt: number;
+  expiresAt: number;
+  status: PremiumStatus;
+}
 
 interface PremiumContextValue {
-  /** 네이티브(iOS/Android) 여부 — false면 웹 데모 모드 */
-  isNative: boolean;
-  /** 스토어 연결 완료 여부 */
-  storeReady: boolean;
+  /** 서버 응답 또는 유효한 마지막 서버 캐시 기준 프리미엄 */
   isPremium: boolean;
-  /** 스토어에서 받아온 현지 가격 문자열 (연결 전 null) */
-  price: string | null;
-  paywallOpen: boolean;
-  openPaywall: () => void;
-  closePaywall: () => void;
-  purchase: () => Promise<PurchaseResult>;
-  /** 구매 복원 — 복원된 구매가 있으면 true */
-  restore: () => Promise<boolean>;
+  /** 계정에 연결된 프리미엄 (웹·타 기기 동기화 경로) */
+  accountPremium: boolean;
+  /** 서버가 부여한 기능별 권한 */
+  entitlements: PremiumEntitlement[];
+  /** 서버 권한 응답 기준 기능 사용 가능 여부 */
+  hasFeature: (featureKey: PremiumFeatureKey) => boolean;
+  /** 네이티브 로컬 구매 흔적 — 표시 전용이며 권한 판정에는 사용하지 않음 */
+  localPurchaseDetected: boolean;
+  /** 서버 상태 재조회 (로그인 시에만 동작) */
+  refresh: () => Promise<void>;
+  /** 스토어 구매 복원 — 네이티브 브릿지 호출, 웹에서는 서버 재조회 */
+  restorePurchases: () => Promise<void>;
+  /** 프리미엄 구매 — 네이티브 브릿지 호출 (웹 결제는 미지원) */
+  purchase: () => void;
 }
 
-const PremiumContext = React.createContext<PremiumContextValue | null>(null);
+const PremiumContext = createContext<PremiumContextValue | null>(null);
+
+function readLocal(): LocalPremium {
+  try {
+    const raw = localStorage.getItem(NATIVE_STATUS_STORAGE_KEY);
+    if (!raw) return { isPremium: false };
+    const parsed = JSON.parse(raw) as Partial<LocalPremium>;
+    if (
+      typeof parsed.isPremium !== 'boolean' ||
+      (parsed.purchaseDate !== undefined && typeof parsed.purchaseDate !== 'string') ||
+      (parsed.transactionId !== undefined && typeof parsed.transactionId !== 'string')
+    ) {
+      throw new Error('로컬 구매 표시 캐시 형식이 올바르지 않습니다');
+    }
+    return { isPremium: parsed.isPremium, purchaseDate: parsed.purchaseDate, transactionId: parsed.transactionId };
+  } catch (e) {
+    console.error('로컬 구매 표시 캐시 로드 실패:', e);
+    return { isPremium: false };
+  }
+}
+
+function writeLocal(v: LocalPremium) {
+  try {
+    localStorage.setItem(NATIVE_STATUS_STORAGE_KEY, JSON.stringify(v));
+  } catch (e) {
+    console.error('로컬 구매 표시 캐시 저장 실패:', e);
+  }
+}
+
+function readAccountCache(userId: string): PremiumStatus | null {
+  try {
+    const raw = localStorage.getItem(ACCOUNT_CACHE_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<AccountPremiumCache>;
+    if (
+      parsed.version !== 1 ||
+      parsed.userId !== userId ||
+      typeof parsed.verifiedAt !== 'number' ||
+      typeof parsed.expiresAt !== 'number' ||
+      !Number.isFinite(parsed.verifiedAt) ||
+      !Number.isFinite(parsed.expiresAt) ||
+      parsed.verifiedAt > parsed.expiresAt ||
+      parsed.expiresAt <= Date.now()
+    ) {
+      return null;
+    }
+    return parsePremiumStatus(parsed.status);
+  } catch (e) {
+    console.error('계정 프리미엄 캐시 로드 실패:', e);
+    return null;
+  }
+}
+
+function writeAccountCache(userId: string, status: PremiumStatus) {
+  const verifiedAt = Date.now();
+  const cache: AccountPremiumCache = {
+    version: 1,
+    userId,
+    verifiedAt,
+    expiresAt: verifiedAt + ACCOUNT_CACHE_TTL_MS,
+    status,
+  };
+  try {
+    localStorage.setItem(ACCOUNT_CACHE_STORAGE_KEY, JSON.stringify(cache));
+  } catch (e) {
+    console.error('계정 프리미엄 캐시 저장 실패:', e);
+  }
+}
+
+function hasActiveEntitlement(status: PremiumStatus | null): boolean {
+  return Boolean(status?.premium && status.entitlements.some((entitlement) => entitlement.status === 'active'));
+}
 
 export function PremiumProvider({ children }: { children: React.ReactNode }) {
-  const isNative = Capacitor.isNativePlatform();
-  const [storeReady, setStoreReady] = React.useState(false);
-  const [isPremium, setIsPremium] = React.useState(false);
-  const [price, setPrice] = React.useState<string | null>(null);
-  const [paywallOpen, setPaywallOpen] = React.useState(false);
-  // 구매 진행 콜백 연결용 (approved→verified 이벤트와 purchase() 프라미스 연결)
-  const pendingResolve = React.useRef<((r: PurchaseResult) => void) | null>(null);
+  const { user, getAccessToken } = useAuth();
+  const [local, setLocal] = useState<LocalPremium>({ isPremium: false });
+  const [accountStatus, setAccountStatus] = useState<PremiumStatus | null>(null);
 
-  const grantPremium = React.useCallback(() => {
-    setIsPremium(true);
-    try { localStorage.setItem(PREMIUM_CACHE_KEY, '1'); } catch { /* 저장 실패해도 세션 내 유지 */ }
-  }, []);
+  const accountPremium = hasActiveEntitlement(accountStatus);
+  const entitlements = accountStatus?.entitlements ?? [];
+  const hasFeature = useCallback(
+    (featureKey: PremiumFeatureKey) => Boolean(accountStatus?.premium) && Boolean(accountStatus?.entitlements.some(
+      (entitlement) => entitlement.featureKey === featureKey && entitlement.status === 'active'
+    )),
+    [accountStatus]
+  );
 
-  const revokePremium = React.useCallback(() => {
-    setIsPremium(false);
-    try { localStorage.removeItem(PREMIUM_CACHE_KEY); } catch { /* noop */ }
-  }, []);
+  const refresh = useCallback(async () => {
+    const token = await getAccessToken();
+    if (!token || !user) {
+      setAccountStatus(null);
+      return;
+    }
+    const status = await fetchPremiumStatus(token);
+    setAccountStatus(status);
+    writeAccountCache(user.id, status);
+  }, [getAccessToken, user]);
 
-  React.useEffect(() => {
-    // 캐시 선반영 — 오프라인 실행에서도 이용권 유지 (스토어 연결 후 보정)
-    try { if (localStorage.getItem(PREMIUM_CACHE_KEY) === '1') setIsPremium(true); } catch { /* noop */ }
+  // 전역 콜백(마운트 1회 등록)에서 항상 최신 refresh를 부르기 위한 ref
+  const refreshRef = React.useRef(refresh);
+  useEffect(() => { refreshRef.current = refresh; }, [refresh]);
 
-    if (!isNative) return;
+  // 초기 로컬 상태 + 네이티브 셸이 호출하는 전역 콜백 등록
+  useEffect(() => {
+    setLocal(readLocal());
 
-    const onReady = () => {
-      const CdvPurchase = window.CdvPurchase;
-      if (!CdvPurchase) {
-        console.error('[Premium] CdvPurchase 플러그인을 찾을 수 없습니다');
-        return;
-      }
-      const { store, ProductType, Platform, LogLevel } = CdvPurchase;
-      const platform = Capacitor.getPlatform() === 'ios' ? Platform.APPLE_APPSTORE : Platform.GOOGLE_PLAY;
-
-      store.verbosity = LogLevel.WARNINGS;
-      store.register([{ id: PRODUCT_ID, type: ProductType.NON_CONSUMABLE, platform }]);
-      // 자체 서버 검증 — 서버가 Apple/Google에 영수증 재확인 후 ok 응답 시에만 verified
-      store.validator = VALIDATOR_URL;
-
-      store.when()
-        .productUpdated((p: any) => {
-          if (p.id !== PRODUCT_ID) return;
-          const pricing = p.pricing ?? p.offers?.[0]?.pricingPhases?.[0];
-          if (pricing?.price) setPrice(pricing.price);
-          if (p.owned) grantPremium();
-        })
-        // 환불 회수 — 기기 영수증 로딩이 "완료"된 시점에만 판정 (로딩 중/오프라인 오회수 방지).
-        // Android는 환불 시 스토어 조회에서 즉시 빠져 다음 실행에 회수됨.
-        // iOS는 기기 영수증에 환불이 늦게 반영될 수 있어 복원/재검증 시점에 회수됨.
-        .receiptsReady(() => {
-          const p = store.get(PRODUCT_ID, platform);
-          if (p && p.owned === false) revokePremium();
-        })
-        .approved((tx: any) => tx.verify())
-        .verified((receipt: any) => {
-          receipt.finish();
-          grantPremium();
-          pendingResolve.current?.('ok');
-          pendingResolve.current = null;
-        })
-        .unverified(() => {
-          // 서버 검증 거부 — 프리미엄 미부여 (조작 영수증 방어)
-          console.error('[Premium] 영수증 검증 거부됨');
-          pendingResolve.current?.('error');
-          pendingResolve.current = null;
-        });
-
-      store.initialize([platform])
-        .then(() => {
-          setStoreReady(true);
-          const p = store.get(PRODUCT_ID, platform);
-          if (p?.owned) grantPremium();
-        })
-        .catch((e: unknown) => console.error('[Premium] 스토어 초기화 실패:', e));
+    window.setPremiumStatus = (isPremium, purchaseDate, transactionId) => {
+      const next = { isPremium, purchaseDate, transactionId };
+      writeLocal(next);
+      setLocal(next);
+    };
+    window.onPremiumPurchaseSuccess = () => {
+      void refreshRef.current().catch((e) => console.error('구매 후 프리미엄 조회 실패:', e));
+    };
+    window.onPremiumRestoreSuccess = () => {
+      void refreshRef.current().catch((e) => console.error('복원 후 프리미엄 조회 실패:', e));
     };
 
-    // Capacitor는 cordova 플러그인 사용 시 deviceready를 발생시킴 (이미 지난 경우 즉시 실행)
-    if (window.CdvPurchase) onReady();
-    else document.addEventListener('deviceready', onReady, { once: true });
-  }, [isNative, grantPremium, revokePremium]);
+    // 네이티브에 현재 상태 질의 (iOS: storeKit 초기화 / Android: 동기 조회)
+    if (window.webkit?.messageHandlers?.storeKit) {
+      window.webkit.messageHandlers.storeKit.postMessage('initialize');
+    } else if (window.Android?.getPremiumStatus) {
+      const isPremium = window.Android.getPremiumStatus();
+      setLocal((prev) => ({ ...prev, isPremium: prev.isPremium || isPremium }));
+    }
 
-  const purchase = React.useCallback(async (): Promise<PurchaseResult> => {
-    const store = window.CdvPurchase?.store;
-    const { Platform } = window.CdvPurchase ?? {};
-    if (!store) return 'error';
-    const platform = Capacitor.getPlatform() === 'ios' ? Platform.APPLE_APPSTORE : Platform.GOOGLE_PLAY;
-    const offer = store.get(PRODUCT_ID, platform)?.getOffer();
-    if (!offer) return 'error';
-
-    return new Promise<PurchaseResult>((resolve) => {
-      pendingResolve.current = resolve;
-      offer.order().then((err: any) => {
-        if (err) {
-          pendingResolve.current = null;
-          resolve(err.isError && err.code === window.CdvPurchase.ErrorCode.PAYMENT_CANCELLED ? 'cancelled' : 'error');
-        }
-        // err 없음 → approved→verified 이벤트가 resolve 처리
-      });
-    });
+    return () => {
+      delete window.setPremiumStatus;
+      delete window.onPremiumPurchaseSuccess;
+      delete window.onPremiumRestoreSuccess;
+    };
+    // refreshRef는 렌더마다 최신으로 유지되므로 의존성 불필요
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const restore = React.useCallback(async (): Promise<boolean> => {
-    const store = window.CdvPurchase?.store;
-    if (!store) return false;
-    try {
-      await store.restorePurchases();
-      const owned = !!store.get(PRODUCT_ID)?.owned;
-      // 복원은 스토어에 명시적으로 물어본 결과이므로 회수까지 신뢰하고 반영
-      if (owned) grantPremium();
-      else revokePremium();
-      return owned;
-    } catch (e) {
-      console.error('[Premium] 복원 실패:', e);
-      return false;
+  // 로그인/로그아웃 시 계정 프리미엄 동기화
+  useEffect(() => {
+    if (!user) {
+      setAccountStatus(null);
+      return;
     }
-  }, [grantPremium, revokePremium]);
+    setAccountStatus(readAccountCache(user.id));
+    void refresh().catch((e) => console.error('계정 프리미엄 조회 실패:', e));
+  }, [user, refresh]);
 
-  const value: PremiumContextValue = {
-    isNative,
-    storeReady,
-    isPremium,
-    price,
-    paywallOpen,
-    openPaywall: React.useCallback(() => setPaywallOpen(true), []),
-    closePaywall: React.useCallback(() => setPaywallOpen(false), []),
-    purchase,
-    restore,
-  };
+  const restorePurchases = useCallback(async () => {
+    if (window.webkit?.messageHandlers?.restorePurchases) {
+      window.webkit.messageHandlers.restorePurchases.postMessage('');
+    } else if (window.webkit?.messageHandlers?.storeKit) {
+      window.webkit.messageHandlers.storeKit.postMessage('restore');
+    } else if (window.Android?.restorePurchases) {
+      window.Android.restorePurchases();
+    } else {
+      // 웹: 복원할 스토어가 없으므로 계정 상태만 재조회
+      await refresh();
+    }
+  }, [refresh]);
 
-  return <PremiumContext.Provider value={value}>{children}</PremiumContext.Provider>;
+  const purchase = useCallback(() => {
+    if (window.webkit?.messageHandlers?.handlePremiumPurchase) {
+      window.webkit.messageHandlers.handlePremiumPurchase.postMessage('');
+    } else if (window.webkit?.messageHandlers?.storeKit) {
+      window.webkit.messageHandlers.storeKit.postMessage('purchase');
+    } else if (window.Android?.purchasePremium) {
+      window.Android.purchasePremium();
+    } else {
+      throw new Error('웹에서는 아직 구매를 지원하지 않습니다. 앱에서 구매해 주세요.');
+    }
+  }, []);
+
+  return (
+    <PremiumContext.Provider
+      value={{
+        isPremium: accountPremium,
+        accountPremium,
+        entitlements,
+        hasFeature,
+        localPurchaseDetected: local.isPremium,
+        refresh,
+        restorePurchases,
+        purchase,
+      }}
+    >
+      {children}
+    </PremiumContext.Provider>
+  );
 }
 
-export function usePremium() {
-  const ctx = React.useContext(PremiumContext);
-  if (!ctx) throw new Error('usePremium은 PremiumProvider 안에서만 사용할 수 있습니다');
+export function usePremium(): PremiumContextValue {
+  const ctx = useContext(PremiumContext);
+  if (!ctx) throw new Error('usePremium must be used within PremiumProvider');
   return ctx;
 }

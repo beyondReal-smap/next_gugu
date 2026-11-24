@@ -1,0 +1,90 @@
+# 구구 어드벤처 — https://gugu.smap.site
+# AI 검색·에이전트용 요약: https://gugu.smap.site/llms.txt
+# 기계 판독용 데이터셋: https://gugu.smap.site/ai/dataset.json
+# MCP 서버(읽기 전용): https://gugu.smap.site/api/mcp/
+
+User-agent: *
+Allow: /
+# Next.js 내부 산출물(RSC payload)과 OAuth 콜백 — 색인 대상이 아니다.
+# 와일드카드 대신 실제 경로를 명시한다. 네이버 Yeti 등 일부 봇은 패턴 문법 지원이 불완전해
+# 잘못 매칭되면 llms.txt까지 함께 막힌다.
+# /learn·/profile 자체는 막지 않는다. 그 페이지들은 meta robots=noindex로 처리했는데,
+# robots.txt로 크롤을 막아 버리면 크롤러가 그 태그를 읽지 못해 URL만 색인되는 역효과가 난다.
+Disallow: /_next/static/chunks/
+Disallow: /index.txt
+Disallow: /learn/index.txt
+Disallow: /profile/index.txt
+Disallow: /play/index.txt
+Disallow: /auth/
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Yeti
+Allow: /
+
+User-agent: Daum
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: MistralAI-User
+Allow: /
+
+Sitemap: https://gugu.smap.site/sitemap.xml
+Sitemap: https://gugu.smap.site/rss.xml

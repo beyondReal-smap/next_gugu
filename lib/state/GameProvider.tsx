@@ -3,6 +3,8 @@ import React, { createContext, useContext, useEffect, useRef, useState, useCallb
 import { GameState, SessionResult, CommitResult } from '../types';
 import { getLevelInfo, LevelInfo } from '../level';
 import { DEFAULT_STATE, applyVisit, applySession } from './commit';
+import { notifySessionCommitted } from '../learning/bridge';
+import { mergeServerSnapshot } from '../learning/merge';
 
 const STORAGE_KEY = 'gugu.progress.v1';
 
@@ -14,6 +16,7 @@ interface GameContextValue {
   setDailyGoal: (goal: number) => void;
   setOnboarded: (v: boolean) => void;
   resetProgress: () => void;
+  mergeServerSnapshot: (state: Record<string, unknown>) => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -51,6 +54,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const commitSession = useCallback((result: SessionResult): CommitResult => {
     const { next, commit } = applySession(ref.current, result);
     setState(next);
+    notifySessionCommitted(result);
     return commit;
   }, []);
 
@@ -63,6 +67,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const resetProgress = useCallback(() => {
     setState(applyVisit({ ...DEFAULT_STATE, onboarded: true }));
   }, []);
+  const mergeServer = useCallback((remote: Record<string, unknown>) => {
+    setState((s) => mergeServerSnapshot(s, remote));
+  }, []);
 
   const value: GameContextValue = {
     loaded,
@@ -72,6 +79,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setDailyGoal,
     setOnboarded,
     resetProgress,
+    mergeServerSnapshot: mergeServer,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

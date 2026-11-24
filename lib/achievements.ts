@@ -1,6 +1,7 @@
 // 업적 정의 및 판정
 import { GameState } from './types';
 import { getLevelInfo } from './level';
+import { MODE_LIST } from './modes';
 
 export interface AchievementDef {
   id: string;
@@ -34,7 +35,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'level_15', name: '레벨 15', description: '레벨 15 도달', icon: 'Rocket', check: (s) => getLevelInfo(s.totalXp).level >= 15 },
   { id: 'challenge_15', name: '번개 계산', description: '60초 챌린지에서 15점 달성', icon: 'Timer', check: (s) => (s.bestScores?.challenge ?? 0) >= 15 },
   { id: 'survival_20', name: '생존왕', description: '서바이벌에서 20문제 생존', icon: 'HeartPulse', check: (s) => (s.bestScores?.survival ?? 0) >= 20 },
-  { id: 'mode_explorer', name: '모드 탐험가', description: '모든 게임 모드를 플레이', icon: 'Compass', check: (s) => (s.modesPlayed?.length ?? 0) >= 6 },
+  { id: 'mode_explorer', name: '모드 탐험가', description: '모든 게임 모드를 플레이', icon: 'Compass', check: (s) => MODE_LIST.every((m) => (s.modesPlayed ?? []).includes(m.id)) },
 ];
 
 export function newlyUnlocked(state: GameState): string[] {

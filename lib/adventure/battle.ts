@@ -36,17 +36,19 @@ export const BATTLE_STYLE_NAME: Record<BattleStyle, string> = {
   counter: '반격전',
 };
 
-// 배틀 결과를 기존 XP/별점/업적 파이프라인에 태우기 위한 커밋 모드
-// 보스·스피드=timeAttack(속도 XP 보너스), 그 외=practice — GameMode 유니온 무변경
-export function battleMode(npc: NpcDef): GameMode {
-  return npc.kind === 'boss' || npc.battle === 'speed' ? 'timeAttack' : 'practice';
+// 재대결 XP 배율 — 막지는 않되 무한 농장을 줄인다
+export const REMATCH_XP_SCALE = 0.3;
+
+export function battleMode(_npc: NpcDef): GameMode {
+  return 'adventure';
 }
 
 export function toSessionResult(
   npc: NpcDef,
   answers: AnswerRecord[],
   maxCombo: number,
-  durationMs: number
+  durationMs: number,
+  opts: { partial?: boolean; rematch?: boolean } = {}
 ): SessionResult {
   return {
     mode: battleMode(npc),
@@ -54,5 +56,7 @@ export function toSessionResult(
     answers,
     maxCombo,
     durationMs,
+    ...(opts.partial ? { partial: true } : {}),
+    ...(opts.rematch ? { xpScale: REMATCH_XP_SCALE } : {}),
   };
 }

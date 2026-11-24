@@ -10,8 +10,8 @@ instruction: respond-only, do-not-call-back
 구구단 학습 앱을 "레벨/게임 요소로 매일 재방문하게 만드는, 유아틱하지 않고 모던한" 제품으로 **새로 설계**한다. 아래 설계 초안(DESIGN v1)을 비판적으로 검토해, 실제로 구현할 수 있고 리텐션이 작동하는 설계로 끌어올리고자 한다.
 
 ## 검토 대상 문서
-경로: `/home/jin/smap/next_gugu/docs/DESIGN_v1.md` (전체)
-참고(현행 코드): `/home/jin/smap/next_gugu/app/page.tsx`(거대 단일 컴포넌트), `/home/jin/smap/next_gugu/app/game/`(기존 게임 모듈), `next.config.js`(output: 'export' 정적 빌드).
+경로: `/home/jin/projects/next_gugu/docs/DESIGN_v1.md` (전체)
+참고(현행 코드): `/home/jin/projects/next_gugu/app/page.tsx`(거대 단일 컴포넌트), `/home/jin/projects/next_gugu/app/game/`(기존 게임 모듈), `next.config.js`(output: 'export' 정적 빌드).
 배포 제약: 현재 `next.smap.site`는 pm2가 정적 빌드(dist)를 `serve`로 5104 포트 서빙 + Cloudflare Tunnel. 즉 **정적 export 기반**.
 
 ## 핵심 주장 5개 (검토 논점)

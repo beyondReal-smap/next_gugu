@@ -1,6 +1,6 @@
 "use client";
 // R3F 월드 씬 — three를 import하는 유일한 진입점 (dynamic ssr:false로 청크 분리)
-import React, { useCallback, useMemo, useRef, MutableRefObject } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, MutableRefObject } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { NpcDef, RegionDef } from '@/lib/adventure/types';
@@ -9,6 +9,8 @@ import { MoveState } from './controls';
 import { Terrain } from './Terrain';
 import { Npc } from './Npc';
 import { Player } from './Player';
+import { useAppActive } from '@/lib/native/useAppActive';
+import { usePrefs } from '@/lib/state/PrefsProvider';
 
 // 3인칭 팔로우 카메라 (프레임률 무관 지수 보간)
 function CameraRig({ posRef }: { posRef: MutableRefObject<[number, number]> }) {
@@ -74,6 +76,22 @@ function EncounterWatcher({
   return null;
 }
 
+function FpsProbe({ onFps, enabled }: { onFps: (fps: number) => void; enabled: boolean }) {
+  const acc = useRef({ frames: 0, t: 0 });
+  const onFpsRef = useRef(onFps);
+  onFpsRef.current = onFps;
+  useFrame((_, dt) => {
+    if (!enabled) return;
+    acc.current.frames += 1;
+    acc.current.t += dt;
+    if (acc.current.t >= 1) {
+      onFpsRef.current(acc.current.frames / acc.current.t);
+      acc.current = { frames: 0, t: 0 };
+    }
+  });
+  return null;
+}
+
 export interface WorldCanvasProps {
   region: RegionDef;
   defeatedIds: string[];
@@ -89,19 +107,43 @@ export default function WorldCanvas({ region, defeatedIds, moveRef, posRef, onEn
   const handleEncounter = useCallback((npc: NpcDef | null) => onEncounterRef.current(npc), []);
 
   const defeatedSet = useMemo(() => new Set(defeatedIds), [defeatedIds]);
+  const appActive = useAppActive();
+  const { graphicsQuality } = usePrefs();
+  const [autoLow, setAutoLow] = useState(false);
+  const fpsHits = useRef<number[]>([]);
+
+  useEffect(() => {
+    setAutoLow(false);
+    fpsHits.current = [];
+  }, [graphicsQuality, region.table]);
+
+  const low = graphicsQuality === 'battery' || (graphicsQuality === 'auto' && autoLow);
+
+  const onFps = useCallback((fps: number) => {
+    if (graphicsQuality !== 'auto' || autoLow) return;
+    const hits = fpsHits.current;
+    hits.push(fps);
+    if (hits.length >= 3) {
+      const avg = hits.reduce((s, n) => s + n, 0) / hits.length;
+      if (avg < 40) setAutoLow(true);
+    }
+  }, [graphicsQuality, autoLow]);
 
   return (
     <Canvas
-      dpr={[1, 1.5]}
+      key={low ? 'low' : 'high'}
+      frameloop={appActive ? 'always' : 'never'}
+      dpr={low ? 1 : [1, 1.5]}
       camera={{ fov: 50, near: 0.5, far: 80, position: [posRef.current[0], 8.5, posRef.current[1] + 9.5] }}
-      gl={{ antialias: true, powerPreference: 'high-performance' }}
+      gl={{ antialias: !low, powerPreference: low ? 'low-power' : 'high-performance' }}
     >
       <color attach="background" args={[region.theme.sky]} />
       <fog attach="fog" args={[region.theme.sky, 26, 55]} />
       <ambientLight intensity={0.85} />
       <directionalLight position={[6, 12, 4]} intensity={1.2} />
 
-      <Terrain region={region} />
+      <Terrain region={region} decoStep={low ? 2 : 1} />
+      <FpsProbe onFps={onFps} enabled={appActive && graphicsQuality === 'auto' && !autoLow} />
       {region.npcs.map((n, i) => (
         <Npc key={n.id} npc={n} defeated={defeatedSet.has(n.id)} idleOffset={i * 1.7} />
       ))}

@@ -1,6 +1,8 @@
 "use client";
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { GameMode } from '../types';
+import { useWebTrial } from './WebTrialProvider';
+import { trackMetaCustom } from '@/src/utils/metaPixel';
 
 export interface ActiveSession {
   mode: GameMode;
@@ -17,7 +19,17 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [active, setActive] = useState<ActiveSession | null>(null);
-  const start = useCallback((mode: GameMode, table: number | null) => setActive({ mode, table }), []);
+  const { tryPlay } = useWebTrial();
+  // 웹 체험판은 하루 판 수 한도를 넘으면 시작하지 않는다(설치 안내는 WebTrialProvider가 띄움)
+  const start = useCallback((mode: GameMode, table: number | null) => {
+    if (!tryPlay()) return;
+    setActive({ mode, table });
+    trackMetaCustom('play_start', {
+      mode,
+      table: table == null ? 'mixed' : String(table),
+      content_name: 'web_play',
+    });
+  }, [tryPlay]);
   const end = useCallback(() => setActive(null), []);
   return <SessionContext.Provider value={{ active, start, end }}>{children}</SessionContext.Provider>;
 }
